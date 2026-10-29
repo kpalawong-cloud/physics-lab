@@ -103,7 +103,7 @@ td:first-child, th:first-child { text-align: left; color: var(--muted); font-wei
 .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
   margin-right: 5px; background: var(--c); vertical-align: -1px; }
 /* ลิงก์สลับหน้า กลศาสตร์ / แสง */
-.pages { display: flex; gap: 6px; margin-bottom: 8px; }
+.pages { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .pages button { padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
 .pages button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 body:not([data-group="mech"]) nav button[data-group="mech"], body:not([data-group="optics"]) nav button[data-group="optics"],
@@ -139,6 +139,8 @@ body:not([data-group="elec"]) nav button[data-group="elec"], body:not([data-grou
 }
 :root[data-theme="dark"] { --c-ray: #f0a93b; --c-ray2: #6aa0f5; --c-ray3: #3cc48f; --water: rgba(106, 160, 245, 0.16); --glass: rgba(140, 180, 240, 0.22); }
 #mrCanvas, #bnCanvas, #dpCanvas { touch-action: none; }
+#dpCanvas { height: 520px; }
+@media (max-width: 800px) { #dpCanvas { height: 440px; } }
 #bnCanvas { cursor: grab; }
 #refract .rf-fiber, #refract[data-mode="fiber"] .rf-snell { display: none; }
 #refract[data-mode="fiber"] .rf-fiber { display: revert; }
@@ -177,6 +179,8 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
   <button data-group="optics" data-tab="diffract">การเลี้ยวเบนผ่านช่อง</button>
   <button data-group="optics" data-tab="michelson">อินเตอร์เฟอโรมิเตอร์ไมเคลสัน</button>
   <button data-group="optics" data-tab="instr">กล้องจุลทรรศน์และกล้องโทรทรรศน์</button>
+  <button data-group="optics" data-tab="plx">พาราแล็กซ์ในการวัดและหาตำแหน่งภาพ</button>
+  <button data-group="optics" data-tab="beamx">Beam expander (ขยายลำแสง)</button>
   <button data-group="elec" data-tab="circuit">แล็บต่อวงจร</button>
   <button data-group="elec" data-tab="rc">วงจร RC</button>
   <button data-group="elec" data-tab="efield">สนามไฟฟ้า</button>
@@ -716,7 +720,7 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
   <div class="card">
     <canvas id="dpCanvas"></canvas>
     <div class="eqbox" id="dpEq"></div>
-    <p class="note">ลากตาในภาพเพื่อเปลี่ยนมุมมอง</p>
+    <p class="note">ลากตาในภาพเพื่อเปลี่ยนมุมมอง รังสีสามเส้นคือลำแสงแคบที่เข้าตา (มุมระหว่างรังสีขยายให้เห็นชัด) แนวต่อรังสีย้อนกลับ (เส้นประ) ตัดกันที่ภาพของเหรียญ</p>
   </div>
   <div class="card">
     <div class="ctrl"><label>ความลึกจริงของเหรียญ d <output id="dp_do"></output></label>
@@ -728,6 +732,7 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
     <table>
       <tr><td>ลึกปรากฏเมื่อมองตรง d′ = d/n</td><td id="dp_d0"></td></tr>
       <tr><td>ลึกปรากฏที่มุมนี้</td><td id="dp_dt"></td></tr>
+      <tr><td>ภาพเลื่อนเข้าหาผู้มองในแนวราบ</td><td id="dp_dx"></td></tr>
       <tr><td>มุมในน้ำ θ<sub>น้ำ</sub></td><td id="dp_tw"></td></tr>
     </table>
     <p class="note">ยิ่งมองเฉียง วัตถุในน้ำยิ่งดูตื้นขึ้น นี่คือเหตุผลที่สระน้ำดูตื้นกว่าความจริง</p>
@@ -1843,6 +1848,7 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
 <section class="sim" id="instr" data-mode="mag">
   <div class="card">
     <canvas id="in_cv"></canvas>
+    <canvas id="in_zoom" data-show="micro kep" style="height: 210px; margin-top: 8px"></canvas>
     <div class="eqbox" id="in_eq"></div>
     <div class="legend">
       <span style="--c: var(--c-ray)">รังสีที่ 1</span>
@@ -1873,18 +1879,22 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
     </div>
     <!-- กล้องจุลทรรศน์ -->
     <div class="ctrl" data-show="micro"><label>โฟกัสเลนส์ใกล้วัตถุ f<sub>o</sub> <output id="in_foo"></output></label>
-      <input type="range" id="in_fo" min="0.5" max="3" step="0.05" value="1.5"></div>
+      <input type="range" id="in_fo" min="0.3" max="3" step="0.05" value="1.5"></div>
     <div class="ctrl" data-show="micro"><label>ระยะวัตถุ s<sub>o</sub> <output id="in_soo"></output></label>
-      <input type="range" id="in_so" min="0.6" max="6" step="0.01" value="1.8"></div>
+      <input type="range" id="in_so" min="0.31" max="6" step="0.001" value="1.8"></div>
     <div class="ctrl" data-show="micro"><label>โฟกัสเลนส์ใกล้ตา f<sub>e</sub> <output id="in_feo"></output></label>
-      <input type="range" id="in_fe" min="1.5" max="8" step="0.1" value="4"></div>
+      <input type="range" id="in_fe" min="1" max="8" step="0.1" value="4"></div>
     <div class="ctrl" data-show="micro"><label>ระยะห่างระหว่างเลนส์ L <output id="in_Lo"></output></label>
       <input type="range" id="in_L" min="5" max="30" step="0.01" value="12.45"></div>
     <div class="ctrl" data-show="micro"><label>ความสูงวัตถุ h <output id="in_hoo"></output></label>
       <input type="range" id="in_ho" min="0.1" max="1" step="0.05" value="0.3"></div>
     <div class="buttons" data-show="micro">
-      <button id="in_uNear">ภาพสุดท้ายที่ 25 cm</button>
+      <button id="in_uNear">ภาพสุดท้ายห่างตา 25 cm</button>
       <button id="in_uInf">ภาพสุดท้ายที่อนันต์</button>
+    </div>
+    <div class="buttons" data-show="micro">
+      <button id="in_p10">กล้องจริง: วัตถุ ×10 + ตา ×10</button>
+      <button id="in_p40">กล้องจริง: วัตถุ ×40 + ตา ×10</button>
     </div>
     <!-- กล้องโทรทรรศน์ -->
     <div class="ctrl" data-show="kep newt"><label><span id="in_fTl">ความยาวโฟกัส</span> <output id="in_fTo"></output></label>
@@ -1899,6 +1909,7 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
       <input type="range" id="in_dd" min="-3" max="3" step="0.05" value="0"></div>
     <div class="buttons" data-show="kep">
       <button id="in_kNorm">ปรับปกติ (d = f<sub>o</sub> + f<sub>e</sub>)</button>
+      <button id="in_kReal">กล้องจริง: f<sub>o</sub> 90 cm, f<sub>e</sub> 2.5 cm</button>
     </div>
     <table id="in_tab"></table>
     <p class="note" id="in_tip"></p>
@@ -2035,6 +2046,116 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
     <label class="check bt-level"><input type="checkbox" id="bt_two"> เพิ่มแหล่งกำเนิดที่ 2 (กำลังเท่ากัน ที่เดียวกัน)</label>
     <table id="bt_tab"></table>
     <p class="note" id="bt_note"></p>
+  </div>
+</section>
+
+
+<!-- พาราแล็กซ์ในการวัดและหาตำแหน่งภาพ -->
+<section class="sim" id="plx" data-mode="scale">
+  <div class="card">
+    <canvas id="px2_cv" style="touch-action: none"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="px2_run">แกว่งตาไปมา</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="px2_reset">รีเซ็ต</button>
+    </div>
+    <canvas id="px2_eye" class="graph" style="height: 190px"></canvas>
+    <div class="eqbox" id="px2_eq"></div>
+    <div class="legend" data-show="scale">
+      <span style="--c: var(--c-ray)">แนวสายตาผ่านเข็มไปตกบนสเกล</span>
+      <span style="--c: var(--c-ray2)">แสงสะท้อนจากแถบกระจกเงา</span>
+      <span style="--c: var(--c-mg)">เข็ม</span>
+      <span style="--c: var(--c-vy)">ตำแหน่งค่าจริง</span>
+    </div>
+    <div class="legend" data-show="locate">
+      <span style="--c: var(--c-ray)">รังสีจากปลายเข็มวัตถุ</span>
+      <span style="--c: var(--c-v)">แนวสายตาไปปลายภาพ</span>
+      <span style="--c: var(--c-vy)">แนวสายตาไปปลายเข็มค้นหา</span>
+      <span style="--c: var(--c-mg)">เข็มวัตถุและภาพ</span>
+    </div>
+    <p class="note" data-show="scale">ภาพบนเป็นภาพตัดขวางของมิเตอร์มองจากด้านข้าง (มาตราส่วนจริง) กรอบเล็กขยายบริเวณเข็มให้เห็นการอ่านผิด
+      ภาพล่างคือสิ่งที่ตาเห็นเมื่อมองลงบนหน้าปัด ลากตาบนภาพเพื่อเลื่อนซ้าย-ขวา</p>
+    <p class="note" data-show="locate">ภาพบนมองรางแสงจากด้านข้าง แนวตั้งขยายมากกว่าแนวนอนเพื่อให้เห็นเข็มชัด (เส้นตรงยังเป็นเส้นตรง จุดตัดยังถูกต้อง)
+      การเลื่อนตาวาดเป็นแนวตั้งฉากกับแกน ในการทดลองจริงเลื่อนตาซ้าย-ขวา ผลเหมือนกัน
+      ลากเข็มค้นหาตามแนวราง หรือลากตาขึ้น-ลง</p>
+  </div>
+  <div class="card">
+    <div class="mode">
+      <button data-mode="scale" class="active">อ่านสเกล</button>
+      <button data-mode="locate">หาตำแหน่งภาพ</button>
+    </div>
+    <div data-show="scale">
+      <div class="ctrl"><label>ค่าจริง (ตำแหน่งเข็ม) <output id="px2_vo"></output></label>
+        <input type="range" id="px2_v" min="0.5" max="9.5" step="0.1" value="6"></div>
+      <div class="ctrl"><label>ระยะเข็มสูงจากหน้าปัด g <output id="px2_go"></output></label>
+        <input type="range" id="px2_g" min="1" max="20" step="0.5" value="8"></div>
+      <div class="ctrl"><label>ระยะตาถึงเข็ม D <output id="px2_Do"></output></label>
+        <input type="range" id="px2_D" min="15" max="50" step="1" value="25"></div>
+      <div class="ctrl"><label>ตาเยื้องจากแนวตั้งฉาก x <output id="px2_xo"></output></label>
+        <input type="range" id="px2_x" min="-15" max="15" step="0.1" value="10"></div>
+      <label class="check"><input type="checkbox" id="px2_mir"> มีแถบกระจกเงาใต้เข็ม</label>
+    </div>
+    <div data-show="locate">
+      <div class="mode">
+        <button data-el="mirror" class="active">กระจกเว้า</button>
+        <button data-el="lens">เลนส์นูน</button>
+      </div>
+      <div class="ctrl"><label>ความยาวโฟกัส f <output id="px2_fo"></output></label>
+        <input type="range" id="px2_f" min="5" max="25" step="0.5" value="10"></div>
+      <div class="ctrl"><label>ระยะวัตถุ u <output id="px2_uo"></output></label>
+        <input type="range" id="px2_u" min="6" max="60" step="0.5" value="15"></div>
+      <div class="ctrl"><label>ตำแหน่งเข็มค้นหา s (วัดจากกระจก/เลนส์) <output id="px2_so"></output></label>
+        <input type="range" id="px2_s" min="2" max="62" step="0.1" value="40"></div>
+      <div class="ctrl"><label>ตาเลื่อนจากแนวแกน e <output id="px2_eo"></output></label>
+        <input type="range" id="px2_e" min="-3" max="3" step="0.05" value="1.5"></div>
+      <div class="buttons"><button id="px2_snap">วางเข็มที่ภาพ (ดูเฉลย)</button></div>
+    </div>
+    <table id="px2_tab"></table>
+    <p class="note" id="px2_tip"></p>
+  </div>
+</section>
+
+<!-- Beam expander: ระบบสองเลนส์ขยายลำแสงเลเซอร์ -->
+<section class="sim" id="beamx" data-mode="kep">
+  <div class="card">
+    <canvas id="bx_cv"></canvas>
+    <div class="eqbox" id="bx_eq"></div>
+    <div class="legend">
+      <span style="--c: rgb(255, 30, 0)">ลำแสงเลเซอร์ He-Ne (λ = 632.8 nm) และรังสีภายในลำ</span>
+      <span style="--c: var(--c-f)">แสงรบกวน (แสงกระเจิงจากฝุ่น เข้ามาเอียง)</span>
+      <span style="--c: var(--muted)">เส้นประ = แนวต่อของรังสี</span>
+    </div>
+    <p class="note" id="bx_note"></p>
+  </div>
+  <div class="card">
+    <div class="mode">
+      <button data-mode="kep" class="active">แบบเคปเลอร์</button>
+      <button data-mode="gal">แบบกาลิเลโอ</button>
+    </div>
+    <div class="ctrl"><label><span id="bx_f1l">โฟกัสเลนส์นูนตัวสั้น f₁</span> <output id="bx_f1o"></output></label>
+      <input type="range" id="bx_f1" min="5" max="40" step="1" value="25"></div>
+    <div class="ctrl"><label>โฟกัสเลนส์นูนตัวยาว f₂ <output id="bx_f2o"></output></label>
+      <input type="range" id="bx_f2" min="50" max="300" step="1" value="100"></div>
+    <div class="ctrl"><label>เส้นผ่านศูนย์กลางลำแสงเข้า D₁ <output id="bx_Do"></output></label>
+      <input type="range" id="bx_D" min="0.5" max="5" step="0.1" value="1"></div>
+    <div class="ctrl"><label>มุมบานเต็มของลำแสงเข้า θ₁ <output id="bx_tho"></output></label>
+      <input type="range" id="bx_th" min="0" max="3" step="0.05" value="1"></div>
+    <div class="ctrl"><label>เลื่อนระยะห่างเลนส์จากค่าปกติ Δd <output id="bx_ddo"></output></label>
+      <input type="range" id="bx_dd" min="-8" max="8" step="0.1" value="0"></div>
+    <div class="buttons">
+      <button id="bx_norm">ตั้งให้ลำแสงออกขนาน (Δd = 0)</button>
+    </div>
+    <label class="check"><input type="checkbox" id="bx_rev"> กลับทิศ (แสงเข้าเลนส์ f₂ ก่อน = ย่อลำแสง)</label>
+    <label class="check"><input type="checkbox" id="bx_stray" checked> แสดงแสงรบกวน (รังสีเอียง 5 mrad)</label>
+    <label class="check" data-show="kep"><input type="checkbox" id="bx_ph"> ใส่ pinhole ที่จุดโฟกัสร่วม (spatial filter)</label>
+    <div class="ctrl" data-show="kep" id="bx_phc"><label>เส้นผ่านศูนย์กลาง pinhole <output id="bx_pdo"></output></label>
+      <input type="range" id="bx_pd" min="10" max="200" step="5" value="40"></div>
+    <table id="bx_tab"></table>
+    <p class="note"><b>ทำไมต้องขยายลำแสง:</b> ลำแสงกว้างขึ้น M เท่า มุมบานลดลง M เท่า จึงส่งไปได้ไกลโดยไม่บานมาก
+      และเมื่อนำไปโฟกัสด้วยเลนส์ f จะได้จุดเล็กลง เพราะขนาดจุดจำกัดด้วยการเลี้ยวเบน d ≈ 4λf/(πD)</p>
+    <p class="note"><b>แบบเคปเลอร์</b> (นูน + นูน, L = f₁ + f₂): มีจุดโฟกัสจริงภายใน ใส่ pinhole กรองแสงรบกวนได้ ภาพกลับหัว
+      แต่ยาวกว่า และเลเซอร์กำลังสูงอาจทำให้อากาศที่จุดโฟกัสแตกตัว (air breakdown)<br>
+      <b>แบบกาลิเลโอ</b> (เว้า + นูน, L = f₂ − |f₁|): สั้นกว่า ไม่มีจุดโฟกัสจริงภายใน จึงเหมาะกับเลเซอร์กำลังสูง แต่ใส่ pinhole ไม่ได้</p>
   </div>
 </section>
 
@@ -4599,64 +4720,109 @@ const refract = (() => {
 const depth = (() => {
   const c = $('dpCanvas');
   const dd = slider('dp_d', 'm', 2), nn = slider('dp_n', '', 2), aa = slider('dp_a', '°', 1);
+  const SPREAD = rad(4);   // ครึ่งมุมของลำแสงที่เข้าตา (ขยายจากขนาดรูม่านตาจริงเพื่อให้มองเห็น)
   let geo = null;
   dragOn(c, (x, y) => {
-    if (!geo || y > geo.Ys) return;
+    if (!geo || y > geo.Ys - 4) return;
     setSlider('dp_a', Math.max(0, Math.min(75, deg(Math.atan2(x - geo.Xs, geo.Ys - y)))).toFixed(1));
   });
-  // ความลึกปรากฏ (แนวดิ่ง) เมื่อมองเฉียงมุม θa จากแนวดิ่ง: d′ = d cos³θa / (n cos³θw)
-  const apparent = (d, n, ta) => { const tw = Math.asin(Math.sin(ta) / n); return [d * Math.cos(ta) ** 3 / (n * Math.cos(tw) ** 3), tw]; };
+  // ตำแหน่งภาพ (จุดตัดของรังสีข้างเคียงที่ต่อย้อนกลับ) เมื่อมองเฉียงมุม ta จากแนวดิ่ง:
+  // ลึกปรากฏ d′ = d cos³θ / (n cos³θน้ำ) และภาพเลื่อนในแนวราบเข้าหาผู้มอง
+  const apparent = (d, N, ta) => {
+    const tw = Math.asin(Math.sin(ta) / N), dA = d * Math.cos(ta) ** 3 / (N * Math.cos(tw) ** 3);
+    return { tw, dA, x: d * Math.tan(tw) - dA * Math.tan(ta) };   // x วัดจากแนวดิ่งผ่านเหรียญ
+  };
 
   function draw() {
     const { ctx, w, h } = fitCanvas(c), d = dd(), N = nn(), ta = rad(aa());
-    const [dA, tw] = apparent(d, N, ta);
-    const Ys = h * 0.36, k = (h - Ys - 24) / 3.1, xc = w * 0.32;   // px ต่อเมตร
-    const xS = xc + d * Math.tan(tw) * k;                                // จุดที่แสงออกจากผิวน้ำ
+    const A = apparent(d, N, ta), tw = A.tw, dA = A.dA;
+    const Ys = Math.round(h * 0.32), k = (h - Ys - 46) / d, xc = Math.max(170, w * 0.34);   // k = px ต่อเมตร (ปรับตามความลึกให้เต็มกรอบ)
+    const xS = xc + d * Math.tan(tw) * k, yC = Ys + d * k, yA = Ys + dA * k, xA = xc + A.x * k;
     geo = { Xs: xS, Ys };
+    // พื้นหลัง: ของเหลว ผิว ป้าย
     ctx.fillStyle = col('--water'); ctx.fillRect(0, Ys, w, h - Ys);
     line(ctx, 0, Ys, w, Ys, col('--c-ray2'), 2);
-    ctx.fillStyle = col('--muted'); ctx.font = '12px system-ui';
+    ctx.font = '12px system-ui'; ctx.fillStyle = col('--muted');
     ctx.fillText('อากาศ n = 1.00', 10, Ys - 8); ctx.fillText(`ของเหลว n = ${fmt(N)}`, 10, Ys + 18);
-    // เหรียญจริงและตำแหน่งปรากฏ
-    const yC = Ys + d * k, yA = Ys + dA * k;
-    // ตำแหน่งปรากฏตามแนวนอน: เลื่อนไปตามแนวรังสีที่ต่อย้อน
-    const xA = xS - dA * Math.tan(ta) * k;
-    ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.ellipse(xc, yC, 14, 5, 0, 0, 7); ctx.fill();
-    ctx.save(); ctx.globalAlpha = 0.45; ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.ellipse(xA, yA, 14, 5, 0, 0, 7); ctx.fill(); ctx.restore();
-    // ลำแสงแคบ 3 เส้นรอบทิศที่ตามอง
-    const L = Math.min(Math.min(w, h) * 0.55, (Ys - 22) / Math.cos(ta) / 0.95);   // ให้ตาอยู่ในภาพ
-    [-0.035, 0, 0.035].forEach((dlt, i) => {
-      const t2 = Math.max(0, ta + dlt), w2 = Math.asin(Math.sin(t2) / N), xs = xc + d * Math.tan(w2) * k;
-      const color = i === 1 ? col('--c-ray') : col('--c-ray3');
-      line(ctx, xc, yC, xs, Ys, color, 1.8);
-      line(ctx, xs, Ys, xs + L * Math.sin(t2), Ys - L * Math.cos(t2), color, 1.8);
-      line(ctx, xs, Ys, xs - (yA - Ys) / Math.cos(t2) * Math.sin(t2) * 1.15, Ys + (yA - Ys) * 1.15, color, 1, [4, 4]);
+    // แนวของตำแหน่งภาพเมื่อมองจากมุมต่าง ๆ (0° ถึง 80°)
+    ctx.save(); ctx.strokeStyle = col('--c-mg'); ctx.globalAlpha = 0.6; ctx.lineWidth = 1.4; ctx.setLineDash([2, 4]); ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const P = apparent(d, N, rad(2 * i)), px = xc + P.x * k, py = Ys + P.dA * k; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.restore();
+    // ระยะจากผิวถึงตา (วัดตามรังสีกลาง) ให้ตาอยู่ในกรอบ
+    const st = Math.sin(ta), ct = Math.cos(ta);
+    let Le = 0.8 * (Ys - 40) / ct;
+    if (st > 0.01) Le = Math.min(Le, (w - 36 - xS) / st);
+    Le = Math.max(60, Le);
+    const ex = xS + Le * st, ey = Ys - Le * ct;
+    // ลำแสงแคบ 3 เส้น (ขอบ กลาง ขอบ) ที่เข้าตา
+    const colors = [col('--c-ray3'), col('--c-ray'), col('--c-ray3')], ends = [];
+    [-SPREAD, 0, SPREAD].forEach((dl, i) => {
+      const t = ta + dl, wv = Math.asin(Math.sin(t) / N), xs = xc + d * Math.tan(wv) * k;
+      const s = (Le - (xs - xS) * st) / Math.cos(t - ta), xe = xs + s * Math.sin(t), ye = Ys - s * Math.cos(t);
+      ends.push([xe, ye]);
+      line(ctx, xc, yC, xs, Ys, colors[i], i === 1 ? 2.2 : 1.6);
+      line(ctx, xs, Ys, xe, ye, colors[i], i === 1 ? 2.2 : 1.6);
+      if (i === 1) arrow(ctx, xs + 0.4 * s * Math.sin(t), Ys - 0.4 * s * Math.cos(t), 0.1 * s * Math.sin(t), -0.1 * s * Math.cos(t), colors[i]);
+      // แนวต่อย้อนกลับ (เส้นประ) จากผิวไปยังภาพ
+      const yb = yA + 16, sb = (yb - Ys) / Math.cos(t);
+      line(ctx, xs, Ys, xs - sb * Math.sin(t), yb, colors[i], 1.1, [5, 4]);
     });
-    // เส้นปกติและตา
-    line(ctx, xS, Ys - 70, xS, Ys + 70, col('--muted'), 1, [3, 4]);
-    const ex = xS + L * 0.9 * Math.sin(ta), ey = Ys - L * 0.9 * Math.cos(ta);
-    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.ellipse(ex, ey, 15, 9, -ta, 0, 7); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(ex - 3 * Math.sin(ta), ey + 3 * Math.cos(ta), 4, 0, 7); ctx.fill();
-    // บอกความลึก
+    // เส้นแนวฉากและมุมที่จุดแสงออกจากผิว
+    line(ctx, xS, Ys - 64, xS, Ys + 64, col('--muted'), 1, [3, 4]);
+    if (ta > rad(2)) {
+      ctx.lineWidth = 1.4; ctx.strokeStyle = col('--c-ray'); ctx.fillStyle = col('--c-ray'); ctx.font = '600 12px system-ui';
+      ctx.beginPath(); ctx.arc(xS, Ys, 40, -Math.PI / 2, -Math.PI / 2 + ta); ctx.stroke();
+      ctx.fillText('θ', xS + 50 * Math.sin(ta / 2) - 3, Ys - 50 * Math.cos(ta / 2) + 4);
+      ctx.beginPath(); ctx.arc(xS, Ys, 32, Math.PI / 2, Math.PI / 2 + tw); ctx.stroke();
+      ctx.fillText('θน้ำ', xS - 36 * Math.sin(tw / 2) - 30, Ys + 44 * Math.cos(tw / 2) + 6);
+    }
+    // ตา: หันไปตามรังสีกลาง ขนาดพอรับรังสีทั้งสามเส้น
+    const sep = Math.hypot(ends[2][0] - ends[0][0], ends[2][1] - ends[0][1]), sc = Math.max(1, (sep + 8) / 22);
+    ctx.save(); ctx.translate(ex, ey); ctx.rotate(Math.atan2(ct, -st) - Math.PI); ctx.scale(sc, sc); ctx.translate(4, 0);
+    ctx.strokeStyle = col('--ink'); ctx.fillStyle = col('--panel'); ctx.lineWidth = 1.5 / sc;
+    ctx.beginPath(); ctx.moveTo(-9, 0); ctx.quadraticCurveTo(3, -13, 17, -7); ctx.lineTo(17, 7); ctx.quadraticCurveTo(3, 13, -9, 0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = col('--c-n'); ctx.beginPath(); ctx.arc(-2, 0, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(-3.5, 0, 2.2, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = col('--muted'); ctx.font = '11px system-ui';
+    ctx.fillText('ตา (ลากได้)', Math.max(4, ex - 14 * sc - 70), Math.max(12, ey - 6 * sc));
+    // เหรียญจริงและภาพของเหรียญ
+    ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.ellipse(xc, yC, 14, 5, 0, 0, 7); ctx.fill();
+    ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = '#d4a017'; ctx.beginPath(); ctx.ellipse(xA, yA, 14, 5, 0, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1; ctx.setLineDash([3, 2]); ctx.strokeStyle = col('--c-mg'); ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
+    ctx.font = '600 12px system-ui';
+    ctx.fillStyle = col('--ink'); ctx.fillText('เหรียญ (วัตถุ)', xc + 18, yC + 18);
+    ctx.fillStyle = col('--c-mg');
+    { const lb = 'ภาพของเหรียญ', tw2 = ctx.measureText(lb).width; ctx.fillText(lb, ta > rad(15) ? xA - 16 - tw2 : xA + 20, ta > rad(15) ? yA - 10 : yA + 4); }
     // บอกความลึก: ลูกศรและป้ายอยู่ทางซ้ายของเหรียญ ไม่ทับรังสี
-    const mx = Math.min(xc, xA) - 50, lr = `ลึกจริง ${fmt(d, 2)} m`, la = `ลึกปรากฏ ${fmt(dA, 2)} m`;
+    const mx = Math.min(xc, xA) - 48, lr = `ลึกจริง ${fmt(d, 2)} m`, la = `ลึกปรากฏ ${fmt(dA, 2)} m`;
     arrow(ctx, mx, Ys, 0, yC - Ys, col('--ink'));
     arrow(ctx, mx + 16, Ys, 0, yA - Ys, col('--c-mg'));
-    line(ctx, mx, yC, xc - 14, yC, col('--ink'), 1, [2, 3]); line(ctx, mx + 16, yA, xA - 14, yA, col('--c-mg'), 1, [2, 3]);
+    line(ctx, mx, yC, xc - 16, yC, col('--ink'), 1, [2, 3]); line(ctx, mx + 16, yA, xA - 16, yA, col('--c-mg'), 1, [2, 3]);
     ctx.font = '12px system-ui';
-    ctx.fillStyle = col('--ink'); ctx.fillText(lr, mx - 8 - ctx.measureText(lr).width, yC + 4);
-    ctx.fillStyle = col('--c-mg'); ctx.fillText(la, mx - 8 - ctx.measureText(la).width, yA + 4);
+    ctx.fillStyle = col('--ink'); ctx.fillText(lr, Math.max(4, mx - 8 - ctx.measureText(lr).width), yC + 4);
+    ctx.fillStyle = col('--c-mg'); ctx.fillText(la, Math.max(4, mx - 8 - ctx.measureText(la).width), Math.min(yA + 4, yC + 4 - 16));
+    ctx.fillStyle = col('--muted'); ctx.font = '11px system-ui';
+    ctx.fillText('เส้นจุดสีม่วง = ตำแหน่งภาพเมื่อมองจากมุมต่าง ๆ', 10, h - 10);
+    // ไม้บรรทัดวัดความลึกที่ขอบขวา
+    const rx = w - 14, stp = niceStep(d, 5);
+    line(ctx, rx, Ys, rx, Ys + d * k, col('--muted'), 1);
+    ctx.textAlign = 'right';
+    for (let z = 0; z <= d + 1e-9; z += stp) { line(ctx, rx - 5, Ys + z * k, rx, Ys + z * k, col('--muted'), 1); ctx.fillText(`${+z.toFixed(2)} m`, rx - 7, Ys + z * k + 4); }
+    ctx.textAlign = 'left';
 
     $('dp_d0').textContent = fmt(d / N, 3) + ' m';
     $('dp_dt').textContent = fmt(dA, 3) + ' m';
+    $('dp_dx').textContent = fmt(Math.abs(A.x), 3) + ' m';
     $('dp_tw').textContent = fmt(deg(tw), 1) + '°';
     setEq('dpEq',
       eqH('มองในแนวดิ่ง (มุมเล็ก)') +
-      eqL(`d′/d = n<sub>อากาศ</sub>/n<sub>น้ำ</sub> → d′ = d/n = ${n(d)}/${n(N)} = <b>${r(d / N, 3)} m</b>`) +
+      eqL(`d′/d = n<sub>อากาศ</sub>/n<sub>ของเหลว</sub> → d′ = d/n = ${n(d)}/${n(N)} = <b>${r(d / N, 3)} m</b>`) +
       eqH(`มองเฉียง θ = ${r(aa(), 1)}°`) +
       eqL(`sin θ = n sin θ<sub>น้ำ</sub> → θ<sub>น้ำ</sub> = <b>${r(deg(tw), 1)}°</b>`) +
-      eqL(`d′ = d cos³θ/(n cos³θ<sub>น้ำ</sub>) = ${n(d)} × cos³${n(aa(), 1)}°/(${n(N)} × cos³${n(deg(tw), 1)}°) = <b>${r(dA, 3)} m</b>`));
+      eqL(`d′ = d cos³θ/(n cos³θ<sub>น้ำ</sub>) = ${n(d)} × cos³${n(aa(), 1)}°/(${n(N)} × cos³${n(deg(tw), 1)}°) = <b>${r(dA, 3)} m</b>`) +
+      eqL(`ภาพเลื่อนเข้าหาผู้มองในแนวราบ = d tan θ<sub>น้ำ</sub> − d′ tan θ = <b>${r(Math.abs(A.x), 3)} m</b>`));
   }
   return { draw };
 })();
@@ -9892,13 +10058,29 @@ const instr = (() => {
   const clampSet = (id, v) => { if (!isFinite(v)) return; const el = $(id); setSlider(id, Math.max(+el.min, Math.min(+el.max, v)).toFixed(2)); };
   $('in_mNear').onclick = () => clampSet('in_sm', NEAR * fm() / (NEAR + fm()));
   $('in_mInf').onclick = () => clampSet('in_sm', fm());
-  $('in_uNear').onclick = () => clampSet('in_L', vimg(so(), fo()) + NEAR * fe() / (NEAR + fe()));
+  // ระยะวางตา (eye relief) = ระยะจากเลนส์ใกล้ตาถึงรูม่านตาออก (ภาพของเลนส์ใกล้วัตถุที่เกิดจากเลนส์ใกล้ตา)
+  const relief = (L, f2) => (L > f2 ? L * f2 / (L - f2) : NaN);
+  // ภาพสุดท้ายห่างจากตา (ที่รูม่านตาออก) 25 cm: |s′ₑ| + e = 25 แก้หา L แบบวนซ้ำ
+  $('in_uNear').onclick = () => {
+    const v1 = vimg(so(), fo()), f2 = fe();
+    let L = v1 + NEAR * f2 / (NEAR + f2);
+    for (let i = 0; i < 40; i++) { const D = NEAR - relief(L, f2); L = v1 + D * f2 / (D + f2); }
+    clampSet('in_L', L);
+  };
+  // ค่าจริง: เลนส์ใกล้วัตถุสร้างภาพห่าง 16 cm (ความยาวท่อมาตรฐาน) แล้วปรับให้ภาพสุดท้ายอยู่ที่อนันต์
+  const preset = (f1, f2) => {
+    setSlider('in_fo', f1); setSlider('in_fe', f2); setSlider('in_ho', 0.1);
+    clampSet('in_so', 16 * f1 / (16 - f1)); clampSet('in_L', vimg(so(), f1) + f2);
+  };
+  $('in_p10').onclick = () => preset(1.6, 2.5);
+  $('in_p40').onclick = () => preset(0.45, 2.5);
   $('in_uInf').onclick = () => clampSet('in_L', vimg(so(), fo()) + fe());
   $('in_kNorm').onclick = () => setSlider('in_dd', 0);
+  $('in_kReal').onclick = () => { setSlider('in_fT', 90); setSlider('in_fe2', 2.5); setSlider('in_dd', 0); };
 
   // ---------- ตัวช่วยวาด ----------
-  function mkView(x0, x1, y0, y1, uniform) {
-    const L = 22, R = 22, T = 30, B = 46, aw = w - L - R, ah = h - T - B;
+  function mkView(x0, x1, y0, y1, uniform, extraB = 0) {
+    const L = 22, R = 22, T = 30, B = 46 + extraB, aw = w - L - R, ah = h - T - B;
     let kx = aw / (x1 - x0), ky = ah / (y1 - y0);
     if (uniform) kx = ky = Math.min(kx, ky);
     const ox = L + (aw - (x1 - x0) * kx) / 2 - x0 * kx, oy = T + (ah - (y1 - y0) * ky) / 2 + y1 * ky;
@@ -9974,6 +10156,38 @@ const instr = (() => {
     if (extra) s += '   ' + extra;
     label(s, px + L * V.kx + 8, py + 4, col('--muted'), '11px system-ui', 'left');
   }
+  // ภาพขยายบริเวณเลนส์ใกล้ตา: ให้เห็นระยะจากเลนส์ใกล้ตาถึงตำแหน่งวางตาชัด ๆ (วาดด้วยตัวช่วยเดิมบน canvas ที่สอง)
+  const zc = $('in_zoom');
+  const yAt = (t, x) => {
+    const P = t.pts;
+    for (let i = 1; i < P.length; i++) if (x <= P[i][0] || i === P.length - 1) {
+      const [xa, ya] = P[i - 1], [xb, yb] = P[i];
+      return xb === xa ? yb : ya + (yb - ya) * (x - xa) / (xb - xa);
+    }
+  };
+  function drawZoom(xL, f2, e, rays, img) {
+    const keep = { ctx, w, h, V };
+    ({ ctx, w, h } = fitCanvas(zc));
+    const x0 = xL - 1.3 * f2, x1 = xL + (isFinite(e) ? e : f2) * 1.7;
+    const ys = [0];
+    rays.forEach(t => [x0, xL, xL + (isFinite(e) ? e : 0)].forEach(x => ys.push(yAt(t, x))));
+    if (img && img.x > x0) ys.push(img.h);
+    const yM = Math.max(...ys.filter(isFinite).map(Math.abs)) * 1.15;
+    V = mkView(x0, x1, -yM, yM, false, 24);
+    axis();
+    mark(xL - f2, 'Fₑ', true, col('--c-vy')); mark(xL + f2, 'Fₑ′', true, col('--c-vy'));
+    lens(xL, Math.max(...rays.map(t => Math.abs(yAt(t, xL)))) * 1.12, 'เลนส์ใกล้ตา');
+    rays.forEach((t, i) => poly(t.pts, RC()[i % 3], 2));
+    if (img && img.x > x0) imgArrow(img.x, img.h, true, img.lb);
+    if (isFinite(e)) {
+      pupilMark(xL + e);
+      eye(V.X(xL + e) + 2, V.Y(0), 0, 'ตา');
+      dim(xL, xL + e, h - 44, `ระยะวางตา e = ${fmt(e, 2)} cm`, col('--c-n'));
+    }
+    label('ภาพขยายบริเวณเลนส์ใกล้ตา', 8, 16, col('--muted'), '600 12px system-ui', 'left');
+    scaleBar();
+    ({ ctx, w, h, V } = keep);
+  }
   // ไล่รังสีผ่านเลนส์บางตามลำดับ (กฎเลนส์บาง: ความชันใหม่ = ความชันเดิม − y/f)
   function trace(x0, y0, m, lenses, xEnd) {
     const pts = [[x0, y0]], hits = [];
@@ -9983,6 +10197,32 @@ const instr = (() => {
     return { pts, hits, m, x, y };
   }
   const RC = () => [col('--c-ray'), col('--c-ray2'), col('--c-ray3')];
+  // เส้นบอกระยะแนวนอน (หน่วยโลก) ที่ความสูง py บนจอ; ข้อความไม่พอที่ให้วางด้านนอก (out = 'left' | 'right')
+  function dim(x1, x2, py, txt, color, out = 'right') {
+    if (!isFinite(x1) || !isFinite(x2)) return;
+    let a = V.X(Math.min(x1, x2)), b = V.X(Math.max(x1, x2));
+    const ca = a >= 2, cb = b <= w - 2;
+    a = Math.max(2, a); b = Math.min(w - 2, b);
+    if (b - a < 2) return;
+    line(ctx, a, py, b, py, color, 1.2);
+    if (ca) line(ctx, a, py - 5, a, py + 5, color, 1.2);
+    if (cb) line(ctx, b, py - 5, b, py + 5, color, 1.2);
+    ctx.font = '600 11px system-ui';
+    const tw = ctx.measureText(txt).width;
+    let x = (a + b) / 2 - tw / 2;
+    if (tw > b - a - 6) x = out === 'left' ? a - 6 - tw : b + 6;
+    label(txt, x, py - 4, color, '600 11px system-ui', 'left');
+  }
+  // เส้นบอกระยะแนวตั้ง (พิกัดจอ)
+  function dimV(px, y1, y2, txt, color, side = 'right') {
+    line(ctx, px, y1, px, y2, color, 1.2); line(ctx, px - 5, y1, px + 5, y1, color, 1.2); line(ctx, px - 5, y2, px + 5, y2, color, 1.2);
+    label(txt, side === 'right' ? px + 8 : px - 8, (y1 + y2) / 2 + 4, color, '600 11px system-ui', side === 'right' ? 'left' : 'right');
+  }
+  // จุดรูม่านตาออก (รังสีที่ผ่านกลางเลนส์ใกล้วัตถุตัดแกนที่นี่ = ตำแหน่งวางตา)
+  function pupilMark(x) {
+    const px = V.X(x), py = V.Y(0);
+    ctx.fillStyle = col('--c-n'); ctx.beginPath(); ctx.arc(px, py, 4, 0, 7); ctx.fill();
+  }
   // เส้นประต่อแนวรังสีขาออกย้อนไปยังภาพเสมือน (หรือขนานกันถ้าภาพอยู่ที่อนันต์)
   function backExt(t, xi, yi, inf, xBack) {
     if (inf) poly([[t.x, t.y], [xBack, t.y + t.m * (xBack - t.x)]], col('--muted'), 1.2, [5, 4]);
@@ -10001,7 +10241,7 @@ const instr = (() => {
     const rays = slopes.map(m => trace(-s, hh, m, [{ x: 0, f }], xmax));   // รังสีเริ่มจากปลายวัตถุ
     const hitMax = Math.max(...rays.map(t => Math.abs(t.hits[0])));
     const yM = Math.max(hh * 1.6, Math.min(isFinite(hi) ? Math.abs(hi) : 0, 6 * hh), Math.min(hitMax, 6 * hh)) * 1.12;
-    V = mkView(xmin, xmax, -yM, yM, false);
+    V = mkView(xmin, xmax, -yM, yM, false, 46);
     axis();
     mark(-f, 'F'); mark(f, 'F′'); mark(-2 * f, '2F', false, col('--c-vy')); mark(2 * f, '2F′', false, col('--c-vy'));
     lens(0, Math.max(hitMax, yM * 0.7) * 1.08, 'แว่นขยาย (เลนส์นูน)');
@@ -10012,7 +10252,10 @@ const instr = (() => {
     arrow(ctx, V.X(-s), V.Y(0), 0, V.Y(hh) - V.Y(0), col('--ink'));
     label('วัตถุ', V.X(-s), V.Y(hh) - 7, col('--ink'), '600 12px system-ui');
     if (!inf) imgArrow(v, hi, real, real ? 'ภาพจริง หัวกลับ' : 'ภาพเสมือน หัวตั้ง ขยาย');
-    if (!real) eye(V.X(0) + 46, V.Y(0));
+    if (!real) eye(V.X(0) + 30, V.Y(0), 0, 'ตาชิดเลนส์');
+    const yd1 = h - 62;
+    dim(-s, 0, yd1, `ระยะวัตถุ s ${fmt(s)} cm`, col('--ink'));
+    if (!inf && v < 0) dim(v, 0, yd1 + 22, `ระยะภาพ |s′| ${fmt(-v)} cm`, col('--c-mg'), 'left');
     scaleBar();
     const Mang = NEAR / s, m = inf ? Infinity : -v / s;
     $('in_tab').innerHTML =
@@ -10041,10 +10284,10 @@ const instr = (() => {
   function drawMicro() {
     const f1 = fo(), s1 = so(), f2 = fe(), L = sep(), hh = ho();
     const v1 = vimg(s1, f1), h1 = isFinite(v1) ? -v1 / s1 * hh : NaN;
-    const u2 = L - v1, v2 = isFinite(v1) ? vimg(u2, f2) : NaN, inf2 = isFinite(v1) && !isFinite(v2);
+    const u2 = L - v1, v2 = isFinite(v1) ? (Math.abs(u2 - f2) < 0.006 ? Infinity : vimg(u2, f2)) : NaN, inf2 = isFinite(v1) && !isFinite(v2);
     const x2 = L + v2, h2 = h1 * (-v2 / u2);
-    const ok = isFinite(v1) && v1 > 0 && u2 > 0;
-    let xmin = -Math.max(s1, f1) * 1.4, xmax = L + f2 * 1.6 + 2;
+    const ok = isFinite(v1) && v1 > 0 && u2 > 0, e = relief(L, f2), xe = L + e;
+    let xmin = -Math.max(s1, f1) * 1.4, xmax = Math.max(L + f2 * 1.6 + 2, isFinite(xe) ? xe + 0.6 * f2 + 1.5 : 0);
     if (ok && isFinite(v2) && v2 < 0) xmin = Math.min(xmin, Math.max(x2 - 1, -1.2 * L));
     if (ok && isFinite(v2) && v2 > 0) xmax = Math.max(xmax, Math.min(x2 + 1, 2.5 * L));
     const lenses = [{ x: 0, f: f1 }, { x: L, f: f2 }];
@@ -10055,10 +10298,10 @@ const instr = (() => {
     const yM = Math.max(hh, hit0, hit1, isFinite(h1) ? Math.abs(h1) : 0) * 1.12;
     let yTop = yM, yBot = -yM;   // ภาพสุดท้ายมักใหญ่มาก: ขยายกรอบได้ไม่เกิน 2.5 เท่า ส่วนเกินให้ล้นกรอบ
     if (ok && isFinite(h2)) { const e2 = Math.min(Math.abs(h2) * 1.08, 2.5 * yM); if (h2 > 0) yTop = Math.max(yTop, e2); else yBot = Math.min(yBot, -e2); }
-    V = mkView(xmin, xmax, yBot, yTop, false);
+    V = mkView(xmin, xmax, yBot, yTop, false, 46);
     axis();
     mark(-f1, 'Fₒ'); mark(f1, 'Fₒ′'); mark(L - f2, 'Fₑ', true, col('--c-vy')); mark(L + f2, 'Fₑ′', true, col('--c-vy'));
-    lens(0, hit0 * 1.12, 'เลนส์ใกล้วัตถุ', true); lens(L, hit1 * 1.1, 'เลนส์ใกล้ตา');
+    lens(0, hit0 * 1.12, 'เลนส์ใกล้วัตถุ'); lens(L, hit1 * 1.1, 'เลนส์ใกล้ตา');
     rays.forEach((t, i) => {
       poly(t.pts, RC()[i], 2);
       if (ok && (inf2 || v2 < 0)) backExt({ x: L, y: t.hits[1], m: t.m }, x2, h2, inf2, xmin);
@@ -10067,20 +10310,33 @@ const instr = (() => {
     label('วัตถุ', V.X(-s1), V.Y(hh) - 7, col('--ink'), '600 12px system-ui');
     if (isFinite(v1)) imgArrow(v1, h1, v1 > 0, v1 > 0 ? 'ภาพจริง I₁' : 'ภาพเสมือน I₁');
     if (ok && isFinite(v2)) imgArrow(x2, h2, v2 > 0, v2 > 0 ? 'ภาพสุดท้าย (จริง)' : 'ภาพสุดท้าย (เสมือน)');
-    eye(Math.min(w - 26, V.X(L) + 40), V.Y(0));
+    if (isFinite(xe)) { pupilMark(xe); eye(V.X(xe) + 2, V.Y(0), 0, 'ตา'); }
+    // แถวบอกระยะใต้ภาพ
+    const yd1 = h - 62, yd2 = yd1 + 22, dc = col('--ink');
+    dim(-s1, 0, yd1, `sₒ ${fmt(s1)}`, dc, 'left');
+    if (isFinite(v1) && v1 > 0) { dim(0, v1, yd1, `s′ₒ ${fmt(v1)}`, dc); if (u2 > 0) dim(v1, L, yd1, `sₑ ${fmt(u2)}`, dc); }
+    if (isFinite(e)) dim(L, xe, yd2, `ระยะวางตา e ${fmt(e)} cm`, col('--c-n'));
+    dim(0, L, yd2, `ระยะห่างเลนส์ L = ${fmt(L)} cm`, col('--muted'));
     scaleBar();
-    const mo = -v1 / s1, Me = NEAR / u2, M = mo * Me, finalTxt = !ok ? '–' : inf2 ? '∞' : `${fmt(v2)} cm จากเลนส์ใกล้ตา`;
+    drawZoom(L, f2, ok ? e : NaN, rays, isFinite(v1) && v1 > 0 ? { x: v1, h: h1, lb: 'I₁' } : null);
+    const mo = -v1 / s1, Me = NEAR / u2, M = mo * Me;
+    // กำลังขยายเมื่อตาอยู่ที่รูม่านตาออกจริง: มุมที่ภาพสุดท้ายรองรับที่ตา เทียบกับวัตถุที่ 25 cm
+    const Dimg = inf2 ? Infinity : -v2 + e, thEye = inf2 ? Math.abs(h1) / f2 : Math.abs(h2) / Dimg, Mreal = thEye / (hh / NEAR);
+    const finalTxt = !ok ? '–' : inf2 ? '∞' : `${fmt(v2)} cm จากเลนส์ใกล้ตา`;
     $('in_tab').innerHTML =
       `<tr><td>ระยะภาพจากเลนส์ใกล้วัตถุ s′ₒ</td><td>${isFinite(v1) ? fmt(v1) + ' cm' : '∞'}</td></tr>
       <tr><td>กำลังขยาย mₒ = −s′ₒ/sₒ</td><td>${isFinite(v1) ? fmt(mo) : '∞'}</td></tr>
       <tr><td>ระยะวัตถุของเลนส์ใกล้ตา sₑ = L − s′ₒ</td><td>${isFinite(u2) ? fmt(u2) + ' cm' : '–'}</td></tr>
       <tr><td>ระยะภาพสุดท้าย s′ₑ</td><td>${finalTxt}</td></tr>
       <tr><td>กำลังขยายเลนส์ใกล้ตา Mₑ = 25/sₑ</td><td>${ok ? fmt(Me) : '–'}</td></tr>
-      <tr><td>กำลังขยายรวม M = mₒ × Mₑ</td><td>${ok ? fmt(M, 1) : '–'}</td></tr>`;
+      <tr><td>กำลังขยายรวม M = mₒ × Mₑ (สูตรตำรา ตาชิดเลนส์)</td><td>${ok ? fmt(M, 1) : '–'}</td></tr>
+      <tr><td>ระยะวางตา e (เลนส์ใกล้ตา → รูม่านตาออก)</td><td>${isFinite(e) ? fmt(e, 2) + ' cm' : '–'}</td></tr>
+      <tr><td>ภาพสุดท้ายห่างจากตา</td><td>${!ok ? '–' : inf2 ? '∞' : v2 < 0 ? fmt(Dimg, 1) + ' cm' : '– (ภาพจริง)'}</td></tr>
+      <tr><td>กำลังขยายจริงที่ตา (มุมที่ตา / มุมตาเปล่าที่ 25 cm)</td><td>${ok && (inf2 || v2 < 0) ? fmt(Mreal, 1) + '×' : '–'}</td></tr>`;
     $('in_note').textContent = !ok
       ? (isFinite(v1) && v1 > 0 ? 'ภาพ I₁ อยู่เลยเลนส์ใกล้ตา ลดระยะ L หรือกดปุ่มภาพสุดท้ายที่ 25 cm' : 'วัตถุต้องอยู่เลยจุดโฟกัสของเลนส์ใกล้วัตถุเล็กน้อย (sₒ > fₒ) จึงเกิดภาพจริงขยาย')
       : `เลนส์ใกล้วัตถุสร้างภาพจริงหัวกลับขยาย I₁ แล้วเลนส์ใกล้ตาทำหน้าที่เป็นแว่นขยายส่อง I₁ ได้${inf2 ? 'รังสีขนาน (ภาพที่อนันต์)' : v2 < 0 ? 'ภาพเสมือนหัวกลับ (เทียบกับวัตถุ) ขนาดใหญ่' : 'ภาพจริง เพราะ I₁ อยู่นอกโฟกัสของเลนส์ใกล้ตา'}`;
-    $('in_tip').textContent = 'รังสีทั้งสามเส้นออกจากปลายวัตถุ: ขนานแกน, ผ่านจุดกึ่งกลางเลนส์ใกล้วัตถุ และผ่าน Fₒ แล้วไล่ต่อผ่านเลนส์ใกล้ตาด้วยกฎเลนส์บาง';
+    $('in_tip').textContent = 'ตาต้องวางที่รูม่านตาออก (จุดสีน้ำเงิน) ซึ่งรังสีที่ผ่านกลางเลนส์ใกล้วัตถุ (รังสีที่ 2) ตัดแกน ห่างเลนส์ใกล้ตา e = L·fₑ/(L − fₑ) ตรงนี้ลำแสงจากทุกจุดของวัตถุซ้อนกันพอดี เห็นภาพเต็มวง ถ้าตาอยู่ใกล้หรือไกลกว่านี้ ขอบภาพจะมืด (กล้องจริงมีระยะวางตาราว 1–2 cm)';
     const f1s = n(f1, 2), s1s = n(s1, 2);
     setEq('in_eq',
       eqH('ขั้นที่ 1: เลนส์ใกล้วัตถุ') +
@@ -10090,7 +10346,9 @@ const instr = (() => {
         eqL(`sₑ = L − s′ₒ = ${n(L)} − ${n(v1)} = <b>${r(u2)} cm</b>`) +
         eqL(`1/s′ₑ = 1/fₑ − 1/sₑ = 1/${n(f2, 1)} − 1/${n(u2)} → <b>s′ₑ = ${isFinite(v2) ? r(v2) + ' cm' : '∞'}</b>`) +
         eqL(`Mₑ = 25/sₑ = 25/${n(u2)} = <b>${r(Me)}</b> (ภาพที่ 25 cm: 25/fₑ + 1 = ${r(NEAR / f2 + 1)}, ที่อนันต์: 25/fₑ = ${r(NEAR / f2)})`) +
-        eqL(`M = mₒ × Mₑ = ${n(mo)} × ${n(Me)} = <b>${r(M, 1)}</b> (ลบ = หัวกลับ)`) : ''));
+        eqL(`M = mₒ × Mₑ = ${n(mo)} × ${n(Me)} = <b>${r(M, 1)}</b> (ลบ = หัวกลับ)`) +
+        (isFinite(e) ? eqH('ตำแหน่งวางตา (รูม่านตาออก = ภาพของเลนส์ใกล้วัตถุที่เกิดจากเลนส์ใกล้ตา)') +
+          eqL(`1/e = 1/fₑ − 1/L → e = L fₑ/(L − fₑ) = ${n(L)} × ${n(f2, 1)}/(${n(L)} − ${n(f2, 1)}) = <b>${r(e, 2)} cm</b> หลังเลนส์ใกล้ตา`) : '') : ''));
   }
 
   // ---------- กล้องโทรทรรศน์หักเห (เคปเลอร์) ----------
@@ -10100,17 +10358,17 @@ const instr = (() => {
     const ap = 0.8 * f1 * ta, xs = -0.28 * f1, xEnd = d + Math.max(2.5 * f2, 0.2 * f1);
     const rays = [ap, 0, -ap].map(y0 => trace(xs, y0 - ta * xs, -ta, lenses, xEnd));
     const u2 = d - f1, v2 = vimg(u2, f2), inf2 = !isFinite(v2), h1 = -f1 * ta, h2 = h1 * (-v2 / u2);
-    const xe = d + vimg(d, f2);   // ตำแหน่งรูม่านตาออก (ภาพของเลนส์วัตถุ) = ตำแหน่งวางตา
+    const e = relief(d, f2), xe = d + e;   // ตำแหน่งรูม่านตาออก (ภาพของเลนส์วัตถุ) = ตำแหน่งวางตา
     const ys = rays.flatMap(t => t.pts.slice(0, 3).map(p => p[1]));
     const ymax = Math.max(...ys, 0) + 0.15 * f1 * ta, ymin = Math.min(...ys, h1) - 0.15 * f1 * ta;
     let y0 = ymin, y1 = Math.max(ymax, -ymin * 0.6);
     const kx0 = (w - 44) / (xEnd - xs), ky0 = (h - 76) / (y1 - y0);
     if (ky0 > 5 * kx0) { const ex = (y1 - y0) * (ky0 / (5 * kx0) - 1) / 2; y0 -= ex; y1 += ex; }   // ขยายแนวตั้งไม่เกิน 5 เท่า
-    V = mkView(xs, xEnd, y0, y1, false);
+    V = mkView(xs, xEnd, y0, y1, false, 46);
     axis();
     mark(f1, dd() === 0 ? 'Fₒ′ = Fₑ' : 'Fₒ′'); if (dd() !== 0) mark(d - f2, 'Fₑ', true, col('--c-vy'));
     mark(d + f2, 'Fₑ′', true, col('--c-vy'));
-    lens(0, ap * 1.15, 'เลนส์ใกล้วัตถุ fₒ', true);
+    lens(0, ap * 1.15, 'เลนส์ใกล้วัตถุ fₒ');
     lens(d, Math.max(...rays.map(t => Math.abs(t.hits[1]))) * 1.12, 'เลนส์ใกล้ตา fₑ');
     rays.forEach((t, i) => {
       poly(t.pts, RC()[i], 2);
@@ -10124,8 +10382,15 @@ const instr = (() => {
     if (isFinite(xe) && V.X(xe) < w - 10) {
       line(ctx, V.X(xe), V.Y(0), V.X(xe) - 50, V.Y(0), col('--muted'), 1);
       angArc(V.X(xe), V.Y(0), Math.PI, sAng(-1, -chief.m), 30, 'β', col('--c-ray2'));
-      eye(Math.min(w - 26, V.X(xe) + 18), V.Y(0));
+      pupilMark(xe);
+      eye(V.X(xe) + 2, V.Y(0), 0, 'ตา');
     }
+    const yd1 = h - 62, yd2 = yd1 + 22, dc = col('--ink');
+    dim(0, f1, yd1, `fₒ ${fmt(f1)}`, dc);
+    dim(f1, d, yd1, `${fmt(d - f1)}`, dc, 'left');
+    if (isFinite(e)) dim(d, xe, yd2, `ระยะวางตา e ${fmt(e, 2)} cm`, col('--c-n'));
+    dim(0, d, yd2, `ความยาวกล้อง d = ${fmt(d)} cm`, col('--muted'));
+    drawZoom(d, f2, e, rays, { x: f1, h: h1, lb: 'ภาพจริง' });
     label('รังสีขนานจากดาวที่อยู่ไกลมาก', V.X(xs) + 4, V.Y(rays[0].pts[0][1]) - 8, col('--muted'), '12px system-ui', 'left');
     scaleBar();
     const M0 = f1 / f2, Mact = Math.tan(beta) / ta;
@@ -10134,20 +10399,23 @@ const instr = (() => {
       <tr><td>ระยะปรับปกติ fₒ + fₑ</td><td>${fmt(f1 + f2)} cm</td></tr>
       <tr><td>ภาพจากเลนส์วัตถุ (ที่ Fₒ′)</td><td>${fmt(f1)} cm</td></tr>
       <tr><td>ภาพสุดท้าย s′ₑ</td><td>${inf2 ? '∞' : fmt(v2) + ' cm'}</td></tr>
+      <tr><td>ระยะวางตา e = d·fₑ/(d − fₑ)</td><td>${fmt(e, 2)} cm</td></tr>
       <tr><td>มุม β ที่ตา</td><td>${fmt(deg(beta), 2)}°</td></tr>
       <tr><td>M = fₒ/fₑ</td><td>${fmt(M0, 2)}</td></tr>
-      <tr><td>M = tan β / tan α (วัดจากรังสี)</td><td>${fmt(Mact, 2)}</td></tr>`;
+      <tr><td>M = tan β / tan α (วัดจากรังสี)</td><td>${fmt(Mact, 2)}</td></tr>
+      <tr><td>รูม่านตาออก = D<sub>เลนส์วัตถุ</sub>/M (เช่น D = 6 cm)</td><td>${fmt(60 / M0, 1)} mm</td></tr>`;
     $('in_note').textContent = inf2
       ? 'ปรับปกติ: ภาพจริงจากเลนส์วัตถุอยู่ที่จุดโฟกัสของทั้งสองเลนส์พอดี รังสีออกจากเลนส์ใกล้ตาขนานกัน (ภาพที่อนันต์) ตามองสบาย ภาพหัวกลับ'
       : v2 < 0 ? 'เลนส์ใกล้ตาเลื่อนเข้าใกล้ ภาพจริงอยู่ภายในโฟกัสของเลนส์ใกล้ตา จึงได้ภาพเสมือนที่ระยะจำกัด (เส้นประ)'
         : 'เลนส์ใกล้ตาเลื่อนออกห่าง รังสีขาออกลู่เข้า เกิดภาพจริงด้านหลังเลนส์ใกล้ตา (ใช้ฉายภาพดวงอาทิตย์ลงฉากได้)';
-    $('in_tip').textContent = 'ตาวางที่รูม่านตาออก (จุดที่รังสีผ่านกลางเลนส์วัตถุตัดแกน) มุม β ใหญ่กว่า α จึงเห็นวัตถุใหญ่ขึ้น M เท่า';
+    $('in_tip').textContent = 'ตาวางที่รูม่านตาออก (จุดสีน้ำเงิน ที่รังสีผ่านกลางเลนส์วัตถุตัดแกน) ห่างเลนส์ใกล้ตา e ≈ fₑ(1 + 1/M) มุม β ใหญ่กว่า α จึงเห็นวัตถุใหญ่ขึ้น M เท่า ถ้ารูม่านตาออกโตกว่ารูม่านตาคน (ราว 2–7 mm) แสงบางส่วนเข้าตาไม่ได้';
     setEq('in_eq',
       eqH('กล้องโทรทรรศน์แบบเคปเลอร์: วัตถุอยู่ไกลมาก ภาพจากเลนส์วัตถุเกิดที่ระนาบโฟกัส') +
       eqL(`ความสูงภาพจริง = −fₒ tan α = −${n(f1, 0)} × tan ${n(al(), 1)}° = <b>${r(h1, 3)} cm</b>`) +
       eqL(`d = fₒ + fₑ + Δd = ${n(f1, 0)} + ${n(f2, 1)} + ${n(dd(), 2)} = <b>${r(d)} cm</b>`) +
       eqL(`ปรับปกติ: M = fₒ/fₑ = ${n(f1, 0)}/${n(f2, 1)} = <b>${r(M0, 2)}</b>`) +
       eqL(`tan β = M tan α → β = <b>${r(deg(beta), 2)}°</b>, ตรวจ: tan β / tan α = ${r(Math.tan(beta), 4)}/${r(ta, 4)} = <b>${r(Mact, 2)}</b>`) +
+      eqL(`ระยะวางตา: e = d fₑ/(d − fₑ) = ${n(d)} × ${n(f2, 1)}/(${n(d)} − ${n(f2, 1)}) = <b>${r(e, 2)} cm</b> หลังเลนส์ใกล้ตา`) +
       eqL('ภาพสุดท้ายหัวกลับ (ดาวอยู่ด้านบน แต่รังสีเข้าตามาจากด้านล่าง)'));
   }
 
@@ -10157,7 +10425,8 @@ const instr = (() => {
     const R = f / 10, b = 1.6 * R, xd = -(f - b), yf = b, ye = b + f2;   // R รัศมีกระจก, b ระยะจุดโฟกัสจากแกนหลอด
     const xOpen = xd - 1.6 * R, xs = xOpen - 0.12 * f;
     const hd = (f - b) * ta + R * b / f + 0.08 * R;                     // ครึ่งความสูงของกระจกราบที่ต้องรับลำแสงทั้งหมด
-    const yTop = ye + Math.max(2.4 * R, 1.6 * f2);
+    const e = f2 * (f + f2) / f;                                         // ระยะวางตาเหนือเลนส์ใกล้ตา (ทางเดินแสงคลี่ออก = f + fₑ)
+    const yTop = ye + Math.max(2.4 * R, 1.6 * f2, 1.35 * e);
     V = mkView(xs, R * 0.25, -R * 1.35, yTop, true);
     // ไล่รังสีจริง: สะท้อนจากพาราโบลา x = −y²/4f, สะท้อนจากกระจกราบ 45°, หักเหผ่านเลนส์ใกล้ตา
     const D0 = unit(Math.cos(a), -Math.sin(a));
@@ -10214,7 +10483,8 @@ const instr = (() => {
     label('แสงจากดาว', V.X(xs) + 2, V.Y(rays[0].pts[0][1]) - 8, col('--muted'), '12px system-ui', 'left');
     const sl = rays[1].sl, beta = Math.atan(Math.abs(sl));
     const E1 = rays[1].pts[3];
-    eye(V.X(xd), Math.max(14, V.Y(ye) - 0.55 * R * V.kx - 20), -Math.PI / 2, '');
+    eye(V.X(xd), V.Y(ye + e) - 2, -Math.PI / 2, '');
+    dimV(V.X(xd) - Math.max(ap, 0.35 * R * V.kx) - 14, V.Y(ye), V.Y(ye + e), `ระยะวางตา e ${fmt(e, 2)} cm`, col('--c-n'), 'left');
     if (a > 0) {
       const S0 = rays[0].pts[0];
       line(ctx, V.X(S0[0]), V.Y(S0[1]), V.X(S0[0]) + 46, V.Y(S0[1]), col('--muted'), 1);
@@ -10228,6 +10498,7 @@ const instr = (() => {
       `<tr><td>ความยาวโฟกัสกระจก f = R/2</td><td>${fmt(f, 0)} cm</td></tr>
       <tr><td>รัศมีความโค้งกระจก R<sub>c</sub> = 2f</td><td>${fmt(2 * f, 0)} cm</td></tr>
       <tr><td>เส้นผ่านศูนย์กลางกระจก (f/5)</td><td>${fmt(2 * R, 1)} cm</td></tr>
+      <tr><td>ระยะวางตา e = fₑ(f + fₑ)/f</td><td>${fmt(e, 2)} cm</td></tr>
       <tr><td>มุม β ที่ตา</td><td>${fmt(deg(beta), 2)}°</td></tr>
       <tr><td>M = f/fₑ</td><td>${fmt(M0, 2)}</td></tr>
       <tr><td>M = tan β / tan α (จากรังสี)</td><td>${a > 0 ? fmt(Mact, 2) : '–'}</td></tr>`;
@@ -10238,6 +10509,7 @@ const instr = (() => {
       eqL(`กระจกเว้า: f = R<sub>c</sub>/2 = ${n(2 * f, 0)}/2 = <b>${r(f, 0)} cm</b>`) +
       eqL(`M = f<sub>กระจก</sub>/fₑ = ${n(f, 0)}/${n(f2, 1)} = <b>${r(M0, 2)}</b>`) +
       (a > 0 ? eqL(`tan β = M tan α = ${n(M0, 2)} × tan ${n(aln(), 2)}° → β = <b>${r(deg(beta), 2)}°</b> (จากรังสีจริง tan β/tan α = ${r(Mact, 2)})`) : '') +
+      eqL(`ระยะวางตา (ภาพของกระจกเว้าผ่านเลนส์ใกล้ตา): e = fₑ(f + fₑ)/f = ${n(f2, 1)} × (${n(f, 0)} + ${n(f2, 1)})/${n(f, 0)} = <b>${r(e, 2)} cm</b>`) +
       eqL('กระจกราบไม่เปลี่ยนกำลังขยาย เพียงเปลี่ยนทิศทางแสง'));
   }
 
@@ -10936,8 +11208,716 @@ const beats = (() => {
   return { step, draw };
 })();
 
+/* ---------- พาราแล็กซ์ในการวัดและหาตำแหน่งภาพ ---------- */
+const plx = (() => {
+  const c = $('px2_cv'), ec = $('px2_eye'), sec = $('plx');
+  // H0 = ความสูงปลายเข็มวัตถุเหนือแกน, PB = ฐานเข็มใต้แกน, AP = รัศมีหน้ากระจก/เลนส์ (cm)
+  // TOL = เกณฑ์ที่ตาแยกพาราแล็กซ์ไม่ออก (cm), AMIN = rad → ลิปดา
+  const H0 = 2, PB = 6, AP = 4, TOL = 0.3, AMIN = 10800 / Math.PI, SWX = 12, SWE = 1.5;
+  let mode = 'scale', el = 'mirror', swing = false, ph = 0, map = null, target = null;
+  const clampV = (v, a, b) => Math.max(a, Math.min(b, v));
+  const showFor = m => sec.querySelectorAll('[data-show]').forEach(e => { e.style.display = e.dataset.show.split(' ').includes(m) ? '' : 'none'; });
+  const stopSwing = () => { swing = false; runTxt(); };
+  const tv = slider('px2_v', 'V', 1), gmm = slider('px2_g', 'mm', 1), Dcm = slider('px2_D', 'cm', 0);
+  const xo = slider('px2_x', 'cm', 1, stopSwing);
+  const fcm = slider('px2_f', 'cm', 1, fitS), ucm = slider('px2_u', 'cm', 1, fitS);
+  const scm = slider('px2_s', 'cm', 1), eo = slider('px2_e', 'cm', 2, stopSwing);
+
+  // ตำแหน่งภาพจากสูตร 1/f = 1/u + 1/v (ภาพจริงมีระยะเป็นบวก) และตำแหน่งตา Xe
+  function geo() {
+    const f = fcm(), u = ucm(), real = u > f + 1e-9, v = real ? u * f / (u - f) : Infinity;
+    const ok = real && v <= 150, m = ok ? v / u : 0, yi = ok ? -H0 * m : 0;
+    const Xe = Math.min(190, Math.max(60, (el === 'mirror' ? Math.max(u, ok ? v : 0) : (ok ? v : 0)) + 40));
+    return { f, u, v, ok, real, m, yi, Xe };
+  }
+  function fitS() {
+    const G = geo(), sMax = Math.floor((G.Xe - 8) * 10) / 10, sEl = $('px2_s');
+    sEl.max = sMax;
+    if (+sEl.value > sMax) setSlider('px2_s', sMax); else $('px2_so').textContent = (+sEl.value).toFixed(1) + ' cm';
+  }
+  function runTxt() { $('px2_run').textContent = swing ? 'หยุดแกว่งตา' : 'แกว่งตาไปมา'; }
+  const setVal = (id, v, d) => { $(id).value = v; $(id + 'o').textContent = (+$(id).value).toFixed(d) + ' cm'; };
+
+  modeButtons(sec, 'mode', m => { mode = m; sec.dataset.mode = m; showFor(m); swing = m === 'locate'; ph = 0; runTxt(); });
+  modeButtons(sec, 'el', m => { el = m; fitS(); });
+  $('px2_run').onclick = () => { swing = !swing; runTxt(); };
+  $('px2_reset').onclick = () => {
+    swing = false; ph = 0; runTxt();
+    if (mode === 'scale') setSlider('px2_x', 10);
+    else { setSlider('px2_e', 1.5); setSlider('px2_s', Math.min(40, +$('px2_s').max)); }
+  };
+  $('px2_snap').onclick = () => { const G = geo(); if (G.ok) setSlider('px2_s', Math.round(G.v * 10) / 10); };
+
+  // ลากบนภาพ: โหมดอ่านสเกลลากตาซ้าย-ขวา, โหมดหาภาพลากเข็มค้นหาหรือตา
+  dragOn(c, (x, y, ev) => {
+    if (!map) return;
+    if (mode === 'scale') {
+      stopSwing();
+      setSlider('px2_x', clampV((x - map.ox) / map.k - tv(), -15, 15));
+      return;
+    }
+    if (ev.type === 'pointerdown') target = Math.hypot(x - map.eyeX, y - map.eyeY) < 45 ? 'eye' : 'pin';
+    if (target === 'eye') { stopSwing(); setSlider('px2_e', clampV((map.oy - y) / map.ky - map.yi, -3, 3)); }
+    else setSlider('px2_s', clampV((x - map.ox) / map.kx, 2, +$('px2_s').max));
+  });
+
+  function step(dt) {
+    if (!swing) return;
+    ph += dt * 2 * Math.PI / 5;
+    if (mode === 'scale') setVal('px2_x', SWX * Math.sin(ph), 1);
+    else setVal('px2_e', SWE * Math.sin(ph), 2);
+  }
+
+  // รูปตามองด้านข้าง หันไปทิศ (dx, dy)
+  function drawEye(ctx, x, y, dx, dy, s) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx));
+    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, 0, s, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = col('--c-n'); ctx.beginPath(); ctx.arc(s * 0.55, 0, s * 0.42, 0, 7); ctx.fill();
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(s * 0.72, 0, s * 0.2, 0, 7); ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(s * 1.25, -s * 0.2); ctx.quadraticCurveTo(s * 0.3, -s * 1.55, -s * 0.8, -s * 0.8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s * 1.25, s * 0.2); ctx.quadraticCurveTo(s * 0.3, s * 1.55, -s * 0.8, s * 0.8); ctx.stroke();
+    ctx.restore();
+  }
+  // เส้นบอกขนาด มีหัวลูกศรสองข้าง
+  function dim(ctx, x1, y1, x2, y2, label, color, lx, ly) {
+    const L = Math.hypot(x2 - x1, y2 - y1);
+    line(ctx, x1, y1, x2, y2, color, 1.2);
+    if (L > 10) {
+      const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = 6;
+      ctx.fillStyle = color;
+      [[x1, y1, 1], [x2, y2, -1]].forEach(([px, py, sg]) => {
+        ctx.beginPath(); ctx.moveTo(px, py);
+        ctx.lineTo(px + sg * (ux * hs) - uy * 3, py + sg * (uy * hs) + ux * 3);
+        ctx.lineTo(px + sg * (ux * hs) + uy * 3, py + sg * (uy * hs) - ux * 3); ctx.closePath(); ctx.fill();
+      });
+    }
+    if (label) { ctx.fillStyle = color; ctx.font = '12px system-ui'; ctx.fillText(label, lx, ly); }
+  }
+  function txt(ctx, s, x, y, color, font = '12px system-ui', align = 'left') {
+    ctx.font = font; ctx.textAlign = align; ctx.fillStyle = color; ctx.fillText(s, x, y); ctx.textAlign = 'left';
+  }
+  // เข็มหมุด: ลำเข็มจากฐานถึงปลายแหลม
+  function pin(ctx, x, yBase, yTip, color, w = 2.5, alpha = 1) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    const sg = yTip < yBase ? 1 : -1, tipLen = Math.min(7, Math.abs(yTip - yBase) * 0.3);
+    line(ctx, x, yBase, x, yTip + sg * tipLen, color, w);
+    ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x - w / 2, yTip + sg * tipLen); ctx.lineTo(x, yTip); ctx.lineTo(x + w / 2, yTip + sg * tipLen); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function bg(ctx, w, h) {
+    ctx.fillStyle = col('--grid'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(1, 1, w - 2, h - 2, 10) : ctx.rect(1, 1, w - 2, h - 2); ctx.fill(); ctx.stroke();
+  }
+
+  /* ===== โหมด 1: อ่านสเกล ===== */
+  function scaleState() {
+    const g = gmm() / 10, D = Dcm(), xv = tv(), x = xo(), xe = xv + x, ye = g + D;
+    const dl = g * x / D, Rd = xv - dl, Mx = xv + g * x / (D + 2 * g);
+    return { g, D, xv, x, xe, ye, dl, Rd, Mx, mir: $('px2_mir').checked };
+  }
+  function drawScale() {
+    const { ctx, w, h } = fitCanvas(c), S = scaleState(), { g, D, xv, x, xe, ye, Rd, Mx, mir } = S;
+    const X0 = -15, X1 = 25, Y0 = -3, Y1 = ye + 4;
+    const k = Math.min((w - 24) / (X1 - X0), (h - 30) / (Y1 - Y0));
+    const ox = (w - k * (X1 - X0)) / 2 - k * X0, oy = h - 22 + k * Y0;
+    const PX = q => ox + k * q, PY = q => oy - k * q;
+    map = { k, ox, oy };
+    const ink = col('--ink'), mut = col('--muted');
+    // ตัวมิเตอร์ (หน้าตัด) และแผ่นสเกล
+    ctx.fillStyle = col('--grid'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1;
+    ctx.fillRect(PX(-1), PY(0), k * 12, k * 2.4); ctx.strokeRect(PX(-1), PY(0), k * 12, k * 2.4);
+    line(ctx, PX(-0.6), PY(0), PX(10.6), PY(0), ink, 3);
+    ctx.font = '11px system-ui'; ctx.fillStyle = mut;
+    for (let i = 0; i <= 10; i++) {
+      line(ctx, PX(i), PY(0), PX(i), PY(0) - (i % 5 ? 4 : 7), ink, 1.2);
+      if (k > 18 || i % 2 === 0) { ctx.textAlign = 'center'; ctx.fillText(i, PX(i), PY(0) + 13); ctx.textAlign = 'left'; }
+    }
+    if (mir) line(ctx, PX(0), PY(0) + 2.5, PX(10), PY(0) + 2.5, 'rgba(120,170,235,0.9)', 2.5);
+    txt(ctx, mir ? 'หน้าปัดสเกล + แถบกระจกเงา (V)' : 'หน้าปัดสเกล (V)', PX(-1), PY(0) + k * 2.4 + 13, mut, '12px system-ui');
+    // แนวตั้งฉากกับหน้าปัดผ่านเข็ม (ตำแหน่งที่ตาควรอยู่)
+    line(ctx, PX(xv), PY(0), PX(xv), PY(ye + 1), mut, 1, [4, 4]);
+    txt(ctx, 'แนวตั้งฉาก', PX(xv) + (x > 0 ? -4 : 4), PY(ye + 1) + 2, mut, '11px system-ui', x > 0 ? 'right' : 'left');
+    // แสงสะท้อนจากกระจก: เข็ม → กระจก → ตา และภาพเสมือนของเข็มที่ลึก g
+    if (mir) {
+      line(ctx, PX(xv), PY(g), PX(Mx), PY(0), col('--c-ray2'), 1.5);
+      line(ctx, PX(Mx), PY(0), PX(xe), PY(ye), col('--c-ray2'), 1.5, [6, 4]);
+    }
+    // แนวสายตาผ่านเข็มไปตกบนสเกล
+    line(ctx, PX(xe), PY(ye), PX(Rd), PY(0), col('--c-ray'), 2);
+    ctx.fillStyle = col('--c-mg'); ctx.beginPath(); ctx.arc(PX(xv), PY(g), 3.5, 0, 7); ctx.fill();
+    txt(ctx, 'เข็ม (หน้าตัด)', PX(xv) + (x > 0 ? -82 : 8), PY(g) - 8, col('--c-mg'), '12px system-ui');
+    // ตา และเส้นบอกระยะ x, D
+    drawEye(ctx, PX(xe), PY(ye), PX(xv) - PX(xe), PY(g) - PY(ye), 11);
+    txt(ctx, 'ตา (ลากได้)', PX(xe), PY(ye) - 16, ink, '600 12px system-ui', 'center');
+    if (Math.abs(x) > 0.5) dim(ctx, PX(xv), PY(ye), PX(xe) - Math.sign(x) * 13, PY(ye), '', col('--c-f'));
+    txt(ctx, `x = ${fmt(x, 1)} cm`, (PX(xv) + PX(xe)) / 2, PY(ye) + 16, col('--c-f'), '600 12px system-ui', 'center');
+    const xd = PX(xv) - (x >= 0 ? 14 : -14);
+    dim(ctx, xd, PY(g), xd, PY(ye) + 4, '', col('--c-n'));
+    txt(ctx, `D = ${fmt(D, 0)} cm`, xd + (x >= 0 ? -6 : 6), (PY(g) + PY(ye)) / 2, col('--c-n'), '600 12px system-ui', x >= 0 ? 'right' : 'left');
+    // แถบมาตราส่วน 5 cm
+    const sbx = 12, sby = h - 8;
+    line(ctx, sbx, sby, sbx + 5 * k, sby, ink, 2); line(ctx, sbx, sby - 4, sbx, sby + 1, ink, 2); line(ctx, sbx + 5 * k, sby - 4, sbx + 5 * k, sby + 1, ink, 2);
+    txt(ctx, '5 cm', sbx + 5 * k + 6, sby + 2, mut, '11px system-ui');
+
+    // กรอบขยายบริเวณเข็ม
+    const W = Math.min(250, w * 0.44), Hh = Math.min(160, h * 0.44);
+    const bx = PX(xe) > w / 2 ? 10 : w - W - 10, by = 10;
+    const span = Math.max(Math.abs(xv - Rd), mir ? Math.abs(Mx - Rd) : 0, 0.15);
+    const Z = Math.min(Hh * 0.5 / g, W * 0.62 / span), cxw = mir ? (Rd + Mx) / 2 : (xv + Rd) / 2;
+    const IX = q => bx + W / 2 + Z * (q - cxw), IY = q => by + Hh * 0.7 - Z * q;
+    // กรอบบนภาพหลักแสดงบริเวณที่ขยาย
+    const zx0 = cxw - W / 2 / Z, zx1 = cxw + W / 2 / Z, zy1 = Hh * 0.7 / Z, zy0 = -Hh * 0.3 / Z;
+    ctx.strokeStyle = mut; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.strokeRect(PX(zx0) - 2, PY(zy1) - 2, k * (zx1 - zx0) + 4, k * (zy1 - zy0) + 4); ctx.setLineDash([]);
+    line(ctx, PX(cxw), PY(zy1) - 2, bx + W / 2, by + Hh, mut, 1, [3, 3]);
+    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1.5;
+    ctx.fillRect(bx, by, W, Hh); ctx.strokeRect(bx, by, W, Hh);
+    ctx.save(); ctx.beginPath(); ctx.rect(bx, by, W, Hh); ctx.clip();
+    line(ctx, bx, IY(0), bx + W, IY(0), ink, 3);
+    if (mir) line(ctx, bx, IY(0) + 2.5, bx + W, IY(0) + 2.5, 'rgba(120,170,235,0.9)', 2.5);
+    const tStep = Z * 0.1 >= 5 ? 0.1 : 0.5;
+    for (let q = Math.ceil((cxw - W / 2 / Z) / tStep) * tStep; q < cxw + W / 2 / Z; q += tStep) {
+      const qi = Math.round(q * 10), big = qi % 10 === 0, mid = qi % 5 === 0;
+      line(ctx, IX(q), IY(0), IX(q), IY(0) - (big ? 12 : mid ? 8 : 5), ink, big ? 1.5 : 1);
+      if (big) txt(ctx, String(qi / 10), IX(q), IY(0) - 15, mut, '11px system-ui', 'center');
+    }
+    line(ctx, IX(xv), IY(0), IX(xv), IY(g), col('--c-vy'), 1.5, [4, 3]);
+    const sx = (xe - Rd) / ye;   // ทิศแนวสายตาต่อหน่วยความสูง
+    line(ctx, IX(Rd), IY(0), IX(Rd + sx * (Hh / Z)), IY(Hh / Z), col('--c-ray'), 2);
+    if (mir) {
+      line(ctx, IX(xv), IY(g), IX(Mx), IY(0), col('--c-ray2'), 1.5);
+      const sm = (xe - Mx) / ye; line(ctx, IX(Mx), IY(0), IX(Mx + sm * (Hh / Z)), IY(Hh / Z), col('--c-ray2'), 1.5, [6, 4]);
+    }
+    ctx.fillStyle = col('--c-mg'); ctx.beginPath(); ctx.arc(IX(xv), IY(g), 5, 0, 7); ctx.fill();
+    const lab1 = `จริง ${fmt(xv, 2)}`, lab2 = `อ่านได้ ${fmt(Rd, 2)}`;
+    txt(ctx, lab1, clampV(IX(xv), bx + 30, bx + W - 30), IY(0) + 15, col('--c-vy'), '600 12px system-ui', 'center');
+    txt(ctx, lab2, clampV(IX(Rd), bx + 40, bx + W - 40), IY(0) + 30, col('--c-ray'), '600 12px system-ui', 'center');
+    if (mir) txt(ctx, 'เงา', IX(Mx), IY(0) + 44, col('--c-ray2'), '600 11px system-ui', 'center');
+    ctx.restore();
+    txt(ctx, `ภาพขยาย ×${fmt(Z / k, 0)}`, bx + 6, by + 14, mut, '600 11px system-ui');
+    txt(ctx, `g = ${fmt(g * 10, 1)} mm`, bx + W - 6, by + 14, col('--c-mg'), '600 11px system-ui', 'right');
+    return S;
+  }
+  function drawScaleEye(S) {
+    const { ctx, w, h } = fitCanvas(ec), { xv, Rd, Mx, mir, x } = S;
+    bg(ctx, w, h);
+    const x0 = 24, x1 = w - 24, SX = q => x0 + (x1 - x0) * q / 10, yb = 78;
+    txt(ctx, 'สิ่งที่ตาเห็น (มองลงบนหน้าปัด)', 10, 18, col('--muted'), '600 12px system-ui');
+    const ok = Math.abs(Rd - xv) < 0.005 && (!mir || Math.abs(Mx - Rd) < 0.005);
+    txt(ctx, `อ่านได้ ${fmt(Rd, 2)} V`, w - 10, 18, ok ? col('--c-vy') : col('--c-ray'), '600 13px system-ui', 'right');
+    // ขีดสเกล 0–10 V ทุก 0.1 V
+    line(ctx, SX(0), yb, SX(10), yb, col('--ink'), 1.5);
+    for (let i = 0; i <= 100; i++) {
+      const big = i % 10 === 0, mid = i % 5 === 0;
+      if (!big && !mid && (x1 - x0) / 100 < 3) continue;
+      line(ctx, SX(i / 10), yb, SX(i / 10), yb - (big ? 14 : mid ? 9 : 5), col('--ink'), big ? 1.5 : 1);
+      if (big) txt(ctx, String(i / 10), SX(i / 10), yb - 18, col('--ink'), '12px system-ui', 'center');
+    }
+    txt(ctx, 'V', SX(10) + 6, yb - 18, col('--muted'), '12px system-ui');
+    if (mir) {
+      const gr = ctx.createLinearGradient(0, yb + 6, 0, yb + 30);
+      gr.addColorStop(0, 'rgba(170,200,240,0.85)'); gr.addColorStop(1, 'rgba(110,150,210,0.85)');
+      ctx.fillStyle = gr; ctx.fillRect(SX(0), yb + 6, SX(10) - SX(0), 24);
+      line(ctx, SX(Mx), yb + 6, SX(Mx), yb + 30, 'rgba(40,40,60,0.55)', 2.5);   // เงาของเข็มในกระจก
+      txt(ctx, 'แถบกระจกเงา', SX(0) + 4, yb + 42, col('--muted'), '11px system-ui');
+    }
+    // ตำแหน่งค่าจริง (ตามองไม่เห็นตรงนี้ถ้าตาเยื้อง)
+    ctx.fillStyle = col('--c-vy'); ctx.beginPath(); ctx.moveTo(SX(xv), yb + 50); ctx.lineTo(SX(xv) - 6, yb + 60); ctx.lineTo(SX(xv) + 6, yb + 60); ctx.closePath(); ctx.fill();
+    txt(ctx, `ค่าจริง ${fmt(xv, 2)}`, clampV(SX(xv), 50, w - 50), yb + 74, col('--c-vy'), '12px system-ui', 'center');
+    // เข็มที่เห็นทับสเกล
+    line(ctx, SX(Rd), h - 8, SX(Rd), yb - 26, col('--c-mg'), 2.5);
+    ctx.fillStyle = col('--c-mg'); ctx.beginPath(); ctx.arc(SX(Rd), h - 8, 5, 0, 7); ctx.fill();
+    if (mir) {
+      const sep = Math.abs(Mx - Rd) * (x1 - x0) / 10;
+      txt(ctx, sep < 1.5 ? 'เข็มบังเงาพอดี ✓' : 'เห็นเงาแยกจากเข็ม → ขยับตา', w - 10, yb + 42, sep < 1.5 ? col('--c-vy') : col('--c-mg'), '600 12px system-ui', 'right');
+    }
+  }
+
+  /* ===== โหมด 2: หาตำแหน่งภาพด้วยวิธีไม่มีพาราแล็กซ์ ===== */
+  function drawLocate() {
+    const { ctx, w, h } = fitCanvas(c), G = geo(), { f, u, v, ok, m, yi, Xe } = G;
+    const s = scm(), e = eo(), mirror = el === 'mirror', ey = yi + e;
+    const xmin = mirror ? -6 : -(u + 6), xmax = Xe + 7;
+    const yb = Math.min(-PB - 1, yi - 3.5), ytop = Math.max(H0 + 2.5, AP + 1, ok ? Math.min(yi + 8 * m, 12) + 1 : 0);
+    const kx = (w - 20) / (xmax - xmin), ky = (h - 26 - 44) / (ytop - yb);
+    const ox = 10 - kx * xmin, oy = 26 + ky * ytop, PX = q => ox + kx * q, PY = q => oy - ky * q;
+    const ink = col('--ink'), mut = col('--muted'), cr = col('--c-ray');
+    map = { kx, ky, ox, oy, yi, eyeX: PX(Xe), eyeY: PY(ey) };
+    // ราง (มาตราส่วน cm วัดจากกระจก/เลนส์)
+    const bt = PY(yb);
+    ctx.fillStyle = col('--grid'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1;
+    ctx.fillRect(PX(xmin + 1), bt, PX(xmax - 1) - PX(xmin + 1), 12); ctx.strokeRect(PX(xmin + 1), bt, PX(xmax - 1) - PX(xmin + 1), 12);
+    const lab = kx * 10 < 26 ? 20 : 10;
+    for (let q = Math.ceil(xmin + 1); q <= xmax - 1; q++) {
+      const big = q % 10 === 0, mid = q % 5 === 0;
+      if (!big && !mid && kx < 3) continue;
+      line(ctx, PX(q), bt, PX(q), bt + (big ? 10 : mid ? 6 : 3), ink, big ? 1.3 : 0.8);
+      if (q % lab === 0) txt(ctx, String(Math.abs(q)), PX(q), bt + 24, mut, '11px system-ui', 'center');
+    }
+    txt(ctx, `cm (วัดจาก${mirror ? 'กระจก' : 'เลนส์'})`, PX(xmax - 1), bt + 38, mut, '11px system-ui', 'right');
+    txt(ctx, `แนวตั้งขยาย ×${fmt(ky / kx, 1)}`, 10, bt + 38, mut, '11px system-ui');
+    // แกนมุขสำคัญและจุดโฟกัส
+    line(ctx, PX(xmin + 1), PY(0), PX(Xe), PY(0), mut, 1, [8, 5]);
+    const marks = mirror ? [[f, 'F'], [2 * f, 'C']] : [[f, 'F'], [-f, 'F'], [2 * f, '2F'], [-2 * f, '2F']];
+    marks.forEach(([q, t]) => { if (q > xmin + 1 && q < Xe) { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(PX(q), PY(0), 2.5, 0, 7); ctx.fill(); txt(ctx, t, PX(q), PY(0) + 14, mut, '11px system-ui', 'center'); } });
+    // กระจกเว้า / เลนส์นูน พร้อมขาตั้ง
+    line(ctx, PX(0), PY(-AP), PX(0), bt, mut, 3);
+    if (mirror) {
+      ctx.strokeStyle = ink; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(PX(0) + 5, PY(AP)); ctx.quadraticCurveTo(PX(0) - 5, PY(0), PX(0) + 5, PY(-AP)); ctx.stroke();
+      ctx.lineWidth = 1;
+      for (let q = -AP + 0.6; q < AP; q += AP / 5) line(ctx, PX(0) - 1, PY(q), PX(0) - 7, PY(q) + 5, mut, 1);
+    } else {
+      ctx.fillStyle = col('--glass'); ctx.strokeStyle = col('--c-n'); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(PX(0), PY(0), 6, ky * AP, 0, 0, 7); ctx.fill(); ctx.stroke();
+    }
+    txt(ctx, mirror ? 'กระจกเว้า' : 'เลนส์นูน', PX(0) + 6, PY(AP) - 6, ink, '600 12px system-ui');
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 22, w, bt - 22); ctx.clip();
+    const ox0 = mirror ? u : -u;   // ตำแหน่งเข็มวัตถุ
+    if (ok) {
+      // กรวยแสงที่ผ่านปลายภาพ: ตาต้องอยู่ในกรวยนี้จึงเห็นภาพ
+      const yA = AP + (yi - AP) * Xe / v, yB = -AP + (yi + AP) * Xe / v;
+      ctx.save(); ctx.globalAlpha = 0.1; ctx.fillStyle = cr;
+      ctx.beginPath(); ctx.moveTo(PX(0), PY(AP)); ctx.lineTo(PX(Xe), PY(yA)); ctx.lineTo(PX(Xe), PY(yB)); ctx.lineTo(PX(0), PY(-AP)); ctx.closePath(); ctx.fill(); ctx.restore();
+      // รังสีหลัก 3 เส้นจากปลายเข็มวัตถุ ผ่านปลายภาพ
+      const yAt = (p, q, x) => p[1] + (q[1] - p[1]) * (x - p[0]) / (q[0] - p[0]);
+      const O = [ox0, H0], rays = [];
+      if (mirror) {
+        rays.push([O, [0, H0], [Xe, yAt([0, H0], [f, 0], Xe)]]);
+        rays.push([O, [0, yi], [Xe, yi]]);
+        if (Math.abs(u - 2 * f) > 0.3) { const y3 = yAt(O, [2 * f, 0], 0); rays.push([O, [0, y3], [Xe, yAt([0, y3], [2 * f, 0], Xe)]]); }
+      } else {
+        rays.push([O, [0, H0], [Xe, yAt([0, H0], [f, 0], Xe)]]);
+        rays.push([O, [Xe, yAt(O, [0, 0], Xe)]]);
+        rays.push([O, [0, yi], [Xe, yi]]);
+      }
+      rays.forEach(pts => {
+        ctx.strokeStyle = cr; ctx.lineWidth = 1.4; ctx.globalAlpha = 0.85;
+        ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(PX(p[0]), PY(p[1])) : ctx.moveTo(PX(p[0]), PY(p[1]))); ctx.stroke();
+        ctx.globalAlpha = 1;
+        // หัวลูกศรกลางช่วงแรกและช่วงที่สอง
+        for (let i = 0; i < Math.min(2, pts.length - 1); i++) {
+          const a = pts[i], b = pts[i + 1], t = i ? clampV((v * 0.5 - a[0]) / (b[0] - a[0]), 0.05, 0.5) : 0.5;
+          const mx = PX(a[0] + (b[0] - a[0]) * t), my = PY(a[1] + (b[1] - a[1]) * t);
+          const [ux, uy] = unit(PX(b[0]) - PX(a[0]), PY(b[1]) - PY(a[1]));
+          ctx.fillStyle = cr; ctx.beginPath(); ctx.moveTo(mx + ux * 5, my + uy * 5); ctx.lineTo(mx - ux * 4 - uy * 4, my - uy * 4 + ux * 4); ctx.lineTo(mx - ux * 4 + uy * 4, my - uy * 4 - ux * 4); ctx.closePath(); ctx.fill();
+        }
+      });
+    }
+    // เข็มวัตถุ
+    line(ctx, PX(ox0), PY(-PB), PX(ox0), bt, mut, 3);
+    pin(ctx, PX(ox0), PY(-PB), PY(H0), col('--c-mg'), 2.5);
+    txt(ctx, 'เข็มวัตถุ', PX(ox0), PY(H0) - 8, col('--c-mg'), '600 12px system-ui', 'center');
+    if (ok) {
+      // ภาพจริง หัวกลับ
+      pin(ctx, PX(v), PY(yi + 8 * m), PY(yi), col('--c-mg'), 3, 0.55);
+      txt(ctx, 'ภาพจริง (หัวกลับ)', PX(v) + 6, PY(Math.min(yi + 8 * m, ytop - 1.2)), col('--c-mg'), '12px system-ui');
+    }
+    // แนวสายตาจากตาไปปลายภาพและปลายเข็มค้นหา (ต่อเลยออกไปเป็นเส้นประ)
+    const sTipY = ok ? yi : 0;
+    const sight = (tx, color, dash) => {
+      const xe2 = Math.min(tx, Math.min(s, ok ? v : s)) - 12, ye2 = ey + (sTipY - ey) * (xe2 - Xe) / (tx - Xe);
+      line(ctx, PX(Xe), PY(ey), PX(tx), PY(sTipY), color, 1.6, dash);
+      line(ctx, PX(tx), PY(sTipY), PX(xe2), PY(ye2), color, 1, [2, 4]);
+    };
+    if (ok) sight(v, col('--c-v'), null);
+    sight(s, col('--c-vy'), [6, 4]);
+    ctx.restore();
+    // เข็มค้นหา: ปลายอยู่ระดับเดียวกับปลายภาพ
+    const sBase = Math.max(yb, sTipY - 8);
+    line(ctx, PX(s), PY(sBase), PX(s), bt, mut, 3);
+    pin(ctx, PX(s), PY(sBase), PY(sTipY), col('--c-vy'), 2.5);
+    ctx.fillStyle = col('--c-vy'); ctx.fillRect(PX(s) - 7, bt - 4, 14, 8);
+    txt(ctx, 'เข็มค้นหา ↔', PX(s), bt - 8, col('--c-vy'), '600 12px system-ui', 'center');
+    // ตา
+    drawEye(ctx, PX(Xe), PY(ey), (ok ? PX(v) : PX(s)) - PX(Xe), PY(sTipY) - PY(ey), 12);
+    txt(ctx, 'ตา ↕', PX(Xe) - 4, PY(ey) - 18, ink, '600 12px system-ui', 'center');
+    // ระยะ u และ v
+    const du = 40;
+    dim(ctx, PX(0), du, PX(ox0), du, '', mut);
+    txt(ctx, `u = ${fmt(u, 1)}`, (PX(0) + PX(ox0)) / 2, du - 4, mut, '11px system-ui', 'center');
+    if (ok) {
+      dim(ctx, PX(0), du + 14, PX(v), du + 14, '', col('--c-v'));
+      txt(ctx, `v = ${fmt(v, 1)}`, (PX(0) + PX(v)) / 2, du + 10, col('--c-v'), '11px system-ui', 'center');
+    }
+    // สถานะ
+    const st = status(G, s);
+    txt(ctx, st.text, 10, 16, st.color, '600 13px system-ui');
+    return { G, s, e, ey };
+  }
+  function status(G, s) {
+    if (!G.real) return { text: 'u ≤ f: ได้ภาพเสมือน ใช้เข็มค้นหาบนรางหาไม่ได้ ลองเพิ่ม u', color: col('--c-mg'), code: 'virt' };
+    if (!G.ok) return { text: 'ภาพอยู่ไกลเกินรางวัด (v > 150 cm) ลองเพิ่ม u', color: col('--c-mg'), code: 'far' };
+    const d = s - G.v;
+    if (Math.abs(d) <= TOL) return { text: 'ไม่มีพาราแล็กซ์ ✓ เข็มค้นหาอยู่ที่ตำแหน่งภาพ', color: col('--c-vy'), code: 'ok' };
+    return d > 0
+      ? { text: 'มีพาราแล็กซ์: เข็มค้นหาอยู่หน้าภาพ (ใกล้ตากว่า)', color: col('--c-f'), code: 'front' }
+      : { text: 'มีพาราแล็กซ์: เข็มค้นหาอยู่หลังภาพ (ไกลตากว่า)', color: col('--c-f'), code: 'back' };
+  }
+  function drawLocateEye(L) {
+    const { ctx, w, h } = fitCanvas(ec), { G, s, e, ey } = L, { v, ok, yi, Xe } = G;
+    bg(ctx, w, h);
+    txt(ctx, 'สิ่งที่ตาเห็น (ตาเพ่งที่ปลายภาพ)', 10, 18, col('--muted'), '600 12px system-ui');
+    const mid = h / 2 + 8, cx = w / 2, K = w * 9;
+    const L1 = Xe - v, L2 = Xe - s;
+    const yA = AP + (yi - AP) * Xe / v, yB = -AP + (yi + AP) * Xe / v;
+    const vis = ok && ey <= Math.max(yA, yB) && ey >= Math.min(yA, yB);
+    const phI = ok ? -e / L1 : 0, phS = -e / L2, ref = vis ? phI : phS;
+    const xI = clampV(cx + K * (phI - ref), 12, w - 12), xS = clampV(cx + K * (phS - ref), 12, w - 12);
+    line(ctx, 10, mid, w - 10, mid, col('--line'), 1, [3, 4]);
+    if (ok) {
+      pin(ctx, xI, 26, mid, col('--c-mg'), 4, vis ? 0.9 : 0.12);
+      txt(ctx, vis ? 'ปลายภาพ (หัวกลับ)' : 'มองไม่เห็นภาพ: ตาอยู่นอกกรวยแสง', xI + 8, 38, col('--c-mg'), '12px system-ui', xI > w * 0.6 ? 'right' : 'left');
+    }
+    pin(ctx, xS, h - 8, mid, col('--c-vy'), 4);
+    txt(ctx, 'ปลายเข็มค้นหา', xS + (xS > w * 0.6 ? -8 : 8), h - 12, col('--c-vy'), '12px system-ui', xS > w * 0.6 ? 'right' : 'left');
+    const st = status(G, s);
+    txt(ctx, st.code === 'ok' ? 'ปลายทั้งสองติดกันตลอด ✓' : st.code === 'front' || st.code === 'back' ? `แยกกัน ${fmt(Math.abs(xS - xI), 0)} px` : '', w - 10, 18, st.color, '600 12px system-ui', 'right');
+    // ตำแหน่งตา (e > 0 = ขวา)
+    const ex = w - 70, eyb = h - 16;
+    line(ctx, ex - 50, eyb, ex + 50, eyb, col('--line'), 3);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(ex + 50 * e / 3, eyb, 5, 0, 7); ctx.fill();
+    txt(ctx, 'ตำแหน่งตา ซ้าย ← → ขวา', ex, eyb - 10, col('--muted'), '11px system-ui', 'center');
+  }
+
+  function draw() {
+    if (mode === 'scale') {
+      const S = drawScale(); drawScaleEye(S);
+      const { g, D, xv, x, dl, Rd, Mx, mir } = S, th = x * g / (D * (D + g));
+      $('px2_tab').innerHTML = `<tr><td>ค่าจริง</td><td>${fmt(xv, 2)} V</td></tr>
+        <tr><td>ค่าที่อ่านได้</td><td>${fmt(Rd, 2)} V</td></tr>
+        <tr><td>ความคลาดเคลื่อน Δ</td><td>${r(-dl, 3)} V (${r(-100 * dl / xv, 1)}%)</td></tr>
+        <tr><td>มุมพาราแล็กซ์เข็ม-สเกล</td><td>${r(Math.abs(th) * AMIN, 1)} ลิปดา</td></tr>` +
+        (mir ? `<tr><td>ระยะเงาถึงเข็มที่เห็น</td><td>${fmt(Math.abs(Mx - Rd) * 10, 2)} mm</td></tr>` : '');
+      $('px2_tip').textContent = Math.abs(x) < 0.05
+        ? 'ตาอยู่ในแนวตั้งฉากกับหน้าปัดพอดี แนวสายตาผ่านเข็มตกที่ค่าจริง อ่านค่าได้ถูกต้อง' + (mir ? ' และเข็มบังเงาของตัวเองพอดี' : '')
+        : `ตาเยื้องไปทาง${x > 0 ? 'ขวา' : 'ซ้าย'} แนวสายตาผ่านเข็มไปตกบนสเกลทาง${x > 0 ? 'ซ้าย' : 'ขวา'} ค่าที่อ่านได้จึง${x > 0 ? 'น้อย' : 'มาก'}กว่าค่าจริง ` +
+          (mir ? 'สังเกตเงาในแถบกระจกไม่ทับเข็ม ให้ขยับตาจนเข็มบังเงาพอดี แล้วอ่านค่า' : 'ยิ่งเข็มสูงจากหน้าปัด (g มาก) หรือตายิ่งเยื้อง ยิ่งอ่านผิดมาก');
+      const gs = n(g, 2), xs = n(x, 1), Ds = n(D, 0);
+      setEq('px2_eq',
+        eqH('ความคลาดเคลื่อนจากพาราแล็กซ์ (สามเหลี่ยมคล้าย, สเกล 1 V = 1 cm)') +
+        eqL(`Δ/g = x/D → Δ = g·x/D = ${gs} × ${xs} / ${Ds} = <b>${r(dl, 3)} cm</b> → <b>${r(dl, 3)} V</b>`) +
+        eqL(`ค่าที่อ่านได้ = ค่าจริง − Δ = ${n(xv, 2)} − ${n(dl, 3)} = <b>${r(Rd, 3)} V</b>`) +
+        eqL(`ความคลาดเคลื่อนสัมพัทธ์ = −Δ/ค่าจริง × 100% = <b>${r(-100 * dl / xv, 2)}%</b>`) +
+        eqH('มุมพาราแล็กซ์ระหว่างเข็ม (ห่างตา D) กับสเกล (ห่างตา D + g) เมื่อตาเลื่อน x') +
+        eqL(`θ = x/D − x/(D + g) = x·g / [D(D + g)] = ${xs} × ${gs} / [${Ds} × ${n(D + g, 1)}] = <b>${r(th, 5)} rad</b> = <b>${r(th * AMIN, 1)}′</b>`) +
+        (mir ? eqH('แถบกระจกเงา: ภาพเสมือนของเข็มอยู่ใต้ผิวกระจกลึก g') +
+          eqL(`เงาปรากฏที่ x<sub>v</sub> + g·x/(D + 2g) = ${n(xv, 2)} + ${gs} × ${xs} / ${n(D + 2 * g, 1)} = <b>${r(Mx, 3)}</b>, ห่างจากเข็มที่เห็น <b>${r(Math.abs(Mx - Rd), 3)} cm</b> (เป็นศูนย์เมื่อ x = 0)`) : ''));
+    } else {
+      const L = drawLocate(); drawLocateEye(L);
+      const { G, s, e } = L, { f, u, v, ok, m, Xe } = G, st = status(G, s);
+      const L1 = Xe - v, L2 = Xe - s, dth = ok ? e * (1 / L1 - 1 / L2) : 0;
+      $('px2_tab').innerHTML = `<tr><td>อุปกรณ์</td><td>${el === 'mirror' ? 'กระจกเว้า' : 'เลนส์นูน'}</td></tr>
+        <tr><td>ระยะวัตถุ u</td><td>${fmt(u, 1)} cm</td></tr>
+        <tr><td>ความยาวโฟกัส f</td><td>${fmt(f, 1)} cm</td></tr>
+        <tr><td>ระยะภาพ v (ทฤษฎี)</td><td>${ok ? fmt(v, 2) + ' cm' : G.real ? '> 150 cm' : 'ภาพเสมือน'}</td></tr>
+        <tr><td>กำลังขยาย m = v/u</td><td>${ok ? fmt(m, 2) : '–'}</td></tr>
+        <tr><td>ตำแหน่งเข็มค้นหา s</td><td>${fmt(s, 1)} cm</td></tr>
+        <tr><td>s − v</td><td>${ok ? r(s - v, 2) + ' cm' : '–'}</td></tr>
+        <tr><td>มุมพาราแล็กซ์ปลายภาพ-ปลายเข็ม</td><td>${ok ? r(Math.abs(dth) * AMIN, 1) + '′' : '–'}</td></tr>
+        <tr><td>สถานะ</td><td style="color:${st.color}">${st.code === 'ok' ? 'ไม่มีพาราแล็กซ์ ✓' : st.code === 'front' ? 'มีพาราแล็กซ์: เข็มอยู่หน้าภาพ' : st.code === 'back' ? 'มีพาราแล็กซ์: เข็มอยู่หลังภาพ' : '–'}</td></tr>`;
+      const toward = el === 'mirror' ? 'กระจก' : 'เลนส์';
+      $('px2_tip').textContent = st.code === 'ok'
+        ? `ปลายภาพกับปลายเข็มค้นหาติดกันตลอดไม่ว่าตาจะขยับไปทางใด แสดงว่าเข็มอยู่ที่ตำแหน่งภาพ อ่านค่า v ≈ ${fmt(s, 1)} cm ได้เลย`
+        : st.code === 'front'
+          ? `ปลายภาพอยู่ไกลตากว่า จึงเคลื่อนไปทางเดียวกับที่ตาขยับ ส่วนปลายเข็มเคลื่อนสวนทาง → เลื่อนเข็มค้นหาเข้าหา${toward}`
+          : st.code === 'back'
+            ? `ปลายเข็มค้นหาอยู่ไกลตากว่า จึงเคลื่อนไปทางเดียวกับที่ตาขยับ ส่วนปลายภาพเคลื่อนสวนทาง → เลื่อนเข็มค้นหาเข้าหาตา`
+            : 'วิธีไม่มีพาราแล็กซ์ใช้หาตำแหน่งภาพจริงที่อยู่บนราง ปรับ u ให้มากกว่า f';
+      const fs = n(f, 1), us = n(u, 1);
+      setEq('px2_eq',
+        eqH(`สูตร${el === 'mirror' ? 'กระจกเว้า' : 'เลนส์บาง'} (ระยะภาพจริงเป็นบวก)`) +
+        (G.real
+          ? eqL(`1/f = 1/u + 1/v → 1/v = 1/${fs} − 1/${us} = <b>${r(1 / v, 4)} cm⁻¹</b> → v = <b>${r(v, 2)} cm</b>`) +
+            eqL(`m = v/u = ${n(v, 2)}/${us} = <b>${r(v / u, 2)}</b> (ภาพจริงหัวกลับ)`)
+          : eqL(`1/v = 1/${fs} − 1/${us} = <b>${r(1 / f - 1 / u, 4)} cm⁻¹</b> ≤ 0 → ภาพเสมือน`)) +
+        (ok
+          ? eqH('มุมพาราแล็กซ์ของสองจุดเมื่อตาเลื่อน e (ตาห่างปลายภาพ L₁, ห่างปลายเข็ม L₂)') +
+            eqL(`L₁ = ${n(Xe, 1)} − ${n(v, 2)} = ${r(L1, 2)} cm, L₂ = ${n(Xe, 1)} − ${n(s, 1)} = ${r(L2, 2)} cm`) +
+            eqL(`มุมที่ทิศของแต่ละจุดเปลี่ยน θ₁ = e/L₁ = ${n(e, 2)}/${n(L1, 2)} = ${r(e / L1, 4)} rad, θ₂ = e/L₂ = ${r(e / L2, 4)} rad`) +
+            eqL(`Δθ = e(1/L₁ − 1/L₂) = <b>${r(dth, 5)} rad</b> = <b>${r(dth * AMIN, 1)}′</b> → เป็นศูนย์ทุกค่า e เมื่อ L₁ = L₂ คือ s = v`)
+          : ''));
+    }
+  }
+
+  showFor(mode); runTxt(); fitS();
+  return { step, draw };
+})();
+
+/* ---------- Beam expander: ระบบสองเลนส์ขยายลำแสงเลเซอร์ ---------- */
+const beamx = (() => {
+  const c = $('bx_cv'), sec = $('beamx');
+  const LAM = 632.8e-6;            // ความยาวคลื่น He-Ne (mm)
+  const F_FOC = 100;               // เลนส์โฟกัสที่ใช้เทียบขนาดจุด (mm)
+  const Z_FAR = 100;               // ระยะไกลที่ใช้เทียบขนาดลำแสง (m)
+  const STRAY = 5e-3;              // มุมของแสงรบกวน (rad)
+  const NR = 7;                    // จำนวนรังสีในลำ
+  let mode = 'kep', ctx, w, h, V;
+  const f1 = slider('bx_f1', 'mm', 0), f2 = slider('bx_f2', 'mm', 0), D1 = slider('bx_D', 'mm', 1);
+  const th = slider('bx_th', 'mrad', 2), dd = slider('bx_dd', 'mm', 1), pd = slider('bx_pd', 'μm', 0);
+  const rev = $('bx_rev'), stray = $('bx_stray'), ph = $('bx_ph');
+  const show = () => {
+    sec.dataset.mode = mode;
+    sec.querySelectorAll('[data-show]').forEach(e => { e.style.display = e.dataset.show.split(' ').includes(mode) ? '' : 'none'; });
+    if (mode === 'kep' && !ph.checked) $('bx_phc').style.display = 'none';
+    $('bx_f1l').innerHTML = mode === 'kep' ? 'โฟกัสเลนส์นูนตัวสั้น f₁' : 'โฟกัสเลนส์เว้า |f₁| (f₁ ติดลบ)';
+  };
+  modeButtons(sec, 'mode', m => { mode = m; show(); });
+  ph.addEventListener('change', show);
+  $('bx_norm').onclick = () => setSlider('bx_dd', 0);
+  show();
+
+  // ---------- ตัวช่วยวาด ----------
+  function mkView(x0, x1, y0, y1) {
+    const L = 22, R = 22, T = 34, B = 46, aw = w - L - R, ah = h - T - B;
+    const kx = aw / (x1 - x0), ky = ah / (y1 - y0);
+    const ox = L - x0 * kx, oy = T + y1 * ky;
+    return { kx, ky, X: x => ox + x * kx, Y: y => oy - y * ky };
+  }
+  const label = (s, px, py, color, font = '12px system-ui', align = 'center') => {
+    ctx.font = font; ctx.fillStyle = color;
+    const tw = ctx.measureText(s).width;
+    let x = align === 'center' ? px - tw / 2 : align === 'right' ? px - tw : px;
+    x = Math.max(3, Math.min(w - tw - 3, x));
+    ctx.fillText(s, x, py);
+    return tw;
+  };
+  // ป้ายมีพื้นหลัง (ใช้กับป้ายที่อยู่บนลำแสง)
+  const bgLabel = (s, px, py, color, font) => {
+    ctx.font = font; const tw = ctx.measureText(s).width, x = Math.max(3, Math.min(w - tw - 3, px - tw / 2));
+    ctx.fillStyle = col('--panel'); ctx.globalAlpha = 0.85; ctx.fillRect(x - 3, py - 12, tw + 6, 16); ctx.globalAlpha = 1;
+    label(s, x, py, color, font, 'left');
+  };
+  const poly = (pts, color, wd = 2, dash = null) => {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = wd; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(V.X(x), V.Y(y)) : ctx.moveTo(V.X(x), V.Y(y)))); ctx.stroke(); ctx.restore();
+  };
+  // ระบายพื้นที่ระหว่างรังสีขอบสองเส้น (จุดหักเหตรงกัน)
+  const fillBetween = (top, bot, color) => {
+    if (top.length < 2) return;
+    ctx.fillStyle = color; ctx.beginPath();
+    top.forEach(([x, y], i) => (i ? ctx.lineTo(V.X(x), V.Y(y)) : ctx.moveTo(V.X(x), V.Y(y))));
+    for (let i = bot.length - 1; i >= 0; i--) ctx.lineTo(V.X(bot[i][0]), V.Y(bot[i][1]));
+    ctx.closePath(); ctx.fill();
+  };
+  // เลนส์บาง: นูน = ป่องกลาง, เว้า = คอดกลางและขอบหนา
+  function lens(x, ap, convex) {
+    const px = V.X(x), py = V.Y(0);
+    ctx.fillStyle = col('--glass'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (convex) {
+      const bul = Math.min(9, 3 + ap * 0.05);
+      ctx.moveTo(px, py - ap);
+      ctx.quadraticCurveTo(px + 2 * bul, py, px, py + ap); ctx.quadraticCurveTo(px - 2 * bul, py, px, py - ap);
+    } else {
+      const bw = Math.min(9, 4 + ap * 0.04);
+      ctx.moveTo(px - bw, py - ap); ctx.lineTo(px + bw, py - ap);
+      ctx.quadraticCurveTo(px + 3 - bw, py, px + bw, py + ap); ctx.lineTo(px - bw, py + ap);
+      ctx.quadraticCurveTo(px - 3 + bw, py, px - bw, py - ap);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // ลูกศรบอกขนาดสองหัว (แนวตั้ง)
+  function dimV(px, ya, yb, color) {
+    const p1 = V.Y(ya), p2 = V.Y(yb);
+    if (Math.abs(p2 - p1) < 8) { line(ctx, px, p1, px, p2, color, 2); return; }
+    arrow(ctx, px, (p1 + p2) / 2, 0, p1 - (p1 + p2) / 2, color);
+    arrow(ctx, px, (p1 + p2) / 2, 0, p2 - (p1 + p2) / 2, color);
+  }
+  function scaleBar() {
+    const span = (w - 44) / V.kx, L = niceStep(span, 6), px = 14, py = h - 14;
+    line(ctx, px, py, px + L * V.kx, py, col('--ink'), 2);
+    line(ctx, px, py - 4, px, py + 4, col('--ink'), 1.5); line(ctx, px + L * V.kx, py - 4, px + L * V.kx, py + 4, col('--ink'), 1.5);
+    let s = `${+L.toFixed(3)} mm`;
+    if (Math.abs(V.ky / V.kx - 1) > 0.05) s += `   (แนวตั้งขยาย ×${fmt(V.ky / V.kx, 1)} ให้เห็นขนาดลำแสง)`;
+    label(s, px + L * V.kx + 8, py + 4, col('--muted'), '11px system-ui', 'left');
+  }
+  // ไล่รังสีผ่านเลนส์ A (x = 0) และ B (x = sep) ด้วยกฎเลนส์บาง slope′ = slope − y/f
+  // รังสีกำหนดด้วยความสูงที่เลนส์ A (yA) และความชันขาเข้า m; xp = ตำแหน่ง pinhole (null = ไม่มี)
+  function trace(yA, m, S, xp, rp) {
+    const m1 = m - yA / S.fA, yB = yA + m1 * S.sep, m2 = m1 - yB / S.fB;
+    const pts = [[S.xS, yA + m * S.xS], [0, yA]];
+    let blocked = false, yP = null;
+    if (xp !== null) {
+      yP = yA + m1 * xp; pts.push([xp, yP]);
+      blocked = Math.abs(yP) > rp;
+    }
+    if (!blocked) pts.push([S.sep, yB], [S.xE, yB + m2 * (S.xE - S.sep)]);
+    return { pts, yA, m1, yB, m2, yP, blocked };
+  }
+
+  function draw() {
+    ({ ctx, w, h } = fitCanvas(c));
+    const kep = mode === 'kep', isRev = rev.checked;
+    const short = kep ? f1() : -f1(), long = f2();
+    const fA = isRev ? long : short, fB = isRev ? short : long;
+    const sep0 = fA + fB, sep = sep0 + dd(), M = Math.abs(fB) / Math.abs(fA);
+    const D = D1(), thR = th() * 1e-3, rp = pd() * 1e-3 / 2;
+    const Lk = f1() + f2(), xS = -0.26 * Lk, xE = 1.34 * Lk;
+    const S = { fA, fB, sep, xS, xE };
+    const usePh = kep && ph.checked && fA < sep;
+    const xp = usePh ? fA : null;
+
+    // รังสีในลำ: ความสูงที่เลนส์ A = k·D/2, ความชัน = k·θ/2 (ลำแสงบานออกสม่ำเสมอ)
+    const ks = Array.from({ length: NR }, (_, i) => -1 + 2 * i / (NR - 1));
+    const rays = ks.map(k => trace(k * D / 2, k * thR / 2, S, xp, rp));
+    const top = rays[NR - 1], bot = rays[0];
+    const strays = [trace(-0.3 * D / 2, STRAY, S, xp, rp), trace(0.3 * D / 2, -STRAY, S, xp, rp)];
+
+    // ขอบเขตแนวตั้ง
+    const rA = D / 2, rB = Math.max(Math.abs(top.yB), Math.abs(bot.yB));
+    const yEnd = Math.max(Math.abs(top.yB + top.m2 * (xE - sep)), Math.abs(bot.yB + bot.m2 * (xE - sep)));
+    const yM = Math.max(rA, rB, Math.min(yEnd, 1.6 * Math.max(rA, rB))) * 1.3;
+    V = mkView(xS, xE, -yM, yM);
+    const py0 = V.Y(0);
+
+    // แกนมุขสำคัญ
+    line(ctx, 0, py0, w, py0, col('--muted'), 1, [6, 4]);
+
+    // ลำแสง
+    const rgbL = waveRGB(632.8).join(', ');
+    const beamFill = `rgba(${rgbL}, 0.2)`, beamRay = `rgba(${rgbL}, 0.9)`;
+    if (xp === null) fillBetween(top.pts, bot.pts, beamFill);
+    else {
+      fillBetween(top.pts.slice(0, 3), bot.pts.slice(0, 3), beamFill);
+      const pass = rays.filter(t => !t.blocked);
+      if (pass.length) fillBetween(pass[pass.length - 1].pts.slice(2), pass[0].pts.slice(2), beamFill);
+    }
+    const xMark = (x, y, color) => {
+      const px = V.X(x), py = V.Y(y);
+      line(ctx, px - 4, py - 4, px + 4, py + 4, color, 2); line(ctx, px - 4, py + 4, px + 4, py - 4, color, 2);
+    };
+    rays.forEach((t, i) => {
+      poly(t.pts, beamRay, i === 0 || i === NR - 1 ? 2 : 1);
+      if (t.blocked) xMark(xp, t.yP, beamRay);
+    });
+    if (stray.checked) strays.forEach(t => {
+      poly(t.pts, col('--c-f'), 1.6, [7, 4]);
+      if (t.blocked) xMark(xp, t.yP, col('--c-f'));
+    });
+
+    // เลนส์
+    const apA = Math.max(24, Math.min(h / 2 - 40, Math.max(rA * 1.5, yM * 0.45) * V.ky));
+    const apB = Math.max(24, Math.min(h / 2 - 40, Math.max(rB * 1.5, yM * 0.45) * V.ky));
+    lens(0, apA, fA > 0); lens(sep, apB, fB > 0);
+    const nm = (f, i) => `เลนส์${f > 0 ? 'นูน' : 'เว้า'} f${i} = ${f > 0 ? '' : '−'}${fmt(Math.abs(f), 0)} mm`;
+    const iA = isRev ? '₂' : '₁', iB = isRev ? '₁' : '₂';
+    ctx.font = '600 12px system-ui';
+    const tA = nm(fA, iA), tB = nm(fB, iB), wA = ctx.measureText(tA).width, wB = ctx.measureText(tB).width;
+    const yLA = py0 - apA - 8;
+    let yLB = py0 - apB - 8;
+    if (Math.abs(V.X(sep) - V.X(0)) < (wA + wB) / 2 + 8 && Math.abs(yLB - yLA) < 15) yLB = yLA - 15;
+    label(tA, V.X(0), Math.max(12, yLA), col('--ink'), '600 12px system-ui');
+    label(tB, V.X(sep), Math.max(12, yLB), col('--ink'), '600 12px system-ui');
+
+    // pinhole
+    if (xp !== null) {
+      const px = V.X(xp), gap = Math.max(1.5, rp * V.ky), ext = Math.max(30, Math.min(apA, apB) * 0.9);
+      ctx.fillStyle = col('--ink');
+      ctx.fillRect(px - 2.5, py0 - ext, 5, ext - gap); ctx.fillRect(px - 2.5, py0 + gap, 5, ext - gap);
+      bgLabel(`pinhole ⌀${fmt(pd(), 0)} μm`, px, py0 + ext + 15, col('--ink'), '600 12px system-ui');
+    }
+
+    // จุดโฟกัสภายใน (เคปเลอร์ = จริง) / จุดโฟกัสเสมือน (กาลิเลโอ)
+    const xF = fA, pxF = V.X(xF);
+    if (kep) {
+      ctx.fillStyle = col('--c-mg'); ctx.beginPath(); ctx.arc(pxF, py0, 3.5, 0, 7); ctx.fill();
+      bgLabel('จุดโฟกัสร่วม', pxF, py0 + (xp !== null ? Math.max(30, Math.min(apA, apB) * 0.9) + 31 : 20), col('--c-mg'), '600 12px system-ui');
+    } else {
+      [top, bot].forEach(t => {
+        if (xF < 0) poly([[0, t.yA], [xF, t.yA + t.m1 * xF]], col('--muted'), 1.2, [5, 4]);
+        else if (xF > sep) poly([[sep, t.yB], [xF, t.yA + t.m1 * xF]], col('--muted'), 1.2, [5, 4]);
+      });
+      ctx.fillStyle = col('--c-mg'); ctx.beginPath(); ctx.arc(pxF, py0, 3.5, 0, 7); ctx.fill();
+      bgLabel(xF < 0 ? 'จุดโฟกัสเสมือน' : 'จุดโฟกัส (ไม่เกิดจริง)', pxF, py0 + Math.max(20, (xF < 0 ? rA : 0) * V.ky + 18), col('--c-mg'), '600 12px system-ui');
+    }
+
+    // ป้ายขนาดลำแสงเข้า/ออก
+    const D2t = M * D;
+    const pxD1 = V.X(0) - 16;
+    dimV(pxD1, -rA, rA, col('--ink'));
+    label(`D₁ = ${fmt(D, 2)} mm`, pxD1 - 4, Math.max(14, V.Y(rA) - 6), col('--ink'), '600 12px system-ui', 'right');
+    const pxD2 = Math.min(w - 20, V.X(sep) + 16);
+    dimV(pxD2, bot.yB, top.yB, col('--ink'));
+    label(`D₂ = ${fmt(D2t, 2)} mm`, pxD2 + 6, Math.max(14, V.Y(rB) - 6), col('--ink'), '600 12px system-ui', 'left');
+
+    // ความยาวระบบ
+    const yDim = Math.min(h - 34, py0 + Math.max(apA, apB) + 16);
+    const pa = V.X(0), pb = V.X(sep);
+    line(ctx, pa, yDim - 5, pa, yDim + 5, col('--muted'), 1.2); line(ctx, pb, yDim - 5, pb, yDim + 5, col('--muted'), 1.2);
+    if (pb - pa > 24) { arrow(ctx, (pa + pb) / 2, yDim, (pb - pa) / 2, 0, col('--muted')); arrow(ctx, (pa + pb) / 2, yDim, -(pb - pa) / 2, 0, col('--muted')); }
+    else line(ctx, pa, yDim, pb, yDim, col('--muted'), 1.5);
+    label(`L = ${fmt(sep, 1)} mm`, (pa + pb) / 2, yDim - 6, col('--muted'), '600 12px system-ui');
+    label('แสงเข้า →', 6, 16, col('--muted'), '12px system-ui', 'left');
+    scaleBar();
+
+    // ---------- ตัวเลข ----------
+    const th2t = th() / M;
+    // มุมบานจริงของลำแสงออกจากรังสีขอบ (บวก = บานออก, ลบ = ลู่เข้า) หน่วย mrad
+    const th2e = (top.m2 - bot.m2) * Math.sign(top.yB - bot.yB || 1) * 1e3;
+    const u2 = fB + dd(), v2 = Math.abs(dd()) < 1e-9 ? Infinity : u2 * fB / dd();
+    const dGeo = Math.abs(fA) * thR * 1e3;                    // μm
+    const dDif = 4 * LAM * Math.abs(fA) / (Math.PI * D) * 1e3; // μm
+    const thMin = 4 * LAM / (Math.PI * D) * 1e3;              // mrad
+    const farIn = D + th() * Z_FAR, farOut = Math.abs(D2t + th2e * Z_FAR);
+    const spotIn = 4 * LAM * F_FOC / (Math.PI * D) * 1e3, spotOut = 4 * LAM * F_FOC / (Math.PI * D2t) * 1e3;
+    const nBlk = rays.filter(t => t.blocked).length, sBlk = strays.filter(t => t.blocked).length;
+    const outState = !isFinite(v2) ? 'ขนาน (ตั้งถูกต้อง)' : v2 > 0 ? `ลู่เข้าโฟกัสที่ ${fmt(v2, 0)} mm หลังเลนส์ตัวที่ 2` : `บานออก เหมือนมาจากจุด ${fmt(-v2, 0)} mm หน้าเลนส์ตัวที่ 2`;
+    $('bx_tab').innerHTML =
+      `<tr><td>กำลังขยาย M</td><td>${fmt(M, M < 1 ? 3 : 2)} เท่า</td></tr>
+      <tr><td>เส้นผ่านศูนย์กลางลำแสงออก D₂</td><td>${fmt(D2t, 2)} mm</td></tr>
+      <tr><td>θ₂ (ทฤษฎี θ₁/M / จากรังสี)</td><td>${fmt(th2t, 3)} / ${fmt(th2e, 3)} mrad</td></tr>
+      <tr><td>ระยะห่างเลนส์ L</td><td>${fmt(sep, 1)} mm</td></tr>
+      <tr><td>ลำแสงออก</td><td>${outState}</td></tr>
+      <tr><td>${kep ? 'ขนาดจุดโฟกัสภายใน (รังสี / เลี้ยวเบน)' : 'จุดโฟกัสภายใน'}</td><td>${kep ? `${fmt(dGeo, 1)} / ${fmt(dDif, 1)} μm` : 'ไม่มี (เป็นจุดเสมือน)'}</td></tr>
+      <tr><td>ความกว้างลำที่ระยะ ${Z_FAR} m (เข้า → ออก)</td><td>${fmt(farIn, 0)} → ${fmt(farOut, 0)} mm</td></tr>
+      <tr><td>จุดโฟกัสด้วยเลนส์ ${F_FOC} mm (เข้า → ออก)</td><td>${fmt(spotIn, 1)} → ${fmt(spotOut, 1)} μm</td></tr>
+      <tr><td>มุมบานต่ำสุดที่ D₁ ทำได้ 4λ/(πD₁)</td><td>${fmt(thMin, 2)} mrad</td></tr>`;
+
+    let note = isRev ? `กลับทิศ: แสงเข้าเลนส์ f₂ ก่อน ลำแสงจึงเล็กลง ${fmt(1 / M, 1)} เท่า และมุมบานเพิ่มขึ้น ${fmt(1 / M, 1)} เท่า`
+      : `ลำแสงกว้างขึ้น ${fmt(M, 1)} เท่า มุมบานลดลง ${fmt(M, 1)} เท่า`;
+    note += kep ? ' แบบเคปเลอร์รังสีไขว้กันที่จุดโฟกัสร่วม ลำแสงออกจึงกลับหัว (รังสีบนออกไปอยู่ล่าง)'
+      : ' แบบกาลิเลโอเลนส์เว้าทำให้ลำบานออกเหมือนมาจากจุดโฟกัสเสมือน แล้วเลนส์นูนทำให้ขนาน ระบบสั้นกว่าและไม่มีจุดโฟกัสจริง';
+    if (Math.abs(dd()) > 1e-9) note += `. Δd = ${fmt(dd(), 1)} mm ทำให้ลำแสงออก${dd() > 0 ? 'ลู่เข้า' : 'บานออก'} ต้องตั้งระยะห่างให้พอดีลำแสงจึงจะขนาน`;
+    if (xp !== null) note += sBlk ? `. pinhole กันแสงรบกวนที่เข้ามาเอียง (ไปตกห่างแกน f·α = ${fmt(Math.abs(fA) * STRAY * 1e3, 0)} μm) ไว้ได้` :
+      `. pinhole ใหญ่เกินไป แสงรบกวน (ตกห่างแกน ${fmt(Math.abs(fA) * STRAY * 1e3, 0)} μm) ผ่านไปได้`;
+    if (nBlk) note += ` และตัดรังสีขอบของลำแสงหลักออก ${nBlk} เส้น (pinhole เล็กกว่าจุดโฟกัส)`;
+    if (kep && xp === null && stray.checked) note += '. ลองใส่ pinhole เพื่อกรองแสงรบกวน';
+    if (th() < thMin - 1e-9) note += `. หมายเหตุ: θ₁ ต่ำกว่าขีดจำกัดการเลี้ยวเบนของลำแสงกว้าง ${fmt(D, 1)} mm (≈ ${fmt(thMin, 2)} mrad) ทำได้ในแบบจำลองรังสีเท่านั้น`;
+    $('bx_note').textContent = note + '.';
+
+    // ---------- สมการแทนค่า ----------
+    const fs = x => (x < 0 ? '−' : '') + fmt(Math.abs(x), 0);
+    let eq = eqH('กำลังขยายของลำแสง (อัตราส่วนความยาวโฟกัส)') +
+      (isRev ? eqL(`M = |f₁| / f₂ = ${n(f1(), 0)} / ${n(f2(), 0)} = <b>${r(M, 3)}</b>`)
+        : eqL(`M = f₂ / |f₁| = ${n(f2(), 0)} / ${n(f1(), 0)} = <b>${r(M, 2)}</b>`)) +
+      eqH('ขนาดลำแสงออก') + eqL(`D₂ = M·D₁ = ${n(M, 3)} × ${n(D, 2)} mm = <b>${r(D2t, 2)} mm</b>`) +
+      eqH('มุมบานลำแสงออก (ลดลง M เท่า)') + eqL(`θ₂ = θ₁ / M = ${n(th(), 2)} mrad / ${n(M, 3)} = <b>${r(th2t, 3)} mrad</b>`) +
+      eqH('ระยะห่างเลนส์เมื่อลำแสงออกขนาน');
+    eq += kep ? eqL(`L = f₁ + f₂ = ${n(f1(), 0)} + ${n(f2(), 0)} = <b>${r(sep0, 0)} mm</b>`)
+      : eqL(`L = f₂ − |f₁| = ${n(f2(), 0)} − ${n(f1(), 0)} = <b>${r(sep0, 0)} mm</b>`);
+    if (Math.abs(dd()) > 1e-9) {
+      eq += eqH('เลื่อนระยะห่าง Δd: จุดโฟกัสของเลนส์แรกเป็นวัตถุของเลนส์ที่สอง') +
+        eqL(`u = f<sub>B</sub> + Δd = ${n(fB, 0)} + ${n(dd(), 1)} = ${r(u2, 1)} mm`) +
+        eqL(`v = u f<sub>B</sub> / (u − f<sub>B</sub>) = ${n(u2, 1)} × ${n(fB, 0)} / ${n(dd(), 1)} = <b>${r(v2, 0)} mm</b> (${v2 > 0 ? 'บวก = ลู่เข้า' : 'ลบ = บานออก'})`);
+    }
+    if (kep) {
+      eq += eqH(`ขนาดจุดโฟกัสภายใน (ที่ระยะ f = ${fs(fA)} mm หลังเลนส์แรก)`) +
+        eqL(`ตามรังสี: d ≈ f·θ₁ = ${n(Math.abs(fA), 0)} mm × ${n(th(), 2)}×10⁻³ = <b>${r(dGeo, 1)} μm</b>`) +
+        eqL(`ตามการเลี้ยวเบน: d ≈ 4λf/(πD₁) = 4(632.8×10⁻⁹ m)(${n(Math.abs(fA) / 1000, 3)} m) / (π × ${n(D / 1000, 4)} m) = <b>${r(dDif, 1)} μm</b>`);
+    } else eq += eqH('จุดโฟกัสภายใน') + eqL(`f₁ < 0 → จุดโฟกัสเสมือนอยู่ ${n(f1(), 0)} mm ${isRev ? 'หลังเลนส์แรก (เลยเลนส์เว้า)' : 'หน้าเลนส์เว้า'}: ไม่มีแสงรวมจริง`);
+    eq += eqH(`ประโยชน์: โฟกัสด้วยเลนส์ f = ${F_FOC} mm ได้จุดเล็กลง (d ∝ 1/D)`) +
+      eqL(`d = 4λf/(πD) = 4(632.8×10⁻⁹)(${n(F_FOC / 1000, 1)}) / (π × ${n(D2t / 1000, 4)}) = <b>${r(spotOut, 1)} μm</b> (ก่อนขยาย ${r(spotIn, 1)} μm)`);
+    setEq('bx_eq', eq);
+  }
+
+  return { draw };
+})();
+
 /* ---------- เริ่มโปรแกรม ---------- */
-initApp({ linear, proj, incline, coll, mom, shm, energy: work, ballistic, ladder, mirror, bench, refract, depth, prism, polar, diffract, michelson, circuit, rc, efield, string, pipe, parallax, orbit, rlc, magnet, induct, fluid, bernoulli, gas, heat, circular, equil, pulley, photo, bohr, decay, instr, doppler, ripple, beats }, 'linear');
+initApp({ linear, proj, incline, coll, mom, shm, energy: work, ballistic, ladder, mirror, bench, refract, depth, prism, polar, diffract, michelson, circuit, rc, efield, string, pipe, parallax, orbit, rlc, magnet, induct, fluid, bernoulli, gas, heat, circular, equil, pulley, photo, bohr, decay, instr, doppler, ripple, beats, plx, beamx }, 'linear');
 </script>
 </body>
 </html>
