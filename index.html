@@ -170,6 +170,11 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
   <button data-group="mech" data-tab="circular">การเคลื่อนที่แนววงกลม</button>
   <button data-group="mech" data-tab="equil">สมดุลกล</button>
   <button data-group="mech" data-tab="pulley">รอกและเครื่องกล</button>
+  <button data-group="mech" data-tab="stack">กล่องซ้อนและวัตถุผูกติดกัน</button>
+  <button data-group="mech" data-tab="elevator">ลิฟต์และน้ำหนักปรากฏ</button>
+  <button data-group="mech" data-tab="relvel">ความเร็วสัมพัทธ์</button>
+  <button data-group="mech" data-tab="vtgraph">กราฟการเคลื่อนที่</button>
+  <button data-group="mech" data-tab="rotate">การหมุนและการกลิ้ง</button>
   <button data-group="optics" data-tab="mirror">กระจกและเลนส์</button>
   <button data-group="optics" data-tab="bench">การเกิดภาพบนฉาก (3 มิติ)</button>
   <button data-group="optics" data-tab="refract">การหักเหและสะท้อนกลับหมด</button>
@@ -2156,6 +2161,346 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
     <p class="note"><b>แบบเคปเลอร์</b> (นูน + นูน, L = f₁ + f₂): มีจุดโฟกัสจริงภายใน ใส่ pinhole กรองแสงรบกวนได้ ภาพกลับหัว
       แต่ยาวกว่า และเลเซอร์กำลังสูงอาจทำให้อากาศที่จุดโฟกัสแตกตัว (air breakdown)<br>
       <b>แบบกาลิเลโอ</b> (เว้า + นูน, L = f₂ − |f₁|): สั้นกว่า ไม่มีจุดโฟกัสจริงภายใน จึงเหมาะกับเลเซอร์กำลังสูง แต่ใส่ pinhole ไม่ได้</p>
+  </div>
+</section>
+
+
+<!-- กล่องซ้อนและวัตถุผูกติดกัน -->
+<section class="sim" id="stack" data-mode="pull">
+  <div class="card">
+    <canvas id="sk_cv"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="sk_run">เริ่ม</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="sk_reset">รีเซ็ต</button>
+    </div>
+    <canvas id="sk_fbd" class="graph"></canvas>
+    <div class="legend">
+      <span style="--c: var(--c-mg)">น้ำหนัก mg</span>
+      <span style="--c: var(--c-n)">แรงปฏิกิริยาตั้งฉาก N</span>
+      <span style="--c: var(--c-f)">แรงเสียดทาน f</span>
+      <span style="--c: var(--c-v)">แรงตึงเชือก T / แรงสัมผัส P</span>
+      <span style="--c: var(--ink)">แรงภายนอก F</span>
+      <span style="--c: var(--c-vy)">ความเร่ง a</span>
+    </div>
+    <canvas id="sk_gr" class="graph" style="height: 240px"></canvas>
+    <div class="eqbox" id="sk_eq"></div>
+    <p class="note"><b>วิธีคิด:</b> (1) มองทุกก้อนรวมเป็นระบบเดียว แรงระหว่างก้อน (แรงตึงเชือก แรงสัมผัส แรงเสียดทานระหว่างกล่อง) เป็นแรงภายในที่หักล้างกันเป็นคู่
+      จึงหาความเร่งร่วมได้จาก ΣF<sub>ภายนอก</sub> = (Σm)a (2) แยกเขียน FBD ทีละก้อน แล้วใช้ ΣF = ma กับก้อนที่มีแรงน้อยที่สุดเพื่อหาแรงภายใน</p>
+  </div>
+  <div class="card">
+    <div class="mode" style="flex-wrap: wrap">
+      <button data-mode="pull" class="active">ดึงกล่องต่อกัน</button>
+      <button data-mode="push">ดันกล่องติดกัน</button>
+      <button data-mode="stack">กล่องซ้อน</button>
+    </div>
+    <div class="mode" data-m="push">
+      <button data-side="left" class="active">ดันจากซ้าย →</button>
+      <button data-side="right">← ดันจากขวา</button>
+    </div>
+    <div class="mode" data-m="stack">
+      <button data-at="bottom" class="active">F ที่กล่องล่าง</button>
+      <button data-at="top">F ที่กล่องบน</button>
+    </div>
+    <div class="ctrl" data-m="pull push"><label>จำนวนกล่อง <output id="sk_nbo"></output></label>
+      <input type="range" id="sk_nb" min="2" max="3" step="1" value="3"></div>
+    <div class="ctrl" data-m="pull push"><label>มวล m<sub>1</sub> <output id="sk_m1o"></output></label>
+      <input type="range" id="sk_m1" min="0.5" max="10" step="0.5" value="2"></div>
+    <div class="ctrl" data-m="pull push"><label>มวล m<sub>2</sub> <output id="sk_m2o"></output></label>
+      <input type="range" id="sk_m2" min="0.5" max="10" step="0.5" value="3"></div>
+    <div class="ctrl sk-m3" data-m="pull push"><label>มวล m<sub>3</sub> <output id="sk_m3o"></output></label>
+      <input type="range" id="sk_m3" min="0.5" max="10" step="0.5" value="5"></div>
+    <div class="ctrl" data-m="stack"><label>มวลกล่องบน m <output id="sk_mto"></output></label>
+      <input type="range" id="sk_mt" min="0.5" max="10" step="0.5" value="2"></div>
+    <div class="ctrl" data-m="stack"><label>มวลกล่องล่าง M <output id="sk_mbo"></output></label>
+      <input type="range" id="sk_mb" min="0.5" max="20" step="0.5" value="4"></div>
+    <div class="ctrl"><label>แรง F <output id="sk_Fo"></output></label>
+      <input type="range" id="sk_F" min="0" max="150" step="1" value="60"></div>
+    <div class="ctrl" data-m="pull"><label>มุมของ F เหนือแนวระดับ θ <output id="sk_tho"></output></label>
+      <input type="range" id="sk_th" min="0" max="60" step="1" value="0"></div>
+    <div class="ctrl"><label>สัมประสิทธิ์ความเสียดทานของพื้น μ<sub>พื้น</sub> <output id="sk_muo"></output></label>
+      <input type="range" id="sk_mu" min="0" max="0.6" step="0.01" value="0.2"></div>
+    <div class="ctrl" data-m="stack"><label>μ<sub>s</sub> ระหว่างกล่อง <output id="sk_mso"></output></label>
+      <input type="range" id="sk_ms" min="0" max="1" step="0.01" value="0.4"></div>
+    <div class="ctrl" data-m="stack"><label>μ<sub>k</sub> ระหว่างกล่อง <output id="sk_mko"></output></label>
+      <input type="range" id="sk_mk" min="0" max="1" step="0.01" value="0.3"></div>
+    <div class="mode" data-m="stack">
+      <button data-gr="aF" class="active">กราฟ a–F</button>
+      <button data-gr="vt">กราฟ v–t</button>
+    </div>
+    <table id="sk_tab"></table>
+    <p class="note" id="sk_note"></p>
+  </div>
+</section>
+
+<!-- ลิฟต์และน้ำหนักปรากฏ -->
+<section class="sim" id="elevator" data-mode="trip">
+  <div class="card">
+    <canvas id="el_cv"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="el_run">เริ่ม</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="el_reset">รีเซ็ต</button>
+    </div>
+    <canvas class="graph" id="el_gr" style="height: 330px"></canvas>
+    <div class="eqbox" id="el_eq"></div>
+    <div class="legend">
+      <span style="--c: var(--c-mg)">น้ำหนัก mg</span>
+      <span style="--c: var(--c-n)">แรงที่ตาชั่งดันคน N</span>
+      <span style="--c: var(--c-vy)">ความเร่ง a</span>
+      <span style="--c: var(--c-v)">ความเร็ว v</span>
+      <span style="--c: var(--c-f)">แรงตึงสปริง T</span>
+    </div>
+    <p class="note">ทิศขึ้นเป็นบวกทุกปริมาณ (v, a, แรง) กราฟเส้นจางคือทั้งเที่ยว เส้นเข้มคือส่วนที่ผ่านมาแล้ว เส้นแนวดิ่งคือเวลาปัจจุบัน
+      เส้นประในกราฟ N คือน้ำหนักจริง mg</p>
+  </div>
+  <div class="card">
+    <div class="mode">
+      <button data-mode="trip" class="active">เที่ยวลิฟต์</button>
+      <button data-mode="custom">กำหนดความเร่งเอง</button>
+    </div>
+    <div data-m="trip">
+      <div class="mode">
+        <button data-dir="up" class="active">ขึ้น ↑</button>
+        <button data-dir="down">ลง ↓</button>
+      </div>
+      <div class="ctrl"><label>ขนาดความเร่งตอนออกตัว/หยุด a <output id="el_ao"></output></label>
+        <input type="range" id="el_a" min="0.5" max="4" step="0.1" value="2"></div>
+      <div class="ctrl"><label>ความเร็วสูงสุด v<sub>max</sub> <output id="el_vmo"></output></label>
+        <input type="range" id="el_vm" min="1" max="8" step="0.5" value="4"></div>
+      <div class="ctrl"><label>จำนวนชั้นที่เดินทาง (ชั้นละ 3 m) <output id="el_flo"></output></label>
+        <input type="range" id="el_fl" min="1" max="20" step="1" value="8"></div>
+    </div>
+    <div data-m="custom">
+      <div class="presets">
+        <button data-pa="2" data-pv="0">ออกตัวขึ้น</button>
+        <button data-pa="-2" data-pv="5">ขึ้นแล้วชะลอ</button>
+        <button data-pa="-2" data-pv="0">ออกตัวลง</button>
+        <button data-pa="2" data-pv="-5">ลงแล้วชะลอ</button>
+        <button data-pa="0" data-pv="4">ความเร็วคงที่</button>
+        <button data-pa="-9.8" data-pv="0">สายขาด ตกอิสระ</button>
+      </div>
+      <div class="ctrl"><label>ความเร่ง a (ขึ้นเป็น +) <output id="el_aco"></output></label>
+        <input type="range" id="el_ac" min="-9.8" max="19.6" step="0.1" value="2"></div>
+      <div class="ctrl"><label>ความเร็วเริ่มต้น v<sub>0</sub> (ขึ้นเป็น +) <output id="el_v0o"></output></label>
+        <input type="range" id="el_v0" min="-8" max="8" step="0.5" value="-5"></div>
+    </div>
+    <div class="ctrl"><label>มวลของคน m <output id="el_mo"></output></label>
+      <input type="range" id="el_m" min="30" max="100" step="1" value="60"></div>
+    <label class="check"><input type="checkbox" id="el_hang"> แขวนมวลกับเครื่องชั่งสปริงที่เพดานลิฟต์</label>
+    <div class="ctrl" id="el_mbbox"><label>มวลที่แขวน m<sub>b</sub> <output id="el_mbo"></output></label>
+      <input type="range" id="el_mb" min="0.5" max="5" step="0.5" value="2"></div>
+    <table id="el_tab"></table>
+    <p class="note" id="el_msg"></p>
+    <p class="note"><b>ตาชั่งอ่านค่าแรง N ที่มันดันคน ไม่ใช่น้ำหนักจริง</b> จาก N − mg = ma ได้ N = m(g + a)
+      ค่าที่อ่านจึงขึ้นกับ<b>ทิศของความเร่งเท่านั้น ไม่ขึ้นกับทิศของความเร็ว</b>:
+      ออกตัวขึ้นกับชะลอขณะลง (a ชี้ขึ้น) อ่านได้มากกว่า mg ส่วนออกตัวลงกับชะลอขณะขึ้น (a ชี้ลง) อ่านได้น้อยกว่า mg
+      ความเร็วคงที่ไม่ว่าขึ้นหรือลงอ่านได้เท่า mg และเมื่อสายขาด (a = −g) ตาชั่งอ่านศูนย์ คือสภาพไร้น้ำหนัก</p>
+  </div>
+</section>
+
+<!-- ความเร็วสัมพัทธ์ -->
+<section class="sim" id="relvel" data-mode="river">
+  <div class="card">
+    <canvas id="rv_cv" style="height: 440px; touch-action: none"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="rv_run">เริ่ม</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="rv_reset">รีเซ็ต</button>
+    </div>
+    <div class="eqbox" id="rv_eq"></div>
+    <div class="legend" data-m="river">
+      <span style="--c: var(--c-vx)">v<sub>เรือ/น้ำ</sub> (ทิศหัวเรือ)</span>
+      <span style="--c: var(--c-vy)">v<sub>น้ำ/ฝั่ง</sub> (กระแสน้ำ)</span>
+      <span style="--c: var(--c-v)">v<sub>เรือ/ฝั่ง</sub> = ผลรวม (ทิศที่เรือไปจริง)</span>
+    </div>
+    <div class="legend" data-m="rain">
+      <span style="--c: var(--c-vx)">v<sub>ฝน/พื้น</sub></span>
+      <span style="--c: var(--c-f)">v<sub>รถ/พื้น</sub> และ −v<sub>รถ/พื้น</sub></span>
+      <span style="--c: var(--c-v)">v<sub>ฝน/รถ</sub> (ที่คนในรถเห็น)</span>
+    </div>
+    <div class="legend" data-m="two">
+      <span style="--c: var(--c-cart1)">วัตถุ A และ v<sub>A</sub></span>
+      <span style="--c: var(--c-cart2)">วัตถุ B และ v<sub>B</sub></span>
+      <span style="--c: var(--c-v)">ความเร็วสัมพัทธ์</span>
+    </div>
+    <p class="note" id="rv_note"></p>
+  </div>
+  <div class="card">
+    <div class="mode" style="flex-wrap: wrap">
+      <button data-mode="river" class="active">เรือข้ามแม่น้ำ</button>
+      <button data-mode="rain">ฝนตกกับรถ</button>
+      <button data-mode="two">สองวัตถุ</button>
+    </div>
+    <div data-m="river">
+      <div class="ctrl"><label>ความกว้างแม่น้ำ d <output id="rv_do"></output></label>
+        <input type="range" id="rv_d" min="20" max="200" step="10" value="60"></div>
+      <div class="ctrl"><label>อัตราเร็วกระแสน้ำ u <output id="rv_uo"></output></label>
+        <input type="range" id="rv_u" min="0" max="5" step="0.1" value="1.5"></div>
+      <div class="ctrl"><label>อัตราเร็วเรือเทียบน้ำ v <output id="rv_vo"></output></label>
+        <input type="range" id="rv_v" min="0.5" max="6" step="0.1" value="2.5"></div>
+      <div class="ctrl"><label>มุมหัวเรือ α จากแนวตั้งฉากฝั่ง (+ = ทวนน้ำ) <output id="rv_alo"></output></label>
+        <input type="range" id="rv_al" min="-85" max="85" step="any" value="15"></div>
+      <div class="buttons">
+        <button id="rv_fast">ข้ามเร็วที่สุด</button>
+        <button id="rv_straight">ข้ามตรงจุดตรงข้าม</button>
+      </div>
+    </div>
+    <div data-m="rain">
+      <div class="ctrl"><label>อัตราเร็วฝนตก (แนวดิ่ง) v<sub>ฝน</sub> <output id="rv_vro"></output></label>
+        <input type="range" id="rv_vr" min="1" max="15" step="0.5" value="8"></div>
+      <div class="ctrl"><label>อัตราเร็วรถ (ไปทางขวา) v<sub>รถ</sub> <output id="rv_vco"></output></label>
+        <input type="range" id="rv_vc" min="0" max="30" step="1" value="12"></div>
+      <div class="ctrl"><label>ลมพัดฝนแนวราบ (+ = ทางเดียวกับรถ) <output id="rv_wo"></output></label>
+        <input type="range" id="rv_w" min="-8" max="8" step="0.5" value="0"></div>
+    </div>
+    <div data-m="two">
+      <div class="presets" id="rv_pre">
+        <button data-p="cross">เรือสองลำแล่นตั้งฉาก</button>
+        <button data-p="pass">รถสวนกันคนละเลน</button>
+        <button data-p="chase">รถไล่ตามกัน</button>
+      </div>
+      <div class="mode">
+        <button data-fr="ground" class="active">พื้นดิน</button>
+        <button data-fr="A">กรอบ A</button>
+        <button data-fr="B">กรอบ B</button>
+      </div>
+      <div class="ctrl"><label>อัตราเร็ว A <output id="rv_vao"></output></label>
+        <input type="range" id="rv_va" min="0" max="30" step="1" value="10"></div>
+      <div class="ctrl"><label>ทิศของ A (0° = ตะวันออก, 90° = เหนือ) <output id="rv_aao"></output></label>
+        <input type="range" id="rv_aa" min="0" max="355" step="5" value="0"></div>
+      <div class="ctrl"><label>อัตราเร็ว B <output id="rv_vbo"></output></label>
+        <input type="range" id="rv_vb" min="0" max="30" step="1" value="10"></div>
+      <div class="ctrl"><label>ทิศของ B <output id="rv_abo"></output></label>
+        <input type="range" id="rv_ab" min="0" max="355" step="5" value="90"></div>
+      <div class="ctrl"><label>ตำแหน่งเริ่มของ B (เทียบ A): x <output id="rv_bxo"></output></label>
+        <input type="range" id="rv_bx" min="-200" max="200" step="10" value="120"></div>
+      <div class="ctrl"><label>ตำแหน่งเริ่มของ B (เทียบ A): y <output id="rv_byo"></output></label>
+        <input type="range" id="rv_by" min="-200" max="200" step="10" value="-100"></div>
+    </div>
+    <table id="rv_tab"></table>
+    <p class="note" id="rv_tip"></p>
+  </div>
+</section>
+
+<!-- กราฟการเคลื่อนที่ v–t, s–t, a–t -->
+<section class="sim" id="vtgraph">
+  <div class="card">
+    <canvas id="vg_track" style="height: 150px"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="vg_run">เริ่ม</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="vg_reset">รีเซ็ต</button>
+    </div>
+    <canvas id="vg_v" class="graph" style="height: 290px; touch-action: none"></canvas>
+    <canvas id="vg_s" class="graph" style="height: 210px; touch-action: none"></canvas>
+    <canvas id="vg_a" class="graph" style="height: 170px; touch-action: none"></canvas>
+    <div class="eqbox" id="vg_eq"></div>
+    <div class="legend">
+      <span style="--c: var(--c-v)">ความเร็ว v (ลากจุดได้)</span>
+      <span style="--c: var(--c-vy)">พื้นที่บวก (เหนือแกน t)</span>
+      <span style="--c: var(--c-mg)">พื้นที่ลบ (ใต้แกน t)</span>
+      <span style="--c: var(--c-f)">ความเร่ง a = ความชันของกราฟ v–t</span>
+      <span style="--c: var(--accent)">ช่วงเวลาที่เลือก</span>
+    </div>
+    <p class="note">ลากจุดบนกราฟ v–t ขึ้นลงเพื่อเปลี่ยนความเร็ว (ทีละ 0.5 m/s) หรือซ้ายขวาเพื่อเปลี่ยนเวลา (ทีละ 0.5 s) ·
+      แตะที่ว่างบนกราฟใดก็ได้เพื่อเลือกช่วงนั้น หรือลากในแนวนอนเพื่อเลือกช่วงเวลาเอง</p>
+  </div>
+  <div class="card">
+    <div class="presets" id="vg_pre">
+      <button data-p="back">ไปแล้วถอยกลับ</button>
+      <button data-p="acc">เร่ง–คงที่–หน่วง</button>
+      <button data-p="toss">โยนขึ้นแล้วตกลง</button>
+      <button data-p="rev">รถถอยหลัง</button>
+    </div>
+    <div class="buttons">
+      <button id="vg_add">+ เพิ่มจุด</button>
+      <button id="vg_del">− ลบจุด</button>
+    </div>
+    <div class="ctrl"><label>ตำแหน่งเริ่มต้น s<sub>0</sub> <output id="vg_s0o"></output></label>
+      <input type="range" id="vg_s0" min="-20" max="20" step="1" value="0"></div>
+    <div class="ctrl"><label>ความเร็วในการเล่น <output id="vg_spo"></output></label>
+      <input type="range" id="vg_sp" min="0.25" max="4" step="0.25" value="1"></div>
+    <div class="ctrl"><label for="vg_sel">ช่วงเวลาที่ดูการกระจัด</label>
+      <select id="vg_sel" style="width: 100%; padding: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px"></select></div>
+    <label class="check"><input type="checkbox" id="vg_lab" checked> แสดงตัวเลขพื้นที่และความชันบนกราฟ</label>
+    <table id="vg_tab"></table>
+    <p class="note" id="vg_note"></p>
+    <p class="note">พื้นที่ใต้กราฟ v–t = การกระจัด (คิดเครื่องหมาย: เหนือแกนเป็นบวก ใต้แกนเป็นลบ) ส่วนระยะทางรวมคิดขนาดของพื้นที่ทุกส่วนมาบวกกัน ·
+      ความชันของกราฟ v–t = ความเร่ง · ความชันของกราฟ s–t = ความเร็ว</p>
+  </div>
+</section>
+
+<!-- การหมุนและการกลิ้ง -->
+<section class="sim" id="rotate" data-mode="race">
+  <div class="card">
+    <canvas id="ro_cv"></canvas>
+    <div class="buttons runbar">
+      <button class="primary" id="ro_run">ปล่อยพร้อมกัน</button>
+      <button class="pause">หยุดชั่วคราว</button>
+      <button id="ro_reset">รีเซ็ต</button>
+    </div>
+    <canvas class="graph" id="ro_gc"></canvas>
+    <div class="eqbox" id="ro_eq"></div>
+    <div class="legend" id="ro_leg"></div>
+    <p class="note" id="ro_note1"></p>
+  </div>
+  <div class="card">
+    <div class="mode" style="flex-wrap: wrap">
+      <button data-mode="race" class="active">แข่งกลิ้งลงพื้นเอียง</button>
+      <button data-mode="torque">ทอร์กและความเร่งเชิงมุม</button>
+      <button data-mode="skate">อนุรักษ์โมเมนตัมเชิงมุม</button>
+    </div>
+    <!-- แข่งกลิ้ง -->
+    <div class="ctrl" data-m="race"><label>มุมเอียง θ <output id="ro_tho"></output></label>
+      <input type="range" id="ro_th" min="5" max="45" step="1" value="20"></div>
+    <div class="ctrl" data-m="race"><label>ความยาวพื้นเอียง L <output id="ro_Lo"></output></label>
+      <input type="range" id="ro_L" min="1" max="5" step="0.1" value="3"></div>
+    <div data-m="race" style="margin-bottom: 8px">
+      <label class="check"><input type="checkbox" id="ro_c0" checked> ทรงกลมตัน (I = ⅖MR²)</label>
+      <label class="check"><input type="checkbox" id="ro_c1" checked> ทรงกระบอกตัน (I = ½MR²)</label>
+      <label class="check"><input type="checkbox" id="ro_c2" checked> ทรงกลมกลวง (I = ⅔MR²)</label>
+      <label class="check"><input type="checkbox" id="ro_c3" checked> วงแหวน / ท่อบาง (I = MR²)</label>
+      <label class="check"><input type="checkbox" id="ro_c4" checked> กล่องไถล ไม่มีแรงเสียดทาน (ตัวเทียบ)</label>
+    </div>
+    <div class="ctrl" data-m="race" style="margin-bottom: 4px"><label>วัตถุที่แสดง FBD และพลังงาน (แตะวัตถุในภาพก็ได้)</label></div>
+    <div class="mode" data-m="race" style="flex-wrap: wrap">
+      <button data-obj="0" class="active">กลมตัน</button>
+      <button data-obj="1">กระบอกตัน</button>
+      <button data-obj="2">กลมกลวง</button>
+      <button data-obj="3">วงแหวน</button>
+      <button data-obj="4">กล่อง</button>
+    </div>
+    <div class="ctrl" data-m="race"><label>มวล M ของวัตถุที่เลือก <output id="ro_Mo"></output></label>
+      <input type="range" id="ro_M" min="0.5" max="5" step="0.1" value="1"></div>
+    <div class="ctrl" data-m="race"><label>รัศมี R ของวัตถุที่เลือก <output id="ro_Ro"></output></label>
+      <input type="range" id="ro_R" min="0.05" max="0.3" step="0.01" value="0.1"></div>
+    <!-- ทอร์ก -->
+    <div class="mode" data-m="torque" style="flex-wrap: wrap">
+      <button data-wh="disk" class="active">ล้อแผ่นกลมตัน ½MR²</button>
+      <button data-wh="ring">ล้อวงแหวน MR²</button>
+      <button data-wh="light">รอกเบา I ≈ 0</button>
+    </div>
+    <div class="ctrl" data-m="torque"><label>มวลล้อ M <output id="ro_wMo"></output></label>
+      <input type="range" id="ro_wM" min="0.5" max="10" step="0.5" value="2"></div>
+    <div class="ctrl" data-m="torque"><label>รัศมีล้อ R <output id="ro_wRo"></output></label>
+      <input type="range" id="ro_wR" min="0.05" max="0.3" step="0.01" value="0.15"></div>
+    <div class="ctrl" data-m="torque"><label>มวลแขวน m <output id="ro_mo"></output></label>
+      <input type="range" id="ro_m" min="0.1" max="5" step="0.1" value="0.5"></div>
+    <div class="ctrl" data-m="torque"><label>ระยะตก H <output id="ro_Ho"></output></label>
+      <input type="range" id="ro_H" min="0.5" max="2" step="0.1" value="1.5"></div>
+    <!-- นักสเกต -->
+    <div class="ctrl" data-m="skate"><label>ระยะดัมเบลจากแกนหมุน r <output id="ro_ro"></output></label>
+      <input type="range" id="ro_r" min="0.15" max="0.85" step="0.01" value="0.8"></div>
+    <label class="check" data-m="skate"><input type="checkbox" id="ro_auto" checked> หุบ-กางแขนอัตโนมัติ (ลากแถบเลื่อน r เพื่อคุมเอง)</label>
+    <div class="ctrl" data-m="skate"><label>มวลดัมเบลข้างละ m <output id="ro_dmo"></output></label>
+      <input type="range" id="ro_dm" min="0.5" max="5" step="0.5" value="2"></div>
+    <div class="ctrl" data-m="skate"><label>I ของคน + เก้าอี้ I<sub>0</sub> <output id="ro_Ibo"></output></label>
+      <input type="range" id="ro_Ib" min="0.8" max="4" step="0.1" value="2"></div>
+    <div class="ctrl" data-m="skate"><label>ω ตอนเริ่มหมุน ω<sub>เริ่ม</sub> <output id="ro_w0o"></output></label>
+      <input type="range" id="ro_w0" min="0.5" max="6" step="0.1" value="2"></div>
+    <table id="ro_tab"></table>
+    <p class="note" id="ro_note"></p>
   </div>
 </section>
 
@@ -11916,8 +12261,2172 @@ const beamx = (() => {
   return { draw };
 })();
 
+/* ---------- กล่องซ้อนและวัตถุผูกติดกัน ---------- */
+const stack = (() => {
+  const c = $('sk_cv'), fc = $('sk_fbd'), gc = $('sk_gr'), sec = $('stack'), G = 9.8, TEND = 4;
+  const LB = 1.2, HB = 0.32, LT = 0.45, HT = 0.26;          // ขนาดกล่องล่าง / บน ในโหมดกล่องซ้อน (m)
+  const SUB = ['₁', '₂', '₃'];
+  let mode = 'pull', side = 'left', at = 'bottom', gr = 'aF', running = true, t = 0, msg = '', tFall = null;
+  const restart = () => reset(true);
+  const nbS = slider('sk_nb', 'ก้อน', 0, () => { vis(); restart(); });
+  const m1 = slider('sk_m1', 'kg', 1, restart), m2 = slider('sk_m2', 'kg', 1, restart), m3 = slider('sk_m3', 'kg', 1, restart);
+  const mt = slider('sk_mt', 'kg', 1, restart), mbS = slider('sk_mb', 'kg', 1, restart);
+  const FF = slider('sk_F', 'N', 0, restart), th = slider('sk_th', '°', 0, restart), mu = slider('sk_mu', '', 2, restart);
+  const ms = slider('sk_ms', '', 2, restart), mk = slider('sk_mk', '', 2, restart);
+
+  function reset(start) { t = 0; msg = ''; tFall = null; running = !!start; }
+  function vis() {
+    sec.querySelectorAll('[data-m]').forEach(e => { e.style.display = e.dataset.m.split(' ').includes(mode) ? '' : 'none'; });
+    if (mode !== 'stack') sec.querySelector('.sk-m3').style.display = nbS() === 3 ? '' : 'none';
+  }
+  modeButtons(sec, 'mode', md => { mode = md; sec.dataset.mode = md; vis(); reset(true); });
+  modeButtons(sec, 'side', v => { side = v; reset(true); });
+  modeButtons(sec, 'at', v => { at = v; reset(true); });
+  modeButtons(sec, 'gr', v => { gr = v; });
+  vis();
+  $('sk_run').onclick = () => reset(true);
+  $('sk_reset').onclick = () => reset(false);
+  const sum = a => a.reduce((p, q) => p + q, 0);
+
+  // ---------- โหมดดึง / ดัน: กล่องเรียงบนพื้น ----------
+  // pull: index 0 = ก้อน 1 (ก้อนหน้าที่ถูกดึง อยู่ขวาสุด), conn[i] = แรงตึงเชือกระหว่างก้อน i+1 กับ i+2
+  // push: index ตามลำดับซ้าย→ขวา, conn[i] = แรงสัมผัสระหว่างก้อน i+1 กับ i+2
+  function solveLine() {
+    const nb = nbS(), mm = [m1(), m2(), m3()].slice(0, nb), M = sum(mm), F = FF(), u = mu();
+    const q = mode === 'pull' ? rad(th()) : 0, Fx = F * Math.cos(q), Fy = F * Math.sin(q);
+    const p = mode === 'pull' ? 0 : side === 'left' ? 0 : nb - 1;          // ก้อนที่รับแรง F
+    const sg = mode === 'push' && side === 'right' ? -1 : 1;                // ทิศการเคลื่อนที่
+    const Ns = mm.map((m, i) => m * G - (i === p ? Fy : 0));
+    const lift = Ns[p] < 0; if (lift) Ns[p] = 0;
+    const Ntot = sum(Ns), fmax = u * Ntot, moving = Fx > fmax + 1e-9;
+    const a = moving ? (Fx - fmax) / M : 0;
+    // ลำดับการส่งแรงจากก้อนที่รับ F ออกไป
+    const order = mode === 'pull' || side === 'left' ? mm.map((_, i) => i) : mm.map((_, i) => nb - 1 - i);
+    const fr = new Array(nb).fill(0);
+    if (moving) Ns.forEach((N, i) => { fr[i] = u * N; });
+    else { let rem = Fx; order.forEach(i => { fr[i] = Math.min(rem, u * Ns[i]); rem -= fr[i]; }); }
+    // แรงภายในที่รอยต่อ k: รวม (m a + f) ของทุกก้อนที่อยู่ "ปลายน้ำ" ของรอยต่อนั้น
+    const conn = [];
+    for (let k = 0; k < nb - 1; k++) {
+      const down = mm.map((_, i) => i).filter(i => (mode === 'pull' || side === 'left') ? i > k : i <= k);
+      conn.push(sum(down.map(i => mm[i] * a + fr[i])));
+    }
+    return { nb, mm, M, F, u, q, Fx, Fy, p, sg, Ns, lift, Ntot, fmax, moving, a, fr, conn };
+  }
+
+  // ---------- โหมดกล่องซ้อน ----------
+  // f1 = แรงเสียดทานที่กล่องล่างกระทำต่อกล่องบน (+ = ไปข้างหน้า), f2 = แรงเสียดทานจากพื้นต่อกล่องล่าง
+  function solveStack(F, onTop) {
+    const m = mt(), M = mbS(), us = ms(), uk = Math.min(mk(), us), u = mu();
+    const fs = us * m * G, Ff = u * (m + M) * G, fk = uk * m * G;
+    let st, a1, a2, f1, f2, Fmax, amax;
+    if (!onTop) {
+      amax = us * G; Fmax = (m + M) * (us + u) * G;
+      if (F <= Ff + 1e-9) { st = 'rest'; a1 = a2 = 0; f1 = 0; f2 = -F; }
+      else {
+        const a = (F - Ff) / (m + M);
+        if (a <= amax + 1e-9) { st = 'together'; a1 = a2 = a; f1 = m * a; f2 = -Ff; }
+        else { st = 'slide'; a1 = uk * G; a2 = (F - fk - Ff) / M; f1 = fk; f2 = -Ff; }
+      }
+    } else {
+      if (fs > Ff) { amax = (fs - Ff) / M; Fmax = fs + m * amax; } else { amax = 0; Fmax = fs; }
+      const a = (F - Ff) / (m + M), fneed = F - m * a;
+      if (F <= Ff + 1e-9 && F <= fs + 1e-9) { st = 'rest'; a1 = a2 = 0; f1 = -F; f2 = -F; }
+      else if (F > Ff && fneed <= fs + 1e-9) { st = 'together'; a1 = a2 = a; f1 = -fneed; f2 = -Ff; }
+      else {
+        st = 'slide'; a1 = (F - fk) / m; f1 = -fk;
+        if (fk > Ff) { a2 = (fk - Ff) / M; f2 = -Ff; } else { a2 = 0; f2 = -fk; }
+      }
+    }
+    return { m, M, us, uk, u, fs, Ff, fk, F, onTop, st, a1, a2, f1, f2, Fmax, amax, ukClamp: mk() > us };
+  }
+  const S = () => solveStack(FF(), at === 'top');
+  const x0Top = () => at === 'top' ? 0 : LB - LT;   // ตำแหน่งขอบซ้ายกล่องบนเทียบกล่องล่างตอนเริ่ม
+
+  function step(dt) {
+    if (!running) return;
+    t += dt;
+    if (mode === 'stack') {
+      const P = S(), rel = x0Top() + 0.5 * (P.a1 - P.a2) * t * t + LT / 2;   // ศูนย์กลางกล่องบนเทียบขอบซ้ายกล่องล่าง
+      if (rel < 0 || rel > LB) {
+        const d = rel < 0 ? -(x0Top() + LT / 2) : LB - x0Top() - LT / 2;
+        t = Math.sqrt(2 * d / (P.a1 - P.a2)); tFall = t; running = false;
+        msg = `กล่องบนไถลหลุดจากกล่องล่างที่ t = ${fmt(t, 2)} s`; return;
+      }
+    }
+    if (t >= TEND) { t = TEND; running = false; msg = `ครบ ${TEND} s`; }
+  }
+
+  // ---------- ช่วยวาด ----------
+  const txt = (ctx, s, x, y, clr, font) => { ctx.fillStyle = clr; ctx.font = font || '12px system-ui'; ctx.fillText(s, x, y); };
+  function floor(ctx, w, gy, ox, sc, cam) {
+    ctx.fillStyle = col('--grid'); ctx.fillRect(0, gy, w, 30);
+    line(ctx, 0, gy, w, gy, col('--c-slope'), 3);
+    const x0 = cam - ox / sc, x1 = cam + (w - ox) / sc;
+    for (let k = Math.floor(x0 / 0.5); k <= x1 / 0.5; k++) {
+      const sx = ox + (k * 0.5 - cam) * sc, big = k % 2 === 0;
+      line(ctx, sx, gy, sx, gy + (big ? 9 : 5), col('--muted'), 1);
+      if (big) { ctx.fillStyle = col('--muted'); ctx.font = '10px system-ui'; const s = `${k / 2} m`; ctx.fillText(s, sx - ctx.measureText(s).width / 2, gy + 20); }
+    }
+  }
+  function blockR(ctx, x, y, bw, bh, clr, lab) {
+    ctx.fillStyle = clr; ctx.fillRect(x, y, bw, bh);
+    ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1; ctx.strokeRect(x, y, bw, bh);
+    ctx.fillStyle = '#fff'; ctx.font = (bw < 56 ? '600 10px' : '600 12px') + ' system-ui';
+    const tw = ctx.measureText(lab).width;
+    ctx.fillText(lab, x + bw / 2 - tw / 2, y + bh / 2 + 4);
+  }
+  const BC = i => col(['--c-cart1', '--c-cart2', '--c-vy'][i]);
+  function vArrow(ctx, x, y, v, lab, left) {   // ลูกศรความเร็วในภาพ (ความยาวตามขนาด)
+    const L = Math.min(Math.abs(v) * 14, 130);
+    if (L > 3) arrow(ctx, x, y, Math.sign(v) * L, 0, col('--c-v'));
+    txt(ctx, lab, left ? x - 4 - ctx.measureText(lab).width : x + (v < 0 ? 4 : Math.max(L, 0) + 6), y + 4, col('--c-v'), '600 12px system-ui');
+  }
+
+  function drawLine(ctx, w, h) {
+    const P = solveLine(), nb = P.nb, gy = h - 34;
+    const bw = P.mm.map(m => 0.42 + 0.035 * m), bh = P.mm.map(m => 0.26 + 0.03 * m), gap = mode === 'pull' ? 0.45 : 0;
+    const Ltot = sum(bw) + gap * (nb - 1);
+    const sc = Math.min((w - 40) / (Ltot + 1.6), (gy - 70) / 1.1);
+    const d = 0.5 * P.a * t * t * P.sg, v = P.a * t * P.sg;
+    const ord = mode === 'pull' ? P.mm.map((_, i) => nb - 1 - i) : P.mm.map((_, i) => i);   // ซ้าย→ขวา
+    const lead = mode === 'pull' ? 1.1 : 0.8;
+    let xl = mode === 'pull' || side === 'right' ? (w - (Ltot + lead) * sc) / 2 : (w - (Ltot + lead) * sc) / 2 + lead * sc;
+    if (mode === 'push' && side === 'right') xl = (w - (Ltot + lead) * sc) / 2;
+    floor(ctx, w, gy, xl, sc, d);
+    const pos = {}; let x = xl;
+    ord.forEach(i => { pos[i] = x; x += bw[i] * sc + gap * sc; });
+    // เชือก
+    if (mode === 'pull') for (let k = 0; k < nb - 1; k++) {
+      const yr = gy - Math.min(bh[k], bh[k + 1]) * sc / 2;
+      line(ctx, pos[k + 1] + bw[k + 1] * sc, yr, pos[k], yr, col('--ink'), 2);
+      const lab = `T${SUB[k]}`; txt(ctx, lab, (pos[k + 1] + bw[k + 1] * sc + pos[k]) / 2 - 7, yr - 6, col('--c-v'), '600 12px system-ui');
+    }
+    P.mm.forEach((m, i) => blockR(ctx, pos[i], gy - bh[i] * sc, bw[i] * sc, bh[i] * sc, BC(i), `m${SUB[i]} ${fmt(m, 1)} kg`));
+    // แรง F
+    const FL = 20 + 70 * P.F / 150, Fp = P.p, ymid = gy - bh[Fp] * sc / 2;
+    if (P.F > 0) {
+      if (mode === 'pull') {
+        const x0 = pos[0] + bw[0] * sc, dx = FL * Math.cos(P.q), dy = -FL * Math.sin(P.q);
+        line(ctx, x0, ymid, x0 + dx * 0.25, ymid + dy * 0.25, col('--ink'), 2);
+        arrow(ctx, x0, ymid, dx, dy, col('--ink'), `F = ${fmt(P.F, 0)} N`);
+        if (P.q > 0.01) { line(ctx, x0, ymid, x0 + 40, ymid, col('--muted'), 1, [3, 3]); txt(ctx, `${fmt(deg(P.q), 0)}°`, x0 + 22, ymid - 4, col('--muted'), '11px system-ui'); }
+      } else {
+        const xa = side === 'left' ? pos[0] - FL : pos[nb - 1] + bw[nb - 1] * sc + FL, lab = `F = ${fmt(P.F, 0)} N`;
+        arrow(ctx, xa, ymid, side === 'left' ? FL - 2 : -FL + 2, 0, col('--ink'));
+        ctx.font = '600 13px system-ui'; const tw = ctx.measureText(lab).width;
+        txt(ctx, lab, side === 'left' ? Math.max(4, xa + FL / 2 - tw / 2) : Math.min(w - tw - 4, xa - FL / 2 - tw / 2), Math.min(ymid - 10, gy - bh[Fp] * sc - 6), col('--ink'), '600 13px system-ui');
+      }
+    }
+    // ความเร็วของระบบ (ทุกก้อนเท่ากัน)
+    const top = gy - Math.max(...bh) * sc - 26, xm = (xl + x - gap * sc) / 2;
+    vArrow(ctx, xm, top, v, `v = ${fmt(Math.abs(v), 2)} m/s`);
+    if (P.a > 0) { arrow(ctx, xm, top - 20, P.sg * 28, 0, col('--c-vy')); txt(ctx, `a = ${fmt(P.a, 2)} m/s²`, xm + (P.sg > 0 ? 34 : 4), top - 16, col('--c-vy'), '600 12px system-ui'); }
+    txt(ctx, mode === 'pull' ? 'ดึงกล่องที่ผูกเชือกต่อกันบนพื้นที่มีแรงเสียดทาน' : 'ดันกล่องที่วางชิดกันบนพื้นที่มีแรงเสียดทาน', 8, 18, col('--muted'), '13px system-ui');
+    txt(ctx, `t = ${fmt(t, 2)} s   ระยะ = ${fmt(Math.abs(d), 2)} m`, 8, 36, col('--ink'), '12px system-ui');
+    if (P.lift) txt(ctx, 'F sinθ > m₁g ก้อนหน้าถูกยกลอย (ลด F หรือ θ)', 8, 54, col('--c-mg'), '600 12px system-ui');
+    else if (!P.moving) txt(ctx, 'แรงในแนวราบไม่เกินแรงเสียดทานสูงสุด ระบบไม่เคลื่อนที่', 8, 54, col('--c-mg'), '600 12px system-ui');
+    else if (msg) txt(ctx, msg, 8, 54, col('--c-vy'), '600 12px system-ui');
+    return P;
+  }
+
+  function drawStack(ctx, w, h) {
+    const P = S(), gy = h - 46, sc = Math.min((w - 40) / 3.2, (gy - 80) / 0.95);
+    const d2 = 0.5 * P.a2 * t * t, d1 = 0.5 * P.a1 * t * t, rel = x0Top() + d1 - d2;
+    const xb = (w - LB * sc) / 2 - 0.25 * sc, yb = gy - HB * sc;
+    floor(ctx, w, gy, xb, sc, d2);
+    blockR(ctx, xb, yb, LB * sc, HB * sc, BC(0), `M ${fmt(P.M, 1)} kg`);
+    const xt = xb + rel * sc, yt = yb - HT * sc;
+    if (tFall === null) blockR(ctx, xt, yt, LT * sc, HT * sc, BC(1), `m ${fmt(P.m, 1)} kg`);
+    else {   // กล่องบนเลยขอบ: วาดเอียงตกลง
+      ctx.save(); ctx.translate(xt + LT * sc / 2, yt + HT * sc / 2); ctx.rotate(rel < 0 ? -0.35 : 0.35);
+      blockR(ctx, -LT * sc / 2, -HT * sc / 2 + 6, LT * sc, HT * sc, BC(1), `m ${fmt(P.m, 1)} kg`); ctx.restore();
+    }
+    const FL = 20 + 70 * P.F / 150;
+    if (P.F > 0) {
+      if (P.onTop) arrow(ctx, xt + LT * sc, yt + HT * sc / 2, FL, 0, col('--ink'), `F = ${fmt(P.F, 0)} N`);
+      else arrow(ctx, xb + LB * sc, yb + HB * sc / 2, FL, 0, col('--ink'), `F = ${fmt(P.F, 0)} N`);
+    }
+    vArrow(ctx, xt + 4, yt - 14, P.a1 * t, `v₁ = ${fmt(P.a1 * t, 2)} m/s`);
+    vArrow(ctx, xb + 4, gy + 36, P.a2 * t, `v₂ = ${fmt(P.a2 * t, 2)} m/s`);
+    const stTxt = P.st === 'rest' ? 'อยู่นิ่ง (แรงเสียดทานสถิตยังรับไหว)' : P.st === 'together' ? 'เคลื่อนที่ไปด้วยกัน (ไม่ไถลสัมพัทธ์)' : 'กล่องบนไถลบนกล่องล่าง';
+    txt(ctx, `กล่อง m ซ้อนบนกล่อง M: ${stTxt}`, 8, 18, P.st === 'slide' ? col('--c-mg') : col('--muted'), '600 13px system-ui');
+    txt(ctx, `t = ${fmt(t, 2)} s   ระยะกล่องบนเลื่อนเทียบกล่องล่าง = ${fmt(d1 - d2, 2)} m`, 8, 36, col('--ink'), '12px system-ui');
+    if (msg) txt(ctx, msg, 8, 54, col('--c-vy'), '600 12px system-ui');
+    return P;
+  }
+
+  // ---------- FBD แยกทีละก้อน ----------
+  // force: { nm, v (ขนาด, N), dx, dy (เวกเตอร์หน่วยบนจอ), at: c|t|b|l|r, push (หัวลูกศรชนผิว), ox, clr }
+  function fbd(panels, foot) {
+    const w = fc.getBoundingClientRect().width || 600;
+    const cols = Math.max(1, Math.min(panels.length, Math.floor(w / 175)));
+    const rows = Math.ceil(panels.length / cols), PH = 214;
+    // ตัดบรรทัดคำอธิบายคู่กิริยา-ปฏิกิริยาก่อน เพื่อคำนวณความสูง canvas
+    const mc = fc.getContext('2d'); mc.font = '12px system-ui'; const fl = []; let cur = '';
+    foot.split(' ').forEach(seg => {
+      const tryS = cur ? cur + ' ' + seg : seg;
+      if (mc.measureText(tryS).width > w - 16 && cur) { fl.push(cur); cur = seg; } else cur = tryS;
+    });
+    if (cur) fl.push(cur);
+    const want = rows * PH + fl.length * 16 + 14 + 'px';
+    if (fc.style.height !== want) fc.style.height = want;
+    const { ctx } = fitCanvas(fc), pw = w / cols;
+    const bwid = Math.min(pw * 0.3, 70), bhgt = bwid * 0.7;
+    const reachV = PH / 2 - bhgt / 2 - 26, reachH = pw / 2 - bwid / 2 - 12;
+    const Fm = Math.max(1e-6, ...panels.flatMap(p => p.forces.map(f => f.v)));
+    const k = Math.min(reachV, reachH) / Fm;
+    const font = pw < 210 ? '600 11px system-ui' : '600 12px system-ui';
+    const hit = (A, B) => A[0] < B[0] + B[2] && B[0] < A[0] + A[2] && A[1] < B[1] + B[3] && B[1] < A[1] + A[3];
+    panels.forEach((P, i) => {
+      const px = (i % cols) * pw, py = Math.floor(i / cols) * PH + 4;
+      ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.strokeRect(px + 3, py, pw - 6, PH - 6);
+      txt(ctx, P.title, px + 9, py + 15, col('--ink'), '600 12px system-ui');
+      const cx = px + pw / 2, cy = py + PH / 2 + 10, bx = cx - bwid / 2, by = cy - bhgt / 2;
+      ctx.globalAlpha = 0.3; ctx.fillStyle = P.clr; ctx.fillRect(bx, by, bwid, bhgt); ctx.globalAlpha = 1;
+      ctx.strokeStyle = P.clr; ctx.lineWidth = 1.5; ctx.strokeRect(bx, by, bwid, bhgt);
+      // ความเร่งของก้อน
+      const ay = py + 32;
+      if (Math.abs(P.a) > 1e-9) { arrow(ctx, px + 10 + (P.a < 0 ? 24 : 0), ay, Math.sign(P.a) * 24, 0, col('--c-vy')); txt(ctx, `a = ${fmt(Math.abs(P.a), 2)} m/s²`, px + 40, ay + 4, col('--c-vy'), '11px system-ui'); }
+      else txt(ctx, 'a = 0', px + 10, ay + 4, col('--c-vy'), '11px system-ui');
+      // วาดลูกศรทั้งหมดก่อน แล้ววางป้ายในตำแหน่งที่ไม่ทับกัน
+      const obs = [[bx, by, bwid, bhgt]], arr = [];
+      P.forces.forEach(f => {
+        if (f.v < 1e-6) return;
+        const L = Math.max(10, f.v * k);
+        let ax = f.at === 'l' ? bx : f.at === 'r' ? bx + bwid : cx;
+        let ay2 = f.at === 't' ? by - (Math.abs(f.dx) > 0.9 ? 4 : 0) : f.at === 'b' ? by + bhgt + 4 : f.at === 'c' ? (f.dy < -0.5 ? by : f.dy > 0.5 ? by + bhgt : cy) : cy;
+        ax += (f.ox || 0) * bwid;
+        const sx = f.push ? ax - f.dx * L : ax, sy = f.push ? ay2 - f.dy * L : ay2, hx = sx + f.dx * L, hy = sy + f.dy * L;
+        arrow(ctx, sx, sy, f.dx * L, f.dy * L, f.clr);
+        obs.push([Math.min(sx, hx) - 3, Math.min(sy, hy) - 3, Math.abs(hx - sx) + 6, Math.abs(hy - sy) + 6]);
+        arr.push({ f, sx, sy, hx, hy });
+      });
+      ctx.font = font;
+      arr.forEach(({ f, sx, sy, hx, hy }) => {
+        const lab = `${f.nm} ${fmt(f.v, 1)} N`, tw = ctx.measureText(lab).width, mx = (sx + hx) / 2, my = (sy + hy) / 2;
+        const ux = f.dx, uy = f.dy;
+        const bx0 = hx + ux * 6 + (ux < -0.3 ? -tw : ux > 0.3 ? 0 : -tw / 2), by0 = hy + uy * 6 + (uy > 0.3 ? 11 : uy < -0.3 ? -1 : 4);
+        const cands = [[bx0, by0], [hx + 6, hy + 4], [hx - 6 - tw, hy + 4], [hx - tw / 2, hy - 7], [hx - tw / 2, hy + 15],
+          [mx + 6, my + 4], [mx - 6 - tw, my + 4], [mx - tw / 2, my - 7], [mx - tw / 2, my + 15],
+          [sx + 6, sy + 4], [sx - 6 - tw, sy + 4], [hx + 6, hy - 8], [hx - 6 - tw, hy - 8], [hx + 6, hy + 16], [hx - 6 - tw, hy + 16]];
+        const inside = ([x, y]) => x >= px + 5 && x + tw <= px + pw - 5 && y - 11 >= py + 40 && y + 3 <= py + PH - 8;
+        let pick = cands.find(q => inside(q) && !obs.some(o => hit([q[0], q[1] - 11, tw, 14], o)));
+        if (!pick) pick = [Math.max(px + 6, Math.min(px + pw - 6 - tw, bx0)), Math.max(py + 52, Math.min(py + PH - 10, by0))];
+        obs.push([pick[0], pick[1] - 11, tw, 14]);
+        txt(ctx, lab, pick[0], pick[1], f.clr, font);
+      });
+    });
+    fl.forEach((s, j) => txt(ctx, s, 8, rows * PH + 16 + j * 16, col('--muted'), '12px system-ui'));
+  }
+  const Fc = (nm, v, dx, dy, at2, clr, push, ox) => ({ nm, v: Math.abs(v), dx, dy, at: at2, clr, push, ox: ox || 0 });
+
+  function fbdLine(P) {
+    const cMG = col('--c-mg'), cN = col('--c-n'), cF = col('--c-f'), cT = col('--c-v'), cE = col('--ink');
+    const panels = P.mm.map((m, i) => {
+      const fs = [Fc(`m${SUB[i]}g`, m * G, 0, 1, 'c', cMG), Fc(`N${SUB[i]}`, P.Ns[i], 0, -1, 'c', cN)];
+      if (P.fr[i] > 1e-9) fs.push(Fc(`f${SUB[i]}`, P.fr[i], -P.sg, 0, 'b', cF));
+      if (mode === 'pull') {
+        if (i === 0) fs.push(Fc('F', P.F, Math.cos(P.q), -Math.sin(P.q), 'r', cE));
+        if (i > 0) fs.push(Fc(`T${SUB[i - 1]}`, P.conn[i - 1], 1, 0, 'r', cT));
+        if (i < P.nb - 1) fs.push(Fc(`T${SUB[i]}`, P.conn[i], -1, 0, 'l', cT));
+      } else {
+        if (i === P.p) fs.push(Fc('F', P.F, P.sg, 0, P.sg > 0 ? 'l' : 'r', cE, true));
+        const pn = k => `P${SUB[k]}${SUB[k + 1]}`;
+        if (i > 0) fs.push(Fc(pn(i - 1), P.conn[i - 1], 1, 0, 'l', cT, true));
+        if (i < P.nb - 1) fs.push(Fc(pn(i), P.conn[i], -1, 0, 'r', cT, true));
+      }
+      return { title: `ก้อน ${i + 1} (m${SUB[i]} = ${fmt(m, 1)} kg)`, clr: BC(i), a: P.a * P.sg, forces: fs };
+    });
+    let foot;
+    if (mode === 'pull') foot = 'เชือกเบา: แรงตึงที่ปลายทั้งสองของเส้นเดียวกันเท่ากัน (T' + SUB[0] + ' ดึงก้อน 1 ไปข้างหลัง และดึงก้อน 2 ไปข้างหน้า)' +
+      ' · คู่กิริยา-ปฏิกิริยาของ N และ f อยู่ที่พื้น · ' + (P.moving ? 'ทุกก้อนมีความเร่งเท่ากัน' : 'ระบบนิ่ง: แรงเสียดทานสถิตแบ่งกันไม่แน่นอน ภาพนี้สมมติก้อนหน้ารับก่อน');
+    else foot = P.mm.slice(0, -1).map((_, k) => `P${SUB[k]}${SUB[k + 1]}: ก้อน ${k + 1} ดันก้อน ${k + 2} และก้อน ${k + 2} ดันก้อน ${k + 1} ขนาดเท่ากัน ทิศตรงข้าม (คู่กิริยา-ปฏิกิริยา)`).join(' · ') +
+      (P.moving ? '' : ' · ระบบนิ่ง: แรงเสียดทานสถิตแบ่งกันไม่แน่นอน ภาพนี้สมมติก้อนที่ถูกดันรับก่อน');
+    fbd(panels, foot);
+  }
+  function fbdStack(P) {
+    const cMG = col('--c-mg'), cN = col('--c-n'), cF = col('--c-f'), cE = col('--ink');
+    const N1 = P.m * G, N2 = (P.m + P.M) * G, s1 = Math.sign(P.f1), s2 = Math.sign(P.f2);
+    const top = [Fc('mg', N1, 0, 1, 'c', cMG), Fc('N₁', N1, 0, -1, 'c', cN), Fc('f₁', P.f1, s1, 0, 'b', cF)];
+    const bot = [Fc('Mg', P.M * G, 0, 1, 'c', cMG), Fc('N₂', N2, 0, -1, 'c', cN), Fc('N₁', N1, 0, 1, 't', cN, true, -0.3),
+      Fc('f₁', P.f1, -s1, 0, 't', cF), Fc('f₂', P.f2, s2, 0, 'b', cF)];
+    (P.onTop ? top : bot).push(Fc('F', P.F, 1, 0, 'r', cE));
+    const panels = [{ title: `กล่องบน (m = ${fmt(P.m, 1)} kg)`, clr: BC(1), a: P.a1, forces: top },
+      { title: `กล่องล่าง (M = ${fmt(P.M, 1)} kg)`, clr: BC(0), a: P.a2, forces: bot }];
+    const fk = P.st === 'slide' ? 'แรงเสียดทานจลน์' : 'แรงเสียดทานสถิต';
+    fbd(panels, `คู่กิริยา-ปฏิกิริยา: N₁ (กล่องล่างดันกล่องบนขึ้น ↔ กล่องบนกดกล่องล่างลง) · f₁ (${fk} ระหว่างกล่อง ขนาดเท่ากัน ทิศตรงข้าม) · N₂ = (m + M)g เพราะไม่มีแรงแนวดิ่งอื่น`);
+  }
+
+  // ---------- กราฟ ----------
+  function plot(ctx, w, h, xMax, yMax, xl, yl, series, marks) {
+    const L = 50, R = 12, T = 14, B = 34, pw = w - L - R, ph = h - T - B;
+    const X = x => L + x / xMax * pw, Y = y => T + ph - y / yMax * ph;
+    const sx = niceStep(xMax, 5), sy = niceStep(yMax, 4);
+    ctx.font = '11px system-ui';
+    for (let x = 0; x <= xMax + 1e-9; x += sx) { line(ctx, X(x), T, X(x), T + ph, col('--grid'), 1); const s = fmt(x, sx < 1 ? 1 : 0); ctx.fillStyle = col('--muted'); ctx.fillText(s, X(x) - ctx.measureText(s).width / 2, T + ph + 14); }
+    for (let y = 0; y <= yMax + 1e-9; y += sy) { line(ctx, L, Y(y), L + pw, Y(y), col('--grid'), 1); const s = fmt(y, sy < 1 ? 1 : 0); ctx.fillStyle = col('--muted'); ctx.fillText(s, L - 6 - ctx.measureText(s).width, Y(y) + 4); }
+    line(ctx, L, T + ph, L + pw, T + ph, col('--muted'), 1.2); line(ctx, L, T, L, T + ph, col('--muted'), 1.2);
+    txt(ctx, xl, L + pw - ctx.measureText(xl).width - 4, T + ph + 28, col('--muted'), '12px system-ui');
+    ctx.save(); ctx.translate(13, T + ph / 2 + 30); ctx.rotate(-Math.PI / 2); txt(ctx, yl, 0, 0, col('--muted'), '12px system-ui'); ctx.restore();
+    marks.forEach(m => { line(ctx, X(m.x), T, X(m.x), T + ph, m.clr, 1, [4, 4]); txt(ctx, m.lab, Math.min(X(m.x) + 4, L + pw - ctx.measureText(m.lab).width - 2), T + 12, m.clr, '11px system-ui'); });
+    let ly = T + 14;
+    series.forEach(s => {
+      ctx.strokeStyle = s.clr; ctx.lineWidth = 2.2; ctx.setLineDash(s.dash || []); ctx.beginPath(); let pen = false;
+      s.pts.forEach(p => { if (!p) { pen = false; return; } const yy = Math.min(Math.max(p[1], 0), yMax); if (pen) ctx.lineTo(X(p[0]), Y(yy)); else ctx.moveTo(X(p[0]), Y(yy)); pen = true; });
+      ctx.stroke(); ctx.setLineDash([]);
+      if (s.dot) { ctx.fillStyle = s.clr; ctx.beginPath(); ctx.arc(X(s.dot[0]), Y(Math.min(s.dot[1], yMax)), 5, 0, 7); ctx.fill(); }
+      if (s.lab) { ly += 15; txt(ctx, s.lab, L + 8, ly, s.clr, '600 12px system-ui'); }
+    });
+  }
+  function graph(PL, PS) {
+    const { ctx, w, h } = fitCanvas(gc);
+    if (mode === 'stack' && gr === 'aF') {
+      const P = PS, xMax = Math.max(1.6 * P.Fmax, P.F * 1.15, 10), N = 240, p1 = [], p2 = [];
+      let prev = null, yMax = 0;
+      for (let i = 0; i <= N; i++) {
+        const F = xMax * i / N, Q = solveStack(F, P.onTop);
+        if (prev && prev !== Q.st && Q.st === 'slide') { p1.push(null); p2.push(null); }
+        prev = Q.st; p1.push([F, Q.a1]); p2.push([F, Q.a2]); yMax = Math.max(yMax, Q.a1, Q.a2);
+      }
+      yMax = Math.max(1, yMax * 1.1);
+      plot(ctx, w, h, xMax, yMax, 'F (N)', 'a (m/s²)', [
+        { pts: p2, clr: BC(0), lab: 'a₂ กล่องล่าง', dot: [P.F, P.a2] },
+        { pts: p1, clr: BC(1), lab: 'a₁ กล่องบน', dash: [6, 4], dot: [P.F, P.a1] }],
+        [{ x: P.Fmax, lab: `F_max = ${fmt(P.Fmax, 1)} N`, clr: col('--c-mg') }, { x: P.F, lab: '', clr: col('--ink') }]);
+    } else {
+      let ser, aMax;
+      if (mode === 'stack') {
+        const P = PS; aMax = Math.max(P.a1, P.a2);
+        ser = [{ pts: [[0, 0], [TEND, P.a2 * TEND]], clr: BC(0), lab: 'v₂ กล่องล่าง', dot: [t, P.a2 * t] },
+          { pts: [[0, 0], [TEND, P.a1 * TEND]], clr: BC(1), lab: 'v₁ กล่องบน', dash: [6, 4], dot: [t, P.a1 * t] }];
+      } else {
+        aMax = PL.a; ser = [{ pts: [[0, 0], [TEND, PL.a * TEND]], clr: col('--c-v'), lab: 'v ของทุกก้อน (เท่ากัน)', dot: [t, PL.a * t] }];
+      }
+      plot(ctx, w, h, TEND, Math.max(1, aMax * TEND * 1.1), 't (s)', '|v| (m/s)', ser,
+        tFall !== null ? [{ x: tFall, lab: 'กล่องบนหลุด', clr: col('--c-mg') }] : []);
+    }
+  }
+
+  // ---------- สมการ ตาราง และหมายเหตุ ----------
+  const msum = (mm, idx) => idx.length === 1 ? n(mm[idx[0]], 1) : '(' + idx.map(i => n(mm[i], 1)).join(' + ') + ')';
+  const mnames = idx => idx.length === 1 ? `m${SUB[idx[0]]}` : '(' + idx.map(i => `m${SUB[i]}`).join(' + ') + ')';
+  function textLine(P) {
+    const all = P.mm.map((_, i) => i), up = P.u, q = deg(P.q), pull = mode === 'pull';
+    const T = pull ? 'T' : 'P', nmK = k => pull ? `T${SUB[k]}` : `P${SUB[k]}${SUB[k + 1]}`;
+    let eq = eqH('1) มองทั้งระบบเป็นก้อนเดียว: ' + (pull ? 'แรงตึงเชือก' : 'แรงสัมผัสระหว่างก้อน') + 'เป็นแรงภายใน หักล้างกันเป็นคู่');
+    if (pull && P.q > 1e-6) eq += eqL(`ΣN = ${mnames(all)}g − F sinθ = ${msum(P.mm, all)} × 9.8 − ${n(P.F, 0)} × sin ${n(q, 0)}° = <b>${r(P.Ntot)} N</b>`);
+    else eq += eqL(`ΣN = ${mnames(all)}g = ${msum(P.mm, all)} × 9.8 = <b>${r(P.Ntot)} N</b>`);
+    eq += eqL(`แรงเสียดทานจลน์รวม f = μΣN = ${n(up)} × ${n(P.Ntot)} = <b>${r(P.fmax)} N</b>`);
+    const Fh = pull && P.q > 1e-6 ? 'F cosθ' : 'F';
+    if (!P.moving) {
+      eq += eqL(`${Fh} = ${r(P.Fx)} N ≤ μΣN = ${r(P.fmax)} N → <b>ไม่เคลื่อนที่ a = 0</b> (แรงเสียดทานสถิตรวม = ${r(P.Fx)} N)`);
+    } else {
+      eq += eqL(`ΣF = (Σm)a : ${Fh} − f = ${mnames(all)}a`);
+      eq += eqL(`a = (${pull && P.q > 1e-6 ? `${n(P.F, 0)} × cos ${n(q, 0)}°` : n(P.F, 0)} − ${n(P.fmax)}) / ${n(P.M, 1)} = <b>${r(P.a, 3)} m/s²</b>`);
+      eq += eqH('2) แยกก้อน: ใช้ ΣF = ma กับกลุ่มก้อนที่อยู่ด้านปลาย (ไม่มี F มาเกี่ยว)');
+      for (let k = P.nb - 2; k >= 0; k--) {
+        const down = all.filter(i => (pull || side === 'left') ? i > k : i <= k);
+        const who = down.map(i => i + 1).join('+');
+        eq += eqL(`ก้อน ${who}: ${nmK(k)} − μ${mnames(down)}g = ${mnames(down)}a → ${nmK(k)} = ${msum(P.mm, down)} × (${n(P.a, 3)} + ${n(up)} × 9.8) = <b>${r(P.conn[k])} N</b>`);
+      }
+      const pi = P.p, oth = pull ? [0] : (P.nb > 1 ? [side === 'left' ? 0 : P.nb - 2] : []);
+      eq += eqH(`ตรวจด้วยก้อน ${pi + 1} (ก้อนที่รับ F)`);
+      const kk = oth[0], net = P.Fx - P.conn[kk] - P.fr[pi];
+      eq += eqL(`${Fh} − ${nmK(kk)} − μN${SUB[pi]} = ${n(P.Fx)} − ${n(P.conn[kk])} − ${n(P.fr[pi])} = ${r(net)} N = m${SUB[pi]}a = ${n(P.mm[pi], 1)} × ${n(P.a, 3)} = <b>${r(P.mm[pi] * P.a)} N</b> ✓`);
+      eq += eqH('สังเกต');
+      eq += eqL(`${T} = (มวลด้านปลาย/Σm) × F${pull && P.q > 1e-6 ? '(cosθ + μ sinθ)' : ''} → ` + (pull && P.q > 1e-6 ? 'เมื่อ F เอียงขึ้น ค่า T ขึ้นกับ μ ด้วย' : 'ไม่ขึ้นกับ μ เลย'));
+    }
+    let tab = `<tr><td>ความเร่งร่วม a</td><td>${fmt(P.a, 3)} m/s²</td></tr>`;
+    for (let k = 0; k < P.nb - 1; k++) tab += `<tr><td>${pull ? 'แรงตึงเชือก ' : 'แรงสัมผัส '}${nmK(k)}</td><td>${fmt(P.conn[k], 2)} N</td></tr>`;
+    tab += `<tr><td>แรงเสียดทานรวม</td><td>${fmt(sum(P.fr), 2)} N</td></tr><tr><td>ΣN จากพื้น</td><td>${fmt(P.Ntot, 2)} N</td></tr>
+      <tr><td>F ในแนวราบ</td><td>${fmt(P.Fx, 2)} N</td></tr><tr><td>ความเร็วขณะ t</td><td>${fmt(P.a * t, 2)} m/s</td></tr>`;
+    let note;
+    if (pull) note = 'เชือกที่อยู่ใกล้ F มีแรงตึงมากกว่า เพราะต้องลากมวลด้านหลังมากกว่า ' +
+      (P.q > 1e-6 ? 'แรง F ที่เอียงขึ้นลดแรงกดพื้นของก้อน 1 (N₁ = m₁g − F sinθ) แรงเสียดทานจึงลดลง' : 'ลองปรับ μ: a เปลี่ยน แต่ T ไม่เปลี่ยน');
+    else note = `ดันจาก${side === 'left' ? 'ซ้าย' : 'ขวา'}: แรงสัมผัสระหว่างก้อนเท่ากับแรงที่ใช้เร่ง (และชนะแรงเสียดทาน) ของก้อนที่อยู่ข้างหน้ารอยต่อนั้น ` +
+      'กดสลับด้านดันแล้วดูว่าแรงสัมผัสเปลี่ยน แม้ความเร่งเท่าเดิม';
+    return { eq, tab, note };
+  }
+  function textStack(P) {
+    const m = n(P.m, 1), M = n(P.M, 1), us = n(P.us), uk = n(P.uk), u = n(P.u), F = n(P.F, 0);
+    let eq;
+    if (!P.onTop) {
+      eq = eqH('1) หา F สูงสุดที่ยังเคลื่อนไปด้วยกัน: แรงแนวราบที่ทำให้กล่องบนเร่งได้มีแรงเดียวคือ f₁ จากกล่องล่าง') +
+        eqL(`กล่องบน: f₁ = ma ≤ μ<sub>s</sub>mg → a<sub>max</sub> = μ<sub>s</sub>g = ${us} × 9.8 = <b>${r(P.amax)} m/s²</b>`) +
+        eqL(`ทั้งระบบ: F − μ<sub>พื้น</sub>(m + M)g = (m + M)a`) +
+        eqL(`F<sub>max</sub> = (m + M)(μ<sub>s</sub>g + μ<sub>พื้น</sub>g) = (${m} + ${M}) × (${us} × 9.8 + ${u} × 9.8) = <b>${r(P.Fmax)} N</b>`);
+      if (P.st === 'rest') eq += eqH('2) F = ' + F + ' N') + eqL(`F ≤ μ<sub>พื้น</sub>(m + M)g = ${u} × (${m} + ${M}) × 9.8 = ${r(P.Ff)} N → <b>ไม่เคลื่อนที่</b>`);
+      else if (P.st === 'together') eq += eqH(`2) F = ${F} N ≤ F<sub>max</sub> → เคลื่อนที่ไปด้วยกัน`) +
+        eqL(`a = (F − μ<sub>พื้น</sub>(m + M)g)/(m + M) = (${F} − ${n(P.Ff)})/(${m} + ${M}) = <b>${r(P.a1, 3)} m/s²</b>`) +
+        eqL(`f₁ = ma = ${m} × ${n(P.a1, 3)} = <b>${r(P.f1)} N</b> (≤ μ<sub>s</sub>mg = ${r(P.fs)} N)`);
+      else eq += eqH(`2) F = ${F} N > F<sub>max</sub> → กล่องบนไถล ใช้ μ<sub>k</sub> แยกแต่ละก้อน`) +
+        eqL(`กล่องบน: μ<sub>k</sub>mg = ma₁ → a₁ = μ<sub>k</sub>g = ${uk} × 9.8 = <b>${r(P.a1, 3)} m/s²</b> (f₁ ชี้ไปข้างหน้า)`) +
+        eqL(`กล่องล่าง: F − μ<sub>k</sub>mg − μ<sub>พื้น</sub>(m + M)g = Ma₂`) +
+        eqL(`a₂ = (${F} − ${uk} × ${m} × 9.8 − ${u} × (${m} + ${M}) × 9.8)/${M} = <b>${r(P.a2, 3)} m/s²</b>`) +
+        eqL(`ความเร่งของกล่องบนเทียบกล่องล่าง a₁ − a₂ = <b>${r(P.a1 - P.a2, 3)} m/s²</b> (ไถลถอยหลังเทียบกล่องล่าง)`);
+    } else {
+      eq = eqH('1) หา F สูงสุดที่ยังเคลื่อนไปด้วยกัน: กล่องล่างถูกเร่งด้วย f₁ จากกล่องบนเท่านั้น');
+      if (P.fs > P.Ff) eq += eqL(`กล่องล่าง: f₁ − μ<sub>พื้น</sub>(m + M)g = Ma , f₁ ≤ μ<sub>s</sub>mg`) +
+        eqL(`a<sub>max</sub> = (μ<sub>s</sub>mg − μ<sub>พื้น</sub>(m + M)g)/M = (${n(P.fs)} − ${n(P.Ff)})/${M} = <b>${r(P.amax, 3)} m/s²</b>`) +
+        eqL(`F<sub>max</sub> = (m + M)a<sub>max</sub> + μ<sub>พื้น</sub>(m + M)g = (${m} + ${M}) × ${n(P.amax, 3)} + ${n(P.Ff)} = <b>${r(P.Fmax)} N</b>`);
+      else eq += eqL(`μ<sub>s</sub>mg = ${r(P.fs)} N ≤ μ<sub>พื้น</sub>(m + M)g = ${r(P.Ff)} N → กล่องล่างไม่มีทางขยับ`) +
+        eqL(`กล่องบนเริ่มไถลเมื่อ F > F<sub>max</sub> = μ<sub>s</sub>mg = <b>${r(P.Fmax)} N</b>`);
+      if (P.st === 'rest') eq += eqH(`2) F = ${F} N`) + eqL(`F ไม่เกินทั้ง μ<sub>s</sub>mg และ μ<sub>พื้น</sub>(m + M)g → <b>ไม่เคลื่อนที่</b> แรงเสียดทานสถิต f₁ = f₂ = ${r(P.F)} N`);
+      else if (P.st === 'together') eq += eqH(`2) F = ${F} N ≤ F<sub>max</sub> → เคลื่อนที่ไปด้วยกัน`) +
+        eqL(`a = (F − μ<sub>พื้น</sub>(m + M)g)/(m + M) = (${F} − ${n(P.Ff)})/(${m} + ${M}) = <b>${r(P.a1, 3)} m/s²</b>`) +
+        eqL(`กล่องบน: F − f₁ = ma → f₁ = ${F} − ${m} × ${n(P.a1, 3)} = <b>${r(-P.f1)} N</b> (ชี้ไปข้างหลัง)`);
+      else eq += eqH(`2) F = ${F} N > F<sub>max</sub> → กล่องบนไถล ใช้ μ<sub>k</sub> แยกแต่ละก้อน`) +
+        eqL(`กล่องบน: F − μ<sub>k</sub>mg = ma₁ → a₁ = (${F} − ${uk} × ${m} × 9.8)/${m} = <b>${r(P.a1, 3)} m/s²</b>`) +
+        (P.fk > P.Ff ? eqL(`กล่องล่าง: μ<sub>k</sub>mg − μ<sub>พื้น</sub>(m + M)g = Ma₂ → a₂ = (${n(P.fk)} − ${n(P.Ff)})/${M} = <b>${r(P.a2, 3)} m/s²</b>`)
+          : eqL(`กล่องล่าง: μ<sub>k</sub>mg = ${r(P.fk)} N ≤ μ<sub>พื้น</sub>(m + M)g = ${r(P.Ff)} N → <b>a₂ = 0</b> กล่องล่างนิ่ง`));
+    }
+    if (P.ukClamp) eq += eqL('หมายเหตุ: ตั้ง μ<sub>k</sub> > μ<sub>s</sub> ไม่สมจริง โปรแกรมใช้ μ<sub>k</sub> = μ<sub>s</sub>');
+    const stT = P.st === 'rest' ? 'นิ่ง' : P.st === 'together' ? 'ไปด้วยกัน' : 'ไถลสัมพัทธ์';
+    const tab = `<tr><td>สถานะ</td><td>${stT}</td></tr><tr><td>F<sub>max</sub> (ไปด้วยกัน)</td><td>${fmt(P.Fmax, 2)} N</td></tr>
+      <tr><td>a₁ กล่องบน</td><td>${fmt(P.a1, 3)} m/s²</td></tr><tr><td>a₂ กล่องล่าง</td><td>${fmt(P.a2, 3)} m/s²</td></tr>
+      <tr><td>f₁ ระหว่างกล่อง</td><td>${fmt(Math.abs(P.f1), 2)} N ${P.f1 > 1e-9 ? '(บน: ไปหน้า)' : P.f1 < -1e-9 ? '(บน: ถอยหลัง)' : ''}</td></tr>
+      <tr><td>f₂ จากพื้น</td><td>${fmt(Math.abs(P.f2), 2)} N</td></tr><tr><td>N₁ / N₂</td><td>${fmt(P.m * G, 1)} / ${fmt((P.m + P.M) * G, 1)} N</td></tr>
+      <tr><td>v₁ / v₂ ขณะ t</td><td>${fmt(P.a1 * t, 2)} / ${fmt(P.a2 * t, 2)} m/s</td></tr>`;
+    const note = P.onTop
+      ? 'ออกแรงที่กล่องบน: แรงเสียดทานจากกล่องล่างต้านกล่องบน (ชี้ถอยหลัง) และคู่ของมันลากกล่องล่างไปข้างหน้า ถ้า F เกิน F<sub>max</sub> กล่องบนวิ่งนำ a₁ > a₂'
+      : 'ออกแรงที่กล่องล่าง: กล่องบนถูกพาไปด้วยแรงเสียดทานจากกล่องล่าง (ชี้ไปข้างหน้า) ซึ่งมีค่าไม่เกิน μ<sub>s</sub>mg จึงเร่งได้ไม่เกิน μ<sub>s</sub>g ถ้า F เกิน F<sub>max</sub> กล่องบนไถลถอยหลังเทียบกล่องล่าง (แต่เทียบพื้นยังไปข้างหน้า)';
+    return { eq, tab, note };
+  }
+
+  function draw() {
+    const hw = (c.getBoundingClientRect().width || 600) < 600 ? '250px' : '310px';
+    if (c.style.height !== hw) c.style.height = hw;
+    const { ctx, w, h } = fitCanvas(c);
+    let PL = null, PS = null, T;
+    if (mode === 'stack') { PS = drawStack(ctx, w, h); fbdStack(PS); T = textStack(PS); }
+    else { PL = drawLine(ctx, w, h); fbdLine(PL); T = textLine(PL); }
+    graph(PL, PS);
+    $('sk_tab').innerHTML = T.tab;
+    if ($('sk_note')._t !== T.note) { $('sk_note').innerHTML = T.note; $('sk_note')._t = T.note; }
+    setEq('sk_eq', T.eq);
+  }
+  return { step, draw };
+})();
+
+/* ---------- ลิฟต์และน้ำหนักปรากฏ ---------- */
+const elevator = (() => {
+  const c = $('el_cv'), gc = $('el_gr'), sec = $('elevator');
+  const G = 9.8, FH = 3, CARH = 2.4, TW = 0.5, TAIL = 1.2, CF = 20, HIST = 10;   // ชั้นละ 3 m, จอดนิ่ง 0.5 s ก่อนออก
+  let mode = 'trip', dir = 1, running = true, t = 0, msg = '', cs = { y: 0, v: 0, stop: false }, hist = [];
+  const restart = () => reset(true);
+  const mm = slider('el_m', 'kg', 0);
+  const aT = slider('el_a', 'm/s²', 1, restart);
+  const vT = slider('el_vm', 'm/s', 1, restart);
+  const fl = slider('el_fl', 'ชั้น', 0, restart);
+  const aC = slider('el_ac', 'm/s²', 1);          // เปลี่ยนความเร่งได้ขณะลิฟต์วิ่ง
+  const v0 = slider('el_v0', 'm/s', 1, restart);
+  const mb = slider('el_mb', 'kg', 1);
+  const hang = () => $('el_hang').checked;
+  const topY = () => (CF - 1) * FH;
+
+  function vis() {
+    sec.querySelectorAll('[data-m]').forEach(e => { e.style.display = e.dataset.m === mode ? '' : 'none'; });
+    $('el_mbbox').style.display = hang() ? '' : 'none';
+  }
+  function reset(start) {
+    t = 0; msg = ''; running = !!start;
+    const vv = v0(), aa = aC(), up = vv > 0 || (vv === 0 && aa > 0), still = vv === 0 && aa === 0;
+    cs = { y: still ? 9 * FH : up ? 2 * FH : 17 * FH, v: vv, stop: false };
+    hist = [{ t: 0, v: cs.v, a: aa }];
+  }
+  modeButtons(sec, 'mode', md => { mode = md; sec.dataset.mode = md; vis(); reset(true); });
+  modeButtons(sec, 'dir', d => { dir = d === 'up' ? 1 : -1; reset(true); });
+  sec.querySelectorAll('.presets button').forEach(b => b.onclick = () => {
+    setSlider('el_ac', b.dataset.pa); setSlider('el_v0', b.dataset.pv); reset(true);
+  });
+  $('el_hang').onchange = vis;
+  $('el_run').onclick = () => reset(true);
+  $('el_reset').onclick = () => reset(false);
+  vis(); reset(true);
+
+  // โปรไฟล์เที่ยวลิฟต์: เร่ง a → ความเร็วคงที่ → หน่วง a (ถ้าระยะสั้นเกินจะเป็นสามเหลี่ยม เร่งไม่ถึง vmax)
+  function prof() {
+    const A = aT(), Vm = vT(), H = fl() * FH, tri = H < Vm * Vm / A;
+    const V = tri ? Math.sqrt(A * H) : Vm, t1 = V / A, s1 = V * V / (2 * A), s2 = H - 2 * s1, t2 = s2 / V;
+    return { A, Vm, H, tri, V, t1, s1, s2, t2, T: 2 * t1 + t2, tEnd: TW + 2 * t1 + t2 + TAIL, y0: dir > 0 ? 0 : H };
+  }
+  function kin(P, tt) {
+    const u = tt - TW;
+    let d, v, a, ph;
+    if (u <= 0) { d = 0; v = 0; a = 0; ph = 'จอดนิ่ง (ก่อนออกตัว)'; }
+    else if (u < P.t1) { a = P.A; v = P.A * u; d = 0.5 * P.A * u * u; ph = 'ออกตัว (เร่ง)'; }
+    else if (u < P.t1 + P.t2) { a = 0; v = P.V; d = P.s1 + P.V * (u - P.t1); ph = 'ความเร็วคงที่'; }
+    else if (u < P.T) { const w = u - P.t1 - P.t2; a = -P.A; v = P.V - P.A * w; d = P.s1 + P.s2 + P.V * w - 0.5 * P.A * w * w; ph = 'ชะลอจนหยุด (หน่วง)'; }
+    else { d = P.H; v = 0; a = 0; ph = 'ถึงแล้ว จอดนิ่ง'; }
+    return { y: P.y0 + dir * d, v: dir * v, a: dir * a, ph };
+  }
+  function now() {
+    if (mode === 'trip') return kin(prof(), t);
+    const a = cs.stop ? 0 : aC();
+    const ph = cs.stop ? 'หยุดนิ่งที่ปลายปล่อง'
+      : Math.abs(a + G) < 1e-6 ? 'ตกอิสระ (สายขาด)'
+      : Math.abs(a) < 1e-9 ? (Math.abs(cs.v) < 1e-9 ? 'อยู่นิ่ง' : 'ความเร็วคงที่')
+      : Math.abs(cs.v) < 1e-9 ? 'ออกตัว' : a * cs.v > 0 ? 'เร็วขึ้น' : 'ช้าลง';
+    return { y: cs.y, v: cs.v, a, ph };
+  }
+
+  function step(dt) {
+    if (!running) return;
+    if (mode === 'trip') {
+      const P = prof();
+      t += dt;
+      if (t >= P.tEnd) { t = P.tEnd; running = false; msg = `ถึงชั้น ${dir > 0 ? fl() + 1 : 1} ใช้เวลาเดินทาง ${fmt(P.T, 2)} s`; }
+      return;
+    }
+    if (cs.stop) { running = false; return; }
+    const a = aC();
+    cs.y += cs.v * dt + 0.5 * a * dt * dt; cs.v += a * dt; t += dt;
+    if (cs.y <= 0 || cs.y >= topY()) {
+      const vHit = Math.abs(cs.v);
+      cs.y = Math.min(Math.max(cs.y, 0), topY()); cs.v = 0; cs.stop = true; running = false;
+      msg = (cs.y <= 0 ? `ลิฟต์ถึงชั้นล่างสุดด้วยอัตราเร็ว ${fmt(vHit, 1)} m/s` : `ลิฟต์ถึงชั้นบนสุดด้วยอัตราเร็ว ${fmt(vHit, 1)} m/s`) +
+        (vHit > 3 ? ' (ในความจริงต้องมีเบรกฉุกเฉินและกันชนรับ)' : '') + ' กดเริ่มเพื่อเล่นใหม่';
+    }
+    hist.push({ t, v: cs.v, a: cs.stop ? 0 : a });
+    while (hist.length > 2 && hist[1].t < t - HIST - 1) hist.shift();
+  }
+
+  // ป้ายข้อความที่ย่อขนาดตัวอักษรให้พอดีความกว้าง
+  function label(ctx, s, x, y, maxW, size, color, weight = '', align = 'center') {
+    let f = size;
+    ctx.font = `${weight} ${f}px system-ui`;
+    while (f > 9 && ctx.measureText(s).width > maxW) { f -= 1; ctx.font = `${weight} ${f}px system-ui`; }
+    const tw = ctx.measureText(s).width;
+    ctx.fillStyle = color;
+    ctx.fillText(s, align === 'center' ? x - tw / 2 : align === 'right' ? x - tw : x, y);
+  }
+
+  function drawBuilding(ctx, x0, x1, h, S, nF) {
+    const top = 18, bot = h - 12, Hb = nF * FH + 0.6, sc = (bot - top) / Hb, Y = yy => bot - yy * sc;
+    const bx = x0 + 22, bw = x1 - bx - 4;
+    ctx.fillStyle = col('--grid'); ctx.fillRect(bx, Y(Hb), bw, bot - Y(Hb));
+    ctx.strokeStyle = col('--line'); ctx.lineWidth = 1;
+    ctx.strokeRect(bx, Y(Hb), bw, bot - Y(Hb));
+    const every = sc * FH >= 13 ? 1 : sc * FH >= 6 ? 5 : 10;
+    for (let i = 0; i < nF; i++) {
+      const yy = Y(i * FH);
+      line(ctx, bx, yy, bx + bw, yy, col('--line'), 1);
+      if (i % every === 0 || i === nF - 1) {
+        ctx.fillStyle = col('--muted'); ctx.font = '10px system-ui';
+        const s = String(i + 1); ctx.fillText(s, bx - 4 - ctx.measureText(s).width, yy - Math.min(sc * FH, 14) / 2 + 4);
+      }
+    }
+    ctx.fillStyle = col('--c-slope'); ctx.fillRect(x0, bot, x1 - x0, 6);
+    // ปล่องลิฟต์และตัวลิฟต์
+    const sx = bx + bw * 0.55, sw = Math.max(10, bw * 0.32);
+    ctx.fillStyle = col('--panel'); ctx.fillRect(sx, Y(Hb - 0.3), sw, bot - Y(Hb - 0.3));
+    line(ctx, sx + sw / 2, Y(Hb - 0.3), sx + sw / 2, Y(S.y + CARH), col('--muted'), 1);
+    ctx.fillStyle = col('--accent'); ctx.fillRect(sx + 1, Y(S.y + CARH), sw - 2, Math.max(4, CARH * sc));
+    ctx.fillStyle = col('--muted'); ctx.font = '11px system-ui'; ctx.fillText('ชั้น', x0, 12);
+    // ลูกศรความเร็วข้างลิฟต์
+    if (Math.abs(S.v) > 0.05) {
+      const L = Math.min(40, 6 * Math.abs(S.v)) * Math.sign(S.v), yc = Y(S.y + CARH / 2);
+      arrow(ctx, sx - 6, yc, 0, -L, col('--c-v'));
+    }
+  }
+
+  function spring(ctx, x, y1, y2, wd) {
+    const k = 8, seg = (y2 - y1) / (k + 2);
+    ctx.strokeStyle = col('--c-f'); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + seg);
+    for (let i = 0; i < k; i++) ctx.lineTo(x + (i % 2 ? -wd : wd), y1 + seg * (1.5 + i));
+    ctx.lineTo(x, y2 - seg); ctx.lineTo(x, y2); ctx.stroke();
+  }
+
+  function drawCar(ctx, x0, x1, h, S, m, Nf) {
+    const cl = x0 + 6, cr = x1 - 6, cw = cr - cl, ct = 0.1 * h, cb = 0.93 * h, ch = cb - ct;
+    // สายลิฟต์ (ขาดเมื่อตกอิสระ)
+    const free = mode === 'custom' && !cs.stop && Math.abs(S.a + G) < 1e-6;
+    const mx = (cl + cr) / 2;
+    if (free) {
+      line(ctx, mx, 0, mx, ct * 0.35, col('--muted'), 2); line(ctx, mx + 3, ct * 0.65, mx, ct, col('--muted'), 2);
+      label(ctx, 'สายขาด!', mx + 8, ct * 0.6, 80, 12, col('--c-mg'), '600', 'left');
+    } else line(ctx, mx, 0, mx, ct, col('--muted'), 2);
+    ctx.fillStyle = col('--grid'); ctx.fillRect(cl, ct, cw, ch);
+    ctx.strokeStyle = col('--accent'); ctx.lineWidth = 3; ctx.strokeRect(cl, ct, cw, ch);
+    ctx.fillStyle = col('--c-slope'); ctx.fillRect(cl, cb - 6, cw, 6);
+
+    // ตาชั่งและคน
+    const px = cl + cw * 0.22, scW = Math.min(56, cw * 0.3), scH = 12, sTop = cb - 6 - scH;
+    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1.5;
+    ctx.fillRect(px - scW / 2, sTop, scW, scH); ctx.strokeRect(px - scW / 2, sTop, scW, scH);
+    label(ctx, fmt(Nf / G, 1) + ' kg', px, sTop + 10, scW - 4, 10, col('--accent'), '600');
+    const Hp = Math.min(0.5 * ch, 170), hip = sTop - Hp * 0.47, sh = sTop - Hp * 0.82, hr = Hp * 0.085;
+    ctx.strokeStyle = col('--ink'); ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(px - Hp * 0.08, sTop); ctx.lineTo(px, hip); ctx.lineTo(px + Hp * 0.08, sTop);
+    ctx.moveTo(px, hip); ctx.lineTo(px, sh);
+    ctx.moveTo(px - Hp * 0.13, hip + Hp * 0.05); ctx.lineTo(px, sh + Hp * 0.04); ctx.lineTo(px + Hp * 0.13, hip + Hp * 0.05);
+    ctx.stroke(); ctx.lineCap = 'butt';
+    ctx.fillStyle = col('--c-ball'); ctx.beginPath(); ctx.arc(px, sh - hr - 2, hr, 0, 7); ctx.fill();
+
+    // ลูกศรความเร็วที่มุมบนซ้ายในลิฟต์
+    if (Math.abs(S.v) > 0.05) {
+      const L = Math.min(0.22 * ch, 9 * Math.abs(S.v)) * Math.sign(S.v), yv = ct + 0.27 * ch;
+      arrow(ctx, cl + 14, yv + L / 2, 0, -L, col('--c-v'));
+    }
+    label(ctx, `v = ${fmt(Math.abs(S.v), 1)} m/s ${Math.abs(S.v) < 0.05 ? '' : S.v > 0 ? '↑' : '↓'}`, cl + 24, ct + 16, cw * 0.55, 12, col('--c-v'), '600', 'left');
+
+    // FBD ของคน (จุดแทนคน) มาตราส่วนเดียวกันทุกแรง: mg ยาว mgL พิกเซล
+    const fx = cl + cw * (hang() ? 0.52 : 0.6), fy = ct + 0.58 * ch, mgL = Math.max(26, 0.12 * ch), k = mgL / (m * G);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(fx, fy, 4, 0, 7); ctx.fill();
+    arrow(ctx, fx, fy, 0, m * G * k, col('--c-mg'));
+    label(ctx, `mg = ${fmt(m * G, 0)} N`, fx, fy + mgL + 15, cw * 0.5, 12, col('--c-mg'), '600');
+    if (Nf > 0.5) arrow(ctx, fx, fy, 0, -Nf * k, col('--c-n'));
+    label(ctx, `N = ${fmt(Nf, 0)} N`, fx, fy - Math.max(Nf * k, 0) - 7, cw * (hang() ? 0.42 : 0.5), 12, col('--c-n'), '600');
+    // ลูกศรความเร่ง: a = g ยาวเท่า mg
+    const aL = S.a / G * mgL, ax = fx + 22;
+    if (Math.abs(S.a) > 0.01) arrow(ctx, ax, fy, 0, -aL, col('--c-vy'));
+    label(ctx, `a = ${fmt(Math.abs(S.a), 1)} m/s² ${Math.abs(S.a) < 0.01 ? '' : S.a > 0 ? '↑' : '↓'}`, fx, fy + mgL + 31, cw * (hang() ? 0.5 : 0.6), 12, col('--c-vy'), '600');
+
+    // มวลแขวนกับเครื่องชั่งสปริง
+    if (hang()) {
+      const hx = cl + cw * 0.87, mbv = mb(), T = mbv * Math.max(0, G + S.a), L0 = 0.16 * ch, ext = 0.09 * ch * T / (mbv * G);
+      const yb = ct + 6 + L0 + ext, rb = 7 + 2.2 * Math.sqrt(mbv);
+      ctx.fillStyle = col('--ink'); ctx.fillRect(hx - 8, ct, 16, 6);
+      spring(ctx, hx, ct + 6, yb, 6);
+      ctx.fillStyle = col('--c-cart2'); ctx.beginPath(); ctx.arc(hx, yb + rb, rb, 0, 7); ctx.fill();
+      label(ctx, 'T =', hx, yb + 2 * rb + 14, cw * 0.24, 11, col('--c-f'), '600');
+      label(ctx, `${fmt(T, 1)} N`, hx, yb + 2 * rb + 27, cw * 0.24, 11, col('--c-f'), '600');
+      label(ctx, `${fmt(mbv, 1)} kg`, hx, yb + 2 * rb + 40, cw * 0.24, 10, col('--muted'));
+    }
+  }
+
+  function drawDial(ctx, x0, x1, h, S, m, Nf) {
+    const cx = (x0 + x1) / 2, wd = x1 - x0, R = Math.max(30, Math.min(wd * 0.4, h * 0.17, 72)), cy = 22 + R;
+    const stepKg = niceStep(3 * m, 5), nMaj = Math.ceil(3 * m / stepKg - 1e-9), maxKg = nMaj * stepKg;
+    const kg = Nf / G, a0 = Math.PI * 0.75, sweep = Math.PI * 1.5;
+    label(ctx, 'หน้าปัดตาชั่ง', cx, 14, wd, 12, col('--muted'));
+    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill(); ctx.stroke();
+    for (let i = 0; i <= nMaj * 5; i++) {
+      const q = a0 + sweep * i / (nMaj * 5), big = i % 5 === 0;
+      line(ctx, cx + Math.cos(q) * R * (big ? 0.8 : 0.88), cy + Math.sin(q) * R * (big ? 0.8 : 0.88), cx + Math.cos(q) * R * 0.96, cy + Math.sin(q) * R * 0.96, col('--ink'), big ? 1.6 : 0.8);
+      if (big && R > 40) label(ctx, fmt(stepKg * i / 5, 0), cx + Math.cos(q) * R * 0.64, cy + Math.sin(q) * R * 0.64 + 4, 30, 10, col('--muted'));
+    }
+    // ขีดน้ำหนักจริง
+    const qm = a0 + sweep * m / maxKg;
+    line(ctx, cx + Math.cos(qm) * R * 0.96, cy + Math.sin(qm) * R * 0.96, cx + Math.cos(qm) * R * 1.1, cy + Math.sin(qm) * R * 1.1, col('--c-mg'), 3);
+    const qn = a0 + sweep * Math.min(kg, maxKg) / maxKg;
+    line(ctx, cx, cy, cx + Math.cos(qn) * R * 0.85, cy + Math.sin(qn) * R * 0.85, col('--c-n'), 3);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 7); ctx.fill();
+    label(ctx, 'kg', cx, cy + R * 0.45, 30, 11, col('--muted'));
+    let yy = cy + R + 26;
+    label(ctx, `${fmt(kg, 1)} กก.`, cx, yy, wd - 4, 22, col('--c-n'), '700'); yy += 20;
+    label(ctx, `N = ${fmt(Nf, 1)} N`, cx, yy, wd - 4, 13, col('--ink')); yy += 18;
+    label(ctx, `จริง ${fmt(m, 0)} กก. = ${fmt(m * G, 0)} N`, cx, yy, wd - 4, 11, col('--muted')); yy += 18;
+    const fe = feel(S.a);
+    label(ctx, `${fe} (×${fmt(Nf / (m * G), 2)})`, cx, yy, wd - 4, 13, fe === 'หนักขึ้น' ? col('--c-mg') : fe === 'ปกติ' ? col('--ink') : col('--c-n'), '600'); yy += 20;
+    label(ctx, S.ph, cx, yy, wd - 4, 12, col('--accent'), '600');
+  }
+  function feel(a) {
+    if (Math.abs(a + G) < 1e-6) return 'ไร้น้ำหนัก';
+    if (Math.abs(a) < 0.005) return 'ปกติ';
+    return a > 0 ? 'หนักขึ้น' : 'เบาลง';
+  }
+
+  // กราฟ v–t, a–t, N–t
+  function panel(ctx, x0, y0, pw, ph, t0, t1, lo, hi, pts, key, color, name, ref) {
+    const X = tt => x0 + (tt - t0) / (t1 - t0) * pw, Y = vv => y0 + ph - (vv - lo) / (hi - lo) * ph;
+    ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.strokeRect(x0, y0, pw, ph);
+    const st = niceStep(hi - lo, 3);
+    ctx.font = '10px system-ui';
+    for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) {
+      line(ctx, x0, Y(v), x0 + pw, Y(v), col('--grid'), 1);
+      ctx.fillStyle = col('--muted'); const s = fmt(v, st < 1 ? 1 : 0); ctx.fillText(s, x0 - 4 - ctx.measureText(s).width, Y(v) + 3);
+    }
+    if (lo < 0 && hi > 0) line(ctx, x0, Y(0), x0 + pw, Y(0), col('--muted'), 1);
+    if (ref !== undefined) {
+      line(ctx, x0, Y(ref.v), x0 + pw, Y(ref.v), col('--c-mg'), 1.5, [5, 4]);
+      label(ctx, ref.s, x0 + pw - 4, Y(ref.v) - 3, 90, 10, col('--c-mg'), '', 'right');
+    }
+    const trace = (list, alpha, wdt) => {
+      if (list.length < 2) return;
+      ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = wdt; ctx.beginPath();
+      list.forEach((p, i) => { const yy = Y(Math.min(hi, Math.max(lo, p[key]))); i ? ctx.lineTo(X(p.t), yy) : ctx.moveTo(X(p.t), yy); });
+      ctx.stroke(); ctx.restore();
+    };
+    if (mode === 'trip') { trace(pts, 0.3, 2); trace(pts.filter(p => p.t <= t), 1, 2.5); }
+    else trace(pts.filter(p => p.t >= t0), 1, 2.5);
+    label(ctx, name, x0 + 6, y0 + 13, pw * 0.6, 12, color, '600', 'left');
+    return X;
+  }
+  function drawGraph(m) {
+    const { ctx, w, h } = fitCanvas(gc), L = 46, Rm = 10, T0 = 4, B = 22, gap = 8, ph = (h - T0 - B - 2 * gap) / 3, pw = w - L - Rm;
+    let pts, t0, t1, vr, ar;
+    if (mode === 'trip') {
+      const P = prof(); t0 = 0; t1 = P.tEnd; pts = [];
+      const add = tt => { const k = kin(P, tt); pts.push({ t: tt, v: k.v, a: k.a }); };
+      // จุดแตกหักของ a ใส่ทั้งสองข้างให้เป็นขั้นบันไดตั้งตรง
+      const brk = [TW, TW + P.t1, TW + P.t1 + P.t2, TW + P.T];
+      for (let i = 0; i <= 300; i++) add(t1 * i / 300);
+      brk.forEach(b => { add(b - 1e-6); add(b + 1e-6); });
+      pts.sort((p, q) => p.t - q.t);
+      vr = Math.max(P.V, 1) * 1.25; ar = Math.max(P.A, 1) * 1.4;
+    } else {
+      t1 = Math.max(HIST, t); t0 = t1 - HIST; pts = hist;
+      const vm = Math.max(4, ...hist.map(p => Math.abs(p.v))); vr = vm * 1.2; ar = 21;
+    }
+    pts.forEach(p => { p.N = m * Math.max(0, G + p.a); });
+    const Nhi = mode === 'trip' ? Math.max(...pts.map(p => p.N)) * 1.25 : m * 3 * G * 1.08;
+    const X = panel(ctx, L, T0, pw, ph, t0, t1, -vr, vr, pts, 'v', col('--c-v'), 'v (m/s)');
+    panel(ctx, L, T0 + ph + gap, pw, ph, t0, t1, mode === 'trip' ? -ar : -11, mode === 'trip' ? ar : ar, pts, 'a', col('--c-vy'), 'a (m/s²)');
+    panel(ctx, L, T0 + 2 * (ph + gap), pw, ph, t0, t1, 0, Nhi, pts, 'N', col('--c-n'), 'N ที่ตาชั่ง (N)', { v: m * G, s: `mg = ${fmt(m * G, 0)} N` });
+    // แกนเวลา
+    const st = niceStep(t1 - t0, 6), yb = T0 + 3 * ph + 2 * gap;
+    ctx.font = '10px system-ui';
+    for (let v = Math.ceil(t0 / st) * st; v <= t1 + 1e-9; v += st) {
+      if (X(v) > L + pw - 34) continue;
+      ctx.fillStyle = col('--muted'); const s = fmt(v, st < 1 ? 1 : 0); ctx.fillText(s, X(v) - ctx.measureText(s).width / 2, yb + 13);
+    }
+    label(ctx, 't (s)', L + pw, yb + 13, 40, 11, col('--muted'), '600', 'right');
+    // เส้นเวลาปัจจุบัน
+    line(ctx, X(t), T0, X(t), yb, col('--accent'), 1.5);
+    // เส้นแบ่งช่วงของเที่ยวลิฟต์
+    if (mode === 'trip') {
+      const P = prof();
+      [TW, TW + P.t1, TW + P.t1 + P.t2, TW + P.T].forEach(b => line(ctx, X(b), T0, X(b), yb, col('--muted'), 1, [2, 4]));
+    }
+  }
+
+  function draw() {
+    const { ctx, w, h } = fitCanvas(c), m = mm(), S = now(), Nf = m * Math.max(0, G + S.a), kg = Nf / G;
+    const nF = mode === 'trip' ? fl() + 1 : CF;
+    const nar = w < 560, xb = w * (nar ? 0.15 : 0.2), xc = w * (nar ? 0.7 : 0.64);   // จอแคบให้ห้องลิฟต์กว้างขึ้น
+    drawBuilding(ctx, 0, xb, h, S, nF);
+    drawCar(ctx, xb + 4, xc, h, S, m, Nf);
+    drawDial(ctx, xc + 4, w, h, S, m, Nf);
+    drawGraph(m);
+
+    const fe = feel(S.a), mbv = mb(), Tb = mbv * Math.max(0, G + S.a), P = mode === 'trip' ? prof() : null;
+    const floorNow = Math.round(S.y / FH) + 1;
+    const rows = [
+      ['เวลา t', fmt(t, 2) + ' s'],
+      ['ช่วงการเคลื่อนที่', S.ph],
+      ['ความสูง (ชั้น)', `${fmt(S.y, 1)} m (ชั้น ${floorNow})`],
+      ['มวลคน m', fmt(m, 0) + ' kg'],
+      ['น้ำหนักจริง mg', fmt(m * G, 1) + ' N'],
+      ['ความเร็ว v', fmt(S.v, 2) + ' m/s'],
+      ['ความเร่ง a', fmt(S.a, 2) + ' m/s²'],
+      ['แรงตาชั่ง N', fmt(Nf, 1) + ' N'],
+      ['ตาชั่งอ่าน N/g', fmt(kg, 1) + ' kg'],
+      ['N / mg', fmt(Nf / (m * G), 3)],
+      ['ความรู้สึก', fe === 'ปกติ' ? 'ปกติ (เท่าน้ำหนักจริง)' : fe],
+    ];
+    if (hang()) rows.push(['แรงตึงสปริง T', `${fmt(Tb, 1)} N (${fmt(Tb / G, 2)} kg)`]);
+    if (P) rows.push(['ความเร็วสูงสุดที่ได้', fmt(P.V, 2) + ' m/s' + (P.tri ? ' (ไม่ถึง vmax)' : '')], ['เวลาเดินทางทั้งเที่ยว', fmt(P.T, 2) + ' s']);
+    const html = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+    const tab = $('el_tab'); if (tab._h !== html) { tab.innerHTML = html; tab._h = html; }
+    const note = msg || (mode === 'trip'
+      ? 'ดูกราฟ N–t: ช่วงออกตัว N มากกว่า mg, ช่วงความเร็วคงที่ N = mg, ช่วงชะลอ N น้อยกว่า mg (กลับกันเมื่อลิฟต์ลง)'
+      : 'ลองกดชุด "ขึ้นแล้วชะลอ" เทียบ "ออกตัวลง": ความเร็วต่างทิศแต่ a ทิศเดียวกัน ตาชั่งอ่านเท่ากัน');
+    $('el_msg').textContent = note;
+
+    // สมการแทนค่า
+    const ms = n(m, 0), as = n(S.a, 2);
+    let eq = '';
+    if (P) {
+      const As = n(P.A, 1), sg = dir > 0 ? '' : '−';
+      eq += eqH(`โปรไฟล์เที่ยวลิฟต์ (${dir > 0 ? 'ขึ้น' : 'ลง'} ${fl()} ชั้น, ชั้นละ 3 m)`) +
+        eqL(`H = ${fl()} × 3 = <b>${r(P.H, 0)} m</b>`) +
+        (P.tri
+          ? eqL(`H &lt; v<sub>max</sub>²/a = ${n(P.Vm, 1)}²/${As} = ${r(P.Vm * P.Vm / P.A)} m → เร่งไม่ถึง v<sub>max</sub>: v<sub>สูงสุด</sub> = √(aH) = √(${As} × ${n(P.H, 0)}) = <b>${r(P.V)} m/s</b>`) +
+            eqL(`t<sub>เร่ง</sub> = t<sub>หน่วง</sub> = v/a = ${n(P.V)}/${As} = <b>${r(P.t1)} s</b>, เวลารวม = 2t<sub>เร่ง</sub> = <b>${r(P.T)} s</b>`)
+          : eqL(`ช่วงเร่ง: t₁ = v<sub>max</sub>/a = ${n(P.V, 1)}/${As} = <b>${r(P.t1)} s</b>, s₁ = v²/(2a) = ${n(P.V, 1)}²/(2 × ${As}) = <b>${r(P.s1)} m</b>`) +
+            eqL(`ช่วงความเร็วคงที่: s₂ = H − 2s₁ = ${n(P.H, 0)} − 2 × ${n(P.s1)} = <b>${r(P.s2)} m</b>, t₂ = s₂/v = <b>${r(P.t2)} s</b>`) +
+            eqL(`เวลารวม = 2t₁ + t₂ = 2 × ${n(P.t1)} + ${n(P.t2)} = <b>${r(P.T)} s</b>`)) +
+        eqH('ค่าตาชั่งในแต่ละช่วง (ทิศขึ้นเป็นบวก)') +
+        eqL(`ออกตัว a = ${sg}${r(P.A, 1)}: N = ${ms} × (9.8 + ${n(dir * P.A, 1)}) = <b>${r(m * (G + dir * P.A), 1)} N</b> (${r((G + dir * P.A) * m / G, 1)} kg)`) +
+        eqL(`ความเร็วคงที่ a = 0: N = mg = ${ms} × 9.8 = <b>${r(m * G, 1)} N</b> (${r(m, 1)} kg)`) +
+        eqL(`ชะลอ a = ${dir > 0 ? '−' : ''}${r(P.A, 1)}: N = ${ms} × (9.8 + ${n(-dir * P.A, 1)}) = <b>${r(m * (G - dir * P.A), 1)} N</b> (${r((G - dir * P.A) * m / G, 1)} kg)`);
+    }
+    eq += eqH(`กฎข้อที่สองของนิวตันกับคนบนตาชั่ง ณ t = ${r(t, 2)} s (ทิศขึ้นเป็นบวก)`) +
+      eqL('ΣF = ma → N − mg = ma → N = m(g + a)') +
+      eqL(`N = ${ms} × (9.8 + ${as}) = <b>${r(Nf, 1)} N</b>`) +
+      eqL(`ตาชั่งอ่าน = N/g = ${n(Nf, 1)}/9.8 = <b>${r(kg, 1)} kg</b>`) +
+      eqL(`น้ำหนักปรากฏ/น้ำหนักจริง = (g + a)/g = (9.8 + ${as})/9.8 = <b>${r((G + S.a) / G, 3)}</b>`) +
+      (Math.abs(S.a + G) < 1e-6 ? eqL('a = −g → N = m(g − g) = <b>0</b> ไร้น้ำหนัก (ทั้งคนและตาชั่งตกด้วยความเร่งเท่ากัน)') : '');
+    if (hang()) eq += eqH('มวลแขวนกับเครื่องชั่งสปริง') +
+      eqL(`T − m<sub>b</sub>g = m<sub>b</sub>a → T = m<sub>b</sub>(g + a) = ${n(mbv, 1)} × (9.8 + ${as}) = <b>${r(Tb, 2)} N</b> (อ่านได้ ${r(Tb / G, 2)} kg)`);
+    setEq('el_eq', eq);
+  }
+
+  return { step, draw };
+})();
+
+/* ---------- ความเร็วสัมพัทธ์ ---------- */
+const relvel = (() => {
+  const c = $('rv_cv'), sec = $('relvel'), D2R = Math.PI / 180, HM = 5.5;   // HM = ความสูงฉากฝน (m)
+  let mode = 'river', frame = 'ground', running = true, anim = 0, msg = '', view = null;
+  const boat = { x: 0, y: 0, t: 0, trail: [[0, 0]], done: false };
+  const rain = { car: 0.2, post: 0, Wm: 9, Hs: HM, dG: [], dC: [] };   // Wm, Hs = ขนาดฉากแต่ละช่อง (m)
+  const two = { t: 0 };
+
+  const resetRiver = go => { Object.assign(boat, { x: 0, y: 0, t: 0, trail: [[0, 0]], done: false }); running = !!go; };
+  const resetTwo = go => { two.t = 0; running = !!go; };
+  const initRain = () => {
+    const mk = () => Array.from({ length: 70 }, () => ({ f: Math.random(), y: Math.random() * rain.Hs }));
+    rain.dG = mk(); rain.dC = mk(); rain.car = 0.2; rain.post = 0;
+  };
+  initRain();
+
+  // แถบเลื่อน
+  const rd = slider('rv_d', 'm', 0, () => { msg = ''; resetRiver(false); });
+  const ru = slider('rv_u', 'm/s', 1, () => { msg = ''; resetRiver(false); });
+  const rvb = slider('rv_v', 'm/s', 1, () => { msg = ''; resetRiver(false); });
+  const ral = slider('rv_al', '°', 1, () => { msg = ''; if (boat.done) resetRiver(false); });
+  const rvr = slider('rv_vr', 'm/s', 1), rvc = slider('rv_vc', 'm/s', 0), rw = slider('rv_w', 'm/s', 1);
+  const rt = () => resetTwo(true);
+  const tva = slider('rv_va', 'm/s', 0, rt), taa = slider('rv_aa', '°', 0, rt);
+  const tvb = slider('rv_vb', 'm/s', 0, rt), tab = slider('rv_ab', '°', 0, rt);
+  const tbx = slider('rv_bx', 'm', 0, rt), tby = slider('rv_by', 'm', 0, rt);
+
+  const vis = () => sec.querySelectorAll('[data-m]').forEach(e => { e.style.display = e.dataset.m === mode ? '' : 'none'; });
+  modeButtons(sec, 'mode', md => {
+    mode = md; sec.dataset.mode = md; vis();
+    if (md === 'river') resetRiver(true); else if (md === 'rain') { initRain(); running = true; } else resetTwo(true);
+  });
+  modeButtons(sec, 'fr', f => { frame = f; });
+  vis();
+
+  $('rv_run').onclick = () => { if (mode === 'river') resetRiver(true); else if (mode === 'rain') running = true; else resetTwo(true); };
+  $('rv_reset').onclick = () => { if (mode === 'river') resetRiver(false); else if (mode === 'rain') { initRain(); running = false; } else resetTwo(false); };
+  $('rv_fast').onclick = () => { setSlider('rv_al', 0); msg = ''; resetRiver(true); };
+  $('rv_straight').onclick = () => {
+    const u = ru(), v = rvb();
+    if (v > u) { setSlider('rv_al', Math.asin(u / v) / D2R); msg = ''; }
+    else {
+      setSlider('rv_al', u > 0 ? Math.min(85, Math.asin(v / u) / D2R) : 0);
+      msg = v === u ? 'v = u: ต้องหันหัวเรือเกือบ 90° ทวนน้ำ เรือจึงจะถึงจุดตรงข้าม ซึ่งใช้เวลานานไม่สิ้นสุด ทำไม่ได้จริง (แสดงมุมสูงสุด 85°)'
+        : 'v ≤ u: ข้ามไปตรงจุดตรงข้ามไม่ได้ เพราะองค์ประกอบทวนน้ำของเรือ (v sinα ≤ v) ไม่มีทางหักล้างกระแสน้ำ u ได้ ภาพจึงแสดงมุม sinα = v/u ที่ไหลลอยน้อยที่สุดแทน';
+    }
+    resetRiver(true);
+  };
+  const PRE = { cross: [10, 0, 10, 90, 120, -100], pass: [20, 0, 15, 180, 200, 10], chase: [25, 0, 15, 0, 100, 0] };
+  $('rv_pre').querySelectorAll('button').forEach(b => b.onclick = () => {
+    ['rv_va', 'rv_aa', 'rv_vb', 'rv_ab', 'rv_bx', 'rv_by'].forEach((id, i) => setSlider(id, PRE[b.dataset.p][i]));
+    resetTwo(true);
+  });
+
+  // ลากบนแผนที่แม่น้ำเพื่อหันหัวเรือ
+  dragOn(c, (px, py) => {
+    if (mode !== 'river' || !view || px < view.mx || px > view.mx + view.mw || py < view.my || py > view.my + view.mh) return;
+    const wx = (px - view.X0) / view.sc, wy = (view.Y0 - py) / view.sc, dx = wx - boat.x, dy = wy - boat.y;
+    if (dy <= 0) return;
+    setSlider('rv_al', Math.max(-85, Math.min(85, Math.atan2(-dx, dy) / D2R)));
+  });
+
+  // ฟิสิกส์ของแต่ละโหมด
+  const river = () => {
+    const d = rd(), u = ru(), v = rvb(), al = ral() * D2R, vx = u - v * Math.sin(al), vy = v * Math.cos(al), T = d / vy;
+    return { d, u, v, al, vx, vy, T, drift: vx * T, vg: Math.hypot(vx, vy), ts: Math.max(1, T / 7),
+      phi: Math.atan2(vy, vx) / D2R, minDrift: v < u ? d * Math.sqrt(u * u - v * v) / v : 0 };
+  };
+  const rainK = () => {
+    const vr = rvr(), vc = rvc(), wd = rw(), rx = wd - vc;
+    return { vr, vc, wd, rx, mag: Math.hypot(rx, vr), th: Math.atan2(Math.abs(rx), vr) / D2R, th0: Math.atan2(Math.abs(wd), vr) / D2R,
+      ts: Math.min(1, (rain.Hs / vr) / 1.4, vc > 0 ? rain.Wm / (vc * 2.2) : 1) };
+  };
+  const twoK = () => {
+    const va = tva(), aa = taa() * D2R, vb = tvb(), ab = tab() * D2R;
+    const A = [va * Math.cos(aa), va * Math.sin(aa)], B = [vb * Math.cos(ab), vb * Math.sin(ab)];
+    const rel = [B[0] - A[0], B[1] - A[1]], r0 = [tbx(), tby()], v2 = rel[0] ** 2 + rel[1] ** 2;
+    const tStar = v2 > 1e-9 ? -(r0[0] * rel[0] + r0[1] * rel[1]) / v2 : 0, tc = Math.max(0, tStar);
+    const dmin = Math.hypot(r0[0] + rel[0] * tc, r0[1] + rel[1] * tc), vrel = Math.sqrt(v2), d0 = Math.hypot(r0[0], r0[1]);
+    const Tend = v2 > 1e-9 ? Math.max(4, Math.min(600, Math.max(2 * tc, d0 / vrel))) : 15;
+    return { va, vb, aa, ab, A, B, rel, r0, v2, vrel, tStar, tc, dmin, d0, Tend };
+  };
+
+  function step(dt) {
+    anim += dt;
+    if (!running) return;
+    if (mode === 'river') {
+      if (boat.done) { running = false; return; }
+      const R = river(), hdt = dt * R.ts;
+      boat.x += R.vx * hdt; boat.y += R.vy * hdt; boat.t += hdt;
+      if (boat.y >= R.d) {   // ถึงฝั่งตรงข้าม: ถอยกลับไปยังจุดที่แตะฝั่งพอดี
+        const over = (boat.y - R.d) / R.vy;
+        boat.x -= R.vx * over; boat.t -= over; boat.y = R.d; boat.done = true; running = false;
+      }
+      boat.trail.push([boat.x, boat.y]); if (boat.trail.length > 2000) boat.trail.splice(1, 1);
+    } else if (mode === 'rain') {
+      const K = rainK(), hdt = dt * K.ts, Wm = rain.Wm, wrap = f => ((f % 1) + 1) % 1;
+      const mv = (arr, vx) => arr.forEach(p => {
+        p.f = wrap(p.f + vx * hdt / Wm); p.y -= K.vr * hdt;
+        if (p.y < 0) { p.y += rain.Hs; p.f = wrap(p.f + (Math.random() - 0.5) * 0.2); }
+      });
+      mv(rain.dG, K.wd); mv(rain.dC, K.rx);
+      rain.car = wrap(rain.car + K.vc * hdt / Wm);
+      rain.post = (((rain.post - K.vc * hdt) % 3) + 3) % 3;
+    } else {
+      const K = twoK();
+      two.t += dt * K.Tend / 9;
+      if (two.t >= K.Tend) { two.t = K.Tend; running = false; }
+    }
+  }
+
+  /* ---------- ฟังก์ชันวาดช่วย ---------- */
+  function lab(ctx, a, b, x, y, color) {
+    ctx.fillStyle = color; ctx.font = '600 13px system-ui'; ctx.fillText(a, x, y);
+    if (!b) return;
+    const wa = ctx.measureText(a).width; ctx.font = '600 10px system-ui'; ctx.fillText(b, x + wa, y + 4);
+  }
+  function labW(ctx, a, b) {
+    ctx.font = '600 13px system-ui'; const wa = ctx.measureText(a).width;
+    ctx.font = '600 10px system-ui'; return wa + (b ? ctx.measureText(b).width : 0);
+  }
+  // ลูกศรพร้อมป้ายตัวห้อย วางป้ายเลยหัวลูกศรออกไป (ox, oy = เลื่อนป้ายเพิ่ม)
+  function arw(ctx, x, y, dx, dy, color, a, b, ox = 0, oy = 0) {
+    arrow(ctx, x, y, dx, dy, color);
+    const L = Math.hypot(dx, dy); if (L < 2 || !a) return;
+    const ux = dx / L, uy = dy / L, wl = labW(ctx, a, b);
+    let lx = x + dx + ux * 6, ly = y + dy + uy * 6 + 4;
+    if (ux < -0.3) lx -= wl; else if (Math.abs(ux) <= 0.3) lx -= wl / 2;
+    if (uy > 0.5) ly += 8;
+    lab(ctx, a, b, lx + ox, ly + oy, color);
+  }
+  // ลูกศรที่วางป้ายไว้กลางลูกศร เยื้องออกด้านข้าง (side = +1 / −1)
+  function arwMid(ctx, x, y, dx, dy, color, a, b, side = 1) {
+    arrow(ctx, x, y, dx, dy, color);
+    const L = Math.hypot(dx, dy); if (L < 2) return;
+    const nx = -dy / L * side, ny = dx / L * side, wl = labW(ctx, a, b);
+    lab(ctx, a, b, x + dx / 2 + nx * 16 - wl / 2 + nx * wl / 2, y + dy / 2 + ny * 16 + 4, color);
+  }
+  const title = (ctx, s, x = 10, y = 20, color = col('--muted'), font = '13px system-ui') => { ctx.fillStyle = color; ctx.font = font; ctx.fillText(s, x, y); };
+  function scaleBar(ctx, x, y, sc, len, text) {
+    const m = col('--muted');
+    line(ctx, x, y, x + len * sc, y, m, 2); line(ctx, x, y - 4, x, y + 4, m, 2); line(ctx, x + len * sc, y - 4, x + len * sc, y + 4, m, 2);
+    ctx.fillStyle = m; ctx.font = '12px system-ui'; ctx.fillText(text, x, y - 7);
+  }
+  const niceLen = (px, sc) => niceStep(px / sc, 1);   // ความยาวมาตราส่วนที่เป็นเลขกลมราว px พิกเซล
+  function box(ctx, x, y, w, h) {
+    ctx.fillStyle = col('--panel'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+  }
+  // มุมระหว่างสองทิศ (มุมบนจอ) แสดงเป็นส่วนโค้ง
+  function angArc(ctx, x, y, rr, a1, a2, color, text) {
+    let d = a2 - a1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+    if (Math.abs(d) < 0.02) return;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, rr, Math.min(a1, a1 + d), Math.max(a1, a1 + d)); ctx.stroke();
+    const am = a1 + d / 2; ctx.fillStyle = color; ctx.font = '13px system-ui';
+    const tw = ctx.measureText(text).width;
+    ctx.fillText(text, x + Math.cos(am) * (rr + 9) - tw / 2, y + Math.sin(am) * (rr + 9) + 5);
+  }
+
+  /* ---------- โหมด 1: เรือข้ามแม่น้ำ ---------- */
+  function drawBoat(ctx, x, y, al) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(-Math.cos(al), -Math.sin(al)));   // หัวเรือชี้ (−sinα, cosα) ในพิกัดโลก
+    ctx.fillStyle = col('--c-ball'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(14, 0); ctx.quadraticCurveTo(6, -7, -10, -6); ctx.lineTo(-10, 6); ctx.quadraticCurveTo(6, 7, 14, 0);
+    ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  function drawRiver(ctx, w, h) {
+    const R = river(), wide = w >= 560;
+    const mx = 6, my = 6, mw = (wide ? w * 0.63 : w) - 12, mh = (wide ? h : h * 0.6) - 12;
+    const tx = wide ? w * 0.63 : 6, ty = wide ? 6 : h * 0.6, tw = wide ? w - tx - 6 : w - 12, th = wide ? h - 12 : h - ty - 6;
+    const land = boat.done ? boat.x : boat.x + R.vx * (R.d - boat.y) / R.vy;
+    const x0 = Math.min(0, boat.x, land) - 0.2 * R.d, x1 = Math.max(0, boat.x, land) + 0.2 * R.d;
+    const sc = Math.min((mh - 10) / (1.55 * R.d), (mw - 10) / (x1 - x0)), cxw = (x0 + x1) / 2;
+    const X = x => mx + mw / 2 + (x - cxw) * sc, Y = y => my + mh / 2 - (y - R.d / 2) * sc;
+    view = { X0: X(0), Y0: Y(0), sc, mx, my, mw, mh };
+    ctx.save(); ctx.beginPath(); ctx.rect(mx, my, mw, mh); ctx.clip();
+    ctx.fillStyle = col('--grid'); ctx.fillRect(mx, my, mw, mh);
+    ctx.fillStyle = col('--water'); ctx.fillRect(mx, Y(R.d), mw, R.d * sc);
+    line(ctx, mx, Y(0), mx + mw, Y(0), col('--ink'), 2); line(ctx, mx, Y(R.d), mx + mw, Y(R.d), col('--ink'), 2);
+    // ลายกระแสน้ำเคลื่อนที่ด้วย u
+    if (R.u > 0) {
+      const sp = 70, off = ((anim * R.u * sc) % sp + sp) % sp, La = Math.min(26, 6 + R.u * 5);
+      ctx.globalAlpha = 0.45;
+      for (let k = 0; k < 4; k++) {
+        const yy = Y(R.d * (k + 0.5) / 4), sh = (k % 2) * sp / 2;
+        for (let xx = mx - sp + off + sh; xx < mx + mw; xx += sp) arrow(ctx, xx, yy, La, 0, col('--c-vy'));
+      }
+      ctx.globalAlpha = 1;
+    }
+    // จุดเริ่ม จุดตรงข้าม
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(X(0), Y(0), 4, 0, 7); ctx.fill();
+    ctx.strokeStyle = col('--c-mg'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(0), Y(R.d), 6, 0, 7); ctx.stroke();
+    ctx.font = '12px system-ui'; ctx.fillStyle = col('--muted');
+    ctx.fillText('จุดเริ่ม', X(0) - 20, Y(0) + 17);
+    ctx.fillStyle = col('--c-mg'); ctx.fillText('จุดตรงข้าม', X(0) - 28, Y(R.d) - 14);
+    line(ctx, X(0), Y(0), X(0), Y(R.d), col('--muted'), 1, [3, 5]);
+    // ความกว้าง d
+    const dxp = mx + 16;
+    line(ctx, dxp, Y(0), dxp, Y(R.d), col('--ink'), 1);
+    line(ctx, dxp - 4, Y(0), dxp + 4, Y(0), col('--ink'), 1); line(ctx, dxp - 4, Y(R.d), dxp + 4, Y(R.d), col('--ink'), 1);
+    ctx.fillStyle = col('--ink'); ctx.font = '12px system-ui'; ctx.fillText(`d = ${fmt(R.d, 0)} m`, dxp + 6, Y(R.d / 2) + 4);
+    // รอยทาง และเส้นทางที่คาดไว้
+    ctx.strokeStyle = col('--c-v'); ctx.lineWidth = 2.5; ctx.beginPath();
+    boat.trail.forEach(([x, y], i) => i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))); ctx.stroke();
+    if (!boat.done) line(ctx, X(boat.x), Y(boat.y), X(land), Y(R.d), col('--c-v'), 1.2, [5, 5]);
+    // ระยะไหลลอยบนฝั่งตรงข้าม
+    const yd = Y(R.d) - 8;
+    if (Math.abs(land) * sc > 3) {
+      line(ctx, X(0), yd, X(land), yd, col('--c-f'), 1.5);
+      line(ctx, X(land), yd - 4, X(land), Y(R.d), col('--c-f'), 1, [2, 3]);
+      ctx.fillStyle = col('--c-f'); ctx.font = '600 12px system-ui';
+      const s = `${boat.done ? 'ไหลลอย' : 'จะไหลลอย'} x = ${fmt(land, 1)} m`, sw = ctx.measureText(s).width;
+      ctx.fillText(s, Math.max(mx + 4, Math.min(mx + mw - sw - 4, X(land / 2) - sw / 2)), Y(R.d) + 18);
+    }
+    // เรือและเวกเตอร์
+    const bx = X(boat.x), by = Y(boat.y);
+    drawBoat(ctx, bx, by, R.al);
+    const kv = Math.min(18, 0.3 * Math.min(mw, mh) / Math.max(R.v, R.u, R.vg, 0.1));
+    arw(ctx, bx, by, -R.v * Math.sin(R.al) * kv, -R.v * Math.cos(R.al) * kv, col('--c-vx'), 'v', 'เรือ/น้ำ');
+    arw(ctx, bx, by, R.u * kv, 0, col('--c-vy'), 'v', 'น้ำ', 0, 14);
+    arw(ctx, bx, by, R.vx * kv, -R.vy * kv, col('--c-v'), 'v', 'เรือ/ฝั่ง', 0, -2);
+    // มาตราส่วนและเวลา
+    const sl = niceLen(90, sc);
+    scaleBar(ctx, mx + mw - sl * sc - 12, my + mh - 10, sc, sl, `${sl} m`);
+    title(ctx, `t = ${fmt(boat.t, 1)} s` + (R.ts > 1.01 ? `  (เร่งเวลา ×${fmt(R.ts, 1)})` : ''), mx + 8, my + mh - 10, col('--ink'));
+    title(ctx, 'มองจากด้านบน (ลากบนภาพเพื่อหันหัวเรือ)', mx + 8, my + 16, col('--muted'), (mw < 420 ? '12' : '13') + 'px system-ui');
+    if (boat.done) title(ctx, `ถึงฝั่งเมื่อ t = ${fmt(boat.t, 2)} s`, mx + 8, my + 34, col('--c-v'), '600 13px system-ui');
+    ctx.restore();
+    ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.strokeRect(mx, my, mw, mh);
+    // สามเหลี่ยมเวกเตอร์
+    box(ctx, tx, ty, tw, th);
+    title(ctx, 'สามเหลี่ยมเวกเตอร์ (หน่วย m/s)', tx + 8, ty + 18);
+    const P1 = [-R.v * Math.sin(R.al), R.v * Math.cos(R.al)], P2 = [R.vx, R.vy];
+    const xs = [0, P1[0], P2[0]], ys = [0, P1[1], P2[1]];
+    const ax0 = Math.min(...xs), ax1 = Math.max(...xs), ay0 = Math.min(...ys), ay1 = Math.max(...ys);
+    const k = Math.min((tw - 130) / Math.max(ax1 - ax0, 0.1), (th - 90) / Math.max(ay1 - ay0, 0.1), 70);
+    const ox = tx + tw / 2 - (ax0 + ax1) / 2 * k, oy = ty + 30 + (th - 60) / 2 + (ay0 + ay1) / 2 * k;
+    const sx = p => ox + p[0] * k, sy = p => oy - p[1] * k;
+    line(ctx, ox, oy, sx(P2), oy, col('--muted'), 1, [3, 3]); line(ctx, sx(P2), oy, sx(P2), sy(P2), col('--muted'), 1, [3, 3]);
+    line(ctx, ox, oy, ox, oy - Math.max(30, R.v * k * 0.9), col('--muted'), 1, [2, 4]);
+    const sd = P2[0] >= P1[0] ? 1 : -1;   // ให้ป้ายอยู่นอกสามเหลี่ยม
+    arwMid(ctx, ox, oy, P1[0] * k, -P1[1] * k, col('--c-vx'), 'v', 'เรือ/น้ำ', -sd);
+    arwMid(ctx, sx(P1), sy(P1), (P2[0] - P1[0]) * k, 0, col('--c-vy'), 'v', 'น้ำ/ฝั่ง', -sd);
+    arwMid(ctx, ox, oy, P2[0] * k, -P2[1] * k, col('--c-v'), 'v', 'เรือ/ฝั่ง', sd);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(ox, oy, 3, 0, 7); ctx.fill();
+    if (Math.abs(R.al) > 0.02) angArc(ctx, ox, oy, 24, -Math.PI / 2, Math.atan2(-P1[1], P1[0]), col('--c-vx'), 'α');
+    ctx.font = '12px system-ui'; ctx.fillStyle = col('--muted');
+    ctx.fillText(`|v เรือ/ฝั่ง| = ${fmt(R.vg, 2)} m/s`, tx + 8, ty + th - 26);
+    ctx.fillText(`ข้าม ${fmt(R.vy, 2)} m/s, ตามน้ำ ${fmt(R.vx, 2)} m/s`, tx + 8, ty + th - 9);
+  }
+
+  /* ---------- โหมด 2: ฝนตกกับรถ ---------- */
+  function drawCar(ctx, x, gy, sc) {   // x = ท้ายรถ (px), รถยาว 4 m หันไปทางขวา
+    const L = 4 * sc, cab = col('--c-cart1');
+    ctx.fillStyle = cab;
+    ctx.fillRect(x, gy - 1.05 * sc, L, 0.65 * sc);
+    ctx.beginPath(); ctx.moveTo(x + 0.6 * sc, gy - 1.05 * sc); ctx.lineTo(x + 1.0 * sc, gy - 1.55 * sc);
+    ctx.lineTo(x + 2.6 * sc, gy - 1.55 * sc); ctx.lineTo(x + 3.2 * sc, gy - 1.05 * sc); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = col('--panel');
+    ctx.beginPath(); ctx.moveTo(x + 1.1 * sc, gy - 1.12 * sc); ctx.lineTo(x + 1.25 * sc, gy - 1.45 * sc); ctx.lineTo(x + 1.8 * sc, gy - 1.45 * sc); ctx.lineTo(x + 1.8 * sc, gy - 1.12 * sc); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + 1.95 * sc, gy - 1.12 * sc); ctx.lineTo(x + 1.95 * sc, gy - 1.45 * sc); ctx.lineTo(x + 2.5 * sc, gy - 1.45 * sc); ctx.lineTo(x + 2.95 * sc, gy - 1.12 * sc); ctx.fill();
+    ctx.fillStyle = col('--ink');
+    [0.85, 3.15].forEach(f => { ctx.beginPath(); ctx.arc(x + f * sc, gy - 0.32 * sc, 0.32 * sc, 0, 7); ctx.fill(); });
+  }
+  function drawRain(ctx, w, h) {
+    const K = rainK(), gap = 10, pw = (w - gap) / 2, gy = h * 0.56;
+    const sc = Math.min(pw / 9, (gy - 46) / HM), Wm = pw / sc;
+    rain.Wm = Wm;
+    const Hs = gy / sc;   // ความสูงฉากจริงตามขนาดจอ: ยืดตำแหน่งเม็ดฝนเดิมให้เต็มฉาก
+    if (Math.abs(Hs - rain.Hs) > 0.01) { const k = Hs / rain.Hs; rain.dG.concat(rain.dC).forEach(p => { p.y *= k; }); rain.Hs = Hs; }
+    const kv = Math.min(12, (h - gy - 50) / K.vr, (pw - 70) / Math.max(Math.abs(K.wd) + K.vc, Math.abs(K.rx), 0.1));
+    for (let i = 0; i < 2; i++) {
+      const px0 = i * (pw + gap), inCar = i === 1, Y = y => gy - y * sc, Xf = f => px0 + f * pw;
+      ctx.save(); ctx.beginPath(); ctx.rect(px0, 0, pw, gy + 6); ctx.clip();
+      ctx.fillStyle = col('--grid'); ctx.fillRect(px0, 0, pw, gy);
+      // เสาริมทาง (ติดกับพื้น)
+      const po = inCar ? rain.post : 0;
+      for (let xm = po - 3; xm < Wm + 3; xm += 3) {
+        const xx = px0 + xm * sc; line(ctx, xx, gy, xx, Y(1.2), col('--c-slope'), 3);
+      }
+      // เม็ดฝนเป็นเส้นสั้นตามทิศความเร็วในกรอบนั้น
+      const vx = inCar ? K.rx : K.wd, tau = 0.045;
+      ctx.strokeStyle = col('--c-vx'); ctx.lineWidth = 1.6; ctx.beginPath();
+      (inCar ? rain.dC : rain.dG).forEach(p => {
+        const x = Xf(p.f), y = Y(p.y); ctx.moveTo(x, y); ctx.lineTo(x - vx * tau * sc, y - K.vr * tau * sc);
+      });
+      ctx.stroke();
+      // รถ
+      if (inCar) drawCar(ctx, px0 + pw / 2 - 2 * sc, gy, sc);
+      else { const cx = rain.car * Wm; drawCar(ctx, px0 + (cx - 2) * sc, gy, sc); drawCar(ctx, px0 + (cx - 2 - Wm) * sc, gy, sc); }
+      line(ctx, px0, gy, px0 + pw, gy, col('--ink'), 2);
+      if (!inCar) {
+        const cx = px0 + rain.car * Wm * sc;
+        const La = Math.min(K.vc * kv, pw * 0.35);
+        if (K.vc > 0) arw(ctx, cx - La / 2, Y(2.1), La, 0, col('--c-f'), 'v', 'รถ');
+      } else if (K.vc > 0) {
+        ctx.fillStyle = col('--muted'); ctx.font = '12px system-ui';
+        const s = pw < 260 ? 'พื้นเคลื่อนไปทางซ้าย' : 'พื้นและเสาเคลื่อนที่ไปทางซ้าย'; ctx.fillText(s, px0 + 8, 40);
+        arrow(ctx, px0 + 50, 50, -40, 0, col('--muted'));
+      }
+      ctx.fillStyle = col('--panel'); ctx.globalAlpha = 0.8; ctx.fillRect(px0, 0, pw, 26); ctx.globalAlpha = 1;
+      const nar = pw < 260;
+      title(ctx, inCar ? (nar ? 'มุมมองคนในรถ' : 'มุมมองคนในรถ (รถหยุดนิ่ง)') : (nar ? 'มุมมองคนบนพื้น' : 'มุมมองคนยืนบนพื้น'), px0 + 8, 18, col('--ink'), '600 13px system-ui');
+      if (!inCar && K.ts < 0.99) title(ctx, `ภาพช้าลง ${fmt(1 / K.ts, 1)} เท่า`, px0 + 8, 40);
+      ctx.restore();
+      ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.strokeRect(px0, 0, pw, gy);
+      // แผนภาพเวกเตอร์ใต้ภาพ
+      const vy0 = gy + 40;
+      if (!inCar) {
+        const xsG = [0, K.wd, K.vc], gx0 = Math.min(...xsG), gx1 = Math.max(...xsG), ox = px0 + pw / 2 - (gx0 + gx1) / 2 * kv;
+        title(ctx, 'ความเร็วเทียบพื้น', px0 + 8, gy + 20);
+        arw(ctx, ox, vy0, K.wd * kv, K.vr * kv, col('--c-vx'), 'v', 'ฝน/พื้น', 4, 0);
+        arw(ctx, ox, vy0, K.vc * kv, 0, col('--c-f'), 'v', 'รถ/พื้น', 0, -10);
+        ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(ox, vy0, 3, 0, 7); ctx.fill();
+        if (Math.abs(K.wd) > 0.01) angArc(ctx, ox, vy0, 26, Math.PI / 2, Math.atan2(K.vr, K.wd), col('--c-vx'), 'θ₀');
+      } else {
+        const xsC = [0, K.wd, K.rx], gx0 = Math.min(...xsC), gx1 = Math.max(...xsC), ox = px0 + pw / 2 - (gx0 + gx1) / 2 * kv;
+        title(ctx, pw < 260 ? 'ความเร็วฝนเทียบรถ' : 'v ฝน/รถ = v ฝน/พื้น + (−v รถ/พื้น)', px0 + 8, gy + 20);
+        line(ctx, ox, vy0, ox, vy0 + K.vr * kv + 10, col('--muted'), 1, [2, 4]);
+        arw(ctx, ox, vy0, K.wd * kv, K.vr * kv, col('--c-vx'), 'v', 'ฝน/พื้น', K.wd * kv < -4 || K.rx < 0 ? 6 : -6, 0);
+        if (K.vc > 0) arw(ctx, ox + K.wd * kv, vy0 + K.vr * kv, -K.vc * kv, 0, col('--c-f'), '−v', 'รถ/พื้น', 0, 14);
+        const qx = K.wd * kv, qy = K.vr * kv, ddx = K.rx * kv, ddy = K.vr * kv;   // ป้ายผลลัพธ์อยู่ด้านที่ไม่มีจุดยอดที่สาม
+        arwMid(ctx, ox, vy0, ddx, ddy, col('--c-v'), 'v', 'ฝน/รถ', -ddy * qx + ddx * qy > 0 ? -1 : 1);
+        ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(ox, vy0, 3, 0, 7); ctx.fill();
+        if (Math.abs(K.rx) > 0.01) angArc(ctx, ox, vy0, 28, Math.PI / 2, Math.atan2(K.vr, K.rx), col('--c-v'), 'θ');
+      }
+    }
+  }
+
+  /* ---------- โหมด 3: สองวัตถุ ---------- */
+  function drawTwo(ctx, w, h) {
+    const K = twoK(), t = two.t;
+    const pA = tt => [K.A[0] * tt, K.A[1] * tt], pB = tt => [K.r0[0] + K.B[0] * tt, K.r0[1] + K.B[1] * tt];
+    const F = tt => frame === 'A' ? pA(tt) : frame === 'B' ? pB(tt) : [0, 0];
+    const vF = frame === 'A' ? K.A : frame === 'B' ? K.B : [0, 0];
+    const inF = (p, tt) => { const f = F(tt); return [p[0] - f[0], p[1] - f[1]]; };
+    const pts = [inF(pA(0), 0), inF(pA(K.Tend), K.Tend), inF(pB(0), 0), inF(pB(K.Tend), K.Tend)];
+    let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
+    let y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+    const span = Math.max(x1 - x0, y1 - y0, 40) * 0.1;
+    x0 -= span; x1 += span; y0 -= span; y1 += span;
+    if (x1 - x0 < 40) { const m = (x0 + x1) / 2; x0 = m - 20; x1 = m + 20; }
+    if (y1 - y0 < 40) { const m = (y0 + y1) / 2; y0 = m - 20; y1 = m + 20; }
+    // พื้นที่ภาพหลักเว้นที่ให้แผนภาพเวกเตอร์: จอกว้างเว้นด้านขวา จอแคบเว้นด้านบน
+    const bs = Math.min(170, w * 0.36, h * 0.42), bx = w - bs - 6, by = 6, wide = w >= 560;
+    const mR = wide ? bx - 24 : w, mT = wide ? 50 : bs + 16, mB = h - 26;
+    const sc = Math.min((mR - 30) / (x1 - x0), (mB - mT - 10) / (y1 - y0));
+    const X = x => mR / 2 + (x - (x0 + x1) / 2) * sc, Y = y => (mT + mB) / 2 - (y - (y0 + y1) / 2) * sc;
+    // กริดติดกับพื้นดิน (ในกรอบที่เคลื่อนที่ กริดจะไหลไป)
+    const g = niceStep(Math.max(x1 - x0, y1 - y0), 6), f = F(t);
+    ctx.strokeStyle = col('--grid'); ctx.lineWidth = 1; ctx.beginPath();
+    for (let gx = Math.floor((x0 - span + f[0]) / g) * g; gx <= x1 + span + f[0]; gx += g) { ctx.moveTo(X(gx - f[0]), 0); ctx.lineTo(X(gx - f[0]), h); }
+    for (let gyv = Math.floor((y0 - span + f[1]) / g) * g; gyv <= y1 + span + f[1]; gyv += g) { ctx.moveTo(0, Y(gyv - f[1])); ctx.lineTo(w, Y(gyv - f[1])); }
+    ctx.stroke();
+    // เส้นทาง: ทั้งหมด (ประ) และที่ผ่านมาแล้ว (ทึบ)
+    const path = (p, color) => {
+      const a = inF(p(0), 0), b = inF(p(K.Tend), K.Tend), cpt = inF(p(t), t);
+      line(ctx, X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), color, 1, [4, 5]);
+      line(ctx, X(a[0]), Y(a[1]), X(cpt[0]), Y(cpt[1]), color, 2.5);
+      return cpt;
+    };
+    const cA = path(pA, col('--c-cart1')), cB = path(pB, col('--c-cart2'));
+    // ระยะใกล้กันที่สุด
+    if (K.tStar > 0 && K.tStar <= K.Tend && K.v2 > 1e-9) {
+      const a = inF(pA(K.tStar), K.tStar), b = inF(pB(K.tStar), K.tStar);
+      line(ctx, X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), col('--c-mg'), 1.5, [3, 3]);
+      [[a, '--c-cart1'], [b, '--c-cart2']].forEach(([p, cc]) => { ctx.strokeStyle = col(cc); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 7, 0, 7); ctx.stroke(); });
+      ctx.font = '600 12px system-ui';
+      const ls = `d_min = ${fmt(K.dmin, 1)} m ที่ t = ${fmt(K.tStar, 1)} s`, lw = ctx.measureText(ls).width;
+      const lx = Math.max(4, Math.min(w - lw - 4, X((a[0] + b[0]) / 2) + 8)), ly = Y((a[1] + b[1]) / 2) + 18;
+      ctx.fillStyle = col('--panel'); ctx.globalAlpha = 0.85; ctx.fillRect(lx - 3, ly - 12, lw + 6, 16); ctx.globalAlpha = 1;
+      ctx.fillStyle = col('--c-mg'); ctx.fillText(ls, lx, ly);
+    }
+    // วัตถุและความเร็วในกรอบนี้
+    const vmax = Math.max(K.va, K.vb, K.vrel, 1), kv = Math.min(60, Math.min(w, h) * 0.16) / vmax;
+    const obj = (p, v, cc, name, sub) => {
+      const vv = [v[0] - vF[0], v[1] - vF[1]];
+      if (Math.hypot(vv[0], vv[1]) > 1e-6) arw(ctx, X(p[0]), Y(p[1]), vv[0] * kv, -vv[1] * kv, col(cc), 'v', sub);
+      ctx.fillStyle = col(cc); ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 10, 0, 7); ctx.fill();
+      ctx.fillStyle = col('--panel'); ctx.font = '700 12px system-ui'; ctx.fillText(name, X(p[0]) - 4, Y(p[1]) + 4);
+    };
+    obj(cA, K.A, '--c-cart1', 'A', frame === 'B' ? 'AB' : frame === 'A' ? '' : 'A');
+    obj(cB, K.B, '--c-cart2', 'B', frame === 'A' ? 'BA' : frame === 'B' ? '' : 'B');
+    if (frame !== 'ground') {
+      const me = frame === 'A' ? cA : cB;
+      ctx.font = '11px system-ui'; const sw = ctx.measureText('หยุดนิ่งในกรอบนี้').width;
+      title(ctx, 'หยุดนิ่งในกรอบนี้', Math.max(4, X(me[0]) - 13 - sw), Y(me[1]) - 12, col('--muted'), '11px system-ui');
+    }
+    // หัวเรื่อง เวลา มาตราส่วน ทิศ
+    title(ctx, frame === 'ground' ? 'กรอบอ้างอิง: พื้นดิน' : wide ? `กรอบอ้างอิงของ ${frame} (${frame} เห็นตัวเองอยู่นิ่ง)` : `กรอบของ ${frame}`, 10, 20, col('--ink'), '600 13px system-ui');
+    title(ctx, `t = ${fmt(t, 1)} s  ระยะห่าง ${fmt(Math.hypot(cB[0] - cA[0], cB[1] - cA[1]), 1)} m`, 10, 40);
+    const sl = niceLen(90, sc);
+    scaleBar(ctx, 12, h - 12, sc, sl, `${sl} m (กริดติดกับพื้นดิน)`);
+    // แผนภาพเวกเตอร์ (มุมขวาบน)
+    box(ctx, bx, by, bs, bs);
+    title(ctx, frame === 'B' ? 'v_AB = v_A − v_B' : 'v_BA = v_B − v_A', bx + 6, by + 16, col('--muted'), '12px system-ui');
+    const qs = [[0, 0], K.A, K.B];
+    const qx0 = Math.min(...qs.map(p => p[0])), qx1 = Math.max(...qs.map(p => p[0])), qy0 = Math.min(...qs.map(p => p[1])), qy1 = Math.max(...qs.map(p => p[1]));
+    const kq = Math.min((bs - 50) / Math.max(qx1 - qx0, 0.1), (bs - 56) / Math.max(qy1 - qy0, 0.1), 8);
+    const qox = bx + bs / 2 - (qx0 + qx1) / 2 * kq, qoy = by + 24 + (bs - 24) / 2 + (qy0 + qy1) / 2 * kq;
+    arw(ctx, qox, qoy, K.A[0] * kq, -K.A[1] * kq, col('--c-cart1'), 'v', 'A');
+    arw(ctx, qox, qoy, K.B[0] * kq, -K.B[1] * kq, col('--c-cart2'), 'v', 'B');
+    const S = frame === 'B' ? K.B : K.A, sg = frame === 'B' ? -1 : 1, ddx = sg * K.rel[0] * kq, ddy = -sg * K.rel[1] * kq;
+    const qx = -S[0] * kq, qy = S[1] * kq;   // จุดเริ่มแกน O เทียบปลายลูกศร: วางป้ายด้านตรงข้าม
+    arwMid(ctx, qox + S[0] * kq, qoy - S[1] * kq, ddx, ddy, col('--c-v'), 'v', frame === 'B' ? 'AB' : 'BA', -ddy * qx + ddx * qy > 0 ? -1 : 1);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(qox, qoy, 2.5, 0, 7); ctx.fill();
+    // เข็มทิศ
+    const nx = bx - 18, ny = by + 30;
+    arrow(ctx, nx, ny + 10, 0, -22, col('--muted'));
+    ctx.fillStyle = col('--muted'); ctx.font = '11px system-ui'; ctx.fillText('N', nx - 4, ny + 24);
+  }
+
+  function draw() {
+    const { ctx, w, h } = fitCanvas(c);
+    let tabH = '', note = '', tip = '', eq = '';
+    if (mode === 'river') {
+      drawRiver(ctx, w, h);
+      const R = river(), ds = n(R.d, 0), us = n(R.u, 1), vs = n(R.v, 1), als = n(R.al / D2R, 1);
+      tabH = `<tr><td>เวลาข้ามฟาก t = d/(v cosα)</td><td>${fmt(R.T, 2)} s</td></tr>
+        <tr><td>ระยะไหลลอย (ตามน้ำ)</td><td>${fmt(R.drift, 1)} m</td></tr>
+        <tr><td>อัตราเร็วเทียบฝั่ง</td><td>${fmt(R.vg, 2)} m/s</td></tr>
+        <tr><td>ทิศเรือไปจริง (จากแนวตลิ่ง)</td><td>${fmt(R.phi, 1)}°</td></tr>
+        <tr><td>เร็วที่สุด: t<sub>min</sub> = d/v</td><td>${fmt(R.d / R.v, 2)} s</td></tr>
+        <tr><td>ตรงข้ามพอดี: α = sin⁻¹(u/v)</td><td>${R.v > R.u ? fmt(Math.asin(R.u / R.v) / D2R, 1) + '°' : 'ทำไม่ได้ (v ≤ u)'}</td></tr>` +
+        (R.v <= R.u && R.u > 0 ? `<tr><td>ไหลลอยน้อยสุด d√(u²−v²)/v</td><td>${R.v < R.u ? fmt(R.minDrift, 1) + ' m' : '→ 0 (t → ∞)'}</td></tr>` : '');
+      note = 'เรือแล่นด้วยความเร็ว v เทียบน้ำในทิศหัวเรือ แต่น้ำทั้งก้อนพาเรือไปด้วยความเร็ว u ความเร็วเทียบฝั่งจึงเป็นผลรวมเวกเตอร์ เวลาข้ามขึ้นกับองค์ประกอบตั้งฉากฝั่ง v cosα เท่านั้น กระแสน้ำไม่ทำให้ข้ามช้าลง แต่ทำให้ไหลลอย';
+      tip = msg || (Math.abs(R.al) < 1e-6 ? 'หัวเรือตั้งฉากฝั่ง: ใช้เวลาน้อยที่สุด t = d/v แต่ไหลลอยไปตามน้ำ x = ud/v'
+        : Math.abs(R.drift) < 0.05 ? 'หันหัวเรือทวนน้ำจน v sinα = u เรือจึงไปถึงจุดตรงข้ามพอดี แต่ใช้เวลานานกว่าหันตั้งฉาก'
+        : 'ลองกด "ข้ามเร็วที่สุด" และ "ข้ามตรงจุดตรงข้าม" แล้วเทียบเวลาและระยะไหลลอย');
+      eq = eqH('การบวกเวกเตอร์: v<sub>เรือ/ฝั่ง</sub> = v<sub>เรือ/น้ำ</sub> + v<sub>น้ำ/ฝั่ง</sub> (x = ตามน้ำ, y = ข้ามแม่น้ำ)') +
+        eqL(`x: v<sub>x</sub> = u − v sinα = ${us} − ${vs} sin ${als}° = <b>${r(R.vx)} m/s</b>`) +
+        eqL(`y: v<sub>y</sub> = v cosα = ${vs} cos ${als}° = <b>${r(R.vy)} m/s</b>`) +
+        eqL(`|v<sub>เรือ/ฝั่ง</sub>| = √(v<sub>x</sub>² + v<sub>y</sub>²) = √(${n(R.vx)}² + ${n(R.vy)}²) = <b>${r(R.vg)} m/s</b>`) +
+        eqL(`tanφ = v<sub>y</sub>/v<sub>x</sub> = ${n(R.vy)}/${n(R.vx)} → φ = <b>${r(R.phi, 1)}°</b> จากแนวตลิ่ง`) +
+        eqH('เวลาและระยะไหลลอย') +
+        eqL(`t = d/v<sub>y</sub> = ${ds}/${n(R.vy)} = <b>${r(R.T)} s</b>`) +
+        eqL(`x = v<sub>x</sub> t = ${n(R.vx)} × ${n(R.T)} = <b>${r(R.drift, 1)} m</b>`) +
+        eqH('กรณีพิเศษ') +
+        eqL(`เร็วที่สุด (α = 0): t = d/v = ${ds}/${vs} = <b>${r(R.d / R.v)} s</b>, x = ud/v = ${us} × ${ds}/${vs} = <b>${r(R.u * R.d / R.v, 1)} m</b>`) +
+        (R.v > R.u
+          ? eqL(`ตรงข้ามพอดี: sinα = u/v = ${us}/${vs} → α = <b>${r(Math.asin(R.u / R.v) / D2R, 1)}°</b>, t = d/√(v² − u²) = <b>${r(R.d / Math.sqrt(R.v * R.v - R.u * R.u))} s</b>`)
+          : eqL(`v ≤ u → ไปตรงข้ามไม่ได้; ไหลลอยน้อยสุดเมื่อ sinα = v/u = ${vs}/${us}` + (R.v < R.u ? `, x<sub>min</sub> = d√(u² − v²)/v = <b>${r(R.minDrift, 1)} m</b>` : '')));
+    } else if (mode === 'rain') {
+      drawRain(ctx, w, h);
+      const K = rainK(), wds = n(K.wd, 1), vcs = n(K.vc, 0), vrs = n(K.vr, 1);
+      const side = Math.abs(K.rx) < 1e-9 ? 'ตกดิ่ง' : K.rx < 0 ? 'เอียงมาจากด้านหน้ารถ' : 'เอียงมาจากด้านหลังรถ';
+      tabH = `<tr><td>ความเร็วฝนเทียบรถ แกน x</td><td>${fmt(K.rx, 1)} m/s</td></tr>
+        <tr><td>ความเร็วฝนเทียบรถ แกน y</td><td>${fmt(-K.vr, 1)} m/s</td></tr>
+        <tr><td>|v<sub>ฝน/รถ</sub>|</td><td>${fmt(K.mag, 2)} m/s</td></tr>
+        <tr><td>มุมจากแนวดิ่ง (คนในรถ) θ</td><td>${fmt(K.th, 1)}°</td></tr>
+        <tr><td>มุมจากแนวดิ่ง (คนบนพื้น) θ₀</td><td>${fmt(K.th0, 1)}°</td></tr>
+        <tr><td>คนในรถเห็นฝน</td><td>${side}</td></tr>`;
+      note = 'ความเร็วขึ้นกับกรอบอ้างอิง: ฝนเม็ดเดียวกัน คนบนพื้นเห็นตก' + (K.wd === 0 ? 'ดิ่ง' : 'เฉียงตามลม') +
+        ' แต่คนในรถเห็นฝนมีความเร็วแนวราบเพิ่มเป็น −v_รถ จึงเห็นฝนสาดเข้าหาด้านหน้ารถ (กระจกหน้าเปียกมากกว่ากระจกหลัง)';
+      tip = 'ลองเพิ่มลมให้ฝนเฉียงไปทางเดียวกับรถ (+) ถ้าลมเท่ากับ v_รถ คนในรถจะเห็นฝนตกดิ่งพอดี';
+      eq = eqH('ความเร็วฝนเทียบรถ: v<sub>ฝน/รถ</sub> = v<sub>ฝน/พื้น</sub> − v<sub>รถ/พื้น</sub> (x = ทิศรถวิ่ง, y = ขึ้น)') +
+        eqL(`x: ${wds} − ${vcs} = <b>${r(K.rx, 1)} m/s</b>`) +
+        eqL(`y: ${n(-K.vr, 1)} − 0 = <b>${r(-K.vr, 1)} m/s</b>`) +
+        eqL(`|v<sub>ฝน/รถ</sub>| = √(${n(K.rx, 1)}² + ${vrs}²) = <b>${r(K.mag)} m/s</b>`) +
+        eqH('มุมที่คนในรถเห็นฝนเอียงจากแนวดิ่ง') +
+        eqL(`tanθ = |v<sub>x</sub>|/|v<sub>y</sub>| = ${n(Math.abs(K.rx), 1)}/${vrs} = ${r(Math.abs(K.rx) / K.vr, 3)} → θ = <b>${r(K.th, 1)}°</b>`) +
+        (K.wd === 0 ? eqL(`ฝนตกดิ่ง: tanθ = v<sub>รถ</sub>/v<sub>ฝน</sub> = ${vcs}/${vrs}`)
+          : eqL(`คนบนพื้น: tanθ₀ = |ลม|/v<sub>ฝน</sub> = ${n(Math.abs(K.wd), 1)}/${vrs} → θ₀ = <b>${r(K.th0, 1)}°</b>`));
+    } else {
+      drawTwo(ctx, w, h);
+      const K = twoK(), f1 = x => n(x, 1), d = Math.hypot(K.r0[0] + K.rel[0] * two.t, K.r0[1] + K.rel[1] * two.t);
+      const dirBA = Math.atan2(K.rel[1], K.rel[0]) / D2R, dirS = K.vrel > 1e-9 ? fmt((dirBA + 360) % 360, 1) + '°' : '−';
+      tabH = `<tr><td>v<sub>BA</sub> = v<sub>B</sub> − v<sub>A</sub></td><td>(${fmt(K.rel[0], 1)}, ${fmt(K.rel[1], 1)}) m/s</td></tr>
+        <tr><td>|v<sub>BA</sub>| = |v<sub>AB</sub>|</td><td>${fmt(K.vrel, 2)} m/s</td></tr>
+        <tr><td>ทิศ v<sub>BA</sub> (จากตะวันออก)</td><td>${dirS}</td></tr>
+        <tr><td>เวลาที่ใกล้กันที่สุด</td><td>${K.v2 < 1e-9 ? 'ระยะคงที่' : K.tStar > 0 ? fmt(K.tStar, 2) + ' s' : 'ตอนเริ่ม (กำลังห่างออก)'}</td></tr>
+        <tr><td>ระยะใกล้กันที่สุด d<sub>min</sub></td><td>${fmt(K.dmin, 1)} m</td></tr>
+        <tr><td>ระยะห่างขณะนี้</td><td>${fmt(d, 1)} m</td></tr>`;
+      note = frame === 'ground' ? 'กรอบพื้นดิน: เห็น A และ B เคลื่อนที่ตามความเร็วของตัวเอง ลองสลับเป็น "กรอบของ A" จะเห็น A อยู่นิ่ง ส่วน B เคลื่อนที่เป็นเส้นตรงด้วย v_BA'
+        : `กรอบของ ${frame}: ${frame} อยู่นิ่ง พื้นดิน (กริด) ไหลไปด้วยความเร็ว −v_${frame} ส่วนอีกวัตถุเคลื่อนเป็นเส้นตรงด้วยความเร็วสัมพัทธ์ ระยะใกล้สุดคือระยะตั้งฉากจาก ${frame} ถึงเส้นทางนั้น`;
+      tip = 'v_AB = v_A − v_B คือความเร็วของ A ที่ B เห็น ส่วน v_BA = −v_AB คือความเร็วของ B ที่ A เห็น ขนาดเท่ากันแต่ทิศตรงข้าม';
+      const ca = Math.cos(K.aa), sa = Math.sin(K.aa), cb = Math.cos(K.ab), sb = Math.sin(K.ab);
+      eq = eqH('แยกองค์ประกอบ (θ วัดจากทิศตะวันออก ทวนเข็มนาฬิกา)') +
+        eqL(`v<sub>A</sub> = (${n(K.va, 0)} cos ${n(taa(), 0)}°, ${n(K.va, 0)} sin ${n(taa(), 0)}°) = (${r(K.va * ca, 2)}, ${r(K.va * sa, 2)}) m/s`) +
+        eqL(`v<sub>B</sub> = (${n(K.vb, 0)} cos ${n(tab(), 0)}°, ${n(K.vb, 0)} sin ${n(tab(), 0)}°) = (${r(K.vb * cb, 2)}, ${r(K.vb * sb, 2)}) m/s`) +
+        eqH('ความเร็วของ B เทียบ A: v<sub>BA</sub> = v<sub>B</sub> − v<sub>A</sub> (v<sub>AB</sub> = −v<sub>BA</sub>)') +
+        eqL(`x: ${n(K.B[0])} − ${n(K.A[0])} = <b>${r(K.rel[0])} m/s</b>`) +
+        eqL(`y: ${n(K.B[1])} − ${n(K.A[1])} = <b>${r(K.rel[1])} m/s</b>`) +
+        eqL(`|v<sub>BA</sub>| = √(${n(K.rel[0])}² + ${n(K.rel[1])}²) = <b>${r(K.vrel)} m/s</b>` +
+          (K.vrel > 1e-9 ? `, tan⁻¹(${n(K.rel[1])}/${n(K.rel[0])}) → ทิศ <b>${dirS}</b>` : '')) +
+        eqH('ระยะใกล้กันที่สุด (ในกรอบของ A, B เริ่มที่ r<sub>0</sub> แล้วเคลื่อนที่ด้วย v<sub>BA</sub>)') +
+        (K.v2 > 1e-9
+          ? eqL(`t* = −(r<sub>0</sub>·v<sub>BA</sub>)/|v<sub>BA</sub>|² = −(${f1(K.r0[0])} × ${n(K.rel[0])} + ${f1(K.r0[1])} × ${n(K.rel[1])})/${n(K.v2, 1)} = <b>${r(K.tStar)} s</b>` +
+              (K.tStar < 0 ? ' &lt; 0 → ใกล้สุดตอนเริ่ม' : '')) +
+            eqL(`d<sub>min</sub> = |r<sub>0</sub> + v<sub>BA</sub>t| = √((${f1(K.r0[0])} + ${n(K.rel[0])} × ${n(K.tc)})² + (${f1(K.r0[1])} + ${n(K.rel[1])} × ${n(K.tc)})²) = <b>${r(K.dmin, 1)} m</b>`)
+          : eqL(`v<sub>BA</sub> = 0 → ระยะห่างคงที่ = <b>${r(K.d0, 1)} m</b>`));
+    }
+    $('rv_tab').innerHTML = tabH;
+    if ($('rv_note')._t !== note) { $('rv_note').innerHTML = note; $('rv_note')._t = note; }
+    if ($('rv_tip')._t !== tip) { $('rv_tip').innerHTML = tip; $('rv_tip')._t = tip; }
+    setEq('rv_eq', eq);
+  }
+  return { step, draw };
+})();
+
+/* ---------- กราฟการเคลื่อนที่ (v–t, s–t, a–t) ---------- */
+const vtgraph = (() => {
+  const sec = $('vtgraph'), ct = $('vg_track'), cv = $('vg_v'), cs = $('vg_s'), ca = $('vg_a'), selEl = $('vg_sel');
+  const VMAX = 25, TMAX = 24, HIT = 26, MINPTS = 2, MAXPTS = 12;
+  const PRESETS = {
+    back: [[0, 2], [2, 6], [4, 6], [6, 0], [8, -4], [10, -4], [12, 0]],
+    acc: [[0, 0], [2, 4], [4, 8], [6, 8], [8, 8], [10, 4], [12, 0]],
+    toss: [[0, 20], [1, 10], [2, 0], [3, -10], [4, -20]],
+    rev: [[0, 0], [2, -4], [4, -4], [6, -4], [8, 0], [10, 0]],
+  };
+  let pts = [], tp = 0, running = true, pick = -1, sel = null, view = null, dragging = false, selKey = '';
+  const s0 = slider('vg_s0', 'm', 0), spd = slider('vg_sp', '×', 2);
+
+  // ---------- การคำนวณ ----------
+  const Tend = () => pts[pts.length - 1].t;
+  const segs = () => {
+    const out = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p = pts[i], q = pts[i + 1], dt = q.t - p.t;
+      out.push({ i, t1: p.t, t2: q.t, v1: p.v, v2: q.v, dt, a: (q.v - p.v) / dt, ds: 0.5 * (p.v + q.v) * dt });
+    }
+    return out;
+  };
+  const segAt = t => { const S = segs(); for (const g of S) if (t < g.t2) return g; return S[S.length - 1]; };
+  const vAt = t => { t = Math.max(0, Math.min(Tend(), t)); const g = segAt(t); return g.v1 + g.a * (t - g.t1); };
+  const aAt = t => segAt(Math.max(0, Math.min(Tend(), t))).a;
+  function sAt(t) {
+    let s = s0();
+    for (const g of segs()) {
+      if (t >= g.t2) s += g.ds;
+      else { if (t > g.t1) { const u = t - g.t1; s += g.v1 * u + 0.5 * g.a * u * u; } break; }
+    }
+    return s;
+  }
+  // แบ่งแต่ละช่วงที่จุดที่ v เปลี่ยนเครื่องหมาย
+  function pieces() {
+    const out = [];
+    for (const g of segs()) {
+      if (g.v1 * g.v2 < 0) {
+        const tc = g.t1 + g.v1 / (g.v1 - g.v2) * g.dt;
+        out.push({ seg: g.i, ta: g.t1, tb: tc, va: g.v1, vb: 0 }, { seg: g.i, ta: tc, tb: g.t2, va: 0, vb: g.v2 });
+      } else out.push({ seg: g.i, ta: g.t1, tb: g.t2, va: g.v1, vb: g.v2 });
+    }
+    return out;
+  }
+  // ชิ้นพื้นที่ที่ถูกตัดให้อยู่ในช่วง [ta, tb]
+  function clipPieces(ta, tb) {
+    const out = [];
+    for (const p of pieces()) {
+      const lo = Math.max(ta, p.ta), hi = Math.min(tb, p.tb);
+      if (hi - lo < 1e-9) continue;
+      const k = (p.vb - p.va) / (p.tb - p.ta), va = p.va + k * (lo - p.ta), vb = p.va + k * (hi - p.ta);
+      out.push({ ta: lo, tb: hi, va, vb, A: 0.5 * (va + vb) * (hi - lo) });
+    }
+    return out;
+  }
+  const distBetween = (ta, tb) => clipPieces(ta, tb).reduce((m, p) => m + Math.abs(p.A), 0);
+
+  // ---------- ตัวเลข ----------
+  const dp = x => { const a = Math.abs(x); return Math.abs(a - Math.round(a)) < 1e-6 ? 0 : Math.abs(a * 10 - Math.round(a * 10)) < 1e-6 ? 1 : 2; };
+  const nx = x => { x = +x.toFixed(2); return n(x, dp(x)); }, fx = x => { x = +x.toFixed(2); return r(x, dp(x)); };
+  const sg = x => (x > 1e-9 ? '+' : '') + fx(x);
+  const snap = (x, s) => Math.round(x / s) * s;
+
+  // ---------- มุมมองกราฟ (ตรึงไว้ระหว่างลาก) ----------
+  function calcView() {
+    const T = Math.max(10, Math.ceil((Tend() + 2) / 2) * 2);
+    let lo = Math.min(-2, ...pts.map(p => p.v)) - 2, hi = Math.max(2, ...pts.map(p => p.v)) + 2;
+    if (hi - lo < 10) { const ex = (10 - (hi - lo)) / 2; hi += ex; lo -= ex; }
+    return { T, vlo: Math.max(-VMAX, Math.floor(lo)), vhi: Math.min(VMAX, Math.ceil(hi)) };
+  }
+  const GL = 56, GR = 16, GT = 30, GB = 26;
+  const gx = (w, t) => GL + t / view.T * (w - GL - GR);
+  const gtInv = (w, x) => (x - GL) / (w - GL - GR) * view.T;
+  const mkY = (h, lo, hi) => y => GT + (hi - y) / (hi - lo) * (h - GT - GB);
+  const ylo = (h, lo, hi) => y => hi - (y - GT) / (h - GT - GB) * (hi - lo);
+  function sRange() {
+    const ss = [s0()]; for (const p of pieces()) ss.push(sAt(p.tb));
+    let lo = Math.min(...ss), hi = Math.max(...ss);
+    if (hi - lo < 4) { const m = (hi + lo) / 2; lo = m - 2; hi = m + 2; }
+    const pad = (hi - lo) * 0.12; return [lo - pad, hi + pad];
+  }
+  function aRange() { const m = Math.max(2, ...segs().map(g => Math.abs(g.a))) * 1.3; return [-m, m]; }
+
+  // ---------- เมื่อจุดเปลี่ยน ----------
+  function changed(keepView) {
+    if (!keepView) view = calcView();
+    if (sel) {
+      if (sel.seg != null) {
+        const S = segs(); if (sel.seg < S.length) { sel.a = S[sel.seg].t1; sel.b = S[sel.seg].t2; } else sel = null;
+      } else { sel.a = Math.min(sel.a, Tend()); sel.b = Math.min(sel.b, Tend()); if (sel.b - sel.a < 0.25) sel = null; }
+    }
+    tp = Math.min(tp, Tend());
+    syncSelect();
+  }
+  function syncSelect() {
+    const S = segs(), key = S.map(g => g.t1 + '-' + g.t2).join(',') + (sel && sel.seg == null ? `|c${sel.a}-${sel.b}` : '');
+    if (key !== selKey) {
+      selKey = key;
+      let h = `<option value="all">ทั้งการเคลื่อนที่ (t = 0 → ${fx(Tend())} s)</option>`;
+      S.forEach((g, i) => { h += `<option value="${i}">ช่วงที่ ${i + 1}: t = ${fx(g.t1)} → ${fx(g.t2)} s</option>`; });
+      if (sel && sel.seg == null) h += `<option value="custom">เลือกเอง: t = ${fx(sel.a)} → ${fx(sel.b)} s</option>`;
+      selEl.innerHTML = h;
+    }
+    selEl.value = !sel ? 'all' : sel.seg == null ? 'custom' : String(sel.seg);
+  }
+  selEl.onchange = () => {
+    const v = selEl.value, S = segs();
+    if (v === 'all') sel = null;
+    else if (v !== 'custom') { const g = S[+v]; sel = { a: g.t1, b: g.t2, seg: +v }; }
+    syncSelect();
+  };
+  function load(name) {
+    pts = PRESETS[name].map(([t, v]) => ({ t, v }));
+    pick = -1; sel = null; tp = 0; running = true; changed();
+  }
+  sec.querySelectorAll('#vg_pre button').forEach(b => b.onclick = () => load(b.dataset.p));
+  $('vg_add').onclick = () => {
+    if (pts.length >= MAXPTS) return;
+    const last = pts[pts.length - 1];
+    if (last.t + 2 <= TMAX) pts.push({ t: last.t + 2, v: last.v });
+    else {   // ไม่มีที่ต่อท้าย: แทรกกลางช่วงที่ยาวที่สุด
+      const g = segs().reduce((m, x) => (x.dt > m.dt ? x : m));
+      if (g.dt < 1) return;
+      const t = snap((g.t1 + g.t2) / 2, 0.5);
+      pts.splice(g.i + 1, 0, { t, v: snap(g.v1 + g.a * (t - g.t1), 0.5) });
+    }
+    pick = -1; changed();
+  };
+  $('vg_del').onclick = () => {
+    if (pts.length <= MINPTS) return;
+    const i = pick > 0 ? pick : pts.length - 1;
+    pts.splice(i, 1); pick = -1; changed();
+  };
+  $('vg_run').onclick = () => { tp = 0; running = true; };
+  $('vg_reset').onclick = () => { tp = 0; running = false; };
+
+  // ---------- แตะ/ลากบนกราฟ ----------
+  function bind(c, isV) {
+    let st = null;
+    const pos = e => { const b = c.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top, w: b.width, h: b.height }; };
+    c.addEventListener('pointerdown', e => {
+      const p = pos(e);
+      try { c.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+      if (isV) {
+        const Y = mkY(p.h, view.vlo, view.vhi);
+        let best = -1, bd = HIT;
+        pts.forEach((q, i) => { const d = Math.hypot(p.x - gx(p.w, q.t), p.y - Y(q.v)); if (d < bd) { bd = d; best = i; } });
+        if (best >= 0) { st = { kind: 'pt', i: best }; pick = best; dragging = true; return; }
+      }
+      st = { kind: 'sel', x0: p.x, t0: Math.max(0, Math.min(Tend(), snap(gtInv(p.w, p.x), 0.5))), moved: false };
+    });
+    c.addEventListener('pointermove', e => {
+      if (!st) return;
+      const p = pos(e);
+      if (st.kind === 'pt') {
+        const i = st.i, V = ylo(p.h, view.vlo, view.vhi);
+        pts[i].v = Math.max(view.vlo, Math.min(view.vhi, snap(V(p.y), 0.5)));
+        if (i > 0) {
+          const tlo = pts[i - 1].t + 0.5, thi = i < pts.length - 1 ? pts[i + 1].t - 0.5 : Math.min(TMAX, view.T);
+          pts[i].t = Math.max(tlo, Math.min(thi, snap(gtInv(p.w, p.x), 0.5)));
+        }
+        changed(true);
+      } else {
+        if (Math.abs(p.x - st.x0) > 8) st.moved = true;
+        if (st.moved) {
+          const t1 = Math.max(0, Math.min(Tend(), snap(gtInv(p.w, p.x), 0.5)));
+          const a = Math.min(st.t0, t1), b = Math.max(st.t0, t1);
+          if (b - a >= 0.5) { sel = { a, b, seg: null }; syncSelect(); }
+        }
+      }
+    });
+    const end = e => {
+      if (!st) return;
+      if (st.kind === 'pt') { dragging = false; changed(); }
+      else if (!st.moved) {
+        const p = pos(e), t = gtInv(p.w, p.x);
+        if (t < 0 || t > Tend()) sel = null;
+        else { const g = segAt(t); sel = sel && sel.seg === g.i ? null : { a: g.t1, b: g.t2, seg: g.i }; }
+        syncSelect();
+      }
+      st = null;
+    };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', e => { if (st && st.kind === 'pt') { dragging = false; changed(); } st = null; });
+  }
+  bind(cv, true); bind(cs, false); bind(ca, false);
+
+  load('back');
+
+  function step(dt) {
+    if (!running) return;
+    tp += dt * spd();
+    if (tp >= Tend()) { tp = Tend(); running = false; }
+  }
+
+  // ---------- วาด ----------
+  const setHtml = (id, html) => { const el = $(id); if (el._h !== html) { el.innerHTML = html; el._h = html; } };
+  function txt(ctx, s, x, y, color, align = 'center', font = '600 12px system-ui') {
+    ctx.font = font; ctx.textAlign = align;
+    ctx.lineWidth = 3.5; ctx.strokeStyle = col('--panel'); ctx.lineJoin = 'round'; ctx.strokeText(s, x, y);
+    ctx.fillStyle = color; ctx.fillText(s, x, y); ctx.textAlign = 'left';
+  }
+  function axes(ctx, w, h, lo, hi, Y, ylab) {
+    const ink = col('--muted'), grid = col('--grid');
+    ctx.font = '11px system-ui'; ctx.lineWidth = 1;
+    const ts = niceStep(view.T, Math.max(4, Math.floor((w - GL - GR) / 50)));
+    for (let t = 0; t <= view.T + 1e-9; t += ts) {
+      const x = gx(w, t);
+      ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(x, GT); ctx.lineTo(x, h - GB); ctx.stroke();
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.fillText(fmt(t, ts < 1 ? 1 : 0), x, h - GB + 14);
+    }
+    const ys = niceStep(hi - lo, Math.max(3, Math.floor((h - GT - GB) / 34)));
+    for (let y = Math.ceil(lo / ys) * ys; y <= hi + 1e-9; y += ys) {
+      const py = Y(y);
+      ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(GL, py); ctx.lineTo(w - GR, py); ctx.stroke();
+      ctx.fillStyle = ink; ctx.textAlign = 'right'; ctx.fillText(fmt(y, ys < 1 ? 1 : 0).replace('-', '−'), GL - 5, py + 4);
+    }
+    ctx.textAlign = 'left';
+    const y0 = lo <= 0 && hi >= 0 ? Y(0) : h - GB;
+    ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(GL, GT - 4); ctx.lineTo(GL, h - GB); ctx.moveTo(GL, y0); ctx.lineTo(w - GR + 4, y0); ctx.stroke();
+    ctx.fillStyle = col('--ink'); ctx.font = '600 12px system-ui';
+    ctx.fillText(ylab, 6, 14);
+    ctx.textAlign = 'right'; ctx.fillText('t (s)', w - 4, h - GB - 6); ctx.textAlign = 'left';
+  }
+  function band(ctx, w, h) {
+    if (!sel) return;
+    const x1 = gx(w, sel.a), x2 = gx(w, sel.b);
+    ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = col('--accent'); ctx.fillRect(x1, GT, x2 - x1, h - GT - GB); ctx.restore();
+    line(ctx, x1, GT, x1, h - GB, col('--accent'), 1.5, [4, 3]); line(ctx, x2, GT, x2, h - GB, col('--accent'), 1.5, [4, 3]);
+  }
+  function cursor(ctx, w, h, y, label, color) {
+    const x = gx(w, tp);
+    line(ctx, x, GT, x, h - GB, col('--ink'), 1.2, [2, 3]);
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill();
+    const right = x < w - 110;
+    txt(ctx, label, x + (right ? 6 : -6), GT + 2, col('--ink'), right ? 'left' : 'right');   // ป้ายค่าอยู่บนสุด ไม่ทับป้ายพื้นที่
+  }
+
+  function drawV() {
+    const { ctx, w, h } = fitCanvas(cv), lo = view.vlo, hi = view.vhi, Y = mkY(h, lo, hi), Y0 = Y(0);
+    const showLab = $('vg_lab').checked, cP = col('--c-vy'), cN = col('--c-mg'), cV = col('--c-v'), cF = col('--c-f');
+    band(ctx, w, h);
+    // พื้นที่ใต้กราฟ
+    const PS = pieces();
+    for (const p of PS) {
+      const neg = p.va + p.vb < 0;
+      ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = neg ? cN : cP;
+      ctx.beginPath(); ctx.moveTo(gx(w, p.ta), Y0); ctx.lineTo(gx(w, p.ta), Y(p.va)); ctx.lineTo(gx(w, p.tb), Y(p.vb)); ctx.lineTo(gx(w, p.tb), Y0);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    axes(ctx, w, h, lo, hi, Y, 'ความเร็ว v (m/s)');
+    if (showLab) for (const p of PS) {
+      const A = 0.5 * (p.va + p.vb) * (p.tb - p.ta);
+      if (Math.abs(A) < 1e-9) continue;
+      const pw = gx(w, p.tb) - gx(w, p.ta);
+      txt(ctx, sg(A), (gx(w, p.ta) + gx(w, p.tb)) / 2, Y((p.va + p.vb) / 4) + 4, A > 0 ? cP : cN, 'center', `700 ${pw > 34 ? 13 : 10}px system-ui`);
+    }
+    // เส้นกราฟและความชัน
+    ctx.strokeStyle = cV; ctx.lineWidth = 2.6; ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, gx(w, p.t), Y(p.v))); ctx.stroke();
+    if (showLab) for (const g of segs()) {
+      const xm = (gx(w, g.t1) + gx(w, g.t2)) / 2, vm = (g.v1 + g.v2) / 2;
+      const up = vm >= 0, ym = Y(vm) + (up ? -10 : 18);
+      txt(ctx, 'a=' + fx(g.a), xm, Math.max(GT + 10, Math.min(h - GB - 4, ym)), cF, 'center', '600 11px system-ui');
+    }
+    // จุดจับ
+    pts.forEach((p, i) => {
+      ctx.beginPath(); ctx.arc(gx(w, p.t), Y(p.v), i === pick ? 9 : 7.5, 0, 7);
+      ctx.fillStyle = i === pick ? cV : col('--panel'); ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = cV; ctx.stroke();
+    });
+    cursor(ctx, w, h, Y(vAt(tp)), `v = ${fx(+vAt(tp).toFixed(2))} m/s`, cV);
+  }
+  function drawS() {
+    const { ctx, w, h } = fitCanvas(cs), [lo, hi] = sRange(), Y = mkY(h, lo, hi), cV = col('--c-v');
+    band(ctx, w, h);
+    axes(ctx, w, h, lo, hi, Y, 'ตำแหน่ง s (m)');
+    line(ctx, GL, Y(s0()), w - GR, Y(s0()), col('--muted'), 1, [5, 4]);
+    ctx.strokeStyle = cV; ctx.lineWidth = 2.6; ctx.beginPath();
+    const T = Tend(), N = Math.max(40, Math.round(w / 3));
+    for (let k = 0; k <= N; k++) { const t = T * k / N; (k ? ctx.lineTo : ctx.moveTo).call(ctx, gx(w, t), Y(sAt(t))); }
+    ctx.stroke();
+    // จุดปลายช่วงและจุดกลับทิศ
+    const marks = [0, ...pieces().map(p => p.tb)];
+    const lab = marks.length <= 9 && w > 500;
+    marks.forEach((t, k) => {
+      const x = gx(w, t), y = Y(sAt(t)), turn = Math.abs(vAt(t)) < 1e-9 && k > 0 && k < marks.length - 1;
+      ctx.beginPath(); ctx.arc(x, y, turn ? 4.5 : 3.5, 0, 7); ctx.fillStyle = turn ? col('--c-mg') : cV; ctx.fill();
+      if (lab || turn) txt(ctx, fx(+sAt(t).toFixed(2)), x, y - 9, col('--ink'), 'center', '11px system-ui');
+    });
+    cursor(ctx, w, h, Y(sAt(tp)), `s = ${r(sAt(tp), 2)} m`, cV);
+  }
+  function drawA() {
+    const { ctx, w, h } = fitCanvas(ca), [lo, hi] = aRange(), Y = mkY(h, lo, hi), cF = col('--c-f');
+    band(ctx, w, h);
+    const S = segs(), Y0 = Y(0);
+    for (const g of S) { ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = cF; ctx.fillRect(gx(w, g.t1), Math.min(Y0, Y(g.a)), gx(w, g.t2) - gx(w, g.t1), Math.abs(Y(g.a) - Y0)); ctx.restore(); }
+    axes(ctx, w, h, lo, hi, Y, 'ความเร่ง a (m/s²)');
+    S.forEach((g, i) => {
+      if (i) line(ctx, gx(w, g.t1), Y(S[i - 1].a), gx(w, g.t1), Y(g.a), cF, 1.2, [3, 3]);
+      line(ctx, gx(w, g.t1), Y(g.a), gx(w, g.t2), Y(g.a), cF, 3);
+      if ($('vg_lab').checked) txt(ctx, fx(g.a), (gx(w, g.t1) + gx(w, g.t2)) / 2, Y(g.a) + (g.a >= 0 ? -6 : 15), cF, 'center', '600 11px system-ui');
+    });
+    cursor(ctx, w, h, Y(aAt(tp)), `a = ${fx(aAt(tp))} m/s²`, cF);
+  }
+  function drawTrack() {
+    const { ctx, w, h } = fitCanvas(ct), [lo0, hi0] = sRange(), ry = h - 34, pad = 34;
+    const st = niceStep(hi0 - lo0, Math.max(4, Math.floor((w - 2 * pad) / 55)));
+    const lo = Math.floor(lo0 / st) * st, hi = Math.ceil(hi0 / st) * st;
+    const X = s => pad + (s - lo) / (hi - lo) * (w - 2 * pad);
+    // ไม้บรรทัด
+    ctx.fillStyle = col('--grid'); ctx.fillRect(pad - 10, ry, w - 2 * pad + 20, 22);
+    ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.strokeRect(pad - 10, ry, w - 2 * pad + 20, 22);
+    ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    for (let s = lo; s <= hi + 1e-9; s += st / 5) {
+      const major = Math.abs(s / st - Math.round(s / st)) < 1e-6, x = X(s);
+      line(ctx, x, ry, x, ry + (major ? 9 : 5), col('--muted'), major ? 1.3 : 0.8);
+      if (major) { ctx.fillStyle = Math.abs(s) < 1e-9 ? col('--ink') : col('--muted'); ctx.fillText(fmt(s, st < 1 ? 1 : 0).replace('-', '−'), x, ry + 20); }
+    }
+    ctx.textAlign = 'right'; ctx.fillStyle = col('--ink'); ctx.fillText('s (m)', w - 4, ry - 4); ctx.textAlign = 'left';
+    // จุดบนแถบกระดาษทุก 1 s
+    for (let t = 0; t <= tp + 1e-9; t += 1) {
+      ctx.beginPath(); ctx.arc(X(sAt(t)), ry - 5, 2.6, 0, 7); ctx.fillStyle = col('--muted'); ctx.fill();
+    }
+    // รถ
+    const s = sAt(tp), v = vAt(tp), a = aAt(tp), x = X(s), cy = ry - 26;
+    ctx.fillStyle = col('--c-cart1'); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 22, cy - 9, 44, 18, 5) : ctx.rect(x - 22, cy - 9, 44, 18); ctx.fill();
+    ctx.fillStyle = col('--ink');
+    for (const dx of [-13, 13]) { ctx.beginPath(); ctx.arc(x + dx, cy + 11, 4.5, 0, 7); ctx.fill(); }
+    line(ctx, x, cy + 9, x, ry, col('--ink'), 1.2, [2, 2]);
+    // ลูกศร v และ a
+    const vm = Math.max(1, ...pts.map(p => Math.abs(p.v))), am = Math.max(1, ...segs().map(g => Math.abs(g.a)));
+    const L = Math.min(90, w / 6);
+    if (Math.abs(v) > 1e-6) arrow(ctx, x, cy - 18, v / vm * L, 0, col('--c-v'), 'v');
+    if (Math.abs(a) > 1e-6) arrow(ctx, x, cy - 34, a / am * L * 0.7, 0, col('--c-f'), 'a');
+    ctx.font = '600 13px system-ui'; ctx.fillStyle = col('--ink');
+    ctx.fillText(`t = ${fmt(tp, 1)} s`, 8, 18);
+    ctx.font = '12px system-ui'; ctx.fillStyle = col('--muted');
+    ctx.fillText(`s = ${r(s, 2)} m · v = ${r(v, 2)} m/s · a = ${fx(a)} m/s²`, 8, 35);
+  }
+
+  function info() {
+    const S = segs(), T = Tend(), D = S.reduce((m, g) => m + g.ds, 0), dist = distBetween(0, T);
+    const a = sel ? sel.a : 0, b = sel ? sel.b : T, sd = sAt(b) - sAt(a), sdist = distBetween(a, b);
+    const rows = [
+      ['เวลาทั้งหมด', `${fx(T)} s`],
+      ['การกระจัดรวม Δs', `${sg(D)} m`],
+      ['ระยะทางรวม', `${fx(dist)} m`],
+      ['ความเร็วเฉลี่ย Δs/Δt', `${r(D / T, 2)} m/s`],
+      ['อัตราเร็วเฉลี่ย ระยะทาง/Δt', `${r(dist / T, 2)} m/s`],
+      ['ตำแหน่งสุดท้าย s', `${r(sAt(T), 2)} m`],
+      [`ช่วง t = ${fx(a)}→${fx(b)} s: Δs`, `${sg(+sd.toFixed(4))} m`],
+      ['ช่วงที่เลือก: ระยะทาง', `${fx(+sdist.toFixed(4))} m`],
+    ];
+    setHtml('vg_tab', rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join(''));
+    const negT = pieces().filter(p => p.va + p.vb < 0).reduce((m, p) => m + (p.tb - p.ta), 0);
+    setHtml('vg_note', negT > 0
+      ? `มีช่วงที่ v &lt; 0 รวม ${fx(+negT.toFixed(2))} s (วัตถุเคลื่อนที่ถอยหลัง) พื้นที่ใต้แกนจึงหักออกจากการกระจัด:
+         การกระจัด ${sg(D)} m แต่ระยะทาง ${fx(dist)} m — ความเร็วเฉลี่ย (${r(D / T, 2)} m/s) จึงต่างจากอัตราเร็วเฉลี่ย (${r(dist / T, 2)} m/s)`
+      : `ไม่มีช่วงที่ v &lt; 0 วัตถุไม่กลับทิศ การกระจัดจึงเท่ากับระยะทาง (${fx(dist)} m) และความเร็วเฉลี่ยเท่ากับอัตราเร็วเฉลี่ย`);
+    return { S, T, D, dist, a, b, sd, sdist };
+  }
+
+  function eq(I) {
+    const { S, T, D, dist, a, b, sd, sdist } = I;
+    let h = eqH('ความชันของกราฟ v–t แต่ละช่วง = ความเร่ง a = Δv/Δt');
+    S.forEach((g, i) => {
+      h += eqL(`a<sub>${i + 1}</sub> = (${nx(g.v2)} − ${nx(g.v1)}) / (${nx(g.t2)} − ${nx(g.t1)}) = <b>${fx(g.a)}</b> m/s²`);
+    });
+    h += eqH('พื้นที่ใต้กราฟแต่ละช่วง (สี่เหลี่ยมคางหมู) = การกระจัด Δs = ½(v₁ + v₂)Δt');
+    S.forEach((g, i) => {
+      let s = `Δs<sub>${i + 1}</sub> = ½(${nx(g.v1)} + ${nx(g.v2)})(${nx(g.dt)}) = <b>${fx(g.ds)}</b> m`;
+      if (g.v1 * g.v2 < 0) {
+        const t1 = g.v1 / (g.v1 - g.v2) * g.dt, t2 = g.dt - t1;
+        s += ` · v = 0 ที่ t = ${fx(g.t1 + t1)} s → ระยะทาง = ½(${nx(Math.abs(g.v1))})(${fx(t1)}) + ½(${nx(Math.abs(g.v2))})(${fx(t2)}) = ${fx(0.5 * Math.abs(g.v1) * t1 + 0.5 * Math.abs(g.v2) * t2)} m`;
+      }
+      h += eqL(s);
+    });
+    h += eqH('รวมทั้งการเคลื่อนที่');
+    h += eqL(`การกระจัด Δs = ${S.map(g => nx(g.ds)).join(' + ')} = <b>${fx(D)}</b> m`);
+    h += eqL(`ระยะทาง = ${pieces().map(p => fx(Math.abs(0.5 * (p.va + p.vb) * (p.tb - p.ta)))).join(' + ')} = <b>${fx(dist)}</b> m`);
+    h += eqL(`ความเร็วเฉลี่ย = Δs/Δt = ${nx(D)} / ${nx(T)} = <b>${fx(D / T)}</b> m/s`);
+    h += eqL(`อัตราเร็วเฉลี่ย = ระยะทาง/Δt = ${fx(dist)} / ${nx(T)} = <b>${fx(dist / T)}</b> m/s`);
+    h += eqH(`ช่วงที่เลือก t = ${fx(a)} → ${fx(b)} s`);
+    const CP = clipPieces(a, b);
+    h += eqL(`Δs = ${CP.map(p => `½(${nx(p.va)} + ${nx(p.vb)})(${nx(p.tb - p.ta)})`).join(' + ')} = <b>${fx(sd)}</b> m`);
+    h += eqL(`ตรวจ: s(${fx(b)}) − s(${fx(a)}) = ${nx(sAt(b))} − ${nx(sAt(a))} = ${fx(sd)} m · ระยะทาง = <b>${fx(sdist)}</b> m`);
+    h += eqH(`ขณะ t = ${fmt(tp, 2)} s`);
+    h += eqL(`s = s₀ + (พื้นที่ใต้กราฟ 0 → t) = ${n(s0(), 0)} + ${nx(sAt(tp) - s0())} = <b>${fx(sAt(tp))}</b> m`);
+    h += eqL(`v = <b>${fx(vAt(tp))}</b> m/s · a = <b>${fx(aAt(tp))}</b> m/s²`);
+    return h;
+  }
+
+  function draw() {
+    if (!dragging) { const nv = calcView(); if (!view || nv.T !== view.T || nv.vlo !== view.vlo || nv.vhi !== view.vhi) view = nv; }
+    drawTrack(); drawV(); drawS(); drawA();
+    const I = info();
+    setEq('vg_eq', eq(I));
+  }
+  return { step, draw };
+})();
+
+/* ---------- การหมุนและการกลิ้ง ---------- */
+const rotate = (() => {
+  const c = $('ro_cv'), gc = $('ro_gc'), sec = $('rotate'), G = 9.8, PER = 6;   // PER = คาบหุบ-กางแขนอัตโนมัติ (s)
+  const OBJ = [
+    { nm: 'ทรงกลมตัน', sh: 'กลมตัน', k: 2 / 5, If: '⅖MR²', cl: '--c-cart1' },
+    { nm: 'ทรงกระบอกตัน', sh: 'กระบอกตัน', k: 1 / 2, If: '½MR²', cl: '--c-vy' },
+    { nm: 'ทรงกลมกลวง', sh: 'กลมกลวง', k: 2 / 3, If: '⅔MR²', cl: '--c-v' },
+    { nm: 'วงแหวน', sh: 'วงแหวน', k: 1, If: 'MR²', cl: '--c-cart2' },
+    { nm: 'กล่องไถล (ไม่มีแรงเสียดทาน)', sh: 'กล่อง', k: 0, If: '—', cl: '--c-f', box: true },
+  ].map(o => ({ ...o, M: 1, R: 0.1, on: true }));
+  let mode = 'race', sel = 0, t = 0, running = true, msg = '', wheel = 'disk';
+  let phi = 0, Lk = 0, r0 = 0.8, tA = 0, auto = true;
+  const hits = [];
+
+  const quiet = (id, v, unit, d) => { const el = $(id); el.value = v; $(id + 'o').textContent = (+el.value).toFixed(d) + ' ' + unit; };
+  function restart(start = true) { t = 0; msg = ''; running = start; }
+  const go = () => restart(true);
+
+  // ---- แข่งกลิ้ง ----
+  const th = slider('ro_th', '°', 0, go), Lr = slider('ro_L', 'm', 1, go);
+  const Mo = slider('ro_M', 'kg', 1, () => { OBJ[sel].M = Mo(); go(); });
+  const Ro = slider('ro_R', 'm', 2, () => { OBJ[sel].R = Ro(); go(); });
+  OBJ.forEach((o, i) => {
+    $('ro_c' + i).onchange = e => {
+      o.on = e.target.checked;
+      if (!OBJ.some(q => q.on)) { o.on = true; e.target.checked = true; }
+      go();
+    };
+  });
+  function pick(i) {
+    sel = i; const o = OBJ[i];
+    quiet('ro_M', o.M, 'kg', 1); quiet('ro_R', o.R, 'm', 2); $('ro_R').disabled = !!o.box;
+    if (!o.on) { o.on = true; $('ro_c' + i).checked = true; }
+  }
+  modeButtons(sec, 'obj', v => pick(+v));
+  const accel = o => G * Math.sin(rad(th())) / (1 + o.k);
+  const tfin = o => Math.sqrt(2 * Lr() / accel(o));
+  const pos = o => Math.min(Lr(), 0.5 * accel(o) * t * t);
+  const speed = o => accel(o) * Math.min(t, tfin(o));
+
+  // ---- ทอร์ก ----
+  const wM = slider('ro_wM', 'kg', 1, go), wR = slider('ro_wR', 'm', 2, go), hm = slider('ro_m', 'kg', 1, go), Hh = slider('ro_H', 'm', 1, go);
+  modeButtons(sec, 'wh', v => { wheel = v; $('ro_wM').disabled = v === 'light'; go(); });
+  function tq() {
+    const k = wheel === 'disk' ? 0.5 : wheel === 'ring' ? 1 : 0, M = wheel === 'light' ? 0 : wM(), R = wR(), m = hm(), H = Hh();
+    const I = k * M * R * R, a = m * G / (m + I / (R * R)), T = m * (G - a);
+    return { k, M, R, m, H, I, a, T, al: a / R, tau: T * R, tf: Math.sqrt(2 * H / a) };
+  }
+
+  // ---- นักสเกต / เก้าอี้หมุน ----
+  const Ib = slider('ro_Ib', 'kg·m²', 1, spin), dm = slider('ro_dm', 'kg', 1, spin), w0 = slider('ro_w0', 'rad/s', 1, spin), rr = slider('ro_r', 'm', 2);
+  const Iof = x => Ib() + 2 * dm() * x * x;
+  function syncA() { const cv = Math.max(-1, Math.min(1, (rr() - 0.5) / 0.3)); tA = Math.acos(cv) / (2 * Math.PI) * PER; }
+  function spin() { r0 = rr(); Lk = Iof(r0) * w0(); syncA(); }
+  $('ro_r').addEventListener('input', e => { if (e.isTrusted && auto) { auto = false; $('ro_auto').checked = false; } });
+  $('ro_auto').onchange = e => { auto = e.target.checked; if (auto) syncA(); };
+  spin();
+
+  const LEG = {
+    race: [['--c-mg', 'น้ำหนัก mg'], ['--c-n', 'แรงปฏิกิริยาตั้งฉาก N'], ['--c-f', 'แรงเสียดทานสถิต fₛ'], ['--c-vy', 'ความเร่ง a']],
+    torque: [['--c-mg', 'น้ำหนัก'], ['--c-n', 'แรงจากแกนหมุน N'], ['--c-f', 'แรงตึงเชือก T'], ['--c-vy', 'a และ α'], ['--c-v', 'ระยะตก y']],
+    skate: [['--c-v', 'ความเร็วของดัมเบล v = ωr'], ['--c-f', 'แรงดึงเข้าสู่ศูนย์กลาง F = mω²r'], ['--c-cart2', 'ดัมเบล']],
+  };
+  const vis = () => {
+    sec.querySelectorAll('[data-m]').forEach(e => { e.style.display = e.dataset.m.split(' ').includes(mode) ? '' : 'none'; });
+    $('ro_run').textContent = mode === 'race' ? 'ปล่อยพร้อมกัน' : mode === 'torque' ? 'ปล่อยมวล' : 'เริ่มหมุนใหม่';
+    $('ro_leg').innerHTML = LEG[mode].map(([v, s]) => `<span style="--c: var(${v})">${s}</span>`).join('');
+  };
+  modeButtons(sec, 'mode', md => { mode = md; sec.dataset.mode = md; vis(); if (md === 'skate') spin(); else go(); });
+  vis();
+  $('ro_run').onclick = () => { if (mode === 'skate') spin(); else go(); };
+  $('ro_reset').onclick = () => {
+    if (mode === 'skate') { quiet('ro_r', 0.8, 'm', 2); phi = 0; spin(); } else restart(false);
+  };
+  // แตะวัตถุบนพื้นเอียงเพื่อเลือก
+  c.addEventListener('pointerdown', e => {
+    if (mode !== 'race') return;
+    const b = c.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+    let best = null, bd = 45;
+    hits.forEach(hh => { const d = Math.hypot(hh.x - x, hh.y - y); if (d < bd) { bd = d; best = hh.i; } });
+    if (best !== null) { const btn = sec.querySelector(`.mode button[data-obj="${best}"]`); if (btn) btn.click(); }
+  });
+
+  function step(dt) {
+    if (mode === 'skate') {
+      if (auto) { tA += dt; quiet('ro_r', 0.5 + 0.3 * Math.cos(2 * Math.PI * tA / PER), 'm', 2); }
+      phi += Lk / Iof(rr()) * dt;
+      return;
+    }
+    if (!running) return;
+    t += dt;
+    if (mode === 'race') {
+      const tm = Math.max(...OBJ.filter(o => o.on).map(tfin));
+      if (t >= tm) { t = tm; running = false; msg = 'ทุกวัตถุถึงปลายพื้นเอียงแล้ว'; }
+    } else {
+      const P = tq();
+      if (t >= P.tf) { t = P.tf; running = false; msg = 'มวลแขวนถึงพื้น'; }
+    }
+  }
+
+  // ---------- ฟังก์ชันวาด ----------
+  // วัตถุทรงกลม/ทรงกระบอก/วงแหวน/กล่อง ang = มุมหมุน (rad)
+  function body(ctx, o, x, y, rho, ang, hl) {
+    const clr = col(o.cl);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    let dotR = rho * 0.6;
+    if (o.box) {
+      ctx.fillStyle = clr; ctx.fillRect(-rho, -rho, 2 * rho, 2 * rho);
+    } else if (o.k >= 0.99) {                      // วงแหวน: มวลอยู่ที่ขอบ
+      const lw = o.thin ? 2 : Math.max(3, rho * 0.3);
+      ctx.strokeStyle = clr; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(0, 0, rho - lw / 2, 0, 7); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-rho + lw, 0); ctx.lineTo(rho - lw, 0); ctx.moveTo(0, -rho + lw); ctx.lineTo(0, rho - lw); ctx.stroke();
+      dotR = rho - lw / 2;
+    } else if (o.k > 0.6) {                        // ทรงกลมกลวง: เปลือกบาง
+      ctx.globalAlpha = 0.22; ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, rho, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = clr; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, rho - 1.25, 0, 7); ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-rho, 0); ctx.lineTo(rho, 0); ctx.stroke();
+      dotR = rho - 1.25;
+    } else {                                        // ทรงกลมตัน / ทรงกระบอกตัน
+      ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, rho, 0, 7); ctx.fill();
+      if (o.k < 0.45) {                             // ทรงกลม: แสงเงาให้ดูเป็นลูก
+        const gr = ctx.createRadialGradient(-rho * 0.35, -rho * 0.35, rho * 0.05, 0, 0, rho);
+        gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, rho, 0, 7); ctx.fill();
+      } else { ctx.strokeStyle = col('--panel'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, rho * 0.5, 0, 7); ctx.stroke(); }
+      ctx.strokeStyle = col('--panel'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(rho * 0.92, 0); ctx.stroke();
+    }
+    if (!o.box) { ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(dotR, 0, Math.max(1.8, rho * 0.13), 0, 7); ctx.fill(); }
+    if (hl) {
+      ctx.strokeStyle = col('--accent'); ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.beginPath();
+      if (o.box) ctx.rect(-rho - 4, -rho - 4, 2 * rho + 8, 2 * rho + 8); else ctx.arc(0, 0, rho + 4, 0, 7);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function txt(ctx, s, x, y, color, font = '12px system-ui', right = false) {
+    ctx.font = font; ctx.fillStyle = color; ctx.fillText(s, right ? x - ctx.measureText(s).width : x, y);
+  }
+  // กราฟเส้นทั่วไป
+  function plot(ctx, x, y, pw, ph, xr, yr, xl, yl, series, marks) {
+    const X0 = x + 46, X1 = x + pw - 12, Y0 = y + 24, Y1 = y + ph - 30;
+    const PX = v => X0 + (v - xr[0]) / (xr[1] - xr[0]) * (X1 - X0), PY = v => Y1 - (v - yr[0]) / (yr[1] - yr[0]) * (Y1 - Y0);
+    const sx = niceStep(xr[1] - xr[0], 4), sy = niceStep(yr[1] - yr[0], 4), dg = s => (s >= 1 ? 0 : s >= 0.1 ? 1 : 2);
+    ctx.font = '11px system-ui'; ctx.fillStyle = col('--muted');
+    for (let v = Math.ceil(xr[0] / sx - 1e-9) * sx; v <= xr[1] + 1e-9; v += sx) {
+      line(ctx, PX(v), Y0, PX(v), Y1, col('--grid'), 1); txt(ctx, fmt(v, dg(sx)), PX(v) - 8, Y1 + 14, col('--muted'), '11px system-ui');
+    }
+    for (let v = Math.ceil(yr[0] / sy - 1e-9) * sy; v <= yr[1] + 1e-9; v += sy) {
+      line(ctx, X0, PY(v), X1, PY(v), col('--grid'), 1); txt(ctx, fmt(v, dg(sy)), X0 - 5, PY(v) + 4, col('--muted'), '11px system-ui', true);
+    }
+    line(ctx, X0, Y1, X1, Y1, col('--muted'), 1); line(ctx, X0, Y0, X0, Y1, col('--muted'), 1);
+    txt(ctx, xl, X1, Y1 + 27, col('--muted'), '12px system-ui', true); txt(ctx, yl, x + 4, Y0 - 10, col('--muted'), '12px system-ui');
+    series.forEach(sr => {
+      if (sr.pts.length < 2) return;
+      ctx.save(); ctx.strokeStyle = sr.color; ctx.lineWidth = 2; if (sr.dash) ctx.setLineDash(sr.dash);
+      ctx.beginPath(); sr.pts.forEach(([a, b], i) => (i ? ctx.lineTo(PX(a), PY(b)) : ctx.moveTo(PX(a), PY(b)))); ctx.stroke(); ctx.restore();
+    });
+    (marks || []).forEach(mk => {
+      ctx.beginPath(); ctx.arc(PX(mk.x), PY(mk.y), 4.5, 0, 7);
+      if (mk.hollow) { ctx.strokeStyle = mk.color; ctx.lineWidth = 2; ctx.stroke(); } else { ctx.fillStyle = mk.color; ctx.fill(); }
+    });
+  }
+  // แท่งพลังงาน/ปริมาณ: items = [ป้าย, ค่า, ค่าเต็มแท่ง, สี, ข้อความค่า, ค่าเริ่มต้น(ไม่บังคับ)]
+  function bars(ctx, x, y, pw, ph, title, items) {
+    txt(ctx, title, x + 8, y + 16, col('--ink'), '600 12px system-ui');
+    const top = y + 40, bot = y + ph - 40, nb = items.length, slot = (pw - 16) / nb, bw = Math.min(34, slot - 10);
+    line(ctx, x + 8, bot, x + pw - 8, bot, col('--line'), 1);
+    items.forEach(([lb, v, vmax, clr, vs, v0], i) => {
+      const bx = x + 8 + slot * i + (slot - bw) / 2, f = Math.max(0, Math.min(1.05, v / vmax));
+      ctx.fillStyle = col('--grid'); ctx.fillRect(bx, top, bw, bot - top);
+      ctx.fillStyle = clr; ctx.fillRect(bx, bot - (bot - top) * f, bw, (bot - top) * f);
+      if (v0 !== undefined) line(ctx, bx - 4, bot - (bot - top) * Math.min(1.05, v0 / vmax), bx + bw + 4, bot - (bot - top) * Math.min(1.05, v0 / vmax), col('--ink'), 1.5, [4, 3]);
+      ctx.font = '11px system-ui';
+      txt(ctx, vs, bx + bw / 2 - ctx.measureText(vs).width / 2, top - 6, col('--ink'), '11px system-ui');
+      ctx.font = '12px system-ui';
+      lb.split(' ').forEach((s, j) => txt(ctx, s, bx + bw / 2 - ctx.measureText(s).width / 2, bot + 15 + 14 * j, col('--muted'), '12px system-ui'));
+    });
+  }
+
+  // ---------- โหมด 1: แข่งกลิ้ง ----------
+  function drawRace(ctx, w, h) {
+    const on = OBJ.filter(o => o.on), thr = rad(th()), cs = Math.cos(thr), sn = Math.sin(thr), Lm = Lr();
+    const rho0 = Math.max(9, Math.min(16, h / 28)), gapV = (2 * rho0 + 10) / cs, nl = on.length;
+    const labW = 84, x0 = 14 + rho0, top = 34 + 2 * rho0;
+    const sc = Math.min((w - x0 - labW - rho0) / (Lm * cs), (h - top - (nl - 1) * gapV - 14) / (Lm * sn));
+    const Dx = Lm * cs * sc, Dy = Lm * sn * sc;
+    const order = on.slice().sort((p, q) => tfin(p) - tfin(q));
+    hits.length = 0;
+    // ฐานพื้นเอียงชั้นล่างสุด มุม θ และความสูง
+    const yl = top + (nl - 1) * gapV;
+    ctx.fillStyle = col('--grid'); ctx.beginPath(); ctx.moveTo(x0, yl + 3); ctx.lineTo(x0 + Dx, yl + Dy + 3); ctx.lineTo(x0, yl + Dy + 3); ctx.closePath(); ctx.fill();
+    line(ctx, x0 - 6, yl + Dy + 3, w - 6, yl + Dy + 3, col('--c-slope'), 2);
+    ctx.strokeStyle = col('--muted'); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x0 + Dx, yl + Dy + 3, 30, Math.PI, Math.PI + thr); ctx.stroke();
+    txt(ctx, `θ = ${fmt(th(), 0)}°`, x0 + Dx - 36 - 46, yl + Dy - 4, col('--muted'), '12px system-ui');
+    if (Dy > 40) txt(ctx, `h = L sinθ = ${fmt(Lm * sn, 2)} m`, x0 + 4, yl + Dy - 6, col('--muted'), '11px system-ui');
+    on.forEach((o, i) => {
+      const ay = top + i * gapV, isSel = o === OBJ[sel];
+      line(ctx, x0 - 4, ay + 2, x0 + Dx, ay + Dy + 2, isSel ? col('--accent') : col('--c-slope'), isSel ? 4 : 3);
+      // เส้นชัย
+      line(ctx, x0 + Dx, ay + Dy + 2, x0 + Dx + sn * 2.4 * rho0, ay + Dy + 2 - cs * 2.4 * rho0, col('--ink'), 1.5, [3, 3]);
+      const s = pos(o), px = x0 + s * cs * sc, py = ay + s * sn * sc;
+      const rho = o.box ? rho0 * 0.8 : rho0 * Math.min(1, 0.55 + 1.5 * o.R);
+      const cx = px + sn * rho, cy = py - cs * rho;
+      body(ctx, o, cx, cy, rho, o.box ? thr : thr + s * sc / rho, isSel);
+      hits.push({ i: OBJ.indexOf(o), x: cx, y: cy });
+      const done = t >= tfin(o) - 1e-9, lx = x0 + Dx + rho0 + 6, ly = ay + Dy - 2;
+      txt(ctx, o.sh, lx, ly, col(o.cl), '600 12px system-ui');
+      if (done) txt(ctx, `อันดับ ${order.indexOf(o) + 1} · ${fmt(tfin(o), 2)} s`, lx, ly + 14, col('--ink'), '11px system-ui');
+    });
+    txt(ctx, `t = ${fmt(t, 2)} s`, w - 8, 16, col('--ink'), '600 13px system-ui', true);
+    txt(ctx, w >= 560 ? 'ทุกชิ้นปล่อยจากหยุดนิ่งพร้อมกัน กลิ้งไม่ไถล (ขยายขนาดวัตถุในภาพ)' : 'ปล่อยพร้อมกัน กลิ้งไม่ไถล', 8, 16, col('--muted'), '12px system-ui');
+    if (msg) txt(ctx, msg, 8, 32, col('--c-vy'), '600 12px system-ui');
+  }
+  function fbdRace(ctx, x, w, h, o) {
+    const thr = rad(th()), cs = Math.cos(thr), sn = Math.sin(thr), A = accel(o);
+    const f = o.k / (1 + o.k) * o.M * G * sn, N = o.M * G * cs;
+    txt(ctx, `FBD: ${o.sh}`, x + 8, 16, col('--ink'), '600 12px system-ui');
+    const sz = Math.min(w, h), rho = sz * 0.12, Lmg = sz * 0.34, kf = Lmg / (o.M * G);
+    const Cx = x + w * 0.5, Cy = h * 0.42, Px = Cx - sn * rho, Py = Cy + cs * rho;
+    line(ctx, Px - cs * w * 0.42, Py - sn * w * 0.42, Px + cs * w * 0.42, Py + sn * w * 0.42, col('--c-slope'), 4);
+    body(ctx, o, Cx, Cy, rho, o.box ? thr : thr + 0.6, false);
+    arrow(ctx, Cx, Cy, 0, Lmg, col('--c-mg'), 'mg');
+    arrow(ctx, Px, Py, sn * N * kf, -cs * N * kf, col('--c-n'), 'N');
+    if (!o.box) {
+      const Lf = f * kf, big = Lf < 14;
+      arrow(ctx, Px, Py, -cs * Math.max(14, Lf), -sn * Math.max(14, Lf), col('--c-f'), big ? 'fₛ*' : 'fₛ');
+    }
+    const La = Math.min(w * 0.3, 70) * A / (G * sn), ga = rho + 22 + La;     // ลูกศรความเร่งขนานพื้นเอียง ด้านหลังวัตถุ
+    arrow(ctx, Cx - cs * ga - sn * 6, Cy - sn * ga + cs * 6 - 0, cs * La, sn * La, col('--c-vy'));
+    txt(ctx, 'a', Cx - cs * (ga - La / 2) + sn * 10 - 3, Cy - sn * (ga - La / 2) - cs * 10, col('--c-vy'), '600 13px system-ui');
+    [`mg = ${fmt(o.M * G, 2)} N, N = ${fmt(N, 2)} N`, o.box ? 'ไม่มีแรงเสียดทาน ไม่มีทอร์ก' : `fₛ = ${fmt(f, 3)} N ขึ้นพื้นเอียง`,
+      o.box ? 'จึงไถลโดยไม่หมุน' : f * kf < 14 ? '* ลูกศร fₛ ขยายให้เห็น' : ''].forEach((s, j) => txt(ctx, s, x + 8, h - 42 + 16 * j, col('--muted'), '11px system-ui'));
+  }
+  function graphRace(ctx, w, h) {
+    const o = OBJ[sel], three = w >= 620, pw = three ? w / 3 : w / 2;
+    fbdRace(ctx, 0, pw, h, o);
+    const thr = rad(th()), sn = Math.sin(thr), Lm = Lr(), s = pos(o), v = speed(o);
+    const E = o.M * G * Lm * sn, Ep = o.M * G * (Lm - s) * sn, Kt = 0.5 * o.M * v * v, Kr = 0.5 * o.k * o.M * v * v;
+    line(ctx, pw, 6, pw, h - 6, col('--line'), 1);
+    bars(ctx, pw, 0, pw, h, `พลังงานของ${o.sh} (J)`, [
+      ['Eₚ', Ep, E, col('--c-vx'), fmt(Ep, 2)], ['Eₖ เลื่อน', Kt, E, col('--c-f'), fmt(Kt, 2)],
+      ['Eₖ หมุน', Kr, E, col('--c-v'), fmt(Kr, 2)], ['รวม', Ep + Kt + Kr, E, col('--muted'), fmt(Ep + Kt + Kr, 2)]]);
+    if (three) {
+      line(ctx, 2 * pw, 6, 2 * pw, h - 6, col('--line'), 1);
+      const on = OBJ.filter(q => q.on), tm = Math.max(...on.map(tfin)), vm = Math.max(...on.map(q => accel(q) * tfin(q)));
+      plot(ctx, 2 * pw, 0, pw, h, [0, tm], [0, vm * 1.08], 't (s)', 'v (m/s)', on.map(q => {
+        const te = Math.min(t, tfin(q)), A = accel(q);
+        return { color: col(q.cl), pts: [[0, 0], [te, A * te]] };
+      }), on.map(q => ({ x: Math.min(t, tfin(q)), y: speed(q), color: col(q.cl) })));
+    }
+  }
+
+  // ---------- โหมด 2: ทอร์ก ----------
+  function drawTorque(ctx, w, h) {
+    const P = tq(), te = Math.min(t, P.tf), yv = 0.5 * P.a * te * te, v = P.a * te, om = v / P.R;
+    const wide = w >= 560, Wl = wide ? w * 0.64 : w;
+    const base = Math.min(Wl * 0.2, h * 0.19), rw = base * (0.45 + 1.8 * P.R), cx = Wl * 0.48, cy = 36 + rw;
+    const kf = Math.min(cy - 14, h * 0.2) / Math.max(P.M * G + P.T, P.m * G, 1e-6);
+    const bs = 20 + 9 * Math.sqrt(P.m), mx = cx + rw, ym0 = cy + rw * 0.3 + 26;
+    const floorY = h - 8 - Math.max(0, P.m * G * kf - bs / 2 + 12), scY = Math.max(10, (floorY - bs - ym0) / P.H);
+    const mTop = ym0 + yv * scY;
+    // เพดาน ขาตั้ง พื้น
+    ctx.fillStyle = col('--c-slope'); ctx.fillRect(cx - 55, 0, 110, 6); ctx.fillRect(mx - 50, floorY, 100 + bs, h - floorY);
+    line(ctx, cx - 32, 6, cx, cy, col('--muted'), 3); line(ctx, cx + 32, 6, cx, cy, col('--muted'), 3);
+    // ล้อ (มุมหมุนสอดคล้องกับเชือกที่คลายออกในภาพ)
+    const wo = wheel === 'light' ? { k: 1, cl: '--muted', thin: true } : { k: P.k, cl: '--c-cart1' };
+    body(ctx, wo, cx, cy, rw, yv * scY / rw, false);
+    ctx.fillStyle = col('--ink'); ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, 7); ctx.fill();
+    line(ctx, mx, cy, mx, mTop, col('--ink'), 2);
+    const dimX = mx + bs / 2 + 36;
+    line(ctx, mx - bs / 2 - 4, ym0 + bs, dimX + 6, ym0 + bs, col('--c-v'), 1, [3, 3]);
+    ctx.fillStyle = col('--c-cart2'); ctx.fillRect(mx - bs / 2, mTop, bs, bs);
+    txt(ctx, 'm', mx - 4, mTop + bs / 2 + 4, '#fff', '600 12px system-ui');
+    if (yv * scY > 4) { arrow(ctx, dimX, ym0 + bs, 0, yv * scY, col('--c-v')); txt(ctx, `y = ${fmt(yv, 2)} m`, dimX + 6, ym0 + bs + yv * scY / 2 + 4, col('--c-v'), '600 12px system-ui'); }
+    // FBD
+    arrow(ctx, mx, mTop, 0, -P.T * kf, col('--c-f'), P.T > 1e-6 ? 'T' : '');
+    arrow(ctx, mx, mTop + bs / 2, 0, P.m * G * kf, col('--c-mg'), 'mg');
+    if (P.T > 1e-6) arrow(ctx, mx + 9, cy, 0, P.T * kf, col('--c-f'), 'T');
+    arrow(ctx, cx, cy, 0, -(P.M * G + P.T) * kf, col('--c-n'), P.M * G + P.T > 1e-6 ? 'N' : '');
+    if (P.M > 0) arrow(ctx, cx - 3, cy, 0, P.M * G * kf, col('--c-mg'), 'Mg');
+    arrow(ctx, mx - bs / 2 - 10, mTop + bs / 2 - 10, 0, 45 * P.a / G, col('--c-vy')); txt(ctx, 'a', mx - bs / 2 - 24, mTop + bs / 2 + 6, col('--c-vy'), '600 13px system-ui');
+    // ลูกศรโค้ง α (ทิศตามเข็มนาฬิกา)
+    const ra = rw + 12, a1 = 2.1, a2 = 3.5;
+    ctx.strokeStyle = col('--c-vy'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, ra, a1, a2); ctx.stroke();
+    const ex = cx + ra * Math.cos(a2), ey = cy + ra * Math.sin(a2), tx = -Math.sin(a2), ty = Math.cos(a2);
+    arrow(ctx, ex - tx * 16, ey - ty * 16, tx * 16, ty * 16, col('--c-vy'));
+    txt(ctx, 'α', cx + (ra + 8) * Math.cos(2.8) - 8, cy + (ra + 8) * Math.sin(2.8) + 4, col('--c-vy'), '600 13px system-ui');
+    txt(ctx, 'ภาพไม่ตามมาตราส่วน', 8, 16, col('--muted'), '12px system-ui');
+    if (msg) txt(ctx, msg, 8, 34, col('--c-vy'), '600 12px system-ui');
+    if (wide) {
+      const px = Wl + 12;
+      [`t = ${fmt(te, 2)} s`, `y = ${fmt(yv, 3)} m`, `v = ${fmt(v, 2)} m/s`, `ω = v/R = ${fmt(om, 2)} rad/s`, `a = ${fmt(P.a, 3)} m/s²`,
+        `α = ${fmt(P.al, 2)} rad/s²`, `T = ${fmt(P.T, 3)} N`, `τ = TR = ${fmt(P.tau, 3)} N·m`, `I = ${fmt(P.I, 4)} kg·m²`]
+        .forEach((s, i) => txt(ctx, s, px, 50 + i * 22, col('--ink'), '13px system-ui'));
+    }
+  }
+  function graphTorque(ctx, w, h) {
+    const P = tq(), te = Math.min(t, P.tf), N = 60, pts = [[], [], []];
+    for (let i = 0; i <= N; i++) {
+      const tt = te * i / N, v = P.a * tt, yv = 0.5 * P.a * tt * tt;
+      pts[0].push([tt, P.m * G * yv]); pts[1].push([tt, 0.5 * P.m * v * v]); pts[2].push([tt, 0.5 * P.I * (v / P.R) ** 2]);
+    }
+    const Em = P.m * G * P.H;
+    plot(ctx, 0, 0, w, h, [0, P.tf], [0, Em * 1.08], 't (s)', 'พลังงาน (J)', [
+      { color: col('--c-mg'), pts: pts[0] }, { color: col('--c-f'), pts: pts[1] }, { color: col('--c-v'), pts: pts[2] }]);
+    let lx = 120;
+    (w >= 560 ? [['--c-mg', 'mgy (Eₚ ที่ลดลง)'], ['--c-f', '½mv² (มวลแขวน)'], ['--c-v', '½Iω² (ล้อ)']] : [['--c-mg', 'mgy'], ['--c-f', '½mv²'], ['--c-v', '½Iω²']]).forEach(([cl, s]) => {
+      ctx.fillStyle = col(cl); ctx.fillRect(lx, 8, 10, 10); txt(ctx, s, lx + 14, 17, col('--muted'), '12px system-ui');
+      ctx.font = '12px system-ui'; lx += ctx.measureText(s).width + 28;
+    });
+  }
+
+  // ---------- โหมด 3: อนุรักษ์โมเมนตัมเชิงมุม ----------
+  function sk() {
+    const x = rr(), I = Iof(x), om = Lk / I, I0 = Iof(r0), K0 = Lk * Lk / (2 * I0), K = Lk * Lk / (2 * I);
+    return { x, I, om, I0, om0: Lk / I0, K0, K, m: dm(), Ib: Ib(), L: Lk };
+  }
+  function drawSkate(ctx, w, h) {
+    const S = sk(), wide = w >= 520, Wl = wide ? w * 0.6 : w, cx = Wl / 2, cy = h / 2 + 8;
+    const sc = (Math.min(Wl, h) / 2 - 22) / 0.95, cp = Math.cos(phi), sp = Math.sin(phi);
+    const P = (x, y) => [cx + sc * (x * cp - y * sp), cy + sc * (x * sp + y * cp)];
+    // เก้าอี้ (มองจากด้านบน) และทางเดินของดัมเบล
+    ctx.fillStyle = col('--grid'); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, 0.3 * sc, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.strokeStyle = col('--muted'); ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(cx, cy, S.x * sc, 0, 7); ctx.stroke(); ctx.restore();
+    if (Math.abs(r0 - S.x) > 0.02) { ctx.save(); ctx.strokeStyle = col('--line'); ctx.lineWidth = 1; ctx.setLineDash([2, 5]); ctx.beginPath(); ctx.arc(cx, cy, r0 * sc, 0, 7); ctx.stroke(); ctx.restore(); }
+    // แขนและดัมเบล (ระยะจากแกน = r พอดี)
+    const off = 0.1 * (1 - (S.x - 0.15) / 0.7), dx = Math.sqrt(Math.max(0, S.x * S.x - off * off)), dbs = (0.035 + 0.01 * S.m) * sc;
+    ctx.save(); ctx.lineCap = 'round';
+    [-1, 1].forEach(sd => {
+      const [ax, ay] = P(sd * 0.19, 0), [bx, by] = P(sd * dx, -off);
+      ctx.strokeStyle = col('--c-slope'); ctx.lineWidth = 0.075 * sc; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    });
+    ctx.restore();
+    // ลำตัว ศีรษะ จมูก (บอกทิศหน้า)
+    ctx.fillStyle = col('--c-slope'); ctx.beginPath(); ctx.ellipse(cx, cy, 0.23 * sc, 0.12 * sc, phi, 0, 7); ctx.fill();
+    ctx.fillStyle = col('--muted'); ctx.beginPath(); ctx.arc(cx, cy, 0.095 * sc, 0, 7); ctx.fill();
+    const [nx, ny] = P(0, -0.13); ctx.beginPath(); ctx.arc(nx, ny, 0.025 * sc, 0, 7); ctx.fill();
+    const om = S.om, vref = Math.max(...[0.15, 0.85].map(x => Lk * x / Iof(x))), Fref = Math.max(...Array.from({ length: 15 }, (_, i) => 0.15 + 0.05 * i).map(x => S.m * (Lk / Iof(x)) ** 2 * x));
+    [-1, 1].forEach(sd => {
+      const [bx, by] = P(sd * dx, -off), ux = (bx - cx) / (S.x * sc), uy = (by - cy) / (S.x * sc);
+      ctx.fillStyle = col('--c-cart2'); ctx.strokeStyle = col('--ink'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(bx, by, dbs, 0, 7); ctx.fill(); ctx.stroke();
+      const Lv = 60 * om * S.x / vref, LF = 50 * S.m * om * om * S.x / Fref;
+      arrow(ctx, bx, by, -uy * Lv, ux * Lv, col('--c-v'), 'v');
+      arrow(ctx, bx, by, -ux * LF, -uy * LF, col('--c-f'), 'F');
+    });
+    // ลูกศรโค้งบอกทิศหมุน
+    const ra = 0.34 * sc;
+    ctx.strokeStyle = col('--accent'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, ra, -2.2 + phi, -1.0 + phi); ctx.stroke();
+    const ea = -1.0 + phi; arrow(ctx, cx + ra * Math.cos(ea) + Math.sin(ea) * 16, cy + ra * Math.sin(ea) - Math.cos(ea) * 16, -Math.sin(ea) * 16, Math.cos(ea) * 16, col('--accent'));
+    txt(ctx, 'มองจากด้านบน', 8, 16, col('--muted'), '12px system-ui');
+    txt(ctx, `ω = ${fmt(om, 2)} rad/s`, 8, 34, col('--accent'), '600 13px system-ui');
+    txt(ctx, `r = ${fmt(S.x, 2)} m`, 8, 52, col('--ink'), '13px system-ui');
+    if (wide) {
+      const Imax = Iof(0.85), omax = Lk / Iof(0.15), Kmax = Lk * Lk / (2 * Iof(0.15));
+      line(ctx, Wl, 8, Wl, h - 8, col('--line'), 1);
+      bars(ctx, Wl, 0, w - Wl, h, 'เทียบกับตอนเริ่ม (เส้นประ)', [
+        ['I', S.I, Imax, col('--c-cart1'), fmt(S.I, 2), S.I0], ['ω', om, omax, col('--accent'), fmt(om, 2), S.om0],
+        ['L', Lk, Lk * 1.0, col('--c-vy'), fmt(Lk, 2), Lk], ['Eₖ', S.K, Kmax, col('--c-v'), fmt(S.K, 2), S.K0]]);
+    }
+  }
+  function graphSkate(ctx, w, h) {
+    const S = sk(), side = w >= 500, pw = side ? w / 2 : w, ph = side ? h : h / 2, pts1 = [], pts2 = [];
+    for (let x = 0.15; x <= 0.8501; x += 0.01) { const I = Iof(x); pts1.push([x, Lk / I]); pts2.push([x, Lk * Lk / (2 * I)]); }
+    const omx = Lk / Iof(0.15), Kx = Lk * Lk / (2 * Iof(0.15));
+    plot(ctx, 0, 0, pw, ph, [0.1, 0.9], [0, omx * 1.1], 'r (m)', 'ω (rad/s) เมื่อ L คงที่', [{ color: col('--accent'), pts: pts1 }],
+      [{ x: r0, y: S.om0, color: col('--muted'), hollow: true }, { x: S.x, y: S.om, color: col('--accent') }]);
+    plot(ctx, side ? pw : 0, side ? 0 : ph, pw, ph, [0.1, 0.9], [0, Kx * 1.1], 'r (m)', 'Eₖ หมุน = L²/2I (J)', [{ color: col('--c-v'), pts: pts2 }],
+      [{ x: r0, y: S.K0, color: col('--muted'), hollow: true }, { x: S.x, y: S.K, color: col('--c-v') }]);
+  }
+
+  // ---------- วาดรวม + สมการ + ตาราง ----------
+  function draw() {
+    const { ctx, w, h } = fitCanvas(c), g = fitCanvas(gc);
+    let tab, note, note1, eq;
+    if (mode === 'race') {
+      drawRace(ctx, w, h); graphRace(g.ctx, g.w, g.h);
+      const o = OBJ[sel], on = OBJ.filter(q => q.on), order = on.slice().sort((p, q) => tfin(p) - tfin(q));
+      const thv = th(), thr = rad(thv), sn = Math.sin(thr), cs = Math.cos(thr), Lm = Lr(), A = accel(o), tf = tfin(o), vb = A * tf;
+      const s = pos(o), v = speed(o), f = o.k / (1 + o.k) * o.M * G * sn, mu = o.k * Math.tan(thr) / (1 + o.k);
+      tab = '<tr><th>วัตถุ</th><th>I/MR²</th><th>a (m/s²)</th><th>t (s)</th><th>อันดับ</th></tr>' +
+        on.map(q => `<tr${q === o ? ' style="font-weight:600"' : ''}><td style="color:var(${q.cl})">${q.sh}</td><td>${q.box ? '0*' : fmt(q.k, 3)}</td><td>${fmt(accel(q), 3)}</td><td>${fmt(tfin(q), 3)}</td><td>${t >= tfin(q) - 1e-9 ? order.indexOf(q) + 1 : '–'}</td></tr>`).join('') +
+        `<tr><th colspan="5" style="text-align:left; padding-top:10px">${o.nm}: M = ${fmt(o.M, 1)} kg${o.box ? '' : `, R = ${fmt(o.R, 2)} m`}</th></tr>` +
+        `<tr><td colspan="3">ความเร็วที่ปลายล่าง v</td><td colspan="2">${fmt(vb, 3)} m/s</td></tr>` +
+        (o.box ? '' : `<tr><td colspan="3">ω ที่ปลายล่าง = v/R</td><td colspan="2">${fmt(vb / o.R, 2)} rad/s</td></tr>` +
+          `<tr><td colspan="3">แรงเสียดทานสถิต fₛ</td><td colspan="2">${fmt(f, 3)} N</td></tr>` +
+          `<tr><td colspan="3">μₛ น้อยสุดที่ไม่ไถล</td><td colspan="2">${fmt(mu, 3)}</td></tr>`) +
+        `<tr><td colspan="3">สัดส่วน Eₖ หมุน / Eₖ ทั้งหมด</td><td colspan="2">${fmt(o.k / (1 + o.k) * 100, 1)} %</td></tr>`;
+      note = 'ผลการแข่งขึ้นกับรูปทรงเท่านั้น (I/MR²) ไม่ขึ้นกับมวล M และรัศมี R ลองเปลี่ยน M หรือ R ของวัตถุที่เลือก เวลาถึงล่างจะไม่เปลี่ยน ' +
+        '* กล่องไม่มีแรงเสียดทาน ไถลโดยไม่หมุน จึงเปรียบได้กับ I/MR² = 0';
+      note1 = 'วัตถุที่มวลกระจุกใกล้แกนหมุน (I/MR² น้อย) ชนะ เพราะพลังงานศักย์ถูกแบ่งไปเป็นพลังงานจลน์การหมุนน้อยกว่า เหลือเป็นพลังงานจลน์การเลื่อนที่มากกว่า ' +
+        'แรงเสียดทานสถิตที่จุดสัมผัสไม่ทำงาน (จุดสัมผัสไม่ไถล) พลังงานกลจึงคงที่ แต่แรงนี้ให้ทอร์กที่ทำให้วัตถุหมุน';
+      const ks = o.box ? '0' : n(o.k, 3), Ms = n(o.M, 1), Rs = n(o.R, 2);
+      eq = eqH(`กฎข้อที่สองของนิวตัน (${o.nm}) ตามแนวพื้นเอียง และรอบจุดศูนย์กลางมวล`) +
+        (o.box ? eqL('Mg sinθ = Ma (ไม่มีแรงเสียดทาน) → a = g sinθ') :
+          eqL('Mg sinθ − fₛ = Ma , fₛR = Iα , กลิ้งไม่ไถล: a = αR → fₛ = (I/R²)a')) +
+        eqL(`a = g sinθ/(1 + I/MR²) = 9.8 × sin ${n(thv, 0)}°/(1 + ${ks}) = <b>${r(A, 3)} m/s²</b>`) +
+        eqL(`t = √(2L/a) = √(2 × ${n(Lm, 1)}/${n(A, 3)}) = <b>${r(tf, 3)} s</b>`) +
+        eqL(`v<sub>ล่าง</sub> = √(2gh/(1 + I/MR²)) = √(2 × 9.8 × ${n(Lm * sn, 3)}/(1 + ${ks})) = <b>${r(vb, 3)} m/s</b>`) +
+        (o.box ? '' :
+          eqL(`ω<sub>ล่าง</sub> = v/R = ${n(vb, 3)}/${Rs} = <b>${r(vb / o.R, 2)} rad/s</b>`) +
+          eqH('แรงเสียดทานสถิตและแรงปฏิกิริยา') +
+          eqL(`fₛ = (I/MR²)/(1 + I/MR²) · Mg sinθ = ${n(o.k / (1 + o.k), 3)} × ${Ms} × 9.8 × ${n(sn, 3)} = <b>${r(f, 3)} N</b>`) +
+          eqL(`N = Mg cosθ = ${Ms} × 9.8 × ${n(cs, 3)} = <b>${r(o.M * G * cs, 2)} N</b> , ต้องการ μₛ ≥ fₛ/N = <b>${r(mu, 3)}</b>`)) +
+        eqH(`พลังงานขณะ t = ${r(t, 2)} s (s = ${r(s, 3)} m, v = ${r(v, 3)} m/s, อ้างอิง Eₚ = 0 ที่ปลายล่าง)`) +
+        eqL(`Mg(L − s)sinθ + ½Mv² + ½Iω² = ${n(o.M * G * (Lm - s) * sn, 3)} + ${n(0.5 * o.M * v * v, 3)} + ${n(0.5 * o.k * o.M * v * v, 3)} = <b>${r(o.M * G * (Lm - s) * sn + 0.5 * (1 + o.k) * o.M * v * v, 3)} J</b> = MgL sinθ`);
+    } else if (mode === 'torque') {
+      drawTorque(ctx, w, h); graphTorque(g.ctx, g.w, g.h);
+      const P = tq(), te = Math.min(t, P.tf), v = P.a * te, yv = 0.5 * P.a * te * te, om = v / P.R;
+      const ms = n(P.m, 1), Ms = n(P.M, 1), Rs = n(P.R, 2), Is = n(P.I, 4);
+      tab = `<tr><td>I ของล้อ</td><td>${fmt(P.I, 4)} kg·m²</td></tr><tr><td>ความเร่งของมวล a</td><td>${fmt(P.a, 3)} m/s²</td></tr>
+        <tr><td>ความเร่งเชิงมุม α = a/R</td><td>${fmt(P.al, 2)} rad/s²</td></tr><tr><td>แรงตึงเชือก T</td><td>${fmt(P.T, 3)} N</td></tr>
+        <tr><td>ทอร์ก τ = TR</td><td>${fmt(P.tau, 4)} N·m</td></tr><tr><td>เวลาตกครบ H</td><td>${fmt(P.tf, 3)} s</td></tr>
+        <tr><td>ขณะนี้ v / ω</td><td>${fmt(v, 2)} m/s / ${fmt(om, 1)} rad/s</td></tr>
+        <tr><td>แรงที่แกนรับ N = Mg + T</td><td>${fmt(P.M * G + P.T, 2)} N</td></tr>`;
+      note = 'ล้อที่มี I มาก (มวลอยู่ที่ขอบ) ต้านการเปลี่ยนความเร็วเชิงมุมมาก มวลแขวนจึงตกช้ากว่า และแรงตึงเชือกมากกว่า ถ้าล้อเบา (I ≈ 0) มวลตกอิสระ a = g และ T = 0';
+      note1 = 'แรงตึงเชือก T ทำให้เกิดทอร์ก τ = TR รอบแกนล้อ ทำให้ล้อมีความเร่งเชิงมุม α = τ/I ส่วนมวลแขวนเร่งลงด้วย mg − T = ma เชือกไม่ไถลบนล้อ a = αR ' +
+        'กราฟด้านล่าง: พลังงานศักย์ที่ลดลง mgy แบ่งเป็นพลังงานจลน์ของมวลแขวนและของล้อ';
+      eq = eqH('สมการการเคลื่อนที่ (เชือกเบาไม่ยืด ไม่ไถลบนล้อ แกนไม่มีแรงเสียดทาน)') +
+        eqL('มวลแขวน: mg − T = ma , ล้อ: τ = TR = Iα , a = αR → a = mg/(m + I/R²)') +
+        eqL(`I = ${wheel === 'disk' ? '½MR²' : wheel === 'ring' ? 'MR²' : '0 (รอกเบา)'} = ${wheel === 'light' ? '0' : `${n(P.k, 1)} × ${Ms} × ${Rs}²`} = <b>${r(P.I, 4)} kg·m²</b>`) +
+        eqL(`a = mg/(m + I/R²) = ${ms} × 9.8/(${ms} + ${Is}/${Rs}²) = <b>${r(P.a, 3)} m/s²</b>`) +
+        eqL(`T = m(g − a) = ${ms} × (9.8 − ${n(P.a, 3)}) = <b>${r(P.T, 3)} N</b>`) +
+        eqL(`α = a/R = ${n(P.a, 3)}/${Rs} = <b>${r(P.al, 2)} rad/s²</b> , τ = TR = ${n(P.T, 3)} × ${Rs} = <b>${r(P.tau, 4)} N·m</b> = Iα`) +
+        eqL(`เวลาตก H: t = √(2H/a) = √(2 × ${n(P.H, 1)}/${n(P.a, 3)}) = <b>${r(P.tf, 3)} s</b>`) +
+        eqH(`ขณะ t = ${r(te, 2)} s`) +
+        eqL(`y = ½at² = <b>${r(yv, 3)} m</b> , v = at = <b>${r(v, 3)} m/s</b> , ω = v/R = <b>${r(om, 2)} rad/s</b>`) +
+        eqL(`mgy = ${n(P.m * G * yv, 3)} J = ½mv² + ½Iω² = ${n(0.5 * P.m * v * v, 3)} + ${n(0.5 * P.I * om * om, 3)} = <b>${r(0.5 * P.m * v * v + 0.5 * P.I * om * om, 3)} J</b>`);
+    } else {
+      drawSkate(ctx, w, h); graphSkate(g.ctx, g.w, g.h);
+      const S = sk(), ms = n(S.m, 1), Ibs = n(S.Ib, 1);
+      tab = `<tr><th></th><th>ตอนเริ่ม</th><th>ขณะนี้</th></tr>
+        <tr><td>r (m)</td><td>${fmt(r0, 2)}</td><td>${fmt(S.x, 2)}</td></tr>
+        <tr><td>I (kg·m²)</td><td>${fmt(S.I0, 3)}</td><td>${fmt(S.I, 3)}</td></tr>
+        <tr><td>ω (rad/s)</td><td>${fmt(S.om0, 3)}</td><td>${fmt(S.om, 3)}</td></tr>
+        <tr><td>รอบต่อวินาที f = ω/2π</td><td>${fmt(S.om0 / 2 / Math.PI, 3)}</td><td>${fmt(S.om / 2 / Math.PI, 3)}</td></tr>
+        <tr><td>L = Iω (kg·m²/s)</td><td>${fmt(S.L, 3)}</td><td>${fmt(S.I * S.om, 3)}</td></tr>
+        <tr><td>Eₖ หมุน (J)</td><td>${fmt(S.K0, 3)}</td><td>${fmt(S.K, 3)}</td></tr>
+        <tr><td>งานจากแรงดึงแขน W = ΔEₖ</td><td colspan="2">${fmt(S.K - S.K0, 3)} J</td></tr>`;
+      note = 'ไม่มีทอร์กภายนอกรอบแกนหมุน (แกนเก้าอี้ลื่น) โมเมนตัมเชิงมุม L = Iω จึงคงที่ หุบแขน I ลด ω เพิ่ม กางแขน I เพิ่ม ω ลด ' +
+        'ถือว่าแขนเบาและดัมเบลเป็นมวลจุด, I₀ รวมคนและเก้าอี้';
+      note1 = 'พลังงานจลน์การหมุน Eₖ = L²/2I ไม่คงที่: เมื่อหุบแขน แขนต้องออกแรงดึงดัมเบลเข้าหาศูนย์กลาง (F = mω²r) ในทิศเดียวกับการขยับ จึงทำงานบวก Eₖ เพิ่มขึ้น ' +
+        'เมื่อกางแขน ดัมเบลดึงแขนออก งานเป็นลบ Eₖ ลดลง จุดกลวงบนกราฟ = ตอนเริ่ม';
+      eq = eqH('โมเมนต์ความเฉื่อย (I₀ ของคน + เก้าอี้ บวกดัมเบลมวลจุด 2 ข้าง)') +
+        eqL(`I = I₀ + 2mr² = ${Ibs} + 2 × ${ms} × ${n(S.x, 2)}² = <b>${r(S.I, 3)} kg·m²</b>`) +
+        eqH('อนุรักษ์โมเมนตัมเชิงมุม (ไม่มีทอร์กภายนอก)') +
+        eqL(`L = I<sub>เริ่ม</sub>ω<sub>เริ่ม</sub> = ${n(S.I0, 3)} × ${n(S.om0, 2)} = <b>${r(S.L, 3)} kg·m²/s</b> (คงที่)`) +
+        eqL(`ω = L/I = ${n(S.L, 3)}/${n(S.I, 3)} = <b>${r(S.om, 3)} rad/s</b>`) +
+        eqH('พลังงานจลน์การหมุน') +
+        eqL(`Eₖ = ½Iω² = L²/2I = ${n(S.L, 3)}²/(2 × ${n(S.I, 3)}) = <b>${r(S.K, 3)} J</b> (ตอนเริ่ม ${r(S.K0, 3)} J)`) +
+        eqL(`งานจากแรงดึงแขน W = Eₖ − Eₖ,เริ่ม = ${n(S.K, 3)} − ${n(S.K0, 3)} = <b>${r(S.K - S.K0, 3)} J</b>`) +
+        eqL(`แรงที่มือดึงดัมเบลแต่ละข้าง F = mω²r = ${ms} × ${n(S.om, 3)}² × ${n(S.x, 2)} = <b>${r(S.m * S.om * S.om * S.x, 2)} N</b>`);
+    }
+    $('ro_tab').innerHTML = tab;
+    if ($('ro_note')._t !== note) { $('ro_note').innerHTML = note; $('ro_note')._t = note; }
+    if ($('ro_note1')._t !== note1) { $('ro_note1').innerHTML = note1; $('ro_note1')._t = note1; }
+    setEq('ro_eq', eq);
+  }
+  return { step, draw };
+})();
+
 /* ---------- เริ่มโปรแกรม ---------- */
-initApp({ linear, proj, incline, coll, mom, shm, energy: work, ballistic, ladder, mirror, bench, refract, depth, prism, polar, diffract, michelson, circuit, rc, efield, string, pipe, parallax, orbit, rlc, magnet, induct, fluid, bernoulli, gas, heat, circular, equil, pulley, photo, bohr, decay, instr, doppler, ripple, beats, plx, beamx }, 'linear');
+initApp({ linear, proj, incline, coll, mom, shm, energy: work, ballistic, ladder, mirror, bench, refract, depth, prism, polar, diffract, michelson, circuit, rc, efield, string, pipe, parallax, orbit, rlc, magnet, induct, fluid, bernoulli, gas, heat, circular, equil, pulley, photo, bohr, decay, instr, doppler, ripple, beats, plx, beamx, stack, elevator, relvel, vtgraph, rotate }, 'linear');
 </script>
 </body>
 </html>
