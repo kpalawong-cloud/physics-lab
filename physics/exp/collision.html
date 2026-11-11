@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โมเมนตัมและการชน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const W = 0.100;           // ความกว้างแผ่นกั้นแสงที่พิมพ์ไว้ (m)
+let E_TRUE = null;         // สัมประสิทธิ์การกระดอนของกันชนสปริง (ค่าซ่อน)
+const avg = (a) => { a = a.filter(isFinite); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN; };
+const vel = (t) => (isFinite(t) && t !== 0 ? W / t : 0); // ช่องว่าง = ไม่ผ่านประตู = หยุดนิ่ง
+
+Lab.init({
+  id: 'collision',
+  short: 'โมเมนตัมและการชน',
+  title: 'โมเมนตัมและการชนบนรางลม',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'วัดความเร็วของรถก่อนและหลังการชนด้วยประตูแสง',
+      'ตรวจสอบกฎการอนุรักษ์โมเมนตัมในการชนแบบยืดหยุ่นและไม่ยืดหยุ่น',
+      'เปรียบเทียบพลังงานจลน์ก่อนและหลังการชนทั้งสองแบบ',
+    ],
+    theory:
+      '<p>เมื่อไม่มีแรงภายนอกในแนวราง <b>โมเมนตัมรวมของระบบคงตัว</b></p>' +
+      '<div class="eq">m<sub>A</sub>u<sub>A</sub> + m<sub>B</sub>u<sub>B</sub> = m<sub>A</sub>v<sub>A</sub> + m<sub>B</sub>v<sub>B</sub></div>' +
+      '<p>ความเร็วเป็นปริมาณเวกเตอร์ ให้ทิศไปทางขวาเป็นบวก ทิศซ้ายเป็นลบ ความเร็ววัดจากแผ่นกั้นแสงกว้าง w = 10.0 cm ที่บังประตูแสงเป็นเวลา t</p>' +
+      '<div class="eq">v = w / t</div>' +
+      '<p>การชนแบบ<b>ยืดหยุ่น</b> (กันชนสปริง) พลังงานจลน์เกือบคงเดิม การชนแบบ<b>ไม่ยืดหยุ่น</b> (ตีนตุ๊กแก รถติดกันไป) พลังงานจลน์ลดลง ' +
+      'ถ้า B หยุดนิ่งก่อนชน สัดส่วนพลังงานจลน์ที่เหลือตามทฤษฎีของการชนแบบติดกันเท่ากับ m<sub>A</sub>/(m<sub>A</sub>+m<sub>B</sub>)</p>' +
+      '<p>ถ้าเขียนกราฟโมเมนตัมหลังชนกับโมเมนตัมก่อนชน จะได้เส้นตรงผ่านจุดกำเนิดที่มี<b>ความชันเท่ากับ 1</b></p>',
+    equipment: ['รางลมพร้อมเครื่องเป่าลม', 'รถ A และรถ B มวลราว 200 g พร้อมแผ่นกั้นแสงกว้าง 10.0 cm', 'ตุ้มน้ำหนักเสริม ก้อนละ 100 g',
+      'กันชนสปริง และแผ่นตีนตุ๊กแก', 'ดินน้ำมันรับรถที่ปลายราง', 'ประตูแสง 2 ตัวและเครื่องจับเวลาที่จำเวลาได้หลายค่า (ละเอียด 0.1 ms)', 'เครื่องชั่งดิจิทัล (ละเอียด 0.1 g)'],
+    procedure: [
+      'เลือกชนิดการชน แล้วเลือกตุ้มน้ำหนักเสริมของรถแต่ละคัน ชั่งมวลรถ A และ B บันทึกเป็นกิโลกรัม',
+      'รถ B จอดนิ่งระหว่างประตู 1 และ 2 ตั้งแรงผลักแล้วกด "ผลักรถ A" รถ A ผ่านประตู 1 ไปชนรถ B',
+      'อ่านรายการเวลาในเครื่องจับเวลา: เวลาของรถ A ที่ประตู 1 ก่อนชน (t<sub>A</sub>), เวลาของรถ A หลังชน (t′<sub>A</sub>) และรถ B หลังชน (t′<sub>B</sub>)',
+      'ถ้ารถ A วิ่งย้อนกลับ (ลูกศร ←) ให้ใส่เวลาเป็นค่าลบ ถ้ารถ A หยุดและไม่ผ่านประตูให้เว้นว่าง การชนแบบติดกันให้ใส่เวลาของแผ่นกั้นแสงทั้งสองที่ประตู 2',
+      'ถ้ารถ A หลังชนคลานช้ามาก กด "เร่งภาพ ×20" รอให้ผ่านประตู 2 (เวลาที่เครื่องจับได้ยังเป็นเวลาจริง)',
+      'เปลี่ยนมวลและแรงผลัก ทำให้ได้อย่างน้อย 5 แถวต่อชนิดการชน',
+    ],
+    tip: 'ก่อนบันทึกค่า ดูว่าเวลาแต่ละค่าเป็นของรถคันไหนและทิศใด เครื่องจับเวลาเรียงตามลำดับที่เกิดขึ้น',
+  },
+  table: {
+    rows: 5,
+    sets: [{ key: 'e', label: 'ยืดหยุ่น (กันชนสปริง)' }, { key: 'i', label: 'ไม่ยืดหยุ่น (ติดกัน)' }],
+    hint: 'เวลาเป็นวินาที ใส่ค่าลบเมื่อรถวิ่งไปทางซ้าย เว้นว่างถ้ารถไม่ผ่านประตูหลังชน (ความเร็ว 0)',
+    columns: [
+      { key: 'mA', label: 'm<sub>A</sub><br>(kg)', input: true },
+      { key: 'mB', label: 'm<sub>B</sub><br>(kg)', input: true },
+      { key: 'tA', label: 't<sub>A</sub> ก่อนชน<br>(s)', input: true },
+      { key: 'tA2', label: 't′<sub>A</sub> หลังชน<br>(s)', input: true },
+      { key: 'tB2', label: 't′<sub>B</sub> หลังชน<br>(s)', input: true },
+      { key: 'u', label: 'u<sub>A</sub><br>(m/s)', calc: (r) => (isFinite(r.tA) ? W / r.tA : NaN), digits: 3 },
+      { key: 'vA', label: 'v<sub>A</sub><br>(m/s)', calc: (r) => (isFinite(r.u) ? vel(r.tA2) : NaN), digits: 3 },
+      { key: 'vB', label: 'v<sub>B</sub><br>(m/s)', calc: (r) => (isFinite(r.u) ? vel(r.tB2) : NaN), digits: 3 },
+      { key: 'p1', label: 'p ก่อนชน<br>(kg·m/s)', calc: (r) => r.mA * r.u, digits: 4 },
+      { key: 'p2', label: 'p หลังชน<br>(kg·m/s)', calc: (r) => r.mA * r.vA + r.mB * r.vB, digits: 4 },
+      { key: 'ke', label: 'Ek หลัง / Ek ก่อน', calc: (r) => (r.mA * r.vA * r.vA + r.mB * r.vB * r.vB) / (r.mA * r.u * r.u), digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'โมเมนตัมหลังชนกับก่อนชน', x: 'p1', y: 'p2', xv: 'p<sub>ก่อน</sub>', yv: 'p<sub>หลัง</sub>',
+    xlabel: 'โมเมนตัมก่อนชน (kg·m/s)', ylabel: 'โมเมนตัมหลังชน (kg·m/s)', origin: true,
+    explain: 'ถ้าโมเมนตัมอนุรักษ์ ความชันควรเท่ากับ 1 ค่าที่ต่างจาก 1 เล็กน้อยมาจากแรงต้านอากาศและความคลาดเคลื่อนของการวัด',
+  },
+  results(fit, rows, truth, set) {
+    const ok = rows.filter((r) => isFinite(r.ke) && isFinite(r.p1));
+    const ke = avg(ok.map((r) => r.ke));
+    const out = [
+      { label: 'ความชัน p หลัง / p ก่อน', value: fit.m, unc: fit.sm, unit: '', accepted: 1 },
+      { label: 'สัดส่วนพลังงานจลน์ที่เหลือเฉลี่ย', value: ke, digits: 3, unit: '' },
+    ];
+    if (set === 'i') {
+      out.push({ label: 'สัดส่วนตามทฤษฎีเฉลี่ย m<sub>A</sub>/(m<sub>A</sub>+m<sub>B</sub>)', value: avg(ok.map((r) => r.mA / (r.mA + r.mB))), digits: 3, unit: '' });
+    } else {
+      const e = avg(ok.map((r) => (r.vB - r.vA) / r.u));
+      out.push({ label: 'สัมประสิทธิ์การกระดอน e = (v<sub>B</sub> − v<sub>A</sub>) / u<sub>A</sub>', value: e, digits: 3, unit: '' });
+      out.push({ label: 'สัมประสิทธิ์การกระดอนของกันชนสปริงชุดนี้', value: e, accepted: E_TRUE, hidden: true, digitsTrue: 3 });
+    }
+    return out;
+  },
+  questions: [
+    'โมเมนตัมรวมก่อนชนและหลังชนเท่ากันหรือไม่ ในการชนทั้งสองแบบ ความชันของกราฟบอกอะไร',
+    'พลังงานจลน์หลังชนแบบไม่ยืดหยุ่นลดลงเท่าใด พลังงานส่วนที่หายไปเปลี่ยนเป็นพลังงานรูปใด',
+    'ในการชนแบบยืดหยุ่น เมื่อ m<sub>A</sub> < m<sub>B</sub>, m<sub>A</sub> = m<sub>B</sub> และ m<sub>A</sub> > m<sub>B</sub> รถ A หลังชนเคลื่อนที่อย่างไร อธิบายด้วยกฎการอนุรักษ์',
+    'เหตุใดต้องคิดทิศของความเร็ว และจะเกิดอะไรกับผลการคำนวณถ้าลืมใส่เครื่องหมายลบ',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas style="height:360px"></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    E_TRUE = 0.93 + 0.05 * rng();
+    const M0 = { A: 0.2 + Lab.gauss(rng) * 0.0015, B: 0.2 + Lab.gauss(rng) * 0.0015 };  // มวลรถเปล่าจริง
+    const WF = { A: W * (1 + (rng() - 0.5) * 0.004), B: W * (1 + (rng() - 0.5) * 0.004) }; // ความกว้างแผ่นกั้นแสงจริง
+    const WMASS = 0.1 * (1 + (rng() - 0.5) * 0.002);
+    const DRAG = 0.004 + 0.004 * rng(); // แรงต้านที่เหลือ (m/s² ต่อ m/s)
+    const LEN = 0.16, G1 = 0.45, G2 = 1.10, TRACK = 1.60;
+    const s = { ff: 1, bEnd: false, set: api.currentSet(), xA: 0.12, xB: 0.78, vA: 0, vB: 0, run: false, stuck: false, push: 0.45,
+      nA: 0, nB: 0, log: [], inGate: {}, shown: '', collided: false };
+
+    const mass = (k) => M0[k] + (k === 'A' ? s.nA : s.nB) * WMASS;
+    ctrls.innerHTML =
+      '<h3>ชนิดการชน</h3><div class="seg" id="typ"><button data-v="e">ยืดหยุ่น</button><button data-v="i">ติดกัน</button></div>' +
+      '<h3>ตุ้มน้ำหนักเสริม (ก้อนละ 100 g)</h3>' +
+      '<div class="row" style="font-size:14px"><span style="flex:1">รถ A</span><button class="btn" id="aM">−</button><span id="aN" style="width:28px;text-align:center"></span><button class="btn" id="aP">+</button></div>' +
+      '<div class="row" style="font-size:14px"><span style="flex:1">รถ B</span><button class="btn" id="bM">−</button><span id="bN" style="width:28px;text-align:center"></span><button class="btn" id="bP">+</button></div>' +
+      '<div class="row"><button class="btn" id="wA">ชั่งรถ A</button><button class="btn" id="wB">ชั่งรถ B</button></div>' +
+      '<div class="watch" style="font-size:26px"><span class="readout" id="bal">0.0</span> g<small>เครื่องชั่งดิจิทัล</small></div>' +
+      '<h3>แรงผลักรถ A</h3><input type="range" id="push" min="0.15" max="0.7" step="0.01">' +
+      '<div class="row"><button class="btn primary" id="go">ผลักรถ A</button><button class="btn" id="rst">จัดรถใหม่</button></div>' +
+      '<div class="row"><button class="btn" id="ff" title="ใช้เมื่อรถคลานช้ามาก เวลาที่เครื่องจับได้ยังเป็นเวลาจริง">เร่งภาพ ×20</button></div>' +
+      '<h3>เครื่องจับเวลา (หน่วยความจำ)</h3><div id="log" class="readout" style="background:#10141b;color:#8ff0b0;border-radius:10px;padding:8px 10px;font-size:14px;min-height:98px;line-height:1.55"></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const typ = $('#typ');
+    const syncTyp = () => typ.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.set));
+    typ.onclick = (e) => { const b = e.target.closest('button'); if (!b || s.run) return; s.set = b.dataset.v; syncTyp(); api.useSet(s.set); reset(); };
+    api.onSetChange = (k) => { s.set = k; syncTyp(); reset(); };
+    syncTyp();
+    const showN = () => { $('#aN').textContent = s.nA; $('#bN').textContent = s.nB; };
+    $('#aM').onclick = () => { if (!s.run && s.nA > 0) s.nA--; showN(); };
+    $('#aP').onclick = () => { if (!s.run && s.nA < 3) s.nA++; showN(); };
+    $('#bM').onclick = () => { if (!s.run && s.nB > 0) s.nB--; showN(); };
+    $('#bP').onclick = () => { if (!s.run && s.nB < 3) s.nB++; showN(); };
+    showN();
+    const weigh = (k) => { const v = mass(k) * 1000 + Lab.noise(0.04); $('#bal').textContent = v.toFixed(1); };
+    $('#wA').onclick = () => weigh('A');
+    $('#wB').onclick = () => weigh('B');
+    const pushEl = $('#push');
+    pushEl.value = s.push;
+    pushEl.oninput = () => (s.push = +pushEl.value);
+    function reset() { s.ff = 1; s.bEnd = false; $('#ff').classList.remove('on'); s.run = false; s.xA = 0.12; s.xB = 0.78; s.vA = 0; s.vB = 0; s.stuck = false; s.collided = false; s.inGate = {}; $('#go').disabled = false; }
+    $('#rst').onclick = reset;
+    $('#ff').onclick = () => { if (!s.run) return; s.ff = s.ff === 1 ? 20 : 1; $('#ff').classList.toggle('on', s.ff > 1); };
+    $('#go').onclick = () => {
+      if (s.run) return;
+      reset(); s.log = []; renderLog();
+      s.vA = s.push * (1 + Lab.noise(0.03)); s.run = true; $('#go').disabled = true; s.idle = 0; s.t0 = simT;
+    };
+    function renderLog() {
+      $('#log').innerHTML = s.log.length ? s.log.map((e, i) => (i + 1) + '. ประตู ' + e.g + ' ' + e.dir + ' ' + e.t.toFixed(4) + ' s').join('<br>') : '<span style="color:#6f8a7a">ยังไม่มีข้อมูล</span>';
+    }
+    renderLog();
+
+    // ประตูแสงจับเวลาที่แผ่นกั้นแสงบังลำแสง (แผ่นกั้นแสงอยู่กลางรถ)
+    function gates(prev, k, x, v, t) {
+      const half = WF[k] / 2;
+      [[1, G1], [2, G2]].forEach(([g, gx]) => {
+        const id = k + g;
+        const blocked = Math.abs(x - gx) < half;
+        if (blocked && !s.inGate[id]) s.inGate[id] = { t0: t, dir: v >= 0 ? '→' : '←' };
+        if (!blocked && s.inGate[id]) {
+          const d = s.inGate[id];
+          s.log.push({ g, dir: d.dir, t: t - d.t0 + Lab.noise(0.00006) });
+          delete s.inGate[id];
+          renderLog();
+        }
+      });
+    }
+
+    let ppm, ox, oy;
+    function layout() { ppm = (cv.w - 50) / TRACK; ox = 25; oy = cv.h * 0.56; }
+    const X = (u) => ox + u * ppm;
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // โต๊ะและรางลม
+      ctx.fillStyle = dark ? '#3a3226' : '#d9c3a0'; ctx.fillRect(0, oy + 70, cv.w, 14);
+      ctx.fillStyle = dark ? '#6b7280' : '#4b5563'; ctx.fillRect(X(0.15), oy + 12, 8, 58); ctx.fillRect(X(1.45), oy + 12, 8, 58);
+      const g = ctx.createLinearGradient(0, oy - 6, 0, oy + 12);
+      g.addColorStop(0, dark ? '#9aa3b0' : '#e6e9ee'); g.addColorStop(1, dark ? '#5d6470' : '#a4acb8');
+      ctx.fillStyle = g; ctx.fillRect(X(0), oy - 6, TRACK * ppm, 18);
+      ctx.strokeStyle = '#3d434b'; ctx.lineWidth = 1 / z; ctx.strokeRect(X(0), oy - 6, TRACK * ppm, 18);
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      for (let u = 0.03; u < TRACK - 0.01; u += 0.03) { ctx.beginPath(); ctx.arc(X(u), oy - 2, 0.8, 0, 7); ctx.fill(); }
+      // สเกลบนหน้าราง
+      ctx.fillStyle = dark ? '#e8d8b0' : '#fbf4dc'; ctx.fillRect(X(0), oy + 12, TRACK * ppm, 14);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let cm = 0; cm <= TRACK * 100; cm += 1) {
+        const x = X(cm / 100), l = cm % 10 === 0 ? 9 : cm % 5 === 0 ? 6 : 3.5;
+        ctx.lineWidth = 0.6 / z; ctx.beginPath(); ctx.moveTo(x, oy + 12); ctx.lineTo(x, oy + 12 + l); ctx.stroke();
+        if (cm % 10 === 0) { ctx.font = 8 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(cm, x, oy + 21.5); }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // กันชนปลายราง
+      ctx.fillStyle = '#555'; ctx.fillRect(X(0.02), oy - 18, 5, 12); ctx.fillRect(X(TRACK - 0.02) - 5, oy - 18, 5, 12);
+      // ประตูแสง
+      [[G1, 'ประตู 1'], [G2, 'ประตู 2']].forEach(([gx, lab]) => {
+        const x = X(gx);
+        ctx.fillStyle = '#2f6fde';
+        ctx.fillRect(x - 9, oy - 70, 3, 64); ctx.fillRect(x + 6, oy - 70, 3, 64); ctx.fillRect(x - 9, oy - 72, 18, 4);
+        ctx.fillStyle = 'rgba(230,30,30,.85)'; ctx.fillRect(x - 6, oy - 52, 12, 1);
+        ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(lab, x, oy - 78);
+      });
+      // รถ
+      car(ctx, z, 'A', s.xA, dark ? '#c0563b' : '#e0563b', s.nA);
+      car(ctx, z, 'B', s.xB, dark ? '#3f6fb8' : '#2f6fde', s.nB);
+      if (s.stuck) { ctx.fillStyle = '#7a6a3a'; ctx.fillRect(X(s.xA + LEN / 2) - 2, oy - 18, 4, 10); }
+    }
+    function car(ctx, z, k, x, col, n) {
+      const x0 = X(x - LEN / 2), x1 = X(x + LEN / 2);
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.moveTo(x0, oy - 6); ctx.lineTo(x0 + 6, oy - 20); ctx.lineTo(x1 - 6, oy - 20); ctx.lineTo(x1, oy - 6); ctx.closePath(); ctx.fill();
+      // แผ่นกั้นแสงกลางรถ
+      ctx.fillStyle = Lab.css('--ink');
+      ctx.fillRect(X(x - WF[k] / 2), oy - 58, WF[k] * ppm, 2.2); ctx.fillRect(X(x) - 1, oy - 58, 2, 38);
+      // ตุ้มน้ำหนัก
+      ctx.fillStyle = '#9aa3b0';
+      for (let i = 0; i < n; i++) ctx.fillRect(x0 + 8 + i * 9, oy - 30, 7, 10);
+      // กันชนสปริง/ตีนตุ๊กแก ด้านที่หันเข้าหากัน
+      ctx.fillStyle = s.set === 'e' ? '#888' : '#6b5a2b';
+      if (k === 'A') ctx.fillRect(x1, oy - 15, 4, 6); else ctx.fillRect(x0 - 4, oy - 15, 4, 6);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(k, X(x), oy - 9);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    let simT = 0;
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.run) {
+        const sdt = dt * s.ff; // เวลาในการจำลอง (เร่งได้เมื่อรถคลานช้า เวลาที่จับได้ยังถูกต้อง)
+        const n = Math.ceil(sdt / 0.0005);
+        for (let i = 0; i < n; i++) {
+          const h = sdt / n; simT += h;
+          s.vA -= DRAG * s.vA * h; s.vB -= DRAG * s.vB * h;
+          s.xA += s.vA * h; s.xB += s.vB * h;
+          if (s.stuck) s.xB = s.xA + LEN + 0.008;
+          // รถ A ไปถึงรถ B ที่จอดติดดินน้ำมันปลายราง: A หยุดด้วย
+          if (!s.stuck && s.bEnd && s.xB - s.xA <= LEN + 0.008 && s.vA > 0) { s.vA = 0; s.xA = s.xB - LEN - 0.008; }
+          // การชน: ระยะระหว่างรถ (มีกันชน 4 mm ข้างละอัน)
+          if (!s.stuck && !s.bEnd && s.xB - s.xA <= LEN + 0.008 && s.vA > s.vB) {
+            const mA = mass('A'), mB = mass('B');
+            if (s.set === 'i') {
+              const v = (mA * s.vA + mB * s.vB) / (mA + mB); s.vA = v; s.vB = v; s.stuck = true;
+            } else {
+              const e = E_TRUE, u1 = s.vA, u2 = s.vB;
+              s.vA = (mA * u1 + mB * u2 - mB * e * (u1 - u2)) / (mA + mB);
+              s.vB = (mA * u1 + mB * u2 + mA * e * (u1 - u2)) / (mA + mB);
+            }
+          }
+          gates(null, 'A', s.xA, s.vA, simT); gates(null, 'B', s.xB, s.vB, simT);
+          // ปลายรางมีดินน้ำมันรับ รถที่ไปถึงหยุดนิ่ง
+          const lo = 0.02 + LEN / 2 + 0.004, hi = TRACK - 0.02 - LEN / 2 - 0.004;
+          if (s.xA < lo) { s.xA = lo; s.vA = 0; }
+          if (s.xB > hi) { s.xB = hi; s.vB = 0; s.bEnd = true; if (s.stuck) { s.vA = 0; s.xA = s.xB - LEN - 0.008; } }
+          if (s.xA > s.xB - LEN - 0.008 && !s.stuck) s.xA = s.xB - LEN - 0.008;
+        }
+        // จบเมื่อรถทั้งสองหยุดหรือช้ามากเป็นเวลานาน
+        if (Math.abs(s.vA) < 0.003 && Math.abs(s.vB) < 0.003) s.idle += dt; else s.idle = 0;
+        // รถ A ที่เกือบหยุดอาจคลานช้ามาก จึงหยุดการจำลองหลัง 45 s (กด "จัดรถใหม่" ได้ตลอด)
+        if (s.idle > 0.5 || simT - s.t0 > 90) { s.run = false; s.ff = 1; $('#go').disabled = false; $('#ff').classList.remove('on'); }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ทิศขวาเป็นบวก · ลูกศรในเครื่องจับเวลาบอกทิศที่รถผ่านประตู', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>

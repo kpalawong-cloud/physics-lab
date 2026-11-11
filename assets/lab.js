@@ -137,7 +137,7 @@
       const ctx = cv.ctx;
       const off = L.touch ? L.r + 30 : 0;
       const cx = Math.min(Math.max(L.x, L.r + 4), cv.w - L.r - 4);
-      const cy = Math.max(L.y - off, L.r + 4);
+      const cy = Math.min(Math.max(L.y - off, L.r + 4), cv.h - L.r - 4); // ไม่ให้แว่นล้นขอบบนหรือล่าง
       ctx.save();
       ctx.beginPath(); ctx.arc(cx, cy, L.r, 0, Math.PI * 2); ctx.clip();
       ctx.fillStyle = Lab.css('--soft'); ctx.fillRect(cx - L.r, cy - L.r, 2 * L.r, 2 * L.r);

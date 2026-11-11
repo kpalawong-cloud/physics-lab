@@ -9,6 +9,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/lab.css">
+<style>
+  .groupnav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 4px; position: sticky; top: 0; z-index: 2;
+    background: var(--bg); padding: 8px 0; }
+  .groupnav a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel);
+    border-radius: 999px; padding: 4px 12px; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .groupnav a:hover { border-color: var(--accent); }
+  .groupnav b { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .group { scroll-margin-top: 64px; }
+  .group h2 { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .group h2 .muted { font-size: 14px; font-weight: 400; }
+  .tile { border-top: 3px solid var(--gc, var(--line)); }
+  .chip.uni { background: color-mix(in srgb, var(--earth) 16%, transparent); color: var(--earth); }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -16,78 +30,112 @@
   <div class="hero">
     <h1>ห้องปฏิบัติการฟิสิกส์</h1>
     <p>การทดลองแต่ละเรื่องมี 4 ขั้น: เตรียมการ → ทดลองและบันทึกผล → วิเคราะห์ด้วยกราฟ → สรุปและส่งรายงาน
-      อุปกรณ์ทุกชิ้นวัดได้คลาดเคลื่อนเหมือนของจริง และอุปกรณ์แต่ละเครื่องมีค่าต่างกันเล็กน้อย</p>
+      อุปกรณ์ทุกชิ้นวัดได้คลาดเคลื่อนเหมือนของจริง และอุปกรณ์แต่ละเครื่องมีค่าต่างกันเล็กน้อย
+      เรื่องที่มีป้าย <span class="chip uni">ปฏิบัติการมหาวิทยาลัย</span> ปรับจากปฏิบัติการระดับมหาวิทยาลัยให้นักเรียนมัธยมทำได้</p>
   </div>
 
-  <h2 class="section-title">ปฏิบัติการฟิสิกส์พื้นฐาน</h2>
-  <p class="muted" style="margin:2px 0 0;font-size:14px">ชุดปฏิบัติการระดับมหาวิทยาลัย ปรับให้นักเรียนมัธยมปลายทำได้</p>
-  <div class="grid-cards" id="core"></div>
+  <nav class="groupnav" id="nav"></nav>
+  <div id="groups"></div>
 
-  <h2 class="section-title">การทดลองตามหลักสูตรมัธยม</h2>
-  <div class="grid-cards" id="exps"></div>
-
-  <h2 class="section-title">ห้องจำลองเพื่อสำรวจแนวคิด</h2>
-  <div class="grid-cards">
-    <a class="tile" href="sims.html">
-      <h3>ห้องจำลองฟิสิกส์ 60 เรื่อง</h3>
-      <p>กลศาสตร์ แสง ไฟฟ้า คลื่นและเสียง ฟิสิกส์ยุคใหม่ ของไหลและความร้อน ดาราศาสตร์ ปรับค่าแล้วดูผลทันที</p>
-    </a>
-  </div>
+  <section class="group" id="g-sims">
+    <h2 class="section-title">ห้องจำลองเพื่อสำรวจแนวคิด</h2>
+    <div class="grid-cards">
+      <a class="tile" href="sims.html">
+        <h3>ห้องจำลองฟิสิกส์ 60 เรื่อง</h3>
+        <p>กลศาสตร์ แสง ไฟฟ้า คลื่นและเสียง ฟิสิกส์ยุคใหม่ ของไหลและความร้อน ดาราศาสตร์ ปรับค่าแล้วดูผลทันที</p>
+      </a>
+    </div>
+  </section>
   <footer class="foot">ความคืบหน้าของแต่ละการทดลองบันทึกไว้บนเครื่องนี้ กลับมาทำต่อได้ภายหลัง</footer>
 </div>
 <script>
-const CORE = [
-  { id: 'measure', title: 'การวัดและความคลาดเคลื่อน', level: 'ม.4–ม.6', topic: 'การวัด',
-    desc: 'ใช้เวอร์เนียร์และไมโครมิเตอร์ แก้ความคลาดเคลื่อนศูนย์ หาค่าเฉลี่ยและความไม่แน่นอน แล้วหาความหนาแน่นของโลหะ' },
-  { id: 'linear', title: 'การเคลื่อนที่แนวเส้นตรงบนรางลม', level: 'ม.4–ม.6', topic: 'กลศาสตร์',
-    desc: 'จับเวลาด้วยโฟโตเกตบนรางเอียง เขียนกราฟ s–t² หาความเร่งและค่า g' },
-  { id: 'centripetal', title: 'แรงสู่ศูนย์กลาง', level: 'ม.4–ม.6', topic: 'กลศาสตร์',
-    desc: 'แกว่งจุกยางเป็นวงกลม จับเวลา 20 รอบ หาความสัมพันธ์ระหว่างแรงกับ v²/r' },
-  { id: 'standing', title: 'คลื่นนิ่งในเส้นลวด', level: 'ม.5–ม.6', topic: 'คลื่น',
-    desc: 'ปรับความถี่ให้เกิดคลื่นนิ่ง n ลูป หาความสัมพันธ์ v² กับแรงตึง และมวลต่อความยาวของเส้นลวด' },
-  { id: 'viscosity', title: 'ความหนืดของของเหลว', level: 'ม.5–ม.6', topic: 'ของไหล',
-    desc: 'ปล่อยลูกเหล็กในกลีเซอรีน จับเวลาความเร็วปลาย หาความหนืดด้วยกฎของสโตกส์' },
-  { id: 'resonance', title: 'การสั่นพ้องของเสียงในหลอดเรโซแนนซ์', level: 'ม.5–ม.6', topic: 'เสียง',
-    desc: 'ฟังเสียงดังสุดเมื่อเลื่อนลูกสูบ หาอัตราเร็วเสียงและค่าแก้ปลายหลอด' },
-  { id: 'efield', title: 'สนามไฟฟ้าและเส้นสมศักย์', level: 'ม.6', topic: 'ไฟฟ้าสถิต',
-    desc: 'ใช้หัววัดบนกระดาษตัวนำ หาเส้นสมศักย์ และหาสนามไฟฟ้าระหว่างแผ่นขนาน' },
-  { id: 'rc', title: 'วงจรไฟฟ้ากระแสตรงและวงจร RC', level: 'ม.6', topic: 'ไฟฟ้ากระแส',
-    desc: 'อ่านโวลต์มิเตอร์ขณะตัวเก็บประจุคายประจุ เขียนกราฟ ln V–t หาค่าคงตัวเวลาและความจุ' },
-  { id: 'diffraction', title: 'การเลี้ยวเบนของแสง', level: 'ม.5–ม.6', topic: 'แสงเชิงคลื่น',
-    desc: 'วัดตำแหน่งแถบสว่างของเกรตติงและแถบมืดของสลิตเดี่ยว หาความยาวคลื่นเลเซอร์และความกว้างสลิต' },
-  { id: 'michelson', title: 'การแทรกสอดแบบไมเคิลสัน', level: 'ม.6', topic: 'แสงเชิงคลื่น',
-    desc: 'หมุนไมโครมิเตอร์เลื่อนกระจก นับริ้วการแทรกสอด แล้วหาความยาวคลื่นของแสง' },
-  { id: 'polar', title: 'โพลาไรเซชันของแสง', level: 'ม.5–ม.6', topic: 'แสงเชิงคลื่น',
-    desc: 'หมุนแผ่นวิเคราะห์ อ่านความเข้มแสง ตรวจสอบกฎของมาลุส' },
-  { id: 'photo', title: 'ปรากฏการณ์โฟโตอิเล็กทริก', level: 'ม.6', topic: 'ฟิสิกส์ยุคใหม่',
-    desc: 'หาศักย์หยุดยั้งของแสงหลายความยาวคลื่น หาค่าคงตัวของพลังค์และฟังก์ชันงาน' },
-].map((e, i) => Object.assign(e, { file: 'exp/' + e.id + '.html', title: (i + 1) + '. ' + e.title }));
-const EXPS = [
-  { id: 'ticker', file: 'exp/ticker.html', title: 'การตกอย่างอิสระด้วยเครื่องเคาะสัญญาณเวลา', level: 'ม.4', topic: 'การเคลื่อนที่แนวตรง',
-    desc: 'อ่านระยะจุดบนแถบกระดาษ หาความเร็ว เขียนกราฟ v–t แล้วหาความเร่งโน้มถ่วง' },
-  { id: 'hooke', file: 'exp/hooke.html', title: 'กฎของฮุกและค่านิจของสปริง', level: 'ม.3–ม.4', topic: 'แรงและสมดุล',
-    desc: 'แขวนมวลทีละก้อน อ่านตำแหน่งเข็มชี้บนไม้บรรทัด เขียนกราฟ F–x หาค่านิจสปริง' },
-  { id: 'pendulum', file: 'exp/pendulum.html', title: 'ลูกตุ้มอย่างง่าย', level: 'ม.5', topic: 'การเคลื่อนที่แบบฮาร์มอนิกอย่างง่าย',
-    desc: 'จับเวลาการแกว่ง 10 รอบที่ความยาวต่าง ๆ เขียนกราฟ T²–L แล้วหาค่า g' },
-  { id: 'snell', file: 'exp/snell.html', title: 'การหักเหของแสงผ่านแท่งแก้วครึ่งวงกลม', level: 'ม.5', topic: 'แสงเชิงรังสี',
-    desc: 'วัดมุมตกกระทบและมุมหักเห เขียนกราฟ sin i–sin r หาดรรชนีหักเห และสังเกตมุมวิกฤต' },
-  { id: 'ohm', file: 'exp/ohm.html', title: 'กฎของโอห์ม', level: 'ม.3, ม.6', topic: 'ไฟฟ้ากระแส',
-    desc: 'อ่านมิเตอร์เข็ม เขียนกราฟ V–I ของตัวต้านทานและหลอดไฟ เปรียบเทียบตัวนำโอห์มมิกกับนอนโอห์มมิก' },
+// กลุ่มแล็บตามหน่วยการเรียน เรียงตามลำดับเนื้อหาในหลักสูตร (uni: ปรับจากปฏิบัติการระดับมหาวิทยาลัย)
+const GROUPS = [
+  { key: 'measure', name: 'การวัด', color: 'var(--muted)', labs: [
+    { id: 'measure', title: 'การวัดและความคลาดเคลื่อน', level: 'ม.4–ม.6', uni: 1,
+      desc: 'ใช้เวอร์เนียร์และไมโครมิเตอร์ แก้ความคลาดเคลื่อนศูนย์ หาค่าเฉลี่ยและความไม่แน่นอน แล้วหาความหนาแน่นของโลหะ' },
+  ] },
+  { key: 'mech', name: 'กลศาสตร์', color: 'var(--phy)', labs: [
+    { id: 'ticker', title: 'การตกอย่างอิสระด้วยเครื่องเคาะสัญญาณเวลา', level: 'ม.4',
+      desc: 'อ่านระยะจุดบนแถบกระดาษ หาความเร็ว เขียนกราฟ v–t แล้วหาความเร่งโน้มถ่วง' },
+    { id: 'linear', title: 'การเคลื่อนที่แนวเส้นตรงบนรางลม', level: 'ม.4', uni: 1,
+      desc: 'จับเวลาด้วยโฟโตเกตบนรางเอียง เขียนกราฟ s–t² หาความเร่งและค่า g' },
+    { id: 'projectile', title: 'การเคลื่อนที่แบบโพรเจกไทล์', level: 'ม.4',
+      desc: 'ปล่อยลูกเหล็กจากรางโค้งให้ตกจากขอบโต๊ะ วัดระยะตกบนกระดาษคาร์บอน หาความเร็วต้นและพลังงานที่เหลือ' },
+    { id: 'friction', title: 'สัมประสิทธิ์ความเสียดทาน', level: 'ม.4',
+      desc: 'ดึงกล่องไม้ด้วยเครื่องชั่งสปริง อ่านแรงเสียดทานสถิตและจลน์ เขียนกราฟ f–N' },
+    { id: 'moment', title: 'สมดุลของวัตถุแข็งเกร็งและโมเมนต์', level: 'ม.4',
+      desc: 'ถ่วงไม้เมตรบนคมมีด เลื่อนมวลจนสมดุล ใช้หลักของโมเมนต์หามวลที่ไม่ทราบค่า' },
+    { id: 'hooke', title: 'กฎของฮุกและค่านิจของสปริง', level: 'ม.3–ม.4',
+      desc: 'แขวนมวลทีละก้อน อ่านตำแหน่งเข็มชี้บนไม้บรรทัด เขียนกราฟ F–x หาค่านิจสปริง' },
+    { id: 'energy', title: 'การอนุรักษ์พลังงานกล', level: 'ม.4',
+      desc: 'ปล่อยรถจากความสูงต่าง ๆ วัดความเร็วด้วยโฟโตเกต เขียนกราฟ v²–h และหาพลังงานที่สูญเสีย' },
+    { id: 'collision', title: 'โมเมนตัมและการชน', level: 'ม.4',
+      desc: 'ชนรถสองคันบนรางลมแบบยืดหยุ่นและไม่ยืดหยุ่น เทียบโมเมนตัมและพลังงานจลน์ก่อนและหลังชน' },
+    { id: 'centripetal', title: 'แรงสู่ศูนย์กลาง', level: 'ม.4', uni: 1,
+      desc: 'แกว่งจุกยางเป็นวงกลม จับเวลา 20 รอบ หาความสัมพันธ์ระหว่างแรงกับ v²/r' },
+    { id: 'pendulum', title: 'ลูกตุ้มอย่างง่าย', level: 'ม.5',
+      desc: 'จับเวลาการแกว่ง 10 รอบที่ความยาวต่าง ๆ เขียนกราฟ T²–L แล้วหาค่า g' },
+    { id: 'spring', title: 'การสั่นของมวลติดสปริง', level: 'ม.5',
+      desc: 'จับเวลาการสั่นของมวลต่าง ๆ เขียนกราฟ T²–m หาค่านิจสปริงและมวลประสิทธิผลของสปริง' },
+    { id: 'inertia', title: 'โมเมนต์ความเฉื่อยของล้อหมุน', level: 'ม.6', uni: 1,
+      desc: 'ใช้มวลถ่วงหมุนล้อ จับเวลาการตก หาโมเมนต์ความเฉื่อยและทอร์กความเสียดทาน' },
+  ] },
+  { key: 'wave', name: 'คลื่นและเสียง', color: 'var(--ok)', labs: [
+    { id: 'standing', title: 'คลื่นนิ่งในเส้นลวด', level: 'ม.5–ม.6', uni: 1,
+      desc: 'ปรับความถี่ให้เกิดคลื่นนิ่ง วัดคาบด้วยออสซิลโลสโคป หามวลต่อความยาวของเส้นลวด' },
+    { id: 'resonance', title: 'การสั่นพ้องของเสียงในหลอดเรโซแนนซ์', level: 'ม.5–ม.6', uni: 1,
+      desc: 'ฟังเสียงดังสุดเมื่อเลื่อนลูกสูบ หาอัตราเร็วเสียงและค่าแก้ปลายหลอด' },
+  ] },
+  { key: 'fluid', name: 'ของไหลและความร้อน', color: 'var(--chem)', labs: [
+    { id: 'viscosity', title: 'ความหนืดของของเหลว', level: 'ม.5–ม.6', uni: 1,
+      desc: 'ปล่อยลูกเหล็กในกลีเซอรีน จับเวลาความเร็วปลาย หาความหนืดด้วยกฎของสโตกส์' },
+  ] },
+  { key: 'optics', name: 'แสง', color: 'var(--warn)', labs: [
+    { id: 'snell', title: 'การหักเหของแสงผ่านแท่งแก้วครึ่งวงกลม', level: 'ม.5',
+      desc: 'วัดมุมตกกระทบและมุมหักเห เขียนกราฟ sin i–sin r หาดรรชนีหักเห และสังเกตมุมวิกฤต' },
+    { id: 'diffraction', title: 'การเลี้ยวเบนของแสง', level: 'ม.5–ม.6', uni: 1,
+      desc: 'วัดตำแหน่งแถบสว่างของเกรตติงและแถบมืดของสลิตเดี่ยว หาความยาวคลื่นเลเซอร์และความกว้างสลิต' },
+    { id: 'polar', title: 'โพลาไรเซชันของแสง', level: 'ม.5–ม.6', uni: 1,
+      desc: 'หมุนแผ่นวิเคราะห์ อ่านความเข้มแสง ตรวจสอบกฎของมาลุส' },
+    { id: 'michelson', title: 'การแทรกสอดแบบไมเคิลสัน', level: 'ม.6', uni: 1,
+      desc: 'หมุนไมโครมิเตอร์เลื่อนกระจก นับริ้วการแทรกสอด แล้วหาความยาวคลื่นของแสง' },
+  ] },
+  { key: 'elec', name: 'ไฟฟ้าและแม่เหล็ก', color: 'var(--bad)', labs: [
+    { id: 'ohm', title: 'กฎของโอห์ม', level: 'ม.3, ม.6',
+      desc: 'อ่านมิเตอร์เข็ม เขียนกราฟ V–I ของตัวต้านทานและหลอดไฟ เปรียบเทียบตัวนำโอห์มมิกกับนอนโอห์มมิก' },
+    { id: 'efield', title: 'สนามไฟฟ้าและเส้นสมศักย์', level: 'ม.6', uni: 1,
+      desc: 'ใช้หัววัดบนกระดาษตัวนำ หาเส้นสมศักย์ และหาสนามไฟฟ้าระหว่างแผ่นขนาน' },
+    { id: 'rc', title: 'วงจรไฟฟ้ากระแสตรงและวงจร RC', level: 'ม.6', uni: 1,
+      desc: 'อ่านโวลต์มิเตอร์ขณะตัวเก็บประจุคายประจุ เขียนกราฟ ln V–t หาค่าคงตัวเวลาและความจุ' },
+  ] },
+  { key: 'modern', name: 'ฟิสิกส์ยุคใหม่', color: 'var(--earth)', labs: [
+    { id: 'photo', title: 'ปรากฏการณ์โฟโตอิเล็กทริก', level: 'ม.6', uni: 1,
+      desc: 'หาศักย์หยุดยั้งของแสงหลายความยาวคลื่น หาค่าคงตัวของพลังค์และฟังก์ชันงาน' },
+  ] },
 ];
+
+// ความคืบหน้าจาก localStorage (ข้อมูลแบบใหม่เก็บเป็น sets, แบบเก่าเก็บเป็น rows)
 function status(id) {
   try {
     const s = JSON.parse(localStorage.getItem('vl-' + id) || 'null');
     if (!s) return '';
-    const filled = (s.rows || []).filter(r => Object.values(r).some(v => String(v).trim() !== '')).length;
     if (s.answers && s.answers.concl) return '<span class="chip" style="background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">ทำเสร็จแล้ว</span>';
+    const rows = s.sets ? [].concat(...Object.values(s.sets)) : s.rows || [];
+    const filled = rows.filter((r) => Object.values(r).some((v) => String(v).trim() !== '')).length;
     return filled ? '<span class="chip">บันทึกแล้ว ' + filled + ' แถว</span>' : '';
   } catch (e) { return ''; }
 }
-const tile = e =>
-  '<a class="tile" href="' + e.file + '"><h3>' + e.title + '</h3><p>' + e.desc + '</p>' +
-  '<div class="meta"><span class="chip">' + e.level + '</span><span class="chip" style="background:var(--soft);color:var(--muted)">' + e.topic + '</span>' + status(e.id) + '</div></a>';
-document.getElementById('core').innerHTML = CORE.map(tile).join('');
-document.getElementById('exps').innerHTML = EXPS.map(tile).join('');
+const tile = (e, g) =>
+  '<a class="tile" style="--gc:' + g.color + '" href="exp/' + e.id + '.html"><h3>' + e.title + '</h3><p>' + e.desc + '</p>' +
+  '<div class="meta"><span class="chip">' + e.level + '</span>' + (e.uni ? '<span class="chip uni">ปฏิบัติการมหาวิทยาลัย</span>' : '') + status(e.id) + '</div></a>';
+document.getElementById('nav').innerHTML = GROUPS.map((g) =>
+  '<a href="#g-' + g.key + '"><span class="dot" style="background:' + g.color + '"></span>' + g.name + ' <b>' + g.labs.length + '</b></a>').join('') +
+  '<a href="#g-sims">ห้องจำลอง</a>';
+document.getElementById('groups').innerHTML = GROUPS.map((g) =>
+  '<section class="group" id="g-' + g.key + '"><h2 class="section-title"><span class="dot" style="background:' + g.color + ';width:12px;height:12px"></span>' +
+  g.name + ' <span class="muted">' + g.labs.length + ' เรื่อง</span></h2>' +
+  '<div class="grid-cards">' + g.labs.map((e) => tile(e, g)).join('') + '</div></section>').join('');
 </script>
 </body>
 </html>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การสั่นของมวลติดสปริง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;          // m/s²
+const M1 = 0.05;        // มวลต่อก้อน (kg)
+const MH = 0.05;        // มวลที่แขวน (kg)
+const NMAX = 8;         // จำนวนก้อนสูงสุด
+let K = 25;             // ค่านิจสปริงจริง (ซ่อน)
+let MS = 0.03;          // มวลของสปริงเอง (ซ่อน)
+
+Lab.init({
+  id: 'spring',
+  short: 'มวลติดสปริง',
+  title: 'การสั่นของมวลติดสปริง',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างคาบการสั่น (T) กับมวลที่ติดปลายสปริง (m)',
+      'หาค่านิจสปริง (k) จากความชันของกราฟ T² กับ m',
+      'หามวลประสิทธิผลของสปริงจากจุดตัดแกนของกราฟ',
+    ],
+    theory:
+      '<p>มวล m ที่ติดปลายสปริงซึ่งถูกดึงลงแล้วปล่อยจะสั่นแบบฮาร์มอนิกอย่างง่าย ถ้าสปริงเบามาก คาบการสั่นคือ</p>' +
+      '<div class="eq">T = 2π √(m / k)</div>' +
+      '<p>แต่สปริงจริงมีมวล m<sub>s</sub> ส่วนต่าง ๆ ของสปริงเคลื่อนที่ด้วยความเร็วไม่เท่ากัน ผลรวมเหมือนมีมวลเพิ่มขึ้นประมาณ m<sub>s</sub>/3</p>' +
+      '<div class="eq">T² = (4π²/k) · m + (4π²/k) · m<sub>s</sub>/3</div>' +
+      '<p>กราฟ T² กับ m จึงเป็นเส้นตรงที่<b>ไม่ผ่านจุดกำเนิด</b> ความชัน = 4π²/k ดังนั้น <b>k = 4π² / ความชัน</b> ' +
+      'และ จุดตัดแกน T² ÷ ความชัน = มวลประสิทธิผล m<sub>s</sub>/3</p>' +
+      '<p>มวล m ในการทดลองนี้คือ<b>มวลรวมที่แขวน</b> (ที่แขวน 50 g + ตุ้มมวล)</p>',
+    equipment: ['ขาตั้งพร้อมที่หนีบ', 'สปริง', 'ที่แขวนมวล 50 g', 'ตุ้มมวลแบบมีร่อง ก้อนละ 50 g จำนวน 8 ก้อน', 'ไม้บรรทัด', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'แขวนตุ้มมวล 1 ก้อนบนที่แขวน (มวลรวม 0.100 kg) รอให้หยุดนิ่ง',
+      'ลากที่แขวนลงประมาณ 2–4 cm แล้วปล่อย (หรือกดปุ่ม "ดึงลงแล้วปล่อย") ให้สั่นในแนวดิ่ง ไม่แกว่งไปมา',
+      'เริ่มจับเวลาเมื่อเข็มชี้ผ่านเส้นอ้างอิงจุดสมดุล นับ 10 รอบแล้วหยุด บันทึกเป็น t₁ ทำซ้ำเป็น t₂',
+      'เพิ่มมวลครั้งละ 50 g แล้วทำซ้ำ จนได้อย่างน้อย 6 ค่า',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ T² กับ m',
+    ],
+    tip: 'จุดสมดุลเป็นตำแหน่งที่มวลเคลื่อนที่เร็วที่สุด จึงตัดสินจังหวะเริ่มและหยุดได้แม่นกว่าจุดสูงสุดหรือต่ำสุด',
+  },
+  table: {
+    rows: 7,
+    hint: 'm คือมวลรวมที่แขวน (รวมที่แขวน 50 g) เป็นกิโลกรัม ปุ่ม "บันทึกเวลาลงตาราง" จะเติม t₁ แล้ว t₂ ของแถวเดียวกัน',
+    columns: [
+      { key: 'm', label: 'มวลรวม m<br>(kg)', input: true },
+      { key: 't1', label: 'เวลา 10 รอบ t₁<br>(s)', input: true },
+      { key: 't2', label: 'เวลา 10 รอบ t₂<br>(s)', input: true },
+      { key: 'tm', label: 'เวลาเฉลี่ย<br>(s)', calc: (r) => (isFinite(r.t2) ? (r.t1 + r.t2) / 2 : r.t1), digits: 2 },
+      { key: 'T', label: 'คาบ T<br>(s)', calc: (r) => r.tm / 10, digits: 3 },
+      { key: 'T2', label: 'T²<br>(s²)', calc: (r) => r.T * r.T, digits: 4 },
+    ],
+  },
+  graph: {
+    title: 'T² กับ m', x: 'm', y: 'T2', xv: 'm', yv: 'T²', xlabel: 'มวลรวม m (kg)', ylabel: 'T² (s²)', origin: false,
+    explain: 'จุดตัดแกน T² ไม่เป็นศูนย์เพราะสปริงมีมวล ห้ามบังคับเส้นผ่านจุดกำเนิดในการทดลองนี้',
+  },
+  results(fit) {
+    const k = (4 * Math.PI * Math.PI) / fit.m, uk = (k * fit.sm) / fit.m;
+    const me = fit.b / fit.m;
+    const ume = Math.abs(me) * Math.sqrt((fit.sb / fit.b) ** 2 + (fit.sm / fit.m) ** 2);
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 's²/kg' },
+      { label: 'ค่านิจสปริง k = 4π² / ความชัน', value: k, unc: uk, unit: 'N/m' },
+      { label: 'มวลประสิทธิผล m<sub>s</sub>/3 = จุดตัดแกน ÷ ความชัน', value: me * 1000, unc: ume * 1000, unit: 'g' },
+      { label: 'มวลของสปริง m<sub>s</sub> ≈ 3 × มวลประสิทธิผล', value: me * 3000, unc: ume * 3000, unit: 'g' },
+      { label: 'ค่านิจของสปริงชุดนี้', value: k, unit: 'N/m', accepted: K, hidden: true, digitsTrue: 1 },
+      { label: 'มวลของสปริงชุดนี้', value: me * 3000, unit: 'g', accepted: MS * 1000, hidden: true, digitsTrue: 0 },
+    ];
+  },
+  questions: [
+    'คาบการสั่นเปลี่ยนไปอย่างไรเมื่อมวลเพิ่มขึ้น กราฟ T² กับ m มีลักษณะอย่างไร',
+    'เปรียบเทียบค่า k ที่ได้จากการสั่น (วิธีพลวัต) กับค่า k จากการทดลองกฎของฮุก (วิธีสถิต) ถ้าใช้สปริงเดียวกันควรได้ผลอย่างไร',
+    'จุดตัดแกน T² บอกอะไร ถ้าลืมนับมวลของที่แขวน กราฟและค่า k จะเปลี่ยนไปอย่างไร',
+    'ถ้าดึงลงมากหรือน้อยต่างกัน (แอมพลิจูดต่างกัน) คาบเปลี่ยนหรือไม่ ลองทดลองแล้วอธิบาย',
+    'ระบุแหล่งความคลาดเคลื่อนอย่างน้อย 2 แหล่ง และวิธีลด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 5, r: 80 });
+    lens.button(stage);
+
+    // ค่าซ่อนของสปริงชุดนี้
+    K = 15 + 20 * api.rng();
+    MS = 0.020 + 0.020 * api.rng();
+    const X0 = 0.08 + 0.04 * api.rng();   // ตำแหน่งเข็มชี้เมื่อแขวนเฉพาะที่แขวนแบบไม่มีภาระ (m บนไม้บรรทัด)
+    const s = { n: 1, y: 0, v: 0, drag: false, ref: true, gam: 0.04 };
+    const mass = () => MH + s.n * M1;
+    // ตำแหน่งสมดุล: น้ำหนักของมวลและครึ่งหนึ่งของน้ำหนักสปริงทำให้สปริงยืด
+    const yEq = () => X0 + (mass() * G + 0.5 * MS * G) / K;
+    s.y = yEq();
+
+    ctrls.innerHTML =
+      '<h3>ตุ้มมวล (ก้อนละ 50 g)</h3>' +
+      '<p id="sMass" style="font-size:15px;margin:0 0 6px"></p>' +
+      '<div class="row"><button class="btn" id="sAdd">+ เพิ่ม 50 g</button><button class="btn" id="sSub">− เอาออก 50 g</button></div>' +
+      '<h3>การสั่น</h3>' +
+      '<p style="font-size:14px;margin:0 0 6px">ลากที่แขวนลงแล้วปล่อย หรือใช้ปุ่มด้านล่าง</p>' +
+      '<div class="row"><button class="btn" id="sPull">ดึงลง 3 cm แล้วปล่อย</button><button class="btn" id="sStop">หยุดการสั่น</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="sRef" checked> แสดงเส้นอ้างอิงจุดสมดุล</label>' +
+      '<h3>นาฬิกาจับเวลา</h3><div id="sw"></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    function upd() {
+      $('#sMass').textContent = 'ที่แขวน 50 g + ตุ้ม ' + s.n + ' ก้อน × 50 g';
+      $('#sAdd').disabled = s.n >= NMAX;
+      $('#sSub').disabled = s.n <= 0;
+    }
+    $('#sAdd').onclick = () => { if (s.n < NMAX) { s.n++; upd(); } };
+    $('#sSub').onclick = () => { if (s.n > 0) { s.n--; upd(); } };
+    $('#sPull').onclick = () => { s.y = yEq() + 0.03; s.v = 0; };
+    $('#sStop').onclick = () => { s.y = yEq(); s.v = 0; };
+    $('#sRef').onchange = (e) => (s.ref = e.target.checked);
+    upd();
+    Lab.stopwatch($('#sw'), api, { send: ['t1', 't2'] });
+
+    let ppm, px, ry0;
+    function layout() { ppm = (cv.h - 100) / 0.62; px = cv.w * 0.42; ry0 = 70; }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const yP = ry0 + s.y * ppm;
+      if (e.type === 'pointerdown' && Math.abs(x - px) < 40 && y > yP - 20 && y < yP + 40 + s.n * 7) {
+        s.drag = { dy: y - yP }; canvas.setPointerCapture(e.pointerId);
+      }
+      if (s.drag && e.type === 'pointermove') {
+        const ye = yEq();
+        s.y = Math.max(ye - 0.05, Math.min(ye + 0.06, (y - s.drag.dy - ry0) / ppm)); s.v = 0;
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    function scene(ctx, z) {
+      const ink = Lab.css('--ink'), dark = Lab.dark();
+      const yP = ry0 + s.y * ppm, topY = ry0 - 30;
+      // ขาตั้ง
+      const rodX = px - 0.17 * ppm, baseY = cv.h - 12;
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280';
+      ctx.fillRect(rodX - 60, baseY - 10, 150, 12);
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0';
+      ctx.fillRect(rodX - 4, topY - 14, 8, baseY - topY + 6);
+      ctx.fillRect(rodX, topY - 6, px - rodX + 14, 7);
+      ctx.fillStyle = dark ? '#5d6677' : '#4b5563';
+      ctx.fillRect(rodX - 9, topY - 12, 18, 18);
+      ctx.fillRect(px - 7, topY - 8, 14, 10);
+      // ไม้บรรทัด 0–60 cm
+      const rx0 = px + 0.05 * ppm, rx1 = rx0 + 0.05 * ppm, ryEnd = ry0 + 0.6 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(rx0, ry0 - 8, rx1 - rx0, ryEnd - ry0 + 16);
+      ctx.strokeStyle = dark ? '#6b4f2a' : '#b08a52'; ctx.lineWidth = 1 / z;
+      ctx.strokeRect(rx0, ry0 - 8, rx1 - rx0, ryEnd - ry0 + 16);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2.2;
+      for (let mm = 0; mm <= 600; mm += showMm ? 1 : 5) {
+        const y = ry0 + mm * mmPx;
+        const len = mm % 50 === 0 ? 0.5 : mm % 10 === 0 ? 0.36 : mm % 5 === 0 ? 0.24 : 0.15;
+        ctx.lineWidth = (mm % 10 === 0 ? 1.1 : 0.7) / z;
+        ctx.beginPath(); ctx.moveTo(rx0, y); ctx.lineTo(rx0 + len * (rx1 - rx0), y); ctx.stroke();
+        if (mm % 50 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 50 === 0 ? 11 : 9) / Math.min(z, 3) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, rx1 - 2 / z, y);
+        }
+      }
+      // เส้นอ้างอิงจุดสมดุล (เหมือนติดเทปไว้ที่ตำแหน่งสมดุล)
+      if (s.ref) {
+        const ye = ry0 + yEq() * ppm;
+        ctx.strokeStyle = Lab.css('--accent'); ctx.setLineDash([6 / z, 5 / z]); ctx.lineWidth = 1.2 / z;
+        ctx.beginPath(); ctx.moveTo(px - 60, ye); ctx.lineTo(rx0, ye); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // สปริงขด
+      const sTop = topY + 2, sBot = yP - 10, coils = 16, wC = 9;
+      ctx.strokeStyle = dark ? '#c9ced8' : '#4b5563'; ctx.lineWidth = 1.6 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(px, sTop); ctx.lineTo(px, sTop + 6);
+      const seg = (sBot - 6 - (sTop + 6)) / (coils * 2);
+      for (let i = 0; i <= coils * 2; i++) ctx.lineTo(px + (i === 0 || i === coils * 2 ? 0 : i % 2 ? wC : -wC), sTop + 6 + i * seg);
+      ctx.lineTo(px, sBot); ctx.lineTo(px, yP); ctx.stroke();
+      // เข็มชี้
+      ctx.strokeStyle = '#d23a2a'; ctx.fillStyle = '#d23a2a'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(px - 6, yP); ctx.lineTo(rx0 - 1.5 / z, yP); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rx0, yP); ctx.lineTo(rx0 - 7 / Math.sqrt(z), yP - 2 / Math.sqrt(z)); ctx.lineTo(rx0 - 7 / Math.sqrt(z), yP + 2 / Math.sqrt(z)); ctx.closePath(); ctx.fill();
+      // ที่แขวนและตุ้มมวล
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.4 / Math.sqrt(z);
+      const h = 7, plate = yP + 14 + s.n * h;
+      ctx.beginPath(); ctx.moveTo(px, yP); ctx.lineTo(px, plate); ctx.stroke();
+      ctx.fillStyle = dark ? '#8a93a3' : '#6b7280';
+      ctx.fillRect(px - 16, plate, 32, 4);
+      for (let i = 0; i < s.n; i++) {
+        const y = plate - (i + 1) * h;
+        const gr = ctx.createLinearGradient(px - 15, 0, px + 15, 0);
+        gr.addColorStop(0, '#7d6a3c'); gr.addColorStop(0.45, '#d9c27e'); gr.addColorStop(1, '#7d6a3c');
+        ctx.fillStyle = gr; ctx.fillRect(px - 15, y + 0.5, 30, h - 1);
+      }
+      if (s.n) { ctx.fillStyle = dark ? '#c9ced8' : '#4b5563'; ctx.fillRect(px - 1, plate - s.n * h, 2, s.n * h); }
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (dt > 0 && !s.drag) {
+        // สมการการเคลื่อนที่: (m + ms/3) y'' = −k (y − y_eq) − c y'
+        const mT = mass() + MS / 3, ye = yEq();
+        const n = Math.ceil(dt / 0.0005), h = dt / n;
+        for (let i = 0; i < n; i++) { s.v += (-(K / mT) * (s.y - ye) - s.gam * s.v) * h; s.y += s.v * h; }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากที่แขวนลงแล้วปล่อยเพื่อให้สั่น', 10, 8);
+    }, 0.25);
+  },
+});
+</script>
+</body>
+</html>

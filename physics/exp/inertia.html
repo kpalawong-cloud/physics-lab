@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โมเมนต์ความเฉื่อย · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;
+const R_AX = 0.0200;      // รัศมีแกนที่พันเชือก (ค่าที่พิมพ์บนอุปกรณ์, m)
+const MD = 1.200;         // มวลจาน (kg) พิมพ์บนอุปกรณ์
+const RD = 0.100;         // รัศมีจาน (m) พิมพ์บนอุปกรณ์
+const MHG = 0.020;        // มวลที่แขวน (kg)
+const M1 = 0.020;         // ตุ้มมวลก้อนละ (kg)
+const NMAX = 9;
+let I_TRUE = null;        // โมเมนต์ความเฉื่อยจริงของล้อทั้งชุด (ซ่อน)
+let TF_TRUE = null;       // ทอร์กความเสียดทานที่แกน (ซ่อน)
+
+Lab.init({
+  id: 'inertia',
+  short: 'โมเมนต์ความเฉื่อย',
+  title: 'โมเมนต์ความเฉื่อยของล้อหมุน',
+  level: 'ม.6',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างทอร์กที่กระทำต่อล้อกับความเร่งเชิงมุม',
+      'หาโมเมนต์ความเฉื่อย (I) ของล้อหมุนจากความชันของกราฟ τ กับ α',
+      'หาทอร์กของความเสียดทานที่แกนหมุนจากจุดตัดแกน',
+    ],
+    theory:
+      '<p>เชือกพันรอบแกนรัศมี r ของล้อ ปลายเชือกผ่านรอกเบาไปผูกมวล m ที่ห้อยอยู่ เมื่อปล่อยจากหยุดนิ่ง มวลตกลงด้วยความเร่งคงตัว a ' +
+      'วัดระยะตก h และเวลา t ได้</p>' +
+      '<div class="eq">a = 2h / t² &nbsp;&nbsp; α = a / r</div>' +
+      '<p>แรงตึงเชือก T<sub>s</sub> = m(g − a) ทำให้เกิดทอร์กต่อล้อ τ = T<sub>s</sub> r ส่วนที่แกนหมุนมีทอร์กความเสียดทาน τ<sub>f</sub> ต้านไว้ ตามกฎข้อที่สองของนิวตันสำหรับการหมุน</p>' +
+      '<div class="eq">τ − τ<sub>f</sub> = I α &nbsp;→&nbsp; τ = I · α + τ<sub>f</sub></div>' +
+      '<p>กราฟ τ กับ α จึงเป็นเส้นตรง <b>ความชันคือโมเมนต์ความเฉื่อย I</b> และ<b>จุดตัดแกน τ คือทอร์กความเสียดทาน τ<sub>f</sub></b></p>' +
+      '<p>เทียบกับค่าทางทฤษฎีของจานกลมแบน I = ½ M R² (จานนี้ M = 1.200 kg, R = 10.0 cm) ล้อจริงยังมีดุมและแกนที่เพิ่มโมเมนต์ความเฉื่อยอีกเล็กน้อย</p>',
+    equipment: ['ล้อหมุน (จานโลหะ M = 1.200 kg, R = 10.0 cm) บนแกนรัศมี r = 2.00 cm พร้อมตลับลูกปืน', 'เชือกเบาและรอกเบา',
+      'ที่แขวนมวล 20 g และตุ้มมวลก้อนละ 20 g', 'ไม้เมตร (ขีดละเอียด 1 mm)', 'แท่นรับมวลปรับความสูงได้', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'ม้วนเชือกให้ก้นมวลอยู่ที่ขีดเริ่มต้น ปรับแท่นรับมวลให้อยู่ต่ำลงไป ใช้แว่นขยายอ่านตำแหน่งก้นมวลและผิวบนของแท่นบนไม้เมตร ระยะตก h คือผลต่าง',
+      'ใส่ตุ้มมวลรวมให้ได้มวล m (เริ่มจาก 0.060 kg) กดปล่อยมวลพร้อมกดเริ่มจับเวลา หยุดเวลาเมื่อมวลกระทบแท่น',
+      'ทำซ้ำที่มวลเดียวกันแล้วใช้ค่าเฉลี่ย หรือบันทึกเป็นอีกแถว',
+      'เพิ่มมวลทีละ 20 g ทำให้ได้อย่างน้อย 6 ค่า',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ τ กับ α',
+    ],
+    tip: 'ถ้ามวลน้อยเกินไป ทอร์กจากเชือกอาจไม่ชนะความเสียดทาน ล้อจะไม่หมุน ให้เพิ่มมวล การจับเวลานาน ๆ (มากกว่า 3 s) ช่วยลดความคลาดเคลื่อนจากการกดนาฬิกา',
+  },
+  table: {
+    rows: 7,
+    hint: 'm คือมวลรวมที่แขวน (รวมที่แขวน 20 g) · ใช้ r = 2.00 cm ในการคำนวณ · ปุ่ม "บันทึกเวลาลงตาราง" จะเติมเวลาในแถวว่างแรก',
+    columns: [
+      { key: 'm', label: 'มวลรวม m<br>(kg)', input: true },
+      { key: 'h', label: 'ระยะตก h<br>(m)', input: true },
+      { key: 't', label: 'เวลา t<br>(s)', input: true },
+      { key: 'a', label: 'a = 2h/t²<br>(m/s²)', calc: (r) => (2 * r.h) / (r.t * r.t), digits: 4 },
+      { key: 'al', label: 'α = a/r<br>(rad/s²)', calc: (r) => r.a / R_AX, digits: 3 },
+      { key: 'tau', label: 'τ = m(g−a)r<br>(×10⁻³ N·m)', calc: (r) => r.m * (G - r.a) * R_AX * 1000, digits: 2 },
+    ],
+  },
+  graph: {
+    title: 'τ กับ α', x: 'al', y: 'tau', xv: 'α', yv: 'τ', xlabel: 'ความเร่งเชิงมุม α (rad/s²)', ylabel: 'ทอร์ก τ (×10⁻³ N·m)', origin: false,
+    explain: 'ความชัน (หน่วย ×10⁻³ kg·m²) คือโมเมนต์ความเฉื่อย จุดตัดแกน τ คือทอร์กความเสียดทาน ไม่ควรบังคับผ่านจุดกำเนิด',
+  },
+  results(fit) {
+    const I = fit.m / 1000, uI = fit.sm / 1000;
+    const Idisc = 0.5 * MD * RD * RD;
+    return [
+      { label: 'โมเมนต์ความเฉื่อย I = ความชัน', value: I * 1e3, unc: uI * 1e3, unit: '×10⁻³ kg·m²' },
+      { label: 'ทอร์กความเสียดทาน τ<sub>f</sub> = จุดตัดแกน', value: fit.b, unc: fit.sb, unit: '×10⁻³ N·m' },
+      { label: 'ค่าทางทฤษฎีของจาน ½MR²', value: Idisc * 1e3, digits: 2, unit: '×10⁻³ kg·m²' },
+      { label: 'ส่วนต่าง I − ½MR² (ดุมและแกน)', value: (I - Idisc) * 1e3, unc: uI * 1e3, unit: '×10⁻³ kg·m²' },
+      { label: 'โมเมนต์ความเฉื่อยของล้อชุดนี้', value: I * 1e3, unit: '×10⁻³ kg·m²', accepted: I_TRUE * 1e3, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'กราฟ τ กับ α เป็นเส้นตรงหรือไม่ ความชันและจุดตัดแกนมีความหมายทางฟิสิกส์อย่างไร',
+    'เปรียบเทียบ I ที่วัดได้กับ ½MR² ของจาน ต่างกันเท่าใด เพราะเหตุใด',
+    'ทำไมจึงใช้ทอร์ก τ = m(g − a)r แทน τ = mgr ถ้าใช้ mgr จะเกิดความคลาดเคลื่อนมากหรือน้อย (ดูค่า a เทียบกับ g)',
+    'ถ้าค่ารัศมีแกน r จริงต่างจาก 2.00 cm ไป 1% ค่า I ที่คำนวณได้จะคลาดเคลื่อนประมาณกี่เปอร์เซ็นต์',
+    'ระบุแหล่งความคลาดเคลื่อนอย่างน้อย 2 แหล่ง และวิธีลด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 8, r: 80 });
+    lens.button(stage);
+
+    // ค่าซ่อน: รัศมีแกนจริง, โมเมนต์ความเฉื่อยของดุม, ความเสียดทาน
+    const rT = R_AX * (1 + 0.02 * (api.rng() - 0.5));
+    I_TRUE = 0.5 * MD * RD * RD + 0.0003 + 0.0006 * api.rng();
+    TF_TRUE = 0.0015 + 0.0015 * api.rng();
+    const S0 = 0.100;                                   // ก้นมวลเริ่มที่ขีด 10.0 cm
+    const s = {
+      n: 2, x: 0, v: 0, th: 0, om: 0, state: 'ready', // ready | fall | landed
+      stop: 0.80 + 0.1 * api.rng(),                     // ผิวบนของแท่นรับ (m บนไม้เมตร)
+    };
+    const mass = () => MHG + s.n * M1;
+
+    ctrls.innerHTML =
+      '<h3>มวลที่แขวน (ก้อนละ 20 g)</h3>' +
+      '<p id="iMass" style="font-size:15px;margin:0 0 6px"></p>' +
+      '<div class="row"><button class="btn" id="iAdd">+ เพิ่ม 20 g</button><button class="btn" id="iSub">− เอาออก 20 g</button></div>' +
+      '<h3>แท่นรับมวล</h3>' +
+      '<input type="range" id="iStop" min="0.45" max="0.95" step="0.001">' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">แถบเลื่อนไม่บอกค่า อ่านตำแหน่งแท่นจากไม้เมตร</p>' +
+      '<h3>การทดลอง</h3>' +
+      '<div class="row"><button class="btn primary" id="iGo">ปล่อยมวล</button><button class="btn" id="iWind">ม้วนเชือกกลับ</button></div>' +
+      '<p class="muted" style="font-size:13px" id="iInfo"></p>' +
+      '<h3>นาฬิกาจับเวลา</h3><div id="sw"></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    function upd() {
+      $('#iMass').textContent = 'ที่แขวน 20 g + ตุ้ม ' + s.n + ' ก้อน × 20 g';
+      const busy = s.state === 'fall';
+      $('#iAdd').disabled = busy || s.n >= NMAX; $('#iSub').disabled = busy || s.n <= 0;
+      $('#iStop').disabled = s.state !== 'ready';
+      $('#iGo').disabled = s.state !== 'ready';
+      $('#iInfo').textContent = s.state === 'ready' ? 'พร้อมปล่อย' : s.state === 'fall' ? 'มวลกำลังตก…' : 'มวลถึงแท่นแล้ว กด "ม้วนเชือกกลับ" เพื่อทำใหม่';
+    }
+    $('#iAdd').onclick = () => { if (s.n < NMAX) { s.n++; upd(); } };
+    $('#iSub').onclick = () => { if (s.n > 0) { s.n--; upd(); } };
+    const stopEl = $('#iStop'); stopEl.value = s.stop;
+    stopEl.oninput = () => { if (s.state === 'ready') s.stop = +stopEl.value; };
+    $('#iGo').onclick = () => {
+      if (s.state !== 'ready') return;
+      s.state = 'fall'; s.x = 0; s.v = 0; upd();
+      if (mass() * G * rT <= TF_TRUE) { s.state = 'ready'; $('#iInfo').textContent = 'ล้อไม่หมุน ทอร์กจากมวลไม่ชนะความเสียดทาน ให้เพิ่มมวล'; }
+    };
+    $('#iWind').onclick = () => { s.state = 'ready'; s.x = 0; s.v = 0; s.om = 0; upd(); };
+    upd();
+    Lab.stopwatch($('#sw'), api, { send: 't' });
+
+    // เรขาคณิต
+    let cx, cy, Rp, rp, pxP, pyP, pr, ppm, sy0, lx;
+    function layout() {
+      Rp = Math.min(95, cv.w * 0.14); rp = Rp * 0.2;
+      cx = cv.w * 0.24; cy = 40 + Rp;
+      pr = 14; pxP = cv.w * 0.62; pyP = cy - rp + pr;      // เชือกออกจากด้านบนของแกน ไปพาดบนรอก
+      lx = pxP + pr;                                        // แนวเชือกห้อย
+      sy0 = pyP + 18;                                       // ขีด 0 ของไม้เมตร
+      ppm = (cv.h - sy0 - 16) / 1.0;
+    }
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    function scene(ctx, z) {
+      const ink = Lab.css('--ink'), muted = Lab.css('--muted'), dark = Lab.dark();
+      // แท่นยึดล้อ
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280';
+      ctx.fillRect(cx - 10, cy, 20, cv.h - cy - 14);
+      ctx.fillRect(cx - 70, cv.h - 18, 140, 10);
+      // จานหมุน
+      const gr = ctx.createRadialGradient(cx - Rp * 0.3, cy - Rp * 0.3, Rp * 0.1, cx, cy, Rp);
+      gr.addColorStop(0, dark ? '#a9b2c0' : '#e3e7ee'); gr.addColorStop(1, dark ? '#59606c' : '#9aa3b0');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, Rp, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z; ctx.stroke();
+      // เครื่องหมายบนจาน ให้เห็นการหมุน
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(s.th);
+      ctx.strokeStyle = dark ? '#2b2f36' : '#4b5563'; ctx.lineWidth = 2 / z;
+      for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(rp + 6, 0); ctx.lineTo(Rp - 8, 0); ctx.stroke(); }
+      ctx.fillStyle = '#d23a2a'; ctx.beginPath(); ctx.arc(Rp - 14, 0, 4, 0, 7); ctx.fill();
+      ctx.restore();
+      // แกนและเชือกที่พันอยู่
+      ctx.fillStyle = dark ? '#c9a24a' : '#b8892f'; ctx.beginPath(); ctx.arc(cx, cy, rp, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z; ctx.stroke();
+      ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 7); ctx.fill();
+      // ป้ายข้อมูลจาน วางซ้ายของเสาไม่ให้ทับ
+      ctx.fillStyle = muted; ctx.font = '11.5px Sarabun, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('จาน M = 1.200 kg', cx - 16, cy + Rp + 18);
+      ctx.fillText('R = 10.0 cm', cx - 16, cy + Rp + 33);
+      ctx.fillText('แกน r = 2.00 cm', cx - 16, cy + Rp + 48);
+      // รอกและเชือก
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0'; ctx.fillRect(pxP - 46, pyP - 3, 46, 6); ctx.fillRect(pxP - 49, pyP - 3, 6, cv.h - pyP - 11); // แขนยึดรอกจากด้านซ้าย ไม่ขวางมวล
+      ctx.fillStyle = dark ? '#5d6677' : '#d6dae2'; ctx.beginPath(); ctx.arc(pxP, pyP, pr, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.stroke();
+      ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(cx, cy - rp); ctx.lineTo(pxP, pyP - pr); ctx.stroke();
+      // ไม้เมตร ขีด 0 อยู่บน ค่าเพิ่มลงล่าง
+      const rx0 = lx + 26, rx1 = rx0 + 34, yEnd = sy0 + 1.0 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f'; ctx.fillRect(rx0, sy0 - 6, rx1 - rx0, yEnd - sy0 + 10);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2.2;
+      for (let mm = 0; mm <= 1000; mm += showMm ? 1 : 10) {
+        const y = sy0 + mm * mmPx;
+        const len = mm % 100 === 0 ? 0.55 : mm % 50 === 0 ? 0.42 : mm % 10 === 0 ? 0.3 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(rx0, y); ctx.lineTo(rx0 + len * (rx1 - rx0), y); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 10 : 8) / Math.min(z, 3.5) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(mm / 10, rx1 - 1.5 / z, y);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // แท่นรับมวล
+      const ys = sy0 + s.stop * ppm;
+      ctx.fillStyle = dark ? '#3a4150' : '#c9ced8'; ctx.fillRect(lx - 26, ys, 52, 7);
+      ctx.fillRect(lx - 4, ys + 7, 8, cv.h - ys - 14);
+      // มวลห้อย: ก้นมวลอยู่ที่ S0 + x
+      const hBlk = 12 + s.n * 4, yb = sy0 + (S0 + s.x) * ppm;
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(lx, pyP); ctx.lineTo(lx, yb - hBlk); ctx.stroke();
+      ctx.fillStyle = dark ? '#c9a24a' : '#b8892f'; ctx.fillRect(lx - 9, yb - hBlk, 18, hBlk);
+      ctx.fillStyle = dark ? '#8a93a3' : '#4b5563'; ctx.fillRect(lx - 12, yb - 2, 24, 2);
+      // ขีดเริ่มต้น
+      ctx.strokeStyle = Lab.css('--accent'); ctx.setLineDash([4 / z, 3 / z]); ctx.lineWidth = 1 / z;
+      const y0m = sy0 + S0 * ppm;
+      ctx.beginPath(); ctx.moveTo(lx - 30, y0m); ctx.lineTo(rx0, y0m); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (dt > 0) {
+        const m = mass(), h = s.stop - S0;
+        if (s.state === 'fall') {
+          // a = (m g r − τf) r / (I + m r²)
+          const a = ((m * G * rT - TF_TRUE) * rT) / (I_TRUE + m * rT * rT);
+          s.x += s.v * dt + 0.5 * a * dt * dt; s.v += a * dt; // ความเร่งคงตัว คำนวณแบบแม่นตรง
+          s.om = s.v / rT;
+          if (s.x >= h) { s.x = h; s.state = 'landed'; upd(); }
+        } else if (s.om > 0) {
+          // หลังมวลถึงแท่น เชือกหย่อน ล้อหมุนต่อและช้าลงด้วยความเสียดทาน
+          s.om = Math.max(0, s.om - (TF_TRUE / I_TRUE) * dt);
+        }
+        s.th += s.om * dt;
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'อ่านตำแหน่งก้นมวลและแท่นรับจากไม้เมตร', 10, 8);
+    }, 0.25);
+  },
+});
+</script>
+</body>
+</html>

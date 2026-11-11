@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สัมประสิทธิ์ความเสียดทาน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;            // m/s²
+const KS = 50;            // ค่านิจสปริงของเครื่องชั่งสปริง (N/m): 5 N เต็มสเกลที่ยืด 10 cm
+const FMAX = 5;           // สเกลเต็มของเครื่องชั่งสปริง (N)
+const NSLOT = 3;          // ตุ้มมวลบนก้อนไม้ได้สูงสุด 3 ก้อน
+// ค่าซ่อนของอุปกรณ์ชุดนี้ กำหนดใน apparatus
+const MU = { wood: { s: 0.45, k: 0.32 }, sand: { s: 0.72, k: 0.55 } };
+let MBLOCK = 0.2;         // มวลก้อนไม้จริง (kg)
+let MSLOT = [0.1, 0.1, 0.1]; // มวลจริงของตุ้มแต่ละก้อน (kg) ป้ายบอก 100 g
+
+Lab.init({
+  id: 'friction',
+  short: 'สัมประสิทธิ์ความเสียดทาน',
+  title: 'สัมประสิทธิ์ความเสียดทานสถิตและจลน์',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'วัดแรงเสียดทานสถิตสูงสุดและแรงเสียดทานจลน์ระหว่างก้อนไม้กับพื้นผิว',
+      'หาความสัมพันธ์ระหว่างแรงเสียดทานกับแรงปฏิกิริยาตั้งฉาก (N)',
+      'หาสัมประสิทธิ์ความเสียดทานสถิต μs และจลน์ μk ของพื้นผิวสองชนิด',
+    ],
+    theory:
+      '<p>เมื่อออกแรงดึงก้อนไม้ที่วางบนพื้นราบ แรงเสียดทานสถิตจะมีขนาดเท่ากับแรงดึงไปจนถึงค่าสูงสุด เมื่อแรงดึงเกินค่านี้ก้อนไม้จะเริ่มเคลื่อนที่</p>' +
+      '<div class="eq">f<sub>s,max</sub> = μ<sub>s</sub> N</div>' +
+      '<p>ขณะก้อนไม้เลื่อนด้วยความเร็วคงตัว แรงดึงเท่ากับแรงเสียดทานจลน์ ซึ่งมีค่าน้อยกว่าแรงเสียดทานสถิตสูงสุด</p>' +
+      '<div class="eq">f<sub>k</sub> = μ<sub>k</sub> N</div>' +
+      '<p>บนพื้นราบ N = mg โดย m คือมวลรวมของก้อนไม้และตุ้มมวลที่วางบนก้อนไม้ กราฟ f<sub>k</sub> กับ N เป็นเส้นตรงผ่านจุดกำเนิด <b>ความชันคือ μ<sub>k</sub></b></p>',
+    equipment: ['ก้อนไม้มีขอเกี่ยว', 'ตุ้มมวลแบบแผ่น ก้อนละ 100 g จำนวน 3 ก้อน', 'แผ่นไม้ราบ และแผ่นกระดาษทรายปูบนแผ่นไม้',
+      'เครื่องชั่งสปริง 0–5 N (ขีดละเอียด 0.1 N)', 'เครื่องชั่งดิจิทัล (ละเอียด 0.1 g)', 'เชือก'],
+    procedure: [
+      'กด "ชั่งก้อนไม้" อ่านมวลของก้อนไม้จากเครื่องชั่งดิจิทัล มวลรวม m = มวลก้อนไม้ + จำนวนตุ้ม × 0.100 kg',
+      'เลือกพื้นผิว วางตุ้มมวลบนก้อนไม้ตามต้องการ แล้วกดปุ่ม "ดึงช้า ๆ" ค้างไว้ ดูเข็มของเครื่องชั่งสปริงในภาพขยายด้านบน',
+      'อ่านค่าสูงสุดของเข็มก่อนก้อนไม้เริ่มเคลื่อนที่ เป็นแรงเสียดทานสถิตสูงสุด F<sub>s</sub> ถ้าอ่านไม่ทันใช้ปุ่ม "รีเพลย์ช้า"',
+      'ดึงต่อให้ก้อนไม้เลื่อนด้วยความเร็วคงตัว อ่านค่าเฉลี่ยของเข็มที่สั่นเล็กน้อย เป็นแรงเสียดทานจลน์ F<sub>k</sub>',
+      'กด "วางก้อนไม้ที่เดิม" แล้วเปลี่ยนจำนวนตุ้มมวล ทำซ้ำให้ครบ 0–3 ก้อน และทำซ้ำกับพื้นผิวอีกชนิด',
+    ],
+    tip: 'ดึงให้แรงเพิ่มขึ้นช้า ๆ อย่างสม่ำเสมอ ถ้าดึงกระตุก เข็มจะพุ่งเกินค่าจริง ขณะเลื่อนให้อ่านค่ากลางของช่วงที่เข็มสั่น',
+  },
+  table: {
+    rows: 6,
+    sets: [{ key: 'wood', label: 'ไม้บนไม้' }, { key: 'sand', label: 'ไม้บนกระดาษทราย' }],
+    hint: 'พื้นผิวแต่ละชนิดมีตารางของตัวเอง ตารางสลับตามพื้นผิวที่เลือก · m เป็นกิโลกรัม เช่น 0.3125',
+    columns: [
+      { key: 'm', label: 'มวลรวม m<br>(kg)', input: true },
+      { key: 'Fs', label: 'แรงดึงสูงสุดก่อนเคลื่อนที่ F<sub>s</sub><br>(N)', input: true },
+      { key: 'Fk', label: 'แรงดึงขณะเลื่อน F<sub>k</sub><br>(N)', input: true },
+      { key: 'N', label: 'แรงปฏิกิริยาตั้งฉาก N = mg<br>(N)', calc: (r) => r.m * G, digits: 3 },
+      { key: 'ms', label: 'F<sub>s</sub> / N', calc: (r) => r.Fs / r.N, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'F<sub>k</sub> กับ N', x: 'N', y: 'Fk', xv: 'N', yv: 'F<sub>k</sub>', xlabel: 'แรงปฏิกิริยาตั้งฉาก N (N)', ylabel: 'แรงเสียดทานจลน์ Fk (N)', origin: true,
+    explain: 'ความชันของกราฟคือ μk ส่วน μs หาจากค่าเฉลี่ยของ Fs/N ในตาราง กราฟของพื้นผิวทั้งสองแสดงบนแกนเดียวกันเพื่อเปรียบเทียบ',
+  },
+  results(fit, rows, truth, set) {
+    const q = rows.map((r) => r.ms).filter((v) => isFinite(v));
+    const mean = q.length ? q.reduce((a, b) => a + b, 0) / q.length : NaN;
+    const sd = q.length > 1 ? Math.sqrt(q.reduce((a, b) => a + (b - mean) ** 2, 0) / (q.length - 1)) : NaN;
+    const mu = MU[set] || MU.wood;
+    return [
+      { label: 'สัมประสิทธิ์ความเสียดทานจลน์ μk = ความชัน', value: fit.m, unc: fit.sm, unit: '' },
+      { label: 'สัมประสิทธิ์ความเสียดทานสถิต μs = ค่าเฉลี่ยของ Fs/N', value: mean, unc: q.length > 1 ? sd / Math.sqrt(q.length) : null, digits: 3, unit: '' },
+      { label: 'อัตราส่วน μs / μk', value: mean / fit.m, digits: 2, unit: '' },
+      { label: 'μk ของพื้นผิวชุดนี้', value: fit.m, accepted: mu.k, hidden: true, digitsTrue: 3 },
+      { label: 'μs ของพื้นผิวชุดนี้', value: mean, accepted: mu.s, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'แรงดึงสูงสุดก่อนก้อนไม้เคลื่อนที่ (Fs) กับแรงดึงขณะเลื่อนด้วยความเร็วคงตัว (Fk) ค่าใดมากกว่า อธิบายเหตุผล',
+    'กราฟ Fk กับ N มีลักษณะอย่างไร ความชันมีความหมายอย่างไร และกราฟของพื้นผิวสองชนิดต่างกันอย่างไร',
+    'ถ้าวางก้อนไม้บนพื้นเอียงแล้วค่อย ๆ เพิ่มมุมเอียงจนก้อนไม้เริ่มไถลที่มุม θ จงแสดงว่า μs = tan θ และบอกว่าวิธีนี้ต่างจากการดึงด้วยเครื่องชั่งสปริงอย่างไร',
+    'เหตุใดเข็มของเครื่องชั่งสปริงจึงสั่นขณะก้อนไม้เลื่อน และควรอ่านค่าอย่างไร',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง และเสนอวิธีลดความคลาดเคลื่อน',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+
+    // ค่าซ่อนของอุปกรณ์ชุดนี้
+    const r = api.rng;
+    MU.wood.s = 0.40 + 0.10 * r(); MU.wood.k = MU.wood.s * (0.68 + 0.10 * r());
+    MU.sand.s = 0.66 + 0.12 * r(); MU.sand.k = MU.sand.s * (0.74 + 0.08 * r());
+    MBLOCK = 0.150 + 0.100 * r();
+    MSLOT = [0, 1, 2].map(() => 0.1 * (1 + 0.006 * (2 * r() - 1)));
+
+    const X0 = 0.12;     // ตำแหน่งเริ่มต้นของขอบหน้าก้อนไม้บนแผ่นไม้ (m)
+    const LINK = 0.30;   // ความยาวเชือก + ตัวเครื่องชั่งสปริงตอนไม่ยืด (m)
+    const s = {
+      surf: api.currentSet() === 'sand' ? 'sand' : 'wood',
+      n: 0, xb: X0, vb: 0, xh: X0 + LINK, slip: false, pull: 0,
+      jit: 0, t: 0, hist: [], tBreak: null, replay: null, weighed: false, end: false,
+    };
+    const mass = () => MBLOCK + MSLOT.slice(0, s.n).reduce((a, b) => a + b, 0);
+    const force = () => Math.max(0, KS * (s.xh - s.xb - LINK));
+
+    ctrls.innerHTML =
+      '<h3>พื้นผิว</h3>' +
+      '<div class="seg" id="surf"><button data-v="wood">ไม้บนไม้</button><button data-v="sand">ไม้บนกระดาษทราย</button></div>' +
+      '<h3>มวล</h3>' +
+      '<div class="row"><button class="btn" id="weigh">ชั่งก้อนไม้</button></div>' +
+      '<div class="watch" style="font-size:28px"><span class="readout" id="bal">----.-</span> g<small>เครื่องชั่งดิจิทัล</small></div>' +
+      '<p id="nInfo" style="margin:8px 0 4px"></p>' +
+      '<div class="row"><button class="btn" id="nAdd">+ ตุ้ม 100 g</button><button class="btn" id="nSub">− เอาตุ้มออก</button></div>' +
+      '<h3>การดึง</h3>' +
+      '<div class="row"><button class="btn primary" id="pSlow">ดึงช้า ๆ (กดค้าง)</button><button class="btn" id="pFast">ดึงเร็ว (กดค้าง)</button></div>' +
+      '<div class="row"><button class="btn" id="replay" disabled>รีเพลย์ช้า ×0.2</button><button class="btn" id="reset">วางก้อนไม้ที่เดิม</button></div>' +
+      '<p class="muted" style="font-size:13px">เปิดแว่นขยายแล้วแตะที่เข็มในภาพขยายของเครื่องชั่งสปริงเพื่ออ่านขีด 0.1 N</p>';
+    const $ = (q) => ctrls.querySelector(q);
+
+    function syncSurf() { ctrls.querySelectorAll('#surf button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.surf)); }
+    $('#surf').onclick = (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      s.surf = b.dataset.v; syncSurf(); reset(); api.useSet(s.surf);
+    };
+    api.onSetChange = (k) => { s.surf = k; syncSurf(); reset(); };
+    syncSurf();
+
+    $('#weigh').onclick = () => { s.weighed = true; };
+    function updN() {
+      $('#nInfo').textContent = 'ตุ้มบนก้อนไม้: ' + s.n + ' ก้อน (ก้อนละ 100 g)';
+      const atStart = !s.slip && s.xb === X0 && force() === 0;
+      $('#nAdd').disabled = s.n >= NSLOT || !atStart;
+      $('#nSub').disabled = s.n <= 0 || !atStart;
+    }
+    $('#nAdd').onclick = () => { if (s.n < NSLOT) s.n++; updN(); };
+    $('#nSub').onclick = () => { if (s.n > 0) s.n--; updN(); };
+
+    // ปุ่มดึงแบบกดค้าง
+    function holdBtn(el, speed) {
+      const on = (e) => { e.preventDefault(); if (s.replay) return; s.pull = speed; };
+      const off = () => { if (s.pull === speed) s.pull = 0; };
+      el.addEventListener('pointerdown', on);
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => el.addEventListener(t, off));
+      el.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    holdBtn($('#pSlow'), 0.006);
+    holdBtn($('#pFast'), 0.02);
+    function reset() {
+      s.xb = X0; s.vb = 0; s.xh = X0 + LINK; s.slip = false; s.pull = 0; s.hist = []; s.tBreak = null; s.replay = null; s.end = false;
+      $('#replay').disabled = true; updN();
+    }
+    $('#reset').onclick = reset;
+    $('#replay').onclick = () => {
+      if (s.tBreak == null) return;
+      const seg = s.hist.filter((h) => h.t >= s.tBreak - 2.5 && h.t <= s.tBreak + 2);
+      if (seg.length) s.replay = { seg, t: seg[0].t };
+    };
+    updN();
+
+    // ลากมือไปทางขวาได้ด้วย (เมื่อไม่ได้เปิดแว่นขยาย)
+    let L = {};
+    let dragHand = null;
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && !s.replay) {
+        const hx = L.X(s.xh);
+        if (Math.abs(x - hx - 14) < 30 && Math.abs(y - L.yb) < 40) { dragHand = { x, xh: s.xh }; canvas.setPointerCapture(e.pointerId); }
+      } else if (e.type === 'pointermove' && dragHand) {
+        // จำกัดความเร็วมือไม่เกิน 3 cm/s แม้ลากเร็ว
+        dragHand.target = Math.max(dragHand.xh, dragHand.xh + (x - dragHand.x) / L.ppm);
+      } else if (e.type === 'pointerup' || e.type === 'pointercancel') dragHand = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    // ฟิสิกส์: ก้อนไม้ติดอยู่จนแรงเกิน μs N แล้วเลื่อน มีแรงเสียดทานจลน์ที่แกว่งเล็กน้อย (stick-slip)
+    function step(dt) {
+      const m = mass(), N = m * G, mu = MU[s.surf];
+      let vh = s.pull;
+      if (dragHand && dragHand.target != null) vh = Math.max(0, Math.min(0.03, (dragHand.target - s.xh) / Math.max(dt, 1e-3)));
+      if (s.end) vh = 0;
+      s.xh += vh * dt;
+      s.jit += (-s.jit / 0.15 + Lab.gauss(Math.random) * Math.sqrt(2 / 0.15) * 0.035) * dt; // OU noise ราว ±3.5%
+      const F = force();
+      const c = 1.2 * Math.sqrt(KS * m); // การหน่วงจากเชือกและมือ
+      if (!s.slip) {
+        if (F > mu.s * N) { s.slip = true; s.tBreak = s.t; $('#replay').disabled = false; }
+      }
+      if (s.slip) {
+        const fk = mu.k * N * (1 + s.jit);
+        const a = (F - fk - c * (s.vb - vh)) / m;
+        s.vb += a * dt;
+        if (s.vb <= 0) {
+          s.vb = 0;
+          if (F < mu.s * N * 0.97) s.slip = false; // ติดใหม่ เมื่อหยุดดึง
+        }
+        s.xb += s.vb * dt;
+      }
+      // สุดแผ่นไม้
+      if (s.xb > 0.82) { s.xb = 0.82; s.vb = 0; s.slip = false; s.end = true; }
+      // สปริงไม่ยืดเกินจุดหยุด (เข็มชนปลายสเกล)
+      if (F > FMAX * 1.06) s.xh = s.xb + LINK + (FMAX * 1.06) / KS;
+      s.t += dt;
+      s.hist.push({ t: s.t, F: force(), xb: s.xb, xh: s.xh });
+      if (s.hist.length > 6000) s.hist.splice(0, 1000);
+    }
+
+    // ---------- วาด ----------
+    function layout() {
+      L.ppm = (cv.w - 60) / 1.05; L.x0 = 30; L.yb = cv.h * 0.72;
+      L.X = (x) => L.x0 + x * L.ppm;
+      L.ix0 = 50; L.ix1 = cv.w - 50; L.iy = 120;
+    }
+    function scene(ctx, z, st) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const F = KS * Math.max(0, st.xh - st.xb - LINK);
+      // ----- ภาพขยายเครื่องชั่งสปริง (มองจากด้านหน้า) -----
+      const a = L.ix0, b = L.ix1, y = L.iy;
+      const s0 = a + 70, s1 = b - 50;               // ช่วงสเกล 0–5 N
+      const FX = (f) => s0 + (f / FMAX) * (s1 - s0);
+      ctx.fillStyle = dark ? '#3a4150' : '#dfe3ea';
+      ctx.fillRect(a, y - 34, b - a, 68);
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.strokeRect(a, y - 34, b - a, 68);
+      ctx.fillStyle = dark ? '#f1ead6' : '#fffdf5';
+      ctx.fillRect(s0 - 12, y - 24, s1 - s0 + 24, 40);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let i = 0; i <= 50; i++) {
+        const x = FX(i / 10), l = i % 10 === 0 ? 18 : i % 5 === 0 ? 13 : 8;
+        ctx.lineWidth = (i % 10 === 0 ? 1.3 : 0.8) / z;
+        ctx.beginPath(); ctx.moveTo(x, y - 24); ctx.lineTo(x, y - 24 + l); ctx.stroke();
+        if (i % 10 === 0) {
+          ctx.font = 12 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(i / 10, x, y - 24 + 19);
+        }
+      }
+      ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = muted;
+      ctx.fillText('N', s1 + 16, y - 4);
+      // เข็มชี้ (สามเหลี่ยมแดงชี้ขึ้นที่ขอบล่างขีด)
+      const fx = FX(Math.min(F, FMAX * 1.04));
+      ctx.fillStyle = '#d23a2a'; ctx.strokeStyle = '#d23a2a'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(fx, y - 24); ctx.lineTo(fx, y + 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx, y + 10); ctx.lineTo(fx - 5, y + 22); ctx.lineTo(fx + 5, y + 22); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ภาพขยาย: สเกลของเครื่องชั่งสปริง (ขีดละ 0.1 N)', a, y - 38);
+
+      // ----- ภาพด้านข้าง: แผ่นไม้ ก้อนไม้ เชือก เครื่องชั่งสปริง มือ -----
+      const yb = L.yb, ppm = L.ppm, X = L.X;
+      // แผ่นไม้/กระดาษทราย
+      ctx.fillStyle = dark ? '#7a5a32' : '#c99a5b';
+      ctx.fillRect(X(0), yb, 1.0 * ppm, 14);
+      if (s.surf === 'sand') {
+        ctx.fillStyle = dark ? '#8f7a52' : '#d9c48e'; ctx.fillRect(X(0), yb - 3, 1.0 * ppm, 4);
+        ctx.fillStyle = dark ? '#5d4e30' : '#a8925c';
+        for (let i = 0; i < 160; i++) { const xx = X((i * 0.618 % 1) * 1.0); ctx.fillRect(xx, yb - 3 + (i % 3), 1.2, 1.2); }
+      }
+      ctx.fillStyle = dark ? '#4a5160' : '#9aa3b0'; ctx.fillRect(X(0) - 6, yb + 14, 1.0 * ppm + 12, 6);
+      // ก้อนไม้ ยาว 10 cm สูง 5 cm ขอบหน้าที่ xb
+      const bw = 0.10 * ppm, bh = 0.05 * ppm, bx = X(st.xb) - bw, top = yb - (s.surf === 'sand' ? 3 : 0) - bh;
+      ctx.fillStyle = dark ? '#b88c52' : '#deb47a'; ctx.fillRect(bx, top, bw, bh);
+      ctx.strokeStyle = dark ? '#6b4f2a' : '#9c7440'; ctx.lineWidth = 1 / z; ctx.strokeRect(bx, top, bw, bh);
+      // ตุ้มมวลบนก้อนไม้
+      for (let i = 0; i < s.n; i++) {
+        const gr = ctx.createLinearGradient(bx + bw * 0.2, 0, bx + bw * 0.8, 0);
+        gr.addColorStop(0, '#7d6a3c'); gr.addColorStop(0.45, '#d9c27e'); gr.addColorStop(1, '#7d6a3c');
+        ctx.fillStyle = gr; ctx.fillRect(bx + bw * 0.18, top - (i + 1) * 0.012 * ppm, bw * 0.64, 0.012 * ppm - 1);
+      }
+      // เชือกจากขอเกี่ยวถึงเครื่องชั่งสปริง
+      const hy = top + bh * 0.5, sbx = X(st.xb) + 0.08 * ppm;
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(X(st.xb), hy); ctx.lineTo(sbx, hy); ctx.stroke();
+      // ตัวเครื่องชั่งสปริง: ปลอกยาว 0.22 m ก้านดึงยื่นออกตามระยะยืด
+      const body = 0.22 * ppm, ext = (F / KS) * ppm;
+      ctx.fillStyle = dark ? '#5d6677' : '#e8ebf0';
+      ctx.fillRect(sbx, hy - 7, body, 14);
+      ctx.strokeStyle = muted; ctx.strokeRect(sbx, hy - 7, body, 14);
+      ctx.fillStyle = '#d23a2a'; ctx.fillRect(sbx + 0.03 * ppm + ext * 0.9, hy - 6, 2, 12);
+      ctx.strokeStyle = ink; ctx.beginPath(); ctx.moveTo(sbx + body, hy); ctx.lineTo(X(st.xh), hy); ctx.stroke();
+      // มือ
+      const hx = X(st.xh);
+      ctx.fillStyle = dark ? '#d9a77a' : '#e8b88c';
+      ctx.beginPath(); ctx.ellipse(hx + 12, hy, 14, 11, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(hx + 18, hy - 7, 40, 14);
+      // ป้าย
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(s.surf === 'sand' ? 'แผ่นไม้ปูกระดาษทราย' : 'แผ่นไม้', X(0), yb + 24);
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      let st = s;
+      if (s.replay) {
+        // เล่นซ้ำช้า 0.2 เท่าจากประวัติ
+        s.replay.t += dt * 0.2;
+        const seg = s.replay.seg;
+        let h = seg.find((q) => q.t >= s.replay.t) || seg[seg.length - 1];
+        st = h;
+        if (s.replay.t > seg[seg.length - 1].t) s.replay = null;
+      } else if (dt > 0) {
+        const n = Math.ceil(dt / 0.002);
+        for (let i = 0; i < n; i++) step(dt / n);
+      }
+      $('#bal').textContent = s.weighed ? (MBLOCK * 1000 + Lab.noise(0.03)).toFixed(1) : '----.-';
+      updN();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1, st);
+      lens.draw((c, z) => scene(c, z, st));
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      const msg = s.replay ? 'รีเพลย์ช้า ×0.2' : lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย'
+        : s.end ? 'ก้อนไม้ถึงปลายแผ่นไม้แล้ว กด "วางก้อนไม้ที่เดิม"' : 'กดปุ่มดึงค้างไว้ หรือลากมือไปทางขวา';
+      ctx.fillText(msg, 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

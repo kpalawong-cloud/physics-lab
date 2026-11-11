@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การเคลื่อนที่แบบโพรเจกไทล์ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.78;
+const RAMP_W = 0.45, RAMP_H = 0.36;   // ขนาดรางโค้ง (m): ยาวตามแนวนอน และสูงสุด
+let ETA = null;                        // สัดส่วนพลังงานที่เหลือจริง (ค่าซ่อน)
+const avg = (a) => { a = a.filter(isFinite); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN; };
+
+Lab.init({
+  id: 'projectile',
+  short: 'การเคลื่อนที่แบบโพรเจกไทล์',
+  title: 'การเคลื่อนที่แบบโพรเจกไทล์',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'ศึกษาการเคลื่อนที่แบบโพรเจกไทล์ของลูกเหล็กที่หลุดจากขอบโต๊ะในแนวระดับ',
+      'หาความสัมพันธ์ระหว่างระยะตกตามแนวระดับ R กับความสูงที่ปล่อยลูกเหล็กบนราง h',
+      'หาสัดส่วนพลังงานที่ลูกเหล็กเหลืออยู่เมื่อหลุดจากราง เทียบกับทฤษฎี',
+    ],
+    theory:
+      '<p>ลูกเหล็กหลุดจากปลายรางที่ขอบโต๊ะด้วยความเร็ว v ในแนวระดับ แนวดิ่งตกอิสระจากความสูง H ส่วนแนวระดับเคลื่อนที่ด้วยความเร็วคงตัว ทั้งสองแนวเป็นอิสระต่อกัน</p>' +
+      '<div class="eq">H = ½ g t² &nbsp;,&nbsp; R = v t &nbsp;→&nbsp; v = R √(g / 2H)</div>' +
+      '<p>ลูกเหล็กที่<b>กลิ้ง</b>ลงรางมีพลังงานจลน์ทั้งการเลื่อนที่และการหมุน (ทรงกลมตัน) ถ้าไม่มีพลังงานสูญเสีย</p>' +
+      '<div class="eq">mgh = ½mv² + ⅕mv² &nbsp;→&nbsp; v² = (10/7) g h</div>' +
+      '<p>รวมสองสมการได้ <b>R² = (20/7) H · h</b> กราฟ R² กับ h จึงเป็นเส้นตรงผ่านจุดกำเนิด ถ้ามีพลังงานสูญเสีย ให้ η เป็นสัดส่วนพลังงานที่เหลือ ความชันจะเป็น (20/7) η H</p>',
+    equipment: ['รางโค้งยึดที่ขอบโต๊ะ (ปลายรางอยู่ในแนวระดับ)', 'ลูกเหล็ก', 'ไม้บรรทัดตั้งข้างราง (ขีดละเอียด 1 mm)', 'ไม้เมตรวัดความสูงโต๊ะ',
+      'ลูกดิ่งสำหรับหาจุดใต้ขอบโต๊ะ', 'กระดาษคาร์บอนวางบนกระดาษขาว', 'สายวัดบนพื้น (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'ใช้แว่นขยายอ่านความสูงของโต๊ะ H จากไม้เมตรที่ขอบโต๊ะ (วัดจากพื้นถึงระดับปลายราง) บันทึกเป็นเมตร',
+      'ตั้งจุดปล่อยบนราง แล้วอ่านความสูง h ของจุดปล่อยจากไม้บรรทัดข้างราง (เส้นประชี้ระดับ) บันทึกเป็นเซนติเมตร',
+      'กด "ปล่อยลูกเหล็ก" 3 ครั้งจากจุดเดิม ลูกเหล็กทิ้งรอยจุดบนกระดาษคาร์บอน',
+      'อ่านระยะ R ของแต่ละรอยจากสายวัดบนพื้น (0 อยู่ใต้ขอบโต๊ะตรงลูกดิ่ง) บันทึกเป็นเซนติเมตร แล้วกด "เปลี่ยนกระดาษ" ก่อนเปลี่ยนจุดปล่อย',
+      'เปลี่ยนความสูง h อย่างน้อย 6 ค่า ระหว่าง 5–33 cm',
+    ],
+    tip: 'รอยบนกระดาษคาร์บอนกระจายเล็กน้อยแม้ปล่อยจากจุดเดิม จึงต้องปล่อยหลายครั้งแล้วหาค่าเฉลี่ย',
+  },
+  table: {
+    rows: 6,
+    hint: 'กรอก H ทุกแถว (ค่าเดิม) · R วัดจากจุดใต้ขอบโต๊ะถึงกึ่งกลางรอย',
+    columns: [
+      { key: 'h', label: 'ความสูงจุดปล่อย h<br>(cm)', input: true },
+      { key: 'H', label: 'ความสูงโต๊ะ H<br>(m)', input: true },
+      { key: 'R1', label: 'R₁<br>(cm)', input: true },
+      { key: 'R2', label: 'R₂<br>(cm)', input: true },
+      { key: 'R3', label: 'R₃<br>(cm)', input: true },
+      { key: 'Rm', label: 'R เฉลี่ย<br>(cm)', calc: (r) => avg([r.R1, r.R2, r.R3]), digits: 2 },
+      { key: 'hm', label: 'h<br>(m)', calc: (r) => r.h / 100, digits: 4 },
+      { key: 'Rsq', label: 'R²<br>(m²)', calc: (r) => (r.Rm / 100) ** 2, digits: 4 },
+      { key: 'v', label: 'v = R√(g/2H)<br>(m/s)', calc: (r) => (r.Rm / 100) * Math.sqrt(G / (2 * r.H)), digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'R² กับ h', x: 'hm', y: 'Rsq', xv: 'h', yv: 'R²', xlabel: 'ความสูงจุดปล่อย h (m)', ylabel: 'R² (m²)', origin: true,
+    explain: 'ถ้าไม่มีพลังงานสูญเสีย ความชันควรเท่ากับ (20/7)H ความชันที่น้อยกว่านี้บอกสัดส่วนพลังงานที่สูญเสียไปกับแรงเสียดทานและการไถล',
+  },
+  results(fit, rows) {
+    const H = avg(rows.map((r) => r.H));
+    const ideal = (20 / 7) * H;
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'm' },
+      { label: 'ความสูงโต๊ะเฉลี่ย H', value: H, digits: 3, unit: 'm' },
+      { label: 'ความชันตามทฤษฎี (20/7)H (ไม่มีการสูญเสีย)', value: ideal, digits: 3, unit: 'm' },
+      { label: 'สัดส่วนพลังงานที่เหลือ η = ความชัน / (20/7)H', value: fit.m / ideal, unc: fit.sm / ideal, unit: '' },
+      { label: 'สัดส่วนพลังงานที่เหลือของรางชุดนี้', value: fit.m / ideal, accepted: ETA, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'ขณะลูกเหล็กลอยในอากาศ ความเร็วในแนวระดับและแนวดิ่งเปลี่ยนไปอย่างไร การเคลื่อนที่สองแนวขึ้นต่อกันหรือไม่',
+    'ถ้าเปลี่ยนจากลูกเหล็กกลิ้งเป็นวัตถุที่ไถลโดยไม่หมุนและไม่มีแรงเสียดทาน ความชันของกราฟ R² กับ h ควรเป็นเท่าใด',
+    'สัดส่วนพลังงานที่เหลือ η ที่ได้น้อยกว่า 1 เพราะอะไร',
+    'เหตุใดรอยบนกระดาษคาร์บอนจึงกระจาย ทั้งที่ปล่อยจากจุดเดิม และการปล่อยหลายครั้งช่วยอย่างไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas style="height:620px"></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 8, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ค่าซ่อน: ความสูงโต๊ะ และสัดส่วนพลังงานที่เหลือ (ไถลเล็กน้อย แรงเสียดทานกลิ้ง)
+    const H = 0.80 + 0.15 * rng();
+    ETA = 0.85 + 0.10 * rng();
+    const BR = 0.008; // รัศมีลูกเหล็ก (m)
+    const s = { h: 0.12 + 0.15 * rng(), phase: 'idle', t: 0, v: 0, dots: [], trail: true, ghosts: [], land: null };
+
+    ctrls.innerHTML =
+      '<h3>จุดปล่อยบนราง</h3><input type="range" id="hS" min="0.04" max="0.34" step="0.0005">' +
+      '<div class="row"><button class="btn" data-d="-0.01">▼ 1 cm</button><button class="btn" data-d="-0.001">▼ 1 mm</button><button class="btn" data-d="0.001">▲ 1 mm</button><button class="btn" data-d="0.01">▲ 1 cm</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">แถบเลื่อนไม่บอกตัวเลข อ่านความสูงจากไม้บรรทัดข้างราง</p>' +
+      '<div class="row"><button class="btn primary" id="go">ปล่อยลูกเหล็ก</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="tr" checked> แสดงภาพแฟลชทุก 1/30 s</label>' +
+      '<h3>กระดาษคาร์บอน</h3><p style="margin:0" id="nd"></p>' +
+      '<div class="row"><button class="btn" id="clr">เปลี่ยนกระดาษ</button></div>' +
+      '<p class="muted" style="font-size:13px">ภาพการลอยแสดงช้าลง 4 เท่า</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const hS = $('#hS');
+    const setH = (v) => { if (s.phase !== 'idle') return; s.h = Math.max(0.04, Math.min(0.34, v)); hS.value = s.h; };
+    setH(s.h);
+    hS.oninput = () => (s.phase !== 'idle' ? (hS.value = s.h) : (s.h = +hS.value));
+    ctrls.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => setH(s.h + +b.dataset.d)));
+    $('#tr').onchange = (e) => (s.trail = e.target.checked);
+    const showN = () => ($('#nd').textContent = 'รอยบนกระดาษ: ' + s.dots.length + ' รอย');
+    showN();
+    $('#clr').onclick = () => { s.dots = []; showN(); };
+    $('#go').onclick = () => {
+      if (s.phase !== 'idle') return;
+      // ความเร็วที่ปลายราง: กลิ้งไม่ไถล + การสูญเสียพลังงาน + ความผันผวนรายครั้ง
+      s.v = Math.sqrt((10 / 7) * G * s.h * ETA) * (1 + Lab.noise(0.006));
+      s.side = Lab.noise(0.002);
+      s.phase = 'roll'; s.t = 0; s.ghosts = []; $('#go').disabled = true;
+    };
+
+    // ตำแหน่งบนรางโค้ง: u ∈ [0,1] จากปลายราง (u=0) ถึงยอดราง (u=1), ความสูง y = RAMP_H u²
+    const rampX = (u) => -RAMP_W * u, rampY = (u) => RAMP_H * u * u;
+
+    let ppm, ex, ey; // ex, ey: จุดปลายรางบนจอ (ระดับผิวโต๊ะ)
+    function layout() {
+      // เว้นที่ใต้สายวัดให้แว่นขยายวางได้ทั้งวง
+      ppm = Math.min((cv.w - 50) / 1.62, (cv.h - 150) / (H + 0.52));
+      ex = 30 + 0.52 * ppm; ey = cv.h - 0.10 * ppm - 100 - H * ppm;
+    }
+    const X = (x) => ex + x * ppm, Y = (y) => ey - y * ppm; // x ไปขวา, y ขึ้นจากระดับปลายราง
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const floorY = Y(-H);
+      // พื้นและโต๊ะ
+      ctx.fillStyle = dark ? '#2b3039' : '#d9dde5'; ctx.fillRect(0, floorY, cv.w, cv.h - floorY);
+      ctx.fillStyle = dark ? '#5a4630' : '#b58a55'; ctx.fillRect(0, ey, X(0) - 0, 0.03 * ppm);
+      ctx.fillStyle = dark ? '#4a3a28' : '#9c7444'; ctx.fillRect(X(-0.05), ey + 0.03 * ppm, 0.03 * ppm, floorY - ey - 0.03 * ppm);
+      // รางโค้ง
+      ctx.strokeStyle = dark ? '#9aa3b0' : '#5b6472'; ctx.lineWidth = 3 / Math.sqrt(z); ctx.beginPath();
+      for (let i = 0; i <= 60; i++) { const u = i / 60; ctx.lineTo(X(rampX(u)), Y(rampY(u))); }
+      ctx.stroke();
+      ctx.fillStyle = dark ? '#3a4150' : '#c3c9d3';
+      ctx.fillRect(X(-RAMP_W) - 4, Y(RAMP_H), 4, RAMP_H * ppm);
+      // ไม้บรรทัดตั้งบนโต๊ะข้างราง (0 ที่ระดับปลายราง) ขีดอยู่ขอบขวา
+      const rx = X(-RAMP_W) - 10, rw = 0.035 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f'; ctx.fillRect(rx - rw, Y(0.40), rw, 0.40 * ppm);
+      ruler(ctx, z, rx, 0, 400, (mm) => Y(mm / 1000), -1, rw, 50);
+      // เส้นประบอกระดับจุดปล่อย (ระดับก้นลูกเหล็ก)
+      const ur = Math.sqrt(s.h / RAMP_H);
+      ctx.strokeStyle = Lab.css('--accent'); ctx.setLineDash([5 / z, 4 / z]); ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(rx, Y(s.h)); ctx.lineTo(X(rampX(ur)), Y(s.h)); ctx.stroke(); ctx.setLineDash([]);
+      // ไม้เมตรวัดความสูงโต๊ะ ตั้งที่พื้นหน้าขอบโต๊ะ (0 ที่พื้น)
+      const mx = X(0.03), mw = 0.035 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f'; ctx.fillRect(mx, Y(-H + 1.0), mw, 1.0 * ppm);
+      ruler(ctx, z, mx, 0, 1000, (mm) => Y(-H + mm / 1000), 1, mw, 100);
+      // ลูกดิ่ง
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.7 / z;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), floorY - 6); ctx.stroke();
+      ctx.fillStyle = muted; ctx.beginPath(); ctx.moveTo(X(0) - 3, floorY - 9); ctx.lineTo(X(0) + 3, floorY - 9); ctx.lineTo(X(0), floorY - 2); ctx.fill();
+      // แถบล่าง: มองพื้นจากด้านบน มีกระดาษขาวที่รอยคาร์บอนตก และสายวัดวางชิดขอบกระดาษ
+      const py0 = floorY + 6, ph = 0.06 * ppm;
+      ctx.fillStyle = muted; ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('มองจากด้านบน', X(-0.5), py0 + 2);
+      ctx.fillStyle = dark ? '#d8d8d8' : '#ffffff'; ctx.fillRect(X(0.2), py0, 0.95 * ppm, ph);
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.6 / z; ctx.strokeRect(X(0.2), py0, 0.95 * ppm, ph);
+      const ty = py0 + ph, th = 0.04 * ppm;
+      ctx.fillStyle = dark ? '#c8b45a' : '#f3dd6d'; ctx.fillRect(X(0) - 4, ty, 1.15 * ppm + 8, th);
+      // เส้นแนวลูกดิ่ง (จุดเริ่มสายวัด)
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.6 / z; ctx.beginPath(); ctx.moveTo(X(0), py0); ctx.lineTo(X(0), ty); ctx.stroke();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= 1150; mm += showMm ? 1 : 10) {
+        const x = X(mm / 1000), l = mm % 100 === 0 ? 0.7 : mm % 50 === 0 ? 0.5 : mm % 10 === 0 ? 0.36 : mm % 5 === 0 ? 0.24 : 0.15;
+        ctx.lineWidth = (mm % 10 === 0 ? 0.9 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(x, ty); ctx.lineTo(x, ty + l * th); ctx.stroke();
+        if (mm % 100 === 0 || (z > 3 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 9 / Math.min(z, 3) : 2.2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(mm / 10, x + (mm % 100 === 0 ? 0 : 0), ty + l * th + 0.3 / z);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // รอยบนกระดาษ (มองจากด้านบน): แนวลูกดิ่งอยู่กลางแถบ
+      ctx.fillStyle = '#111';
+      s.dots.forEach((d) => { ctx.beginPath(); ctx.arc(X(d.x), py0 + ph / 2 + d.y * ppm, Math.max(0.0015 * ppm, 0.8 / z), 0, 7); ctx.fill(); });
+      ctx.strokeStyle = 'rgba(120,120,120,.5)'; ctx.setLineDash([3 / z, 3 / z]); ctx.lineWidth = 0.6 / z;
+      ctx.beginPath(); ctx.moveTo(X(0), py0 + ph / 2); ctx.lineTo(X(1.15), py0 + ph / 2); ctx.stroke(); ctx.setLineDash([]);
+      // ภาพแฟลช
+      ctx.fillStyle = dark ? 'rgba(200,210,230,0.35)' : 'rgba(90,100,120,0.3)';
+      if (s.trail) s.ghosts.forEach((g) => { ctx.beginPath(); ctx.arc(X(g[0]), Y(g[1] + BR), BR * ppm, 0, 7); ctx.fill(); });
+      // ลูกเหล็ก
+      const [bx, by] = ballPos();
+      const r = BR * ppm;
+      const gr = ctx.createRadialGradient(X(bx) - r * 0.3, Y(by + BR) - r * 0.3, r * 0.1, X(bx), Y(by + BR), r);
+      gr.addColorStop(0, '#f4f6f9'); gr.addColorStop(0.5, '#a7b0bd'); gr.addColorStop(1, '#4b525d');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(X(bx), Y(by + BR), r, 0, 7); ctx.fill();
+    }
+    // ไม้บรรทัดทั่วไป: x ขอบที่มีขีด, dir = +1 ขีดไปทางขวา, −1 ไปทางซ้าย
+    function ruler(ctx, z, x, mm0, mm1, yOf, dir, w, labelEvery) {
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = mm0; mm <= mm1; mm += showMm ? 1 : 10) {
+        const y = yOf(mm), l = mm % 100 === 0 ? 0.6 : mm % 50 === 0 ? 0.45 : mm % 10 === 0 ? 0.32 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 0.9 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dir * l * w, y); ctx.stroke();
+        if (mm % labelEvery === 0 || (z > 3 && mm % 10 === 0)) {
+          ctx.font = (mm % labelEvery === 0 ? 9 / Math.min(z, 3) : 2.2) + 'px Sarabun, sans-serif';
+          ctx.textAlign = dir > 0 ? 'right' : 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, x + dir * (w - 1 / z), y);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
+    // ตำแหน่งก้นลูกเหล็ก (x, y) ในหน่วยเมตร
+    function ballPos() {
+      if (s.phase === 'idle' || s.phase === 'roll') {
+        const u0 = Math.sqrt(s.h / RAMP_H);
+        const u = s.phase === 'roll' ? u0 * Math.max(0, 1 - s.t / s.tRoll) ** 1.6 : u0;
+        return [rampX(u), rampY(u)];
+      }
+      if (s.phase === 'fly') return [s.v * s.t, -0.5 * G * s.t * s.t];
+      return [s.land, -H];
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    const SLOW = 4, tFall = Math.sqrt((2 * H) / G);
+    let gAcc = 0;
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.phase === 'roll') {
+        s.tRoll = 0.55 + 0.6 * Math.sqrt(s.h);
+        s.t += dt;
+        if (s.t >= s.tRoll) { s.phase = 'fly'; s.t = 0; gAcc = 0; }
+      } else if (s.phase === 'fly') {
+        s.t += dt / SLOW; gAcc += dt / SLOW;
+        if (gAcc >= 1 / 30) { gAcc -= 1 / 30; s.ghosts.push([s.v * s.t, -0.5 * G * s.t * s.t]); }
+        if (s.t >= tFall) {
+          // ระยะตกจริง + ความกระจายของรอย (σ ราว 3–4 mm)
+          s.land = s.v * tFall + Lab.noise(0.0025) + s.side;
+          s.dots.push({ x: s.land, y: Lab.noise(0.003) }); showN();
+          s.phase = 'land'; s.t = 0;
+        }
+      } else if (s.phase === 'land') {
+        s.t += dt;
+        if (s.t > 0.8) { s.phase = 'idle'; $('#go').disabled = false; }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'อ่าน h จากไม้บรรทัดข้างราง · H จากไม้เมตรที่ขอบโต๊ะ · R จากสายวัดบนพื้น', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>

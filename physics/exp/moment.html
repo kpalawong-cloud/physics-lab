@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สมดุลและโมเมนต์ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;
+const MASSES = [0.100, 0.150, 0.200, 0.250, 0.300, 0.400]; // มวลที่ทราบค่า (kg) รวมที่แขวน
+let XTRUE = 0.1;        // มวล X จริง (kg) ซ่อน
+let MR = 0.1, CG = 0.5; // มวลไม้เมตรและตำแหน่งจุดศูนย์ถ่วง (ซ่อน)
+
+Lab.init({
+  id: 'moment',
+  short: 'สมดุลและโมเมนต์',
+  title: 'สมดุลของวัตถุแข็งเกร็งและโมเมนต์ของแรง',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'ศึกษาสมดุลการหมุนของไม้เมตรบนคมมีด (knife edge) โดยใช้หลักของโมเมนต์',
+      'หามวลของวัตถุที่ไม่ทราบค่า X จากกราฟระยะทางกับส่วนกลับของมวล',
+    ],
+    theory:
+      '<p>วัตถุแข็งเกร็งอยู่ในสมดุลการหมุนเมื่อผลรวมโมเมนต์รอบจุดหมุนเป็นศูนย์ คือโมเมนต์ทวนเข็มนาฬิกาเท่ากับโมเมนต์ตามเข็มนาฬิกา</p>' +
+      '<div class="eq">Σ M<sub>ทวน</sub> = Σ M<sub>ตาม</sub> &nbsp;&nbsp; M = F · d</div>' +
+      '<p>แขวนมวล X ไว้ด้านซ้ายห่างจากจุดหมุน d<sub>X</sub> และแขวนมวลที่ทราบค่า m ด้านขวา เลื่อนจนไม้เมตรสมดุลที่ระยะ d</p>' +
+      '<div class="eq">m g d = X g d<sub>X</sub> &nbsp;→&nbsp; d = (X d<sub>X</sub>) · (1/m)</div>' +
+      '<p>ถ้าตรึง X และ d<sub>X</sub> ไว้ กราฟ d กับ 1/m เป็นเส้นตรง <b>ความชัน = X·d<sub>X</sub></b> จึงได้ X = ความชัน / d<sub>X</sub> ' +
+      'ถ้าจุดศูนย์ถ่วงของไม้เมตรไม่ตรงกับจุดหมุนพอดี น้ำหนักของไม้เมตรจะเพิ่มโมเมนต์เล็กน้อย ทำให้ผลคลาดเคลื่อนเป็นระบบ</p>',
+    equipment: ['ไม้เมตร (ขีดละเอียด 1 mm)', 'คมมีดพร้อมแท่นรองที่เลื่อนได้', 'ห่วงเชือก 2 อัน (มวลอันละประมาณ 2 g)',
+      'ชุดมวลที่ทราบค่า 100, 150, 200, 250, 300, 400 g (รวมที่แขวน)', 'วัตถุที่ไม่ทราบมวล X'],
+    procedure: [
+      'วางคมมีดที่ขีด 50.0 cm ตรวจว่าไม้เมตรเปล่าสมดุลหรือไม่ ถ้าไม่สมดุลให้เลื่อนคมมีดจนสมดุล แล้วอ่านตำแหน่งคมมีด',
+      'แขวน X ไว้ด้านซ้าย (เช่นที่ขีด 30.0 cm) และตรึงไว้ตลอดการทดลอง อ่านตำแหน่งห่วงของ X',
+      'แขวนมวลที่ทราบค่า m ด้านขวา เลื่อนห่วงจนเข็มที่ปลายไม้เมตรชี้ระดับศูนย์ แล้วใช้แว่นขยายอ่านตำแหน่งห่วงของ m',
+      'เปลี่ยน m ให้ครบอย่างน้อย 5–6 ค่า บันทึก m, ตำแหน่งของ m, ตำแหน่งของ X และตำแหน่งคมมีดทุกครั้ง',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ d กับ 1/m',
+    ],
+    tip: 'ใกล้จุดสมดุลไม้เมตรจะแกว่งช้า ให้เลื่อนห่วงทีละ 1 mm แล้วรอให้นิ่งก่อนตัดสิน อ่านตำแหน่งที่ "เส้นด้ายของห่วง" ไม่ใช่ขอบห่วง',
+  },
+  table: {
+    rows: 6,
+    hint: 'ตำแหน่งทั้งหมดอ่านจากสเกลไม้เมตรเป็นเซนติเมตร ตารางคำนวณระยะจากจุดหมุนให้ (d = ตำแหน่ง m − ตำแหน่งคมมีด)',
+    columns: [
+      { key: 'm', label: 'มวลที่ทราบค่า m<br>(kg)', input: true },
+      { key: 'xm', label: 'ตำแหน่งห่วง m<br>(cm)', input: true },
+      { key: 'xX', label: 'ตำแหน่งห่วง X<br>(cm)', input: true },
+      { key: 'p', label: 'ตำแหน่งคมมีด<br>(cm)', input: true },
+      { key: 'd', label: 'd = ระยะ m ถึงจุดหมุน<br>(m)', calc: (r) => (r.xm - r.p) / 100, digits: 4 },
+      { key: 'dX', label: 'd<sub>X</sub> = ระยะ X ถึงจุดหมุน<br>(m)', calc: (r) => (r.p - r.xX) / 100, digits: 4 },
+      { key: 'inv', label: '1/m<br>(kg⁻¹)', calc: (r) => 1 / r.m, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'd กับ 1/m', x: 'inv', y: 'd', xv: '(1/m)', yv: 'd', xlabel: '1/m (kg⁻¹)', ylabel: 'ระยะ d (m)', origin: false,
+    explain: 'ความชันคือ X·dX ตามทฤษฎีจุดตัดแกนควรเป็นศูนย์ ถ้าไม่ใช่ศูนย์แสดงว่ามีโมเมนต์อื่นช่วย เช่น น้ำหนักของไม้เมตรหรือห่วงที่แขวน',
+  },
+  results(fit, rows) {
+    const dx = rows.map((r) => r.dX).filter((v) => isFinite(v) && v > 0);
+    const dX = dx.length ? dx.reduce((a, b) => a + b, 0) / dx.length : NaN;
+    const X = fit.m / dX;
+    return [
+      { label: 'ความชัน = X·dX', value: fit.m, unc: fit.sm, unit: 'kg·m' },
+      { label: 'ระยะ dX เฉลี่ย', value: dX, digits: 4, unit: 'm' },
+      { label: 'มวลของวัตถุ X = ความชัน / dX', value: X * 1000, unc: (X * 1000 * fit.sm) / fit.m, unit: 'g' },
+      { label: 'มวลจริงของวัตถุ X', value: X * 1000, unit: 'g', accepted: XTRUE * 1000, hidden: true, digitsTrue: 1 },
+    ];
+  },
+  questions: [
+    'เขียนสมการโมเมนต์รอบคมมีดเมื่อไม้เมตรสมดุล และอธิบายว่าทำไมกราฟ d กับ 1/m จึงเป็นเส้นตรง',
+    'ถ้าจุดศูนย์ถ่วงของไม้เมตรไม่ได้อยู่ที่จุดหมุนพอดี ผลต่อค่า X ที่คำนวณได้เป็นอย่างไร จะแก้ไขอย่างไร',
+    'ออกแบบวิธีหามวลของไม้เมตรเอง: แขวนมวล 100 g ที่ปลายด้านหนึ่ง แล้วเลื่อนคมมีดจนสมดุล ต้องวัดอะไรบ้าง และคำนวณอย่างไร (ลองทำจริงด้วยปุ่ม "ไม้เมตรเปล่า")',
+    'เหตุใดการวัดตำแหน่งห่วงให้ละเอียดจึงสำคัญมากเมื่อ m มีค่ามาก (d สั้น)',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง และเสนอวิธีลดความคลาดเคลื่อน',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 5, r: 80 });
+    lens.button(stage);
+
+    // ค่าซ่อน
+    const r = api.rng;
+    XTRUE = 0.080 + 0.050 * r();
+    MR = 0.090 + 0.030 * r();
+    CG = 0.500 + 0.010 * (r() - 0.5);
+    const HOOK = 0.002; // มวลห่วงเชือกแต่ละอัน (kg) มีทั้งสองข้าง
+
+    // ตำแหน่งบนไม้เมตร (m จากขีด 0)
+    const s = { p: 0.500, xX: 0.300, xm: 0.700, mi: 2, hasX: true, hasM: true, th: 0, om: 0, sel: 'm', drag: null };
+
+    ctrls.innerHTML =
+      '<h3>มวลที่ทราบค่า (รวมที่แขวน)</h3>' +
+      '<div class="seg" id="mSel">' + MASSES.map((m, i) => '<button data-i="' + i + '">' + Math.round(m * 1000) + '</button>').join('') + '</div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0">หน่วยเป็นกรัม</p>' +
+      '<h3>เลือกสิ่งที่จะเลื่อน</h3>' +
+      '<div class="seg" id="sel"><button data-v="m">ห่วง m</button><button data-v="X">ห่วง X</button><button data-v="p">คมมีด</button></div>' +
+      '<div class="row"><button class="btn" id="l10">−1 cm</button><button class="btn" id="l1">−1 mm</button><button class="btn" id="r1">+1 mm</button><button class="btn" id="r10">+1 cm</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">หรือลากห่วง/คมมีดในภาพ (เมื่อปิดแว่นขยาย)</p>' +
+      '<h3>สิ่งที่แขวน</h3>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="hasX" checked> แขวนวัตถุ X</label>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="hasM" checked> แขวนมวลที่ทราบค่า m</label>' +
+      '<div class="row"><button class="btn" id="bare">ไม้เมตรเปล่า</button></div>' +
+      '<p id="state" style="font-size:14px;margin:8px 0 0"></p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const sync = () => {
+      ctrls.querySelectorAll('#mSel button').forEach((b) => b.classList.toggle('on', +b.dataset.i === s.mi));
+      ctrls.querySelectorAll('#sel button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.sel));
+      $('#hasX').checked = s.hasX; $('#hasM').checked = s.hasM;
+    };
+    $('#mSel').onclick = (e) => { const b = e.target.closest('button'); if (b) { s.mi = +b.dataset.i; sync(); } };
+    $('#sel').onclick = (e) => { const b = e.target.closest('button'); if (b) { s.sel = b.dataset.v; sync(); } };
+    $('#hasX').onchange = (e) => (s.hasX = e.target.checked);
+    $('#hasM').onchange = (e) => (s.hasM = e.target.checked);
+    $('#bare').onclick = () => { s.hasX = false; s.hasM = false; sync(); };
+    const clampPos = () => {
+      s.p = Math.max(0.35, Math.min(0.65, s.p));
+      s.xX = Math.max(0.01, Math.min(s.p - 0.02, s.xX));
+      s.xm = Math.max(s.p + 0.02, Math.min(0.99, s.xm));
+    };
+    const move = (d) => { s[s.sel === 'm' ? 'xm' : s.sel === 'X' ? 'xX' : 'p'] += d; clampPos(); };
+    [['l10', -0.01], ['l1', -0.001], ['r1', 0.001], ['r10', 0.01]].forEach(([id, d]) => ($('#' + id).onclick = () => move(d)));
+    sync();
+
+    // โมเมนต์ตามเข็มนาฬิกา (ด้านขวาลง) รอบคมมีด
+    function torque() {
+      let t = MR * (CG - s.p);
+      if (s.hasX) t += (XTRUE + HOOK) * (s.xX - s.p);
+      if (s.hasM) t += (MASSES[s.mi] + HOOK) * (s.xm - s.p);
+      return t * G * Math.cos(s.th);
+    }
+    function inertia() {
+      let I = MR * (1 / 12 + (CG - s.p) ** 2);
+      if (s.hasX) I += XTRUE * (s.xX - s.p) ** 2;
+      if (s.hasM) I += MASSES[s.mi] * (s.xm - s.p) ** 2;
+      return I;
+    }
+    const THMAX = 0.07; // ปลายไม้เมตรชนที่กั้น
+
+    let L = {};
+    function layout() {
+      L.ppm = (cv.w - 70) / 1.0; L.x0 = 35; L.py = cv.h * 0.40;
+      L.px = L.x0 + s.p * L.ppm; // ตำแหน่งคมมีดบนจอ (ตรึงไว้ ไม้เมตรเลื่อนตาม)
+    }
+    // ตำแหน่งบนจอของจุดที่ระยะ u (m) บนไม้เมตร
+    const pt = (u) => [L.px + (u - s.p) * L.ppm * Math.cos(s.th), L.py + (u - s.p) * L.ppm * Math.sin(s.th)];
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const u = s.p + (x - L.px) / L.ppm;
+      if (e.type === 'pointerdown') {
+        const cand = [['m', s.xm, s.hasM], ['X', s.xX, s.hasX]].filter((c) => c[2]);
+        let best = null, bd = 16;
+        cand.forEach(([k, v]) => { const d = Math.abs(pt(v)[0] - x); if (d < bd && Math.abs(y - L.py) < 120) { bd = d; best = k; } });
+        if (!best && Math.abs(x - L.px) < 16 && y > L.py && y < L.py + 70) best = 'p';
+        if (best) { s.drag = { k: best, x0: x, v0: best === 'm' ? s.xm : best === 'X' ? s.xX : s.p }; s.sel = best; sync(); canvas.setPointerCapture(e.pointerId); }
+      } else if (e.type === 'pointermove' && s.drag) {
+        const v = s.drag.v0 + (x - s.drag.x0) / L.ppm;
+        if (s.drag.k === 'm') s.xm = v; else if (s.drag.k === 'X') s.xX = v; else s.p = v;
+        clampPos();
+      } else if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    function hanger(ctx, z, u, label, mass, isX) {
+      const [hx, hy] = pt(u);
+      const dark = Lab.dark(), ink = Lab.css('--ink');
+      // ห่วงเชือกรอบไม้เมตร: เส้นด้ายบาง ๆ ตรงตำแหน่ง u
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(hx, hy - 7); ctx.lineTo(hx, hy + 95); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(hx, hy, 2.5, 8, 0, 0, Math.PI * 2); ctx.stroke();
+      if (isX) {
+        ctx.fillStyle = dark ? '#6b78a8' : '#7d8bc4';
+        ctx.fillRect(hx - 16, hy + 95, 32, 30);
+        ctx.fillStyle = '#fff'; ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('X', hx, hy + 110);
+      } else {
+        const nd = Math.round(mass / 0.05);
+        ctx.fillStyle = dark ? '#8a93a3' : '#6b7280'; ctx.fillRect(hx - 14, hy + 95 + nd * 5, 28, 3);
+        for (let i = 0; i < nd; i++) {
+          const gr = ctx.createLinearGradient(hx - 13, 0, hx + 13, 0);
+          gr.addColorStop(0, '#7d6a3c'); gr.addColorStop(0.45, '#d9c27e'); gr.addColorStop(1, '#7d6a3c');
+          ctx.fillStyle = gr; ctx.fillRect(hx - 13, hy + 95 + i * 5, 26, 4);
+        }
+        ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(label, hx, hy + 100 + nd * 5);
+      }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const ppm = L.ppm, px = L.px, py = L.py, rh = 0.028 * ppm;
+      // แท่นคมมีด
+      ctx.fillStyle = dark ? '#5d6677' : '#6b7280';
+      ctx.beginPath(); ctx.moveTo(px, py + rh / 2); ctx.lineTo(px - 12, py + rh / 2 + 22); ctx.lineTo(px + 12, py + rh / 2 + 22); ctx.closePath(); ctx.fill();
+      ctx.fillRect(px - 30, py + rh / 2 + 22, 60, 8);
+      ctx.fillRect(px - 4, py + rh / 2 + 30, 8, cv.h - (py + rh / 2 + 30) - 22);
+      ctx.fillRect(px - 60, cv.h - 22, 120, 10);
+      // ที่กั้นปลายไม้เมตรและสเกลระดับ
+      const ex = L.x0 + 1.0 * ppm + 12;
+      ctx.fillStyle = dark ? '#4a5160' : '#c9ced8';
+      ctx.fillRect(ex + 6, py - 50, 18, 100);
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z;
+      for (let i = -5; i <= 5; i++) {
+        const yy = py + i * 8;
+        ctx.beginPath(); ctx.moveTo(ex + 6, yy); ctx.lineTo(ex + (i === 0 ? 24 : 14), yy); ctx.stroke();
+      }
+      ctx.fillStyle = muted; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ระดับ', ex + 27, py);
+      // ไม้เมตรหมุนรอบคมมีด
+      ctx.save();
+      ctx.translate(px, py); ctx.rotate(s.th); ctx.translate(-px, -py);
+      const rx0 = px - s.p * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(rx0, py - rh / 2, ppm, rh);
+      ctx.strokeStyle = dark ? '#6b4f2a' : '#b08a52'; ctx.lineWidth = 1 / z; ctx.strokeRect(rx0, py - rh / 2, ppm, rh);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= 1000; mm += showMm ? 1 : 10) {
+        const x = rx0 + mm * mmPx;
+        const l = mm % 100 === 0 ? 0.55 : mm % 50 === 0 ? 0.42 : mm % 10 === 0 ? 0.32 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.55) / z;
+        ctx.beginPath(); ctx.moveTo(x, py - rh / 2); ctx.lineTo(x, py - rh / 2 + l * rh); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 10 : 8) / Math.min(z, 3) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(mm / 10, x, py + rh / 2 - 1 / z);
+        }
+      }
+      // เข็มที่ปลายขวาของไม้เมตร
+      ctx.strokeStyle = '#d23a2a'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(rx0 + ppm, py); ctx.lineTo(rx0 + ppm + 26, py); ctx.stroke();
+      ctx.restore();
+      // ห่วงและมวล (เชือกห้อยดิ่งเสมอ)
+      if (s.hasX) hanger(ctx, z, s.xX, 'X', XTRUE, true);
+      if (s.hasM) hanger(ctx, z, s.xm, Math.round(MASSES[s.mi] * 1000) + ' g', MASSES[s.mi], false);
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (dt > 0) {
+        const n = Math.ceil(dt / 0.002), h = dt / n;
+        for (let i = 0; i < n; i++) {
+          const I = inertia();
+          s.om += ((torque() - MR * G * 0.04 * Math.sin(s.th) - 0.03 * s.om) / I) * h; // แท่นยึดอยู่เหนือจุดศูนย์ถ่วงเล็กน้อย ไม้เมตรจึงมีแรงคืนตัวอ่อน ๆ
+          s.th += s.om * h;
+          if (Math.abs(s.th) > THMAX) { s.th = Math.sign(s.th) * THMAX; s.om = 0; }
+        }
+      }
+      $('#state').textContent = Math.abs(s.th) >= THMAX * 0.999 ? (s.th > 0 ? 'ไม้เมตรเอียงลงด้านขวาจนชนที่กั้น' : 'ไม้เมตรเอียงลงด้านซ้ายจนชนที่กั้น')
+        : Math.abs(s.th) < 0.002 && Math.abs(s.om) < 0.003 ? 'ไม้เมตรเกือบสมดุล ตรวจเข็มที่ปลายไม้เมตร' : 'ไม้เมตรกำลังเอียง…';
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากห่วงหรือคมมีดเพื่อเลื่อน รอให้นิ่งแล้วดูเข็มที่ปลายไม้เมตร', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

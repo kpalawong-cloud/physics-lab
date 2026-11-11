@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การอนุรักษ์พลังงานกล · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.78;
+const WFLAG = 0.0200;     // ความกว้างแผ่นกั้นแสงที่พิมพ์ไว้ (m)
+const TRACK = 1.30;       // ความยาวราง (m)
+const UG = 1.05;          // ตำแหน่งประตูแสงตามราง (m จากปลายบน)
+let KEEP_TRUE = null;     // สัดส่วนพลังงานที่เหลือโดยเฉลี่ยของรางชุดนี้ (ค่าซ่อน คำนวณจากแบบจำลอง)
+const avg = (a) => { a = a.filter(isFinite); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN; };
+
+Lab.init({
+  id: 'energy',
+  short: 'การอนุรักษ์พลังงานกล',
+  title: 'การอนุรักษ์พลังงานกลบนรางลมเอียง',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'วัดอัตราเร็วของรถที่ไถลลงรางเอียงจากความสูงต่าง ๆ ด้วยประตูแสง',
+      'ตรวจสอบว่าพลังงานศักย์โน้มถ่วงที่ลดลงเปลี่ยนเป็นพลังงานจลน์ทั้งหมดหรือไม่',
+      'หาค่า g จากความชันของกราฟ v² กับ h และประเมินพลังงานที่สูญเสีย',
+    ],
+    theory:
+      '<p>รถบนรางลมแทบไม่มีแรงเสียดทาน เมื่อปล่อยจากหยุดนิ่งแล้วลดระดับลง h พลังงานศักย์ที่ลดลงเปลี่ยนเป็นพลังงานจลน์</p>' +
+      '<div class="eq">mgh = ½ m v² &nbsp;→&nbsp; v² = 2g · h</div>' +
+      '<p>กราฟ v² กับ h จึงเป็นเส้นตรง <b>ความชัน = 2g</b> (ไม่ขึ้นกับมวลรถ) ถ้ามีพลังงานสูญเสียไปกับแรงต้านอากาศและแรงเสียดทานที่เหลือ ความชันจะน้อยกว่า 2g</p>' +
+      '<p>อัตราเร็วที่ประตูแสงวัดจากแผ่นกั้นแสงกว้าง w = 2.00 cm ที่บังลำแสงเป็นเวลา Δt</p>' +
+      '<div class="eq">v = w / Δt</div>' +
+      '<p>ความสูงที่ลดลง h หาจากระดับผิวรางที่จุดปล่อยลบด้วยระดับผิวรางที่ประตูแสง วัดด้วยไม้บรรทัดตั้งบนโต๊ะทั้งสองจุด</p>',
+    equipment: ['รางลมยาว 1.3 m ยกปลายหนึ่งให้เอียง', 'รถพร้อมแผ่นกั้นแสงกว้าง 2.00 cm', 'แม่เหล็กไฟฟ้ายึดรถที่จุดปล่อย (เลื่อนได้)',
+      'ประตูแสงและเครื่องจับเวลา (ละเอียด 0.01 ms)', 'ไม้บรรทัดตั้งบนโต๊ะ 2 อัน (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'ใช้แว่นขยายอ่านระดับผิวรางที่ประตูแสง h₂ จากไม้บรรทัดที่ประตูแสง (เส้นชี้สีแดง) บันทึกเป็นเซนติเมตร',
+      'ตั้งจุดปล่อย แล้วอ่านระดับผิวรางที่จุดปล่อย h₁ จากไม้บรรทัดที่เลื่อนตามจุดปล่อย',
+      'กด "ปล่อยรถ" อ่านเวลา Δt ที่แผ่นกั้นแสงบังประตูแสง ทำซ้ำ 2 ครั้ง',
+      'เปลี่ยนจุดปล่อยอย่างน้อย 6 ตำแหน่ง ตารางคำนวณ h = h₁ − h₂, v และ v² ให้',
+    ],
+    tip: 'จุดปล่อยใกล้ประตูแสงมาก h จะเล็ก ความคลาดเคลื่อนสัมพัทธ์ของ h จะสูง ควรกระจายจุดปล่อยให้ครอบคลุมทั้งราง',
+  },
+  table: {
+    rows: 6,
+    hint: 'h₁ และ h₂ เป็นเซนติเมตร Δt เป็นมิลลิวินาที ปุ่ม "บันทึกเวลาลงตาราง" เติม Δt₁ แล้ว Δt₂ ของแถวเดียวกัน',
+    columns: [
+      { key: 'h1', label: 'ระดับจุดปล่อย h₁<br>(cm)', input: true },
+      { key: 'h2', label: 'ระดับประตูแสง h₂<br>(cm)', input: true },
+      { key: 't1', label: 'Δt₁<br>(ms)', input: true },
+      { key: 't2', label: 'Δt₂<br>(ms)', input: true },
+      { key: 'h', label: 'h = h₁ − h₂<br>(m)', calc: (r) => (r.h1 - r.h2) / 100, digits: 4 },
+      { key: 'tm', label: 'Δt เฉลี่ย<br>(ms)', calc: (r) => avg([r.t1, r.t2]), digits: 2 },
+      { key: 'v', label: 'v = w/Δt<br>(m/s)', calc: (r) => WFLAG / (r.tm / 1000), digits: 3 },
+      { key: 'v2', label: 'v²<br>(m²/s²)', calc: (r) => r.v * r.v, digits: 4 },
+    ],
+  },
+  graph: {
+    title: 'v² กับ h', x: 'h', y: 'v2', xv: 'h', yv: 'v²', xlabel: 'ความสูงที่ลดลง h (m)', ylabel: 'v² (m²/s²)', origin: false,
+    explain: 'ถ้าพลังงานกลอนุรักษ์ ความชันเท่ากับ 2g และกราฟผ่านจุดกำเนิด',
+  },
+  results(fit) {
+    const keep = fit.m / (2 * G);
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'm/s²' },
+      { label: 'จุดตัดแกน v²', value: fit.b, unc: fit.sb, unit: 'm²/s²' },
+      { label: 'g = ความชัน / 2', value: fit.m / 2, unc: fit.sm / 2, unit: 'm/s²', accepted: G },
+      { label: 'สัดส่วนพลังงานกลที่เหลือ = ความชัน / 2g', value: keep, unc: fit.sm / (2 * G), unit: '' },
+      { label: 'สัดส่วนพลังงานที่เหลือของรางชุดนี้ (เฉลี่ยทั้งราง)', value: keep, accepted: KEEP_TRUE, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'ขณะรถไถลลงราง พลังงานรูปใดลดลงและพลังงานรูปใดเพิ่มขึ้น',
+    'ความชันของกราฟที่ได้เท่ากับ 2g หรือไม่ พลังงานที่หายไปไปอยู่ที่ใด',
+    'ถ้าเพิ่มมวลรถเป็นสองเท่า กราฟ v² กับ h จะเปลี่ยนไปอย่างไร เพราะเหตุใด',
+    'ความเร็วที่วัดด้วยแผ่นกั้นแสงเป็นความเร็วเฉลี่ยขณะผ่านประตู ค่านี้ต่างจากความเร็วที่ตำแหน่งประตูแสงพอดีหรือไม่ มีผลต่อผลการทดลองมากน้อยเพียงใด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 7, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ค่าซ่อน: ความเอียง, ความกว้างแผ่นกั้นแสงจริง, แรงเสียดทานที่เหลือ และแรงต้านอากาศ
+    const LOW = 0.055 + 0.01 * rng();            // ความสูงผิวรางที่ปลายล่าง (m)
+    const SIN = 0.085 + 0.02 * rng();            // sin θ ของราง
+    const WT = WFLAG * (1 + (rng() - 0.5) * 0.003);
+    const D = 0.004 + 0.005 * rng();             // ความหน่วงคงตัว (m/s²)
+    const B = 0.020 + 0.030 * rng();             // แรงต้านอากาศต่อหน่วยมวล (1/s)
+    const yOf = (u) => LOW + (TRACK - u) * SIN;  // ความสูงผิวรางเหนือโต๊ะ
+    // สัดส่วนพลังงานที่เหลือเฉลี่ยตามแบบจำลอง (คำนวณที่จุดปล่อยหลายตำแหน่ง)
+    function simulate(ur) {
+      let u = ur, v = 0;
+      const h = 0.0005;
+      while (u < UG) { const a = G * SIN - D - B * v; v += a * h; u += v * h; }
+      return v;
+    }
+    KEEP_TRUE = avg([0.2, 0.4, 0.6, 0.8].map((ur) => { const v = simulate(ur); return (v * v) / (2 * G * (UG - ur) * SIN); }));
+
+    const s = { ur: 0.25 + 0.3 * rng(), run: false, u: 0, v: 0, meas: null, inGate: null, t: 0 };
+    ctrls.innerHTML =
+      '<h3>จุดปล่อย (แม่เหล็กไฟฟ้า)</h3><input type="range" id="ur" min="0.06" max="0.95" step="0.001">' +
+      '<div class="row"><button class="btn" data-d="-0.05">◀ 5 cm</button><button class="btn" data-d="-0.005">◀ 5 mm</button><button class="btn" data-d="0.005">5 mm ▶</button><button class="btn" data-d="0.05">5 cm ▶</button></div>' +
+      '<div class="row"><button class="btn primary" id="go">ปล่อยรถ</button></div>' +
+      '<h3>เครื่องจับเวลา</h3><div class="watch"><span class="readout" id="tm">0.00</span><small>เวลาที่แผ่นกั้นแสงบังประตู Δt (ms)</small></div>' +
+      '<div class="row"><button class="btn" id="send" disabled>บันทึกเวลาลงตาราง</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const urEl = $('#ur');
+    const setUr = (v) => { if (s.run) return; s.ur = Math.max(0.06, Math.min(0.95, v)); urEl.value = s.ur; s.u = s.ur; };
+    setUr(s.ur);
+    urEl.oninput = () => (s.run ? (urEl.value = s.ur) : setUr(+urEl.value));
+    ctrls.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => setUr(s.ur + +b.dataset.d)));
+    $('#go').onclick = () => {
+      if (s.run) return;
+      s.run = true; s.u = s.ur; s.v = 0; s.meas = null; s.inGate = null; s.t = 0;
+      $('#tm').textContent = '0.00'; $('#send').disabled = true; $('#go').disabled = true;
+    };
+    $('#send').onclick = () => { if (s.meas != null && !api.fillNext(['t1', 't2'], s.meas.toFixed(2))) alert('ตารางเต็มแล้ว กด "เพิ่มแถว" ก่อน'); };
+
+    let ppm, ox, oyT; // oyT: ระดับผิวโต๊ะบนจอ
+    function layout() { ppm = Math.min((cv.w - 60) / (TRACK + 0.08), (cv.h - 120) / 0.30); ox = 30; oyT = cv.h - 40; }
+    // จุดบนผิวราง: ตามแนวราง u (m) → พิกัดจอ
+    const PX = (u) => ox + u * Math.sqrt(1 - SIN * SIN) * ppm;
+    const PY = (u, off = 0) => oyT - (yOf(u) + off) * ppm;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // โต๊ะ
+      ctx.fillStyle = dark ? '#3a3226' : '#d9c3a0'; ctx.fillRect(0, oyT, cv.w, 14);
+      // ขาราง
+      ctx.fillStyle = dark ? '#6b7280' : '#4b5563';
+      [0.1, TRACK - 0.1].forEach((u) => ctx.fillRect(PX(u) - 4, PY(u, -0.012), 8, oyT - PY(u, -0.012)));
+      // รางลม (หนา 1.2 cm ใต้ผิวราง)
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(PX(0), PY(0)); ctx.lineTo(PX(TRACK), PY(TRACK)); ctx.lineTo(PX(TRACK), PY(TRACK, -0.012)); ctx.lineTo(PX(0), PY(0, -0.012)); ctx.closePath();
+      ctx.fillStyle = dark ? '#7d8592' : '#c3c9d3'; ctx.fill(); ctx.strokeStyle = '#3d434b'; ctx.lineWidth = 1 / z; ctx.stroke();
+      ctx.restore();
+      // กันชนปลายล่าง
+      ctx.fillStyle = '#555'; ctx.fillRect(PX(TRACK - 0.01) - 3, PY(TRACK - 0.01, 0.025), 5, 0.025 * ppm);
+      // ไม้บรรทัดที่ประตูแสงและที่จุดปล่อย
+      rulerAt(ctx, z, UG, 0.045);
+      rulerAt(ctx, z, s.ur, -0.06);
+      // ประตูแสง
+      const gx = PX(UG), gy = PY(UG);
+      ctx.fillStyle = '#2f6fde';
+      ctx.fillRect(gx - 8, gy - 0.075 * ppm, 3, 0.075 * ppm); ctx.fillRect(gx + 5, gy - 0.075 * ppm, 3, 0.075 * ppm);
+      ctx.fillRect(gx - 8, gy - 0.078 * ppm, 16, 3);
+      ctx.fillStyle = 'rgba(230,30,30,.8)'; ctx.fillRect(gx - 5, gy - 0.045 * ppm, 10, 1 / z);
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('ประตูแสง', gx, gy - 0.085 * ppm);
+      // แม่เหล็กไฟฟ้าที่จุดปล่อย
+      const mx = PX(s.ur - 0.075), my = PY(s.ur - 0.075);
+      ctx.fillStyle = dark ? '#8a4f2a' : '#a65a2a'; ctx.fillRect(mx - 10, my - 0.03 * ppm, 10, 0.03 * ppm);
+      // รถ (ยาว 15 cm) แผ่นกั้นแสงกลางรถ
+      const ang = Math.asin(SIN);
+      ctx.save(); ctx.translate(PX(s.u), PY(s.u)); ctx.rotate(ang);
+      ctx.fillStyle = dark ? '#c0563b' : '#e0563b';
+      const L2 = 0.075 * ppm;
+      ctx.beginPath(); ctx.moveTo(-L2, 0); ctx.lineTo(-L2 + 5, -0.02 * ppm); ctx.lineTo(L2 - 5, -0.02 * ppm); ctx.lineTo(L2, 0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = ink;
+      ctx.fillRect(-(WT / 2) * ppm, -0.055 * ppm, WT * ppm, 1.6); ctx.fillRect(-0.8, -0.055 * ppm, 1.6, 0.035 * ppm);
+      ctx.restore();
+    }
+    // ไม้บรรทัดตั้งบนโต๊ะใกล้ตำแหน่ง u (เลื่อนออกด้านข้าง dx m) พร้อมเส้นชี้จากผิวราง
+    function rulerAt(ctx, z, u, dx) {
+      const dark = Lab.dark();
+      const x = PX(u) + dx * ppm, w = 0.028 * ppm, top = 0.25;
+      const left = dx < 0 ? x - w : x;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f'; ctx.fillRect(left, oyT - top * ppm, w, top * ppm);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const edge = dx < 0 ? x : x, dir = dx < 0 ? -1 : 1;
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= top * 1000; mm += showMm ? 1 : 10) {
+        const y = oyT - mm * mmPx;
+        const l = mm % 100 === 0 ? 0.6 : mm % 50 === 0 ? 0.45 : mm % 10 === 0 ? 0.32 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 0.9 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(edge, y); ctx.lineTo(edge + dir * l * w, y); ctx.stroke();
+        if (mm % 50 === 0 || (z > 3 && mm % 10 === 0)) {
+          ctx.font = (mm % 50 === 0 ? 8 / Math.min(z, 3) : 2.2) + 'px Sarabun, sans-serif';
+          ctx.textAlign = dir > 0 ? 'right' : 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, edge + dir * (w - 0.8 / z), y);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // เส้นชี้ระดับผิวราง (ฉากแนวระดับ)
+      ctx.strokeStyle = 'rgba(220,30,30,.9)'; ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(PX(u), PY(u)); ctx.lineTo(edge + dir * 0.6 * w, PY(u)); ctx.stroke();
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.run) {
+        const n = Math.ceil(dt / 0.0005);
+        for (let i = 0; i < n; i++) {
+          const h = dt / n; s.t += h;
+          const a = G * SIN - D * Math.sign(s.v || 1) - B * s.v;
+          s.v += a * h; s.u += s.v * h;
+          // ประตูแสงจับเวลาที่แผ่นกั้นแสงบังลำแสง
+          const blocked = Math.abs(s.u - UG) < WT / 2;
+          if (blocked && s.inGate == null && s.meas == null) s.inGate = s.t;
+          if (!blocked && s.inGate != null) {
+            s.meas = (s.t - s.inGate) * 1000 + Lab.noise(0.01);
+            s.inGate = null;
+            $('#tm').textContent = s.meas.toFixed(2); $('#send').disabled = false;
+          }
+          if (s.u > TRACK - 0.095) { s.u = TRACK - 0.095; s.v = 0; s.run = false; $('#go').disabled = false; break; }
+        }
+        if (s.meas == null && s.inGate != null) $('#tm').textContent = ((s.t - s.inGate) * 1000).toFixed(2);
+      } else if (s.meas == null) s.u = s.ur;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'อ่านระดับผิวรางจากเส้นชี้สีแดงบนไม้บรรทัดทั้งสองอัน', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>
