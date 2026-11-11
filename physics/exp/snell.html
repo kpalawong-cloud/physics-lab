@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การหักเหของแสง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+let N_TRUE = null; // ดรรชนีหักเหของแท่งแก้วชุดนี้
+const D2R = Math.PI / 180;
+const sinD = (d) => Math.sin(d * D2R);
+
+Lab.init({
+  id: 'snell',
+  short: 'การหักเหของแสง',
+  title: 'การหักเหของแสงผ่านแท่งแก้วครึ่งวงกลม',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'วัดมุมตกกระทบและมุมหักเหของแสงที่ผ่านรอยต่อระหว่างอากาศกับแก้ว',
+      'หาดรรชนีหักเหของแก้วจากความชันของกราฟ sin i กับ sin r',
+      'สังเกตการสะท้อนกลับหมดและหามุมวิกฤตของแก้ว',
+    ],
+    theory:
+      '<p>เมื่อแสงผ่านจากอากาศเข้าสู่ตัวกลางที่มีดรรชนีหักเห n มุมตกกระทบ i และมุมหักเห r (วัดจาก<b>เส้นแนวฉาก</b>) สัมพันธ์กันตามกฎของสเนลล์</p>' +
+      '<div class="eq">sin i = n · sin r</div>' +
+      '<p>กราฟ sin i กับ sin r จึงเป็นเส้นตรงผ่านจุดกำเนิด มีความชันเท่ากับ n</p>' +
+      '<p>แสงที่ส่องเข้าทางผิวโค้งเล็งไปที่จุดศูนย์กลาง จะตั้งฉากกับผิวโค้งจึงไม่หักเห เมื่อแสงจากแก้วออกสู่อากาศด้วยมุมที่โตกว่า<b>มุมวิกฤต</b> θc จะสะท้อนกลับหมด</p>' +
+      '<div class="eq">sin θc = 1 / n</div>',
+    equipment: ['กล่องแสงเลเซอร์สีแดง', 'แท่งแก้วครึ่งวงกลม', 'กระดาษโปรแทรกเตอร์วงกลม (ขีดละเอียด 1°)'],
+    procedure: [
+      'วางผิวเรียบของแท่งแก้วตามเส้น 90°–90° ให้จุดกึ่งกลางผิวเรียบอยู่ที่จุดศูนย์กลางโปรแทรกเตอร์',
+      'เลือกแสงเข้าทาง "ผิวเรียบ" หมุนแหล่งแสงด้วยการลากหรือแถบเลื่อน แล้วอ่านมุมตกกระทบ i ตรงที่แสงตัดขอบโปรแทรกเตอร์',
+      'อ่านมุมหักเห r จากจุดที่แสงในแก้วออกไปตัดขอบโปรแทรกเตอร์อีกฝั่ง ใช้แว่นขยายประมาณค่าถึงครึ่งองศา',
+      'เปลี่ยนมุมตกกระทบประมาณ 10°, 20°, … , 70° แล้วบันทึกผล',
+      'เลือกแสงเข้าทาง "ผิวโค้ง" ค่อย ๆ เพิ่มมุมจนแสงที่ออกสู่อากาศหายไป บันทึกมุมวิกฤตในคำถามท้ายการทดลอง',
+    ],
+    tip: 'มุมทุกมุมวัดจากเส้นแนวฉาก (เส้น 0°) ไม่ใช่จากผิวแก้ว',
+  },
+  table: {
+    rows: 7,
+    hint: 'โหมดผิวโค้งก็ใช้ได้: ให้มุมในอากาศเป็น i และมุมในแก้วเป็น r',
+    columns: [
+      { key: 'i', label: 'มุมตกกระทบ i<br>(องศา)', input: true },
+      { key: 'r', label: 'มุมหักเห r<br>(องศา)', input: true },
+      { key: 'si', label: 'sin i', calc: (r) => sinD(r.i), digits: 3 },
+      { key: 'sr', label: 'sin r', calc: (r) => sinD(r.r), digits: 3 },
+      { key: 'q', label: 'sin i / sin r', calc: (r) => r.si / r.sr, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'sin i กับ sin r', x: 'sr', y: 'si', xv: 'sin r', yv: 'sin i', xlabel: 'sin r', ylabel: 'sin i', origin: true,
+    explain: 'ความชันของกราฟคือดรรชนีหักเหของแก้ว n เทียบกับอากาศ',
+  },
+  results(fit) {
+    const n = fit.m, sn = fit.sm;
+    const thc = Math.asin(Math.min(1, 1 / n)) / D2R;
+    return [
+      { label: 'ดรรชนีหักเห n = ความชัน', value: n, unc: sn, unit: '' },
+      { label: 'มุมวิกฤตที่คำนวณได้ θc = sin⁻¹(1/n)', value: thc, unc: (sn / (n * Math.sqrt(n * n - 1))) / D2R, unit: 'องศา' },
+      { label: 'ดรรชนีหักเหของแท่งแก้วชุดนี้', value: n, accepted: N_TRUE, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'เมื่อแสงผ่านจากอากาศเข้าสู่แก้ว แสงเบนเข้าหาหรือออกจากเส้นแนวฉาก เพราะเหตุใด',
+    'เหตุใดแสงที่ผ่านผิวโค้งของแท่งแก้วครึ่งวงกลมจึงไม่หักเห',
+    'มุมวิกฤตที่วัดได้จากโหมดแสงเข้าทาง "ผิวโค้ง" เท่ากับเท่าใด เทียบกับค่าที่คำนวณจากดรรชนีหักเหได้อย่างไร',
+    'ความสว่างของแสงสะท้อนและแสงหักเหเปลี่ยนไปอย่างไรเมื่อมุมใกล้มุมวิกฤต',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    N_TRUE = 1.47 + 0.06 * api.rng();
+    const s = { mode: 'flat', ang: 30 + 10 * api.rng(), drag: false };
+
+    ctrls.innerHTML =
+      '<h3>แสงเข้าทาง</h3>' +
+      '<div class="seg" id="mode"><button data-m="flat" class="on">ผิวเรียบ</button><button data-m="curve">ผิวโค้ง</button></div>' +
+      '<h3>หมุนแหล่งแสง</h3>' +
+      '<input type="range" id="ang" min="0" max="89" step="0.1">' +
+      '<div class="row"><button class="btn" id="m1">◀ 1°</button><button class="btn" id="m01">◀ 0.2°</button><button class="btn" id="p01">0.2° ▶</button><button class="btn" id="p1">1° ▶</button></div>' +
+      '<p class="muted" style="font-size:13px">ลากกล่องแสงรอบโปรแทรกเตอร์ได้ แถบเลื่อนไม่บอกค่ามุม ต้องอ่านจากโปรแทรกเตอร์เอง</p>' +
+      '<div class="note" id="tir" style="display:none">แสงสะท้อนกลับหมด ไม่มีแสงออกสู่อากาศ</div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const angEl = $('#ang');
+    const setAng = (a) => { s.ang = Math.max(0, Math.min(89, a)); angEl.value = s.ang; };
+    setAng(s.ang);
+    angEl.oninput = () => (s.ang = +angEl.value);
+    $('#m1').onclick = () => setAng(s.ang - 1); $('#p1').onclick = () => setAng(s.ang + 1);
+    $('#m01').onclick = () => setAng(s.ang - 0.2); $('#p01').onclick = () => setAng(s.ang + 0.2);
+    ctrls.querySelectorAll('#mode button').forEach((b) => (b.onclick = () => {
+      s.mode = b.dataset.m;
+      ctrls.querySelectorAll('#mode button').forEach((x) => x.classList.toggle('on', x === b));
+    }));
+
+    let cx, cy, R, Rb;
+    function layout() { cx = cv.w / 2; cy = cv.h / 2; R = Math.min(cv.w, cv.h) * 0.43; Rb = R * 0.6; }
+
+    // ค่าสะท้อนแบบเฟรเนล (แสงไม่โพลาไรซ์) ใช้กำหนดความสว่างของรังสี
+    function fresnel(n1, n2, ti) {
+      const st = (n1 / n2) * Math.sin(ti);
+      if (st >= 1) return 1;
+      const tt = Math.asin(st), ci = Math.cos(ti), ct = Math.cos(tt);
+      const rs = ((n1 * ci - n2 * ct) / (n1 * ci + n2 * ct)) ** 2;
+      const rp = ((n1 * ct - n2 * ci) / (n1 * ct + n2 * ci)) ** 2;
+      return (rs + rp) / 2;
+    }
+    function rays() {
+      const a = s.ang * D2R, n = N_TRUE;
+      // ทิศในพิกัดจอ: y ลงล่าง, เส้นแนวฉากคือแนวตั้ง
+      if (s.mode === 'flat') {
+        const r = Math.asin(Math.sin(a) / n);
+        const Rf = fresnel(1, n, a);
+        return { src: [-Math.sin(a), -Math.cos(a)], refl: [[Math.sin(a), -Math.cos(a)], Rf], refr: [[Math.sin(r), Math.cos(r)], 1 - Rf], tir: false };
+      }
+      const st = n * Math.sin(a);
+      const Rf = fresnel(n, 1, a);
+      return {
+        src: [-Math.sin(a), Math.cos(a)],
+        refl: [[Math.sin(a), Math.cos(a)], Rf],
+        refr: st < 1 ? [[Math.sin(Math.asin(st)), -Math.cos(Math.asin(st))], 1 - Rf] : null,
+        tir: st >= 1,
+      };
+    }
+
+    function beam(ctx, x0, y0, x1, y1, I, z) {
+      if (I < 0.003) return;
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,40,30,' + Math.min(1, 0.25 + I * 0.75) * 0.35 + ')';
+      ctx.lineWidth = 6 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.strokeStyle = 'rgba(230,20,20,' + Math.min(1, 0.15 + I * 0.85) + ')';
+      ctx.lineWidth = 1.6 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.restore();
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // กระดาษโปรแทรกเตอร์
+      ctx.fillStyle = dark ? '#1f242d' : '#ffffff';
+      ctx.beginPath(); ctx.arc(cx, cy, R + 26, 0, 7); ctx.fill();
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+      ctx.strokeStyle = ink;
+      const step = z >= 2 ? 0.5 : 1;
+      for (let d = 0; d < 360; d += step) {
+        const a = d * D2R, half = d % 1 !== 0;
+        const l = half ? 3 : d % 10 === 0 ? 14 : d % 5 === 0 ? 9 : 6;
+        ctx.lineWidth = (d % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath();
+        ctx.moveTo(cx + R * Math.sin(a), cy - R * Math.cos(a));
+        ctx.lineTo(cx + (R + l) * Math.sin(a), cy - (R + l) * Math.cos(a)); ctx.stroke();
+        if (d % 10 === 0) {
+          // เลของศาวัดจากเส้นแนวฉาก (0 บน-ล่าง, 90 ซ้าย-ขวา)
+          const lab = d <= 90 ? d : d <= 180 ? 180 - d : d <= 270 ? d - 180 : 360 - d;
+          ctx.fillStyle = muted; ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(lab, cx + (R + 20) * Math.sin(a), cy - (R + 20) * Math.cos(a));
+        }
+      }
+      // เส้นแนวฉากและเส้นผิวเรียบ
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.8 / z; ctx.setLineDash([5 / z, 4 / z]);
+      ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+      // แท่งแก้วครึ่งวงกลม (ครึ่งล่าง)
+      ctx.fillStyle = Lab.css('--glass');
+      ctx.strokeStyle = dark ? 'rgba(160,210,240,.7)' : 'rgba(70,140,190,.8)'; ctx.lineWidth = 1.4 / z;
+      ctx.beginPath(); ctx.moveTo(cx - Rb, cy); ctx.arc(cx, cy, Rb, 0, Math.PI, false); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // รังสี
+      const ry = rays(), Rl = R + 34;
+      const lx = cx + ry.src[0] * Rl, ly = cy + ry.src[1] * Rl;
+      beam(ctx, lx, ly, cx, cy, 1, z);
+      beam(ctx, cx, cy, cx + ry.refl[0][0] * (R + 22), cy + ry.refl[0][1] * (R + 22), ry.refl[1], z);
+      if (ry.refr) beam(ctx, cx, cy, cx + ry.refr[0][0] * (R + 22), cy + ry.refr[0][1] * (R + 22), ry.refr[1], z);
+      // กล่องแสง
+      const ang = Math.atan2(cy - ly, cx - lx);
+      ctx.save(); ctx.translate(lx, ly); ctx.rotate(ang);
+      ctx.fillStyle = dark ? '#3a4150' : '#2b2f36'; ctx.fillRect(-34, -9, 34, 18);
+      ctx.fillStyle = '#e33'; ctx.fillRect(-3, -3, 3, 6);
+      ctx.restore();
+      document.getElementById('tir') && (document.getElementById('tir').style.display = ry.tir ? '' : 'none');
+    }
+
+    // ลากกล่องแสงรอบวง (เฉพาะครึ่งบนในโหมดผิวเรียบ, ครึ่งล่างในโหมดผิวโค้ง)
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const dx = x - cx, dy = y - cy, dist = Math.hypot(dx, dy);
+      if (e.type === 'pointerdown' && dist > R * 0.75 && dist < R + 60) { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && (e.type === 'pointerdown' || e.type === 'pointermove')) {
+        // มุมวัดจากเส้นแนวฉากฝั่งที่แสงเข้า ใช้ได้ทั้งซ้ายและขวา
+        const a = s.mode === 'flat' ? Math.atan2(Math.abs(dx), -dy) : Math.atan2(Math.abs(dx), dy);
+        setAng(a / D2R);
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากกล่องแสงรอบโปรแทรกเตอร์เพื่อเปลี่ยนมุม', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

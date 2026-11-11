@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>กฎของฮุก · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;          // m/s²
+const M1 = 0.05;        // มวลต่อก้อน (kg)
+const NMAX = 10;        // จำนวนก้อนสูงสุด
+let K = 25;             // ค่านิจสปริงจริง (ซ่อน) กำหนดใน apparatus
+
+Lab.init({
+  id: 'hooke',
+  short: 'กฎของฮุก',
+  title: 'กฎของฮุกและค่านิจของสปริง',
+  level: 'ม.3–ม.4',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างแรงดึงสปริง (F) กับระยะยืดของสปริง (x)',
+      'หาค่านิจของสปริง (k) จากความชันของกราฟ F กับ x',
+    ],
+    theory:
+      '<p>เมื่อแขวนมวล m ที่ปลายสปริงและสปริงหยุดนิ่ง แรงที่ดึงสปริงเท่ากับน้ำหนักของมวล</p>' +
+      '<div class="eq">F = mg</div>' +
+      '<p>ภายในขีดจำกัดสภาพยืดหยุ่น ระยะยืดของสปริงแปรผันตรงกับแรงดึง (กฎของฮุก)</p>' +
+      '<div class="eq">F = k x</div>' +
+      '<p>กราฟ F กับ x จึงเป็นเส้นตรงผ่านจุดกำเนิด <b>ความชันคือค่านิจสปริง k</b> (หน่วย N/m)</p>' +
+      '<p>ระยะยืด x = ตำแหน่งเข็มชี้เมื่อแขวนมวล − ตำแหน่งเข็มชี้เมื่อยังไม่แขวนมวล</p>',
+    equipment: ['ขาตั้งพร้อมที่หนีบ', 'สปริง', 'ที่แขวนมวลพร้อมเข็มชี้ (มวลน้อยมาก)', 'ตุ้มมวลแบบมีร่อง ก้อนละ 50 g จำนวน 10 ก้อน', 'ไม้บรรทัด (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'ก่อนแขวนมวล ใช้แว่นขยายอ่านตำแหน่งเข็มชี้บนไม้บรรทัด บันทึกเป็นเซนติเมตร (เช่น 12.35) ในแถวที่มวล 0 kg',
+      'เพิ่มมวลทีละ 50 g รอให้สปริงหยุดนิ่ง แล้วอ่านตำแหน่งเข็มชี้ บันทึกมวลเป็นกิโลกรัม (เช่น 0.050)',
+      'ทำซ้ำจนได้ข้อมูลอย่างน้อย 6–8 ค่า',
+      'ลองเพิ่มมวลจนถึง 10 ก้อน แล้วเอามวลออกทั้งหมด สังเกตตำแหน่งเข็มชี้เทียบกับตอนเริ่มต้น',
+    ],
+    tip: 'เคล็ดลับ: อ่านสเกลโดยให้สายตาอยู่ระดับเดียวกับเข็มชี้ (ในภาพใช้เส้นแดงกลางแว่นขยายช่วย) และประมาณค่าถึงทศนิยมตำแหน่งที่สองของเซนติเมตร',
+  },
+  table: {
+    rows: 8,
+    hint: 'แถวแรกให้บันทึกตอนยังไม่แขวนมวล (m = 0) ระยะยืดคำนวณจากแถวที่ m = 0',
+    columns: [
+      { key: 'm', label: 'มวลที่แขวน m<br>(kg)', input: true },
+      { key: 'F', label: 'แรงดึง F = mg<br>(N)', calc: (r) => r.m * G, digits: 3 },
+      { key: 'x', label: 'ตำแหน่งเข็มชี้<br>(cm)', input: true },
+      {
+        key: 'dx', label: 'ระยะยืด x<br>(m)', digits: 4,
+        calc: (r, rows) => {
+          const base = rows.find((q) => q.m === 0 && isFinite(q.x)) || rows.find((q) => isFinite(q.x));
+          return base ? (r.x - base.x) / 100 : NaN;
+        },
+      },
+    ],
+  },
+  graph: {
+    title: 'F กับ x', x: 'dx', y: 'F', xv: 'x', yv: 'F', xlabel: 'ระยะยืด x (m)', ylabel: 'แรงดึง F (N)', origin: true,
+    explain: 'ถ้าจุดช่วงท้ายเบนออกจากเส้นตรง แสดงว่าสปริงถูกดึงเกินขีดจำกัดสภาพยืดหยุ่น ควรใช้เฉพาะช่วงที่เป็นเส้นตรงหาค่า k',
+  },
+  results(fit) {
+    return [
+      { label: 'ค่านิจสปริง k = ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'N/m', hidden: true, accepted: K, digitsTrue: 1 },
+    ];
+  },
+  questions: [
+    'กราฟ F กับ x มีลักษณะอย่างไร ความชันของกราฟมีความหมายทางฟิสิกส์อย่างไร',
+    'ถ้าใช้สปริงที่แข็งกว่าเดิม (k มากขึ้น) กราฟจะเปลี่ยนไปอย่างไร',
+    'เมื่อแขวนมวลจนถึง 10 ก้อนแล้วเอาออกทั้งหมด เข็มชี้กลับไปที่ตำแหน่งเดิมหรือไม่ จุดท้าย ๆ บนกราฟเป็นอย่างไร อธิบายด้วยขีดจำกัดสภาพยืดหยุ่น',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง และเสนอวิธีลดความคลาดเคลื่อน',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 5, r: 80 });
+    lens.button(stage);
+
+    // ค่าซ่อนของสปริงชุดนี้
+    K = 18 + 14 * api.rng();
+    const X0 = 0.10 + 0.05 * api.rng();         // ตำแหน่งเข็มชี้ตอนไม่มีภาระ (m บนไม้บรรทัด)
+    const FLIM = 0.75 * NMAX * M1 * G;          // ขีดจำกัดสภาพยืดหยุ่น (N)
+    const C2 = 0.008;                            // ยืดเพิ่มนอกเชิงเส้น (m/N²)
+    const s = { n: 0, y: X0, v: 0, fmax: 0 };
+
+    ctrls.innerHTML =
+      '<h3>ตุ้มมวล (ก้อนละ 50 g)</h3>' +
+      '<p id="hMass" style="font-size:15px;margin:0 0 6px"></p>' +
+      '<div class="row"><button class="btn primary" id="hAdd">+ เพิ่มมวล 50 g</button></div>' +
+      '<div class="row"><button class="btn" id="hSub">− เอามวลออก</button><button class="btn" id="hClr">เอาออกทั้งหมด</button></div>' +
+      '<p class="muted" style="font-size:13px">รอให้สปริงหยุดนิ่งก่อนอ่านค่า เปิดแว่นขยายแล้วแตะที่ปลายเข็มชี้เพื่ออ่านสเกลละเอียด</p>';
+    const hMass = ctrls.querySelector('#hMass');
+    function upd() {
+      hMass.textContent = 'มวลที่แขวน: ' + s.n + ' ก้อน × 50 g';
+      ctrls.querySelector('#hAdd').disabled = s.n >= NMAX;
+      ctrls.querySelector('#hSub').disabled = s.n <= 0;
+      ctrls.querySelector('#hClr').disabled = s.n <= 0;
+      const F = s.n * M1 * G;
+      if (F > s.fmax) s.fmax = F;
+    }
+    ctrls.querySelector('#hAdd').onclick = () => { if (s.n < NMAX) { s.n++; upd(); } };
+    ctrls.querySelector('#hSub').onclick = () => { if (s.n > 0) { s.n--; upd(); } };
+    ctrls.querySelector('#hClr').onclick = () => { s.n = 0; upd(); };
+    upd();
+
+    // ตำแหน่งสมดุลของเข็มชี้ (m) รวมผลเกินขีดจำกัดและการยืดค้าง
+    function yEq() {
+      const F = s.n * M1 * G;
+      const set = s.fmax > FLIM ? 0.5 * C2 * (s.fmax - FLIM) ** 2 : 0;
+      const extra = F > FLIM ? C2 * (F - FLIM) ** 2 : 0;
+      return X0 + set + F / K + extra;
+    }
+
+    // เรขาคณิต: ไม้บรรทัด 0–50 cm
+    let ppm, px, ry0;
+    function layout() {
+      ppm = (cv.h - 70) / 0.56;
+      px = cv.w * 0.42; ry0 = 50;
+    }
+
+    canvas.addEventListener('pointerdown', (e) => { const [x, y] = Lab.pos(canvas, e); lens.handle(e, x, y); e.preventDefault(); });
+    canvas.addEventListener('pointermove', (e) => { const [x, y] = Lab.pos(canvas, e); lens.handle(e, x, y); });
+
+    function scene(ctx, z) {
+      const ink = Lab.css('--ink');
+      const dark = Lab.dark();
+      const yP = ry0 + s.y * ppm;                // ตำแหน่งเข็มชี้ (px)
+      const topY = ry0 - 30;                     // จุดแขวนสปริง
+      // ขาตั้ง
+      const rodX = px - 0.17 * ppm, baseY = cv.h - 12;
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280';
+      ctx.fillRect(rodX - 60, baseY - 10, 150, 12);
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0';
+      ctx.fillRect(rodX - 4, topY - 14, 8, baseY - topY + 6);
+      ctx.fillRect(rodX, topY - 6, px - rodX + 14, 7);
+      ctx.fillStyle = dark ? '#5d6677' : '#4b5563';
+      ctx.fillRect(rodX - 9, topY - 12, 18, 18);
+      ctx.fillRect(px - 7, topY - 8, 14, 10);
+      // ไม้บรรทัด (ขีดอยู่ด้านซ้าย หันเข้าหาเข็มชี้)
+      const rx0 = px + 0.05 * ppm, rx1 = rx0 + 0.05 * ppm, ryEnd = ry0 + 0.505 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(rx0, ry0 - 8, rx1 - rx0, ryEnd - ry0 + 16);
+      ctx.strokeStyle = dark ? '#6b4f2a' : '#b08a52'; ctx.lineWidth = 1 / z;
+      ctx.strokeRect(rx0, ry0 - 8, rx1 - rx0, ryEnd - ry0 + 16);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000;
+      const showMm = mmPx * z >= 2.2;
+      for (let mm = 0; mm <= 500; mm += showMm ? 1 : 5) {
+        const y = ry0 + mm * mmPx;
+        const len = mm % 50 === 0 ? 0.5 : mm % 10 === 0 ? 0.36 : mm % 5 === 0 ? 0.24 : 0.15;
+        ctx.lineWidth = (mm % 10 === 0 ? 1.1 : 0.7) / z;
+        ctx.beginPath(); ctx.moveTo(rx0, y); ctx.lineTo(rx0 + len * (rx1 - rx0), y); ctx.stroke();
+        if (mm % 50 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 50 === 0 ? 11 : 9) / Math.min(z, 3) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, rx1 - 2 / z, y);
+        }
+      }
+      // สปริงขด
+      const sTop = topY + 2, sBot = yP - 10, coils = 16, wC = 9;
+      ctx.strokeStyle = dark ? '#c9ced8' : '#4b5563'; ctx.lineWidth = 1.6 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(px, sTop); ctx.lineTo(px, sTop + 6);
+      const seg = (sBot - 6 - (sTop + 6)) / (coils * 2);
+      for (let i = 0; i <= coils * 2; i++) ctx.lineTo(px + (i === 0 || i === coils * 2 ? 0 : i % 2 ? wC : -wC), sTop + 6 + i * seg);
+      ctx.lineTo(px, sBot); ctx.lineTo(px, yP); ctx.stroke();
+      // เข็มชี้: เส้นจากแกนสปริงไปจรดขอบไม้บรรทัด ปลายแหลม
+      ctx.strokeStyle = '#d23a2a'; ctx.fillStyle = '#d23a2a'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(px - 6, yP); ctx.lineTo(rx0 - 1.5 / z, yP); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rx0, yP); ctx.lineTo(rx0 - 7 / Math.sqrt(z), yP - 2 / Math.sqrt(z)); ctx.lineTo(rx0 - 7 / Math.sqrt(z), yP + 2 / Math.sqrt(z)); ctx.closePath(); ctx.fill();
+      // ที่แขวนและตุ้มมวล
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.4 / Math.sqrt(z);
+      const h = 7, plate = yP + 14 + s.n * h;
+      ctx.beginPath(); ctx.moveTo(px, yP); ctx.lineTo(px, plate); ctx.stroke();
+      ctx.fillStyle = dark ? '#8a93a3' : '#6b7280';
+      ctx.fillRect(px - 16, plate, 32, 3);
+      for (let i = 0; i < s.n; i++) {
+        const y = plate - (i + 1) * h;
+        const gr = ctx.createLinearGradient(px - 15, 0, px + 15, 0);
+        gr.addColorStop(0, '#7d6a3c'); gr.addColorStop(0.45, '#d9c27e'); gr.addColorStop(1, '#7d6a3c');
+        ctx.fillStyle = gr; ctx.fillRect(px - 15, y + 0.5, 30, h - 1);
+      }
+      // ก้านที่แขวนผ่านร่องตุ้มมวล
+      if (s.n) { ctx.fillStyle = dark ? '#c9ced8' : '#4b5563'; ctx.fillRect(px - 1, plate - s.n * h, 2, s.n * h); }
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (dt > 0) {
+        // สั่นแบบหน่วงรอบตำแหน่งสมดุล มวลรวม = ตุ้ม + มวลประสิทธิผลของสปริงและที่แขวน
+        const mT = s.n * M1 + 0.03, ye = yEq(), gam = 3.5;
+        const n = Math.ceil(dt / 0.001), h = dt / n;
+        for (let i = 0; i < n; i++) { s.v += (-(K / mT) * (s.y - ye) - gam * s.v) * h; s.y += s.v * h; }
+        if (Math.abs(s.y - ye) < 2e-6 && Math.abs(s.v) < 1e-4) { s.y = ye; s.v = 0; }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'เพิ่มมวลแล้วรอให้สปริงหยุดนิ่ง จากนั้นอ่านตำแหน่งเข็มชี้', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

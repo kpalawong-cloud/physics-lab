@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การตกอย่างอิสระ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.78;        // m/s²
+const F_TICK = 50;     // ความถี่เครื่องเคาะ (Hz)
+const DT = 1 / F_TICK;
+const H = 0.55;        // ระยะตกจนถึงพื้น (m)
+let A_TRUE = null;     // ความเร่งจริงของมวล (มีแรงเสียดทานของแถบกระดาษ)
+
+Lab.init({
+  id: 'ticker',
+  short: 'การตกอย่างอิสระ',
+  title: 'การตกอย่างอิสระด้วยเครื่องเคาะสัญญาณเวลา',
+  level: 'ม.4',
+  intro: {
+    objective: [
+      'หาความเร็วของวัตถุที่ตกจากระยะห่างระหว่างจุดบนแถบกระดาษ',
+      'เขียนกราฟความเร็วกับเวลา (v–t) และหาความเร่งของวัตถุที่ตกอย่างอิสระจากความชันของกราฟ',
+    ],
+    theory:
+      '<p>เครื่องเคาะสัญญาณเวลาเคาะจุดลงบนแถบกระดาษ <b>50 ครั้งต่อวินาที</b> ช่วงเวลาระหว่างจุดที่อยู่ติดกันจึงเท่ากับ</p>' +
+      '<div class="eq">Δt = 1/50 s = 0.02 s</div>' +
+      '<p>ความเร็วเฉลี่ยในช่วงจุดหนึ่งเท่ากับความเร็วขณะหนึ่งที่<b>กึ่งกลางช่วงเวลา</b>นั้น</p>' +
+      '<div class="eq">v = Δx / Δt</div>' +
+      '<p>เมื่อเขียนกราฟ v กับ t จะได้เส้นตรง ความชันคือความเร่ง <b>a = Δv / Δt</b> ซึ่งควรใกล้เคียง g แต่จะน้อยกว่าเล็กน้อยเพราะแรงเสียดทานระหว่างแถบกระดาษกับเครื่องเคาะ</p>',
+    equipment: ['เครื่องเคาะสัญญาณเวลา 50 Hz พร้อมหม้อแปลง', 'แถบกระดาษ', 'ตุ้มน้ำหนัก 200 g', 'ขาตั้งพร้อมที่หนีบ', 'ไม้เมตร (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'กด "เปิดเครื่องเคาะและปล่อยมวล" มวลจะตกลากแถบกระดาษผ่านเครื่องเคาะ (แสดงภาพช้า)',
+      'ไปที่ "วัดแถบกระดาษ" แตะจุดที่ชัดเจนช่วงต้นแถบ (ไม่ใช่จุดที่ซ้อนกัน) ให้เป็นจุดที่ 0',
+      'ลากไม้เมตรให้ขีด 0 ตรงกับจุดที่ 0 แล้วใช้แว่นขยายอ่านตำแหน่ง x ของจุดที่ 0, 1, 2, … บันทึกเป็นเซนติเมตรลงแถวที่ 1, 2, 3, … ตามลำดับ',
+      'บันทึกอย่างน้อย 10 จุด ตารางจะคำนวณระยะแต่ละช่วงและความเร็วให้',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ v–t และหาความเร่ง',
+    ],
+    tip: 'แถวที่ 1 ของตารางคือจุดที่ 0 (x = 0.00 cm) แถวที่ 2 คือจุดที่ 1 และต่อไปเรื่อย ๆ อ่านค่าให้ละเอียดถึง 0.01 cm โดยประมาณค่าระหว่างขีด mm',
+  },
+  table: {
+    rows: 11,
+    hint: 'แถวที่ n คือจุดที่ n − 1 บนแถบกระดาษ กรอกตำแหน่ง x ที่อ่านจากไม้บรรทัด',
+    columns: [
+      { key: 'x', label: 'ตำแหน่งจุด x<br>(cm)', input: true },
+      { key: 't', label: 'เวลา t<br>(s)', calc: (r, rows, i) => (isFinite(r.x) ? i * DT : NaN), digits: 2 },
+      { key: 's', label: 'ระยะช่วง Δx<br>(cm)', calc: (r, rows, i) => (i > 0 ? r.x - rows[i - 1].x : NaN), digits: 2 },
+      { key: 'tm', label: 'เวลากึ่งกลางช่วง<br>(s)', calc: (r, rows, i) => (isFinite(r.s) ? (i - 0.5) * DT : NaN), digits: 2 },
+      { key: 'v', label: 'ความเร็ว v = Δx/Δt<br>(m/s)', calc: (r) => r.s / 100 / DT, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'ความเร็วกับเวลา', x: 'tm', y: 'v', xv: 't', yv: 'v', xlabel: 'เวลา t (s)', ylabel: 'ความเร็ว v (m/s)', origin: false,
+    explain: 'จุดตัดแกน v คือความเร็วขณะที่จุดที่ 0 ถูกเคาะ ซึ่งไม่เป็นศูนย์เพราะเลือกจุดเริ่มหลังมวลเริ่มเคลื่อนที่แล้ว',
+  },
+  results(fit) {
+    return [
+      { label: 'ความเร็วที่จุดที่ 0 (จุดตัดแกน v)', value: fit.b, unc: fit.sb, unit: 'm/s' },
+      { label: 'ความเร่ง a = ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'm/s²', accepted: G },
+      { label: 'ความเร่งจริงของมวล (รวมผลแรงเสียดทาน)', value: fit.m, unit: 'm/s²', accepted: A_TRUE, hidden: true, digitsTrue: 2 },
+    ];
+  },
+  questions: [
+    'ระยะห่างระหว่างจุดบนแถบกระดาษเปลี่ยนแปลงอย่างไร บอกอะไรเกี่ยวกับการเคลื่อนที่ของมวล',
+    'เหตุใดความเร็วเฉลี่ยในแต่ละช่วงจึงใช้แทนความเร็วขณะหนึ่งที่ "กึ่งกลาง" ช่วงเวลา',
+    'ความเร่งที่ได้น้อยกว่า 9.78 m/s² หรือไม่ เพราะเหตุใด และจะปรับปรุงการทดลองอย่างไร',
+    'เหตุใดจึงไม่ใช้จุดช่วงต้นแถบที่ซ้อนทับกันเป็นจุดเริ่มต้น',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ความเร่งจริง: แรงเสียดทานของแถบกระดาษกับเครื่องเคาะทำให้ช้าลง 2–6%
+    A_TRUE = G * (0.94 + 0.04 * rng());
+
+    const s = {
+      mode: 'drop', // drop | tape
+      t: 0, running: false, slow: 8,
+      dots: [], tRel: 0, tEnd: 0,
+      start: -1,     // ดัชนีจุดที่นักเรียนเลือกเป็นจุดที่ 0
+      rulerX: 0,     // ตำแหน่งขีด 0 ของไม้บรรทัดบนแถบ (cm)
+      drag: null,
+    };
+    // สร้างแถบกระดาษ: เครื่องเคาะเปิดก่อนปล่อยมวลเล็กน้อย จุดช่วงต้นจึงซ้อนกัน
+    function makeTape() {
+      s.tRel = 0.08 + 0.05 * Math.random();
+      const tFall = Math.sqrt((2 * H) / A_TRUE);
+      s.tEnd = s.tRel + tFall;
+      s.dots = [];
+      const phase = Math.random() * DT;
+      for (let k = 0; ; k++) {
+        const t = phase + k * DT;
+        if (t > s.tEnd + 3 * DT) break;
+        const tt = Math.min(Math.max(t - s.tRel, 0), tFall);
+        const x = 0.5 * A_TRUE * tt * tt * 100 + 3; // cm จากต้นแถบ (เผื่อหัวแถบ 3 cm)
+        s.dots.push({ t, x: x + Lab.noise(0.012), y: Lab.noise(0.04), r: 0.05 + Math.random() * 0.025 });
+      }
+      s.start = -1; s.rulerX = 2;
+    }
+
+    ctrls.innerHTML =
+      '<h3>ขั้นตอน</h3>' +
+      '<div class="seg" id="mode"><button data-m="drop" class="on">ปล่อยมวล</button><button data-m="tape">วัดแถบกระดาษ</button></div>' +
+      '<div id="cDrop"><div class="row"><button class="btn primary" id="go">เปิดเครื่องเคาะและปล่อยมวล</button></div>' +
+      '<p class="muted" style="font-size:13px">ภาพแสดงช้าลง 8 เท่า มวลตก ' + (H * 100).toFixed(0) + ' cm</p></div>' +
+      '<div id="cTape" style="display:none">' +
+      '<p style="font-size:14px;margin:0 0 6px">1) แตะจุดที่ชัดเจนเพื่อเลือกเป็นจุดที่ 0<br>2) ลากไม้เมตรให้ขีด 0 ตรงจุดที่ 0<br>3) เปิดแว่นขยายแล้วอ่านตำแหน่งทีละจุด</p>' +
+      '<div class="row"><button class="btn" id="snap">วางขีด 0 ตรงจุดที่ 0</button></div>' +
+      '<div class="row"><button class="btn" id="nudgeL">◀ 0.1 mm</button><button class="btn" id="nudgeR">0.1 mm ▶</button></div>' +
+      '</div>' +
+      '<h3>แถบกระดาษ</h3><p class="muted" style="font-size:13px" id="info">ยังไม่มีแถบกระดาษ</p>' +
+      '<div class="row"><button class="btn" id="redo">ทำแถบใหม่</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    function setMode(m) {
+      s.mode = m;
+      ctrls.querySelectorAll('#mode button').forEach((b) => b.classList.toggle('on', b.dataset.m === m));
+      $('#cDrop').style.display = m === 'drop' ? '' : 'none';
+      $('#cTape').style.display = m === 'tape' ? '' : 'none';
+    }
+    ctrls.querySelectorAll('#mode button').forEach((b) => (b.onclick = () => {
+      if (b.dataset.m === 'tape' && !s.dots.length) { alert('ต้องปล่อยมวลเพื่อให้ได้แถบกระดาษก่อน'); return; }
+      setMode(b.dataset.m);
+    }));
+    $('#go').onclick = () => { makeTape(); s.t = 0; s.running = true; $('#go').disabled = true; info(); };
+    $('#redo').onclick = () => { if (!confirm('ทิ้งแถบเดิมแล้วปล่อยมวลใหม่? (ค่าที่บันทึกในตารางยังอยู่)')) return; s.dots = []; setMode('drop'); $('#go').disabled = false; info(); };
+    $('#snap').onclick = () => { if (s.start >= 0) s.rulerX = s.dots[s.start].x + Lab.noise(0.015); };
+    $('#nudgeL').onclick = () => (s.rulerX -= 0.01);
+    $('#nudgeR').onclick = () => (s.rulerX += 0.01);
+    function info() {
+      $('#info').textContent = !s.dots.length ? 'ยังไม่มีแถบกระดาษ'
+        : s.running ? 'กำลังตก…' : 'มีจุดบนแถบ ' + s.dots.length + ' จุด' + (s.start >= 0 ? ' · เลือกจุดที่ 0 แล้ว' : '');
+    }
+    // เก็บแถบไว้ข้ามการโหลดหน้า เพื่อให้กลับมาอ่านต่อได้
+    const saved = Lab.store.get('vl-ticker-tape', null);
+    if (saved && saved.a === A_TRUE) { s.dots = saved.dots; s.start = saved.start; s.rulerX = saved.rulerX; s.tRel = saved.tRel; s.tEnd = saved.tEnd; s.t = 1e9; $('#go').disabled = true; info(); }
+    const persist = () => Lab.store.set('vl-ticker-tape', { a: A_TRUE, dots: s.dots, start: s.start, rulerX: s.rulerX, tRel: s.tRel, tEnd: s.tEnd });
+
+    /* ---------- มุมมองปล่อยมวล ---------- */
+    function sceneDrop(ctx, z) {
+      const w = cv.w, h = cv.h, dark = Lab.dark();
+      const top = 40, floorY = h - 28, ppm = (floorY - top - 150) / H;
+      const cx = w * 0.45;
+      const tFall = s.tEnd - s.tRel;
+      const tt = Math.min(Math.max(s.t - s.tRel, 0), tFall);
+      const fall = s.dots.length ? 0.5 * A_TRUE * tt * tt : 0;
+      // ขาตั้งและเครื่องเคาะ
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0';
+      ctx.fillRect(cx + 90, top - 20, 8, floorY - top + 20);
+      ctx.fillRect(cx - 10, top + 12, 108, 7);
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280'; ctx.fillRect(cx + 40, floorY, 120, 10);
+      ctx.fillStyle = dark ? '#3a6fb8' : '#3b7be0';
+      ctx.fillRect(cx - 34, top, 40, 46); // ตัวเครื่องเคาะ
+      ctx.fillStyle = '#fff'; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('50 Hz', cx - 14, top + 26);
+      // สายไฟ
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx - 34, top + 30); ctx.bezierCurveTo(cx - 90, top + 30, cx - 120, top + 120, cx - 150, top + 140); ctx.stroke();
+      ctx.fillStyle = dark ? '#555' : '#333'; ctx.fillRect(cx - 190, top + 130, 50, 34);
+      const on = s.running && s.t < s.tEnd + 0.05;
+      ctx.fillStyle = on ? '#3cc48f' : '#7a2a2a'; ctx.beginPath(); ctx.arc(cx - 150, top + 140, 4, 0, 7); ctx.fill();
+      // แถบกระดาษยาวกว่าระยะตก ปลายบนพ้นขอบภาพ ปลายล่างติดมวล
+      const massY = top + 110 + fall * ppm, tapeTop = Math.max(0, top + 110 - (H + 0.1) * ppm + fall * ppm);
+      ctx.fillStyle = dark ? '#d8d2c0' : '#f6f0dc';
+      ctx.fillRect(cx - 4, tapeTop, 8, massY - tapeTop);
+      // จุดที่เคาะแล้วเคลื่อนลงตามแถบ
+      ctx.fillStyle = '#222';
+      for (const d of s.dots) {
+        if (d.t > s.t) break;
+        const td = Math.min(Math.max(d.t - s.tRel, 0), tFall);
+        const xd = 0.5 * A_TRUE * td * td; // ตำแหน่งแถบขณะเคาะจุดนี้
+        const y = top + 30 + (fall - xd) * ppm;
+        if (y > top + 30 - 1 && y < massY) { ctx.beginPath(); ctx.arc(cx, y, 1.3, 0, 7); ctx.fill(); }
+      }
+      // มวล
+      ctx.fillStyle = dark ? '#c9a24a' : '#b8892f';
+      ctx.fillRect(cx - 16, massY, 32, 40);
+      ctx.fillStyle = dark ? '#111' : '#fff'; ctx.font = '11px Sarabun, sans-serif'; ctx.fillText('200 g', cx, massY + 24);
+      // พื้นและเบาะรับ
+      ctx.fillStyle = dark ? '#3a4150' : '#c9ced8'; ctx.fillRect(cx - 60, floorY, 80, 10);
+      ctx.fillStyle = Lab.css('--muted'); ctx.textAlign = 'left'; ctx.font = '12px Sarabun, sans-serif';
+      ctx.fillText(s.running ? 'ภาพช้า ×' + s.slow : '', 10, h - 10);
+    }
+
+    /* ---------- มุมมองวัดแถบกระดาษ ---------- */
+    let tv = { x0: 20, ppc: 10, y: 0 };
+    function tapeLayout() {
+      const L = s.dots.length ? s.dots[s.dots.length - 1].x + 3 : 60;
+      tv.ppc = (cv.w - 40) / L; tv.x0 = 20; tv.y = cv.h * 0.42;
+    }
+    const X = (cm) => tv.x0 + cm * tv.ppc;
+    function sceneTape(ctx, z) {
+      const dark = Lab.dark(), L = s.dots.length ? s.dots[s.dots.length - 1].x + 3 : 60;
+      const th = 1.6 * tv.ppc; // ความกว้างแถบ 1.6 cm
+      ctx.fillStyle = dark ? '#d8d2c0' : '#f6f0dc';
+      ctx.fillRect(X(0), tv.y - th / 2, L * tv.ppc, th);
+      ctx.strokeStyle = dark ? '#a39c86' : '#d6cba8'; ctx.lineWidth = 1 / z; ctx.strokeRect(X(0), tv.y - th / 2, L * tv.ppc, th);
+      // จุดจากเครื่องเคาะ
+      ctx.fillStyle = '#1a1a1a';
+      s.dots.forEach((d) => { ctx.beginPath(); ctx.arc(X(d.x), tv.y + d.y * tv.ppc, Math.max(d.r * tv.ppc, 0.7), 0, 7); ctx.fill(); });
+      // เลขกำกับจุด (เขียนด้วยดินสอ)
+      if (s.start >= 0) {
+        ctx.fillStyle = dark ? '#6aa0f5' : '#2f5fbf';
+        ctx.font = Math.max(9, 0.55 * tv.ppc) / Math.min(z, 2.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center';
+        let n = 0, lastX = -1e9;
+        for (let i = s.start; i < s.dots.length; i++, n++) {
+          const xx = X(s.dots[i].x);
+          if (xx - lastX < 12 / z) continue;
+          ctx.fillText(n, xx, tv.y - th / 2 - 4 / z); lastX = xx;
+        }
+      }
+      // ไม้เมตรวางใต้แถบ (แสดง 0–60 cm) ลากได้
+      const ry = tv.y + th / 2 + 2, rh = 2.6 * tv.ppc, len = 60;
+      const r0 = X(s.rulerX);
+      ctx.fillStyle = dark ? 'rgba(200,215,235,0.85)' : 'rgba(250,252,255,0.92)';
+      ctx.fillRect(r0 - 1 * tv.ppc, ry, (len + 2) * tv.ppc, rh);
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1 / z; ctx.strokeRect(r0 - 1 * tv.ppc, ry, (len + 2) * tv.ppc, rh);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const mmPx = tv.ppc / 10, showMm = mmPx * z >= 2.2;
+      for (let mm = 0; mm <= len * 10; mm += showMm ? 1 : 10) {
+        const x = r0 + mm * mmPx;
+        const l = mm % 10 === 0 ? 0.45 : mm % 5 === 0 ? 0.3 : 0.2;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, ry); ctx.lineTo(x, ry + l * rh); ctx.stroke();
+        if (mm % 10 === 0 && (mm % 50 === 0 || mmPx * z > 3)) {
+          ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(mm / 10, x, ry + 0.5 * rh);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // pointer: แว่นขยาย > ลากไม้บรรทัด > แตะเลือกจุดที่ 0
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (s.mode !== 'tape') return;
+      tapeLayout();
+      const th = 1.6 * tv.ppc, ry = tv.y + th / 2 + 2, rh = 2.6 * tv.ppc;
+      if (e.type === 'pointerdown') {
+        if (y > ry && y < ry + rh + 8) { s.drag = { x, r: s.rulerX }; canvas.setPointerCapture(e.pointerId); }
+        else if (Math.abs(y - tv.y) < th) {
+          let best = -1, bd = 14;
+          s.dots.forEach((d, i) => { const dd = Math.abs(X(d.x) - x); if (dd < bd) { bd = dd; best = i; } });
+          if (best >= 0) { s.start = best; info(); persist(); }
+        }
+      } else if (e.type === 'pointermove' && s.drag) {
+        s.rulerX = s.drag.r + (x - s.drag.x) / tv.ppc;
+      } else if (e.type === 'pointerup' || e.type === 'pointercancel') {
+        if (s.drag) persist();
+        s.drag = null;
+      }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      if (s.mode === 'drop') {
+        if (s.running) {
+          s.t += dt / s.slow;
+          if (s.t > s.tEnd + 0.15) { s.running = false; persist(); info(); }
+        }
+        sceneDrop(ctx, 1);
+        lens.draw(sceneDrop);
+      } else {
+        tapeLayout();
+        sceneTape(ctx, 1);
+        lens.draw(sceneTape);
+      }
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : s.mode === 'tape' ? 'แตะจุดเพื่อเลือกจุดที่ 0 · ลากไม้บรรทัดเพื่อเลื่อน' : '', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

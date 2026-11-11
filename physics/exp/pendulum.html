@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ลูกตุ้มอย่างง่าย · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.78;            // ค่า g ประเทศไทยโดยประมาณ (m/s²)
+const BOB_R = 0.015;       // รัศมีลูกตุ้ม (m)
+
+Lab.init({
+  id: 'pendulum',
+  short: 'ลูกตุ้มอย่างง่าย',
+  title: 'ลูกตุ้มอย่างง่าย',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างคาบการแกว่ง (T) กับความยาวของลูกตุ้มอย่างง่าย (L)',
+      'หาค่าความเร่งโน้มถ่วงของโลก (g) จากความชันของกราฟ T² กับ L',
+    ],
+    theory:
+      '<p>เมื่อลูกตุ้มแกว่งด้วยมุมเล็ก (ไม่เกินราว 10°) การเคลื่อนที่เป็นแบบฮาร์มอนิกอย่างง่าย มีคาบ</p>' +
+      '<div class="eq">T = 2π √(L / g)</div>' +
+      '<p>ยกกำลังสองทั้งสองข้างจะได้</p><div class="eq">T² = (4π² / g) · L</div>' +
+      '<p>กราฟ T² กับ L จึงเป็นเส้นตรงผ่านจุดกำเนิด มีความชัน 4π²/g ดังนั้น <b>g = 4π² / ความชัน</b></p>' +
+      '<p>ความยาว L วัดจากจุดแขวนถึง<b>จุดศูนย์กลางของลูกตุ้ม</b> ไม่ใช่ถึงปลายเชือก</p>',
+    equipment: ['ขาตั้งพร้อมที่หนีบ', 'ลูกตุ้มโลหะ เส้นผ่านศูนย์กลาง 3.0 cm', 'เชือกเบา', 'ไม้เมตร (ขีดละเอียด 1 mm)', 'ไม้โปรแทรกเตอร์', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'ปรับความยาวเชือกด้วยแถบเลื่อน แล้วใช้แว่นขยายอ่านความยาว L จากจุดแขวนถึงจุดศูนย์กลางลูกตุ้มบนไม้เมตร บันทึกเป็นเมตร (เช่น 0.452)',
+      'ลากลูกตุ้มออกด้านข้างให้ทำมุมไม่เกิน 10° (ดูจากโปรแทรกเตอร์) แล้วปล่อย',
+      'รอให้แกว่งสม่ำเสมอ 1–2 รอบ แล้วกดเริ่มจับเวลาขณะลูกตุ้มผ่านเส้นอ้างอิง นับ 10 รอบแล้วกดหยุด',
+      'บันทึกเวลา ทำซ้ำอีกครั้งที่ความยาวเดิม (t₁ และ t₂)',
+      'เปลี่ยนความยาวอย่างน้อย 6 ค่า ระหว่าง 0.20–1.20 m แล้วทำซ้ำ',
+    ],
+    tip: 'เคล็ดลับ: เริ่มจับเวลาเมื่อลูกตุ้มผ่าน "จุดต่ำสุด" เพราะเคลื่อนที่เร็วที่สุด ตัดสินจังหวะได้แม่นกว่าจุดปลายที่ลูกตุ้มหยุดชั่วขณะ',
+  },
+  table: {
+    rows: 6,
+    hint: 'ช่องสีขาวกรอกเอง ช่องสีเทาคำนวณให้อัตโนมัติ ปุ่ม "บันทึกเวลาลงตาราง" จะเติมเวลา t₁ แล้ว t₂ ของแถวเดียวกัน',
+    columns: [
+      { key: 'L', label: 'ความยาว L<br>(m)', input: true },
+      { key: 't1', label: 'เวลา 10 รอบ t₁<br>(s)', input: true },
+      { key: 't2', label: 'เวลา 10 รอบ t₂<br>(s)', input: true },
+      { key: 'tm', label: 'เวลาเฉลี่ย<br>(s)', calc: (r) => (isFinite(r.t2) ? (r.t1 + r.t2) / 2 : r.t1), digits: 2 },
+      { key: 'T', label: 'คาบ T<br>(s)', calc: (r) => r.tm / 10, digits: 3 },
+      { key: 'T2', label: 'T²<br>(s²)', calc: (r) => r.T * r.T, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'T² กับ L', x: 'L', y: 'T2', xv: 'L', yv: 'T²', xlabel: 'ความยาว L (m)', ylabel: 'T² (s²)', origin: false,
+    explain: 'ตามทฤษฎีกราฟควรผ่านจุดกำเนิด ถ้าจุดตัดแกนไม่ใกล้ 0 แสดงว่าวัด L คลาดเคลื่อนอย่างเป็นระบบ เช่น วัดถึงปลายเชือกแทนจุดศูนย์กลางลูกตุ้ม',
+  },
+  results(fit) {
+    const g = (4 * Math.PI * Math.PI) / fit.m;
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 's²/m' },
+      { label: 'ความเร่งโน้มถ่วง g = 4π² / ความชัน', value: g, unc: (g * fit.sm) / fit.m, unit: 'm/s²', accepted: G },
+    ];
+  },
+  questions: [
+    'เหตุใดจึงจับเวลาการแกว่ง 10 รอบ แทนการจับเวลาเพียง 1 รอบ',
+    'กราฟ T² กับ L มีลักษณะอย่างไร ความชันของกราฟมีความหมายทางฟิสิกส์อย่างไร',
+    'ลองปล่อยลูกตุ้มด้วยมุมประมาณ 40° แล้วจับเวลา 10 รอบที่ความยาวเดิม คาบเปลี่ยนไปอย่างไร เพราะเหตุใดจึงต้องใช้มุมเล็ก',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง และเสนอวิธีลดความคลาดเคลื่อน',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 8, r: 80 });
+    lens.button(stage);
+
+    const s = { L: 0.6 + Math.round(api.rng() * 20) / 100, th: 0, om: 0, drag: false, ref: true, gamma: 0.012 };
+
+    ctrls.innerHTML =
+      '<h3>ความยาวเชือก</h3>' +
+      '<input type="range" id="pL" min="0.2" max="1.2" step="0.001">' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">แถบเลื่อนไม่บอกตัวเลข ต้องอ่านค่าจากไม้เมตรเอง (ปรับได้เมื่อลูกตุ้มหยุดนิ่ง)</p>' +
+      '<h3>การแกว่ง</h3>' +
+      '<p style="font-size:14px;margin:0 0 6px">ลากลูกตุ้มไปด้านข้างแล้วปล่อย หรือใช้ปุ่มด้านล่าง</p>' +
+      '<div class="row"><button class="btn" id="rel8">ปล่อยที่ 8°</button><button class="btn" id="rel40">ปล่อยที่ 40°</button></div>' +
+      '<div class="row"><button class="btn" id="stop">หยุดลูกตุ้ม</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="ref" checked> แสดงเส้นอ้างอิงจุดต่ำสุด</label>' +
+      '<h3>นาฬิกาจับเวลา</h3><div id="sw"></div>';
+    const pL = ctrls.querySelector('#pL');
+    pL.value = s.L;
+    pL.oninput = () => { if (Math.abs(s.th) < 1e-3 && Math.abs(s.om) < 1e-3 && !s.drag) s.L = +pL.value; else pL.value = s.L; };
+    const release = (deg) => { s.th = (deg * Math.PI) / 180 * (s.th < 0 ? -1 : 1); s.om = 0; };
+    ctrls.querySelector('#rel8').onclick = () => release(8);
+    ctrls.querySelector('#rel40').onclick = () => release(40);
+    ctrls.querySelector('#stop').onclick = () => { s.th = 0; s.om = 0; };
+    ctrls.querySelector('#ref').onchange = (e) => (s.ref = e.target.checked);
+    Lab.stopwatch(ctrls.querySelector('#sw'), api, { send: ['t1', 't2'] });
+
+    // เรขาคณิตของฉาก
+    let ppm, px, py;
+    function layout() {
+      ppm = Math.min((cv.h - 60) / 1.27, (cv.w - 40) / 1.55);
+      px = cv.w * 0.5 + 10; py = 34;
+    }
+    const bobPos = () => [px + s.L * ppm * Math.sin(s.th), py + s.L * ppm * Math.cos(s.th)];
+
+    // การลากลูกตุ้ม
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown') {
+        const [bx, by] = bobPos();
+        if (Math.hypot(x - bx, y - by) < 34) { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+      }
+      if (s.drag && (e.type === 'pointermove' || e.type === 'pointerdown')) {
+        let th = Math.atan2(x - px, Math.max(y - py, 1));
+        s.th = Math.max(-1.05, Math.min(1.05, th)); s.om = 0;
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    // สมการการเคลื่อนที่ (ไม่ประมาณมุมเล็ก) แก้ด้วย RK4
+    function acc(th, om) { return -(G / s.L) * Math.sin(th) - s.gamma * om; }
+    function step(h) {
+      const k1t = s.om, k1o = acc(s.th, s.om);
+      const k2t = s.om + 0.5 * h * k1o, k2o = acc(s.th + 0.5 * h * k1t, k2t);
+      const k3t = s.om + 0.5 * h * k2o, k3o = acc(s.th + 0.5 * h * k2t, k3t);
+      const k4t = s.om + h * k3o, k4o = acc(s.th + h * k3t, k4t);
+      s.th += (h / 6) * (k1t + 2 * k2t + 2 * k3t + k4t);
+      s.om += (h / 6) * (k1o + 2 * k2o + 2 * k3o + k4o);
+    }
+
+    function scene(ctx, z) {
+      const ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const dark = Lab.dark();
+      // ขาตั้ง
+      const baseY = cv.h - 14, rodX = px + 0.42 * ppm;
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280';
+      ctx.fillRect(rodX - 50, baseY - 10, 120, 12);
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0';
+      ctx.fillRect(rodX - 4, py - 22, 8, baseY - py + 12);
+      ctx.fillRect(px - 0.2 * ppm, py - 8, rodX - px + 0.2 * ppm + 4, 8);
+      ctx.fillStyle = dark ? '#5d6677' : '#4b5563';
+      ctx.fillRect(rodX - 9, py - 14, 18, 20);
+      ctx.fillRect(px - 9, py - 12, 18, 12);
+      // ไม้เมตร: ขอบขวาชิดแนวดิ่งของลูกตุ้ม (ศูนย์อยู่ระดับจุดแขวน)
+      const rx1 = px - BOB_R * ppm - 3, rx0 = rx1 - 0.045 * ppm, ry0 = py - 4, ry1 = py + 1.25 * ppm;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(rx0, ry0, rx1 - rx0, ry1 - ry0);
+      ctx.strokeStyle = dark ? '#6b4f2a' : '#b08a52'; ctx.lineWidth = 1 / z;
+      ctx.strokeRect(rx0, ry0, rx1 - rx0, ry1 - ry0);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000;
+      const showMm = mmPx * z >= 1.6;
+      for (let mm = 0; mm <= 1250; mm += showMm ? 1 : 10) {
+        const y = py + mm * mmPx;
+        let len = mm % 100 === 0 ? 0.6 : mm % 50 === 0 ? 0.45 : mm % 10 === 0 ? 0.32 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1.1 : 0.7) / z;
+        ctx.beginPath(); ctx.moveTo(rx1, y); ctx.lineTo(rx1 - len * (rx1 - rx0), y); ctx.stroke();
+        const lab = mm % 100 === 0 || (z > 2 && mm % 10 === 0);
+        if (lab) {
+          ctx.font = (mm % 100 === 0 ? 11 : 9) / Math.min(z, 4.5) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, rx0 + 2 / z, y);
+        }
+      }
+      // โปรแทรกเตอร์ครึ่งวงกลมที่จุดแขวน
+      const pr = 64;
+      ctx.fillStyle = dark ? 'rgba(40,46,58,0.92)' : 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.moveTo(px + pr, py); ctx.arc(px, py, pr, 0, Math.PI); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.8 / z; ctx.stroke();
+      for (let d = -80; d <= 80; d += z > 2 ? 1 : 5) {
+        const a = (d * Math.PI) / 180, l = d % 10 === 0 ? 10 : d % 5 === 0 ? 7 : 4;
+        ctx.beginPath();
+        ctx.moveTo(px + pr * Math.sin(a), py + pr * Math.cos(a));
+        ctx.lineTo(px + (pr - l) * Math.sin(a), py + (pr - l) * Math.cos(a)); ctx.stroke();
+        if (d % 10 === 0 && d !== 0) {
+          ctx.fillStyle = muted; ctx.font = 8 + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(Math.abs(d), px + (pr - 17) * Math.sin(a), py + (pr - 17) * Math.cos(a));
+        }
+      }
+      // เส้นอ้างอิงจุดต่ำสุด
+      if (s.ref) {
+        ctx.strokeStyle = Lab.css('--accent'); ctx.setLineDash([6 / z, 5 / z]); ctx.lineWidth = 1.2 / z;
+        ctx.beginPath(); ctx.moveTo(px, py + pr + 4); ctx.lineTo(px, py + (s.L + 0.08) * ppm); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // เชือกและลูกตุ้ม
+      const [bx, by] = bobPos();
+      const r = Math.max(BOB_R * ppm, 4);
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.1 / z;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + (s.L * ppm - r) * Math.sin(s.th), py + (s.L * ppm - r) * Math.cos(s.th)); ctx.stroke();
+      const gr = ctx.createRadialGradient(bx - r * 0.35, by - r * 0.35, r * 0.1, bx, by, r);
+      gr.addColorStop(0, '#f3f5f8'); gr.addColorStop(0.5, '#a7b0bd'); gr.addColorStop(1, '#59606c');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#2b2f36'; ctx.beginPath(); ctx.arc(bx, by, 0.6 / z, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = Lab.css('--ink'); ctx.beginPath(); ctx.arc(px, py, 2.2 / Math.sqrt(z), 0, Math.PI * 2); ctx.fill();
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (!s.drag && dt > 0) {
+        const n = Math.ceil(dt / 0.002);
+        for (let i = 0; i < n; i++) step(dt / n);
+        if (Math.abs(s.th) < 2e-4 && Math.abs(s.om) < 2e-3) { s.th = 0; s.om = 0; }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากลูกตุ้มแล้วปล่อยเพื่อแกว่ง', 10, 8);
+    }, 0.25);
+  },
+});
+</script>
+</body>
+</html>

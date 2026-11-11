@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>กฎของโอห์ม · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const EMAX = 6;        // แรงเคลื่อนไฟฟ้าสูงสุดของแหล่งจ่าย (V)
+const R_INT = 0.5;     // ความต้านทานภายในแหล่งจ่าย (Ω)
+// ค่าซ่อนของอุปกรณ์ชุดนี้ (สุ่มต่อเครื่อง)
+const rand0 = Lab.rng('ohm');
+const RA = Math.round((8 + 7 * rand0()) * 10) / 10;
+const RB = Math.round((18 + 12 * rand0()) * 10) / 10;
+
+Lab.init({
+  id: 'ohm',
+  short: 'กฎของโอห์ม',
+  title: 'กฎของโอห์ม',
+  level: 'ม.3, ม.6',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างความต่างศักย์ (V) กับกระแสไฟฟ้า (I) ที่ผ่านตัวนำ',
+      'หาความต้านทาน (R) ของตัวต้านทานจากความชันของกราฟ V กับ I',
+      'เปรียบเทียบตัวนำที่เป็นไปตามกฎของโอห์ม (ตัวต้านทาน) กับตัวนำที่ไม่เป็นไปตามกฎของโอห์ม (หลอดไฟ)',
+    ],
+    theory:
+      '<p>กฎของโอห์มกล่าวว่า เมื่ออุณหภูมิคงตัว กระแสไฟฟ้าที่ผ่านตัวนำแปรผันตรงกับความต่างศักย์ระหว่างปลายตัวนำ</p>' +
+      '<div class="eq">V = I R</div>' +
+      '<p>กราฟ V กับ I ของตัวนำโอห์มมิกจึงเป็นเส้นตรงผ่านจุดกำเนิด มีความชันเท่ากับ <b>R</b></p>' +
+      '<p>ไส้หลอดไฟร้อนขึ้นเมื่อกระแสมากขึ้น ความต้านทานจึงเพิ่มขึ้น กราฟ V กับ I ของหลอดไฟจึงเป็นเส้นโค้ง (ตัวนำนอนโอห์มมิก)</p>' +
+      '<p>แอมมิเตอร์ต่อ<b>อนุกรม</b>กับอุปกรณ์ โวลต์มิเตอร์ต่อ<b>ขนาน</b>กับอุปกรณ์</p>',
+    equipment: ['แหล่งจ่ายไฟกระแสตรงปรับค่าได้ 0–6 V', 'สวิตช์', 'ตัวต้านทาน A และ B (ไม่ทราบค่า)', 'หลอดไฟขนาดเล็ก',
+      'แอมมิเตอร์แบบเข็ม (พิสัย 0–0.6 A และ 0–3 A)', 'โวลต์มิเตอร์แบบเข็ม (พิสัย 0–3 V และ 0–15 V)', 'สายไฟ'],
+    procedure: [
+      'เลือกอุปกรณ์ที่ทดสอบ (เริ่มจากตัวต้านทาน A) ตั้งพิสัยมิเตอร์ทั้งสองไว้ที่ค่าสูงก่อน',
+      'เปิดสวิตช์ ปรับปุ่มแหล่งจ่ายไฟให้เข็มขยับเล็กน้อย ถ้าเข็มขึ้นไม่ถึง 1/3 ของสเกลให้เปลี่ยนเป็นพิสัยต่ำ',
+      'ใช้แว่นขยายอ่านค่าความต่างศักย์ V และกระแส I จากหน้าปัดมิเตอร์ บันทึกลงตาราง',
+      'ปิดสวิตช์ ปรับปุ่มแหล่งจ่ายไฟเพิ่มขึ้นแล้วเปิดสวิตช์อ่านค่าใหม่ ทำให้ได้อย่างน้อย 6 ค่า',
+      'เปลี่ยนเป็นตัวต้านทาน B และหลอดไฟ แล้วทำซ้ำ ตารางจะสลับชุดข้อมูลตามอุปกรณ์ที่เลือกให้เอง',
+    ],
+    tip: 'เคล็ดลับ: เริ่มจากพิสัยสูงแล้วค่อยลดลง เพื่อไม่ให้เข็มตีเกินสเกลจนมิเตอร์เสีย และปิดสวิตช์ระหว่างการอ่านแต่ละครั้งเพื่อไม่ให้ตัวต้านทานร้อนจนความต้านทานเปลี่ยน',
+  },
+  table: {
+    rows: 6,
+    sets: [{ key: 'A', label: 'ตัวต้านทาน A' }, { key: 'B', label: 'ตัวต้านทาน B' }, { key: 'L', label: 'หลอดไฟ' }],
+    hint: 'อุปกรณ์แต่ละชิ้นมีตารางของตัวเอง ตารางสลับตามอุปกรณ์ที่เลือกในแผงควบคุม ช่องสีเทาคำนวณให้อัตโนมัติ',
+    columns: [
+      { key: 'V', label: 'ความต่างศักย์ V<br>(V)', input: true },
+      { key: 'I', label: 'กระแสไฟฟ้า I<br>(A)', input: true },
+      { key: 'R', label: 'R = V / I<br>(Ω)', calc: (r) => r.V / r.I, digits: 2 },
+    ],
+  },
+  graph: {
+    title: 'V กับ I', x: 'I', y: 'V', xv: 'I', yv: 'V', xlabel: 'กระแสไฟฟ้า I (A)', ylabel: 'ความต่างศักย์ V (V)', origin: true,
+    explain: 'ถ้าจุดเรียงเป็นเส้นตรงผ่านจุดกำเนิด อุปกรณ์เป็นไปตามกฎของโอห์ม ความชันคือความต้านทาน ถ้าจุดโค้ง (เช่น หลอดไฟ) ความชันของเส้นตรงไม่ใช่ค่าคงตัว ให้ดูค่า R = V/I ในตารางแทน',
+  },
+  results(fit, rows, truth, set) {
+    if (set === 'L') {
+      // หลอดไฟไม่เป็นไปตามกฎของโอห์ม: แสดง R = V/I ที่กระแสต่ำสุดและสูงสุดแทน
+      const pts = rows.filter((r) => isFinite(r.R)).sort((a, b) => a.I - b.I);
+      const out = [{ label: 'ความชันของเส้นตรง (ใช้แทนความต้านทานไม่ได้ เพราะจุดไม่เรียงเป็นเส้นตรง)', value: fit.m, unc: fit.sm, unit: 'Ω' }];
+      if (pts.length >= 2) {
+        out.push({ label: 'R = V/I ที่กระแสต่ำสุด (I = ' + Lab.fmt(pts[0].I) + ' A)', value: pts[0].R, digits: 2, unit: 'Ω' });
+        out.push({ label: 'R = V/I ที่กระแสสูงสุด (I = ' + Lab.fmt(pts[pts.length - 1].I) + ' A)', value: pts[pts.length - 1].R, digits: 2, unit: 'Ω' });
+      }
+      return out;
+    }
+    return [
+      { label: 'ความชันของกราฟ = ความต้านทาน R', value: fit.m, unc: fit.sm, unit: 'Ω' },
+      { label: 'ความต้านทานของตัวต้านทาน ' + set, value: fit.m, unit: 'Ω', accepted: set === 'A' ? RA : RB, hidden: true, digitsTrue: 1 },
+    ];
+  },
+  questions: [
+    'กราฟ V กับ I ของตัวต้านทานมีลักษณะอย่างไร สอดคล้องกับกฎของโอห์มหรือไม่ และความชันของกราฟมีความหมายอย่างไร',
+    'กราฟของหลอดไฟต่างจากกราฟของตัวต้านทานอย่างไร ค่า V/I ของหลอดไฟเปลี่ยนไปอย่างไรเมื่อกระแสเพิ่มขึ้น เพราะเหตุใด',
+    'เหตุใดต้องต่อแอมมิเตอร์แบบอนุกรมและต่อโวลต์มิเตอร์แบบขนานกับอุปกรณ์ และเหตุใดจึงควรเริ่มจากพิสัยสูง',
+    'ระบุแหล่งความคลาดเคลื่อนของการทดลองนี้อย่างน้อย 2 แหล่ง และเสนอวิธีลดความคลาดเคลื่อน',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+
+    const s = {
+      knob: 0, on: false, comp: 'A', vRange: 15, iRange: 3, heat: 0,
+      // เข็มมิเตอร์: ตำแหน่ง (สัดส่วนของสเกล) และความเร็ว
+      nV: 0, vV: 0, nI: 0, vI: 0, jV: 0, jI: 0,
+      V: 0, I: 0, P: 0,
+    };
+
+    const seg = (id, items) => '<div class="seg" id="' + id + '">' + items.map(([v, t]) => '<button data-v="' + v + '">' + t + '</button>').join('') + '</div>';
+    ctrls.innerHTML =
+      '<h3>แหล่งจ่ายไฟ</h3>' +
+      '<input type="range" id="knob" min="0" max="1" step="0.001" value="0">' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">ปุ่มปรับไม่บอกตัวเลข ต้องอ่านค่าจากมิเตอร์เอง</p>' +
+      '<div class="row"><button class="btn primary" id="sw">เปิดสวิตช์</button></div>' +
+      '<h3>อุปกรณ์ที่ทดสอบ</h3>' + seg('comp', [['A', 'ตัวต้านทาน A'], ['B', 'ตัวต้านทาน B'], ['L', 'หลอดไฟ']]) +
+      '<h3>พิสัยโวลต์มิเตอร์</h3>' + seg('vr', [['3', '0–3 V'], ['15', '0–15 V']]) +
+      '<h3>พิสัยแอมมิเตอร์</h3>' + seg('ir', [['0.6', '0–0.6 A'], ['3', '0–3 A']]) +
+      '<p class="muted" style="font-size:13px;margin:10px 0 0">เปิดแว่นขยายแล้วแตะที่หน้าปัดเพื่ออ่านขีดย่อย อ่านค่าตรงปลายเข็มโดยมองตั้งฉากกับหน้าปัด</p>';
+    const knob = ctrls.querySelector('#knob');
+    knob.oninput = () => (s.knob = +knob.value);
+    const swb = ctrls.querySelector('#sw');
+    swb.onclick = () => {
+      s.on = !s.on;
+      swb.textContent = s.on ? 'ปิดสวิตช์' : 'เปิดสวิตช์';
+      swb.classList.toggle('primary', !s.on);
+    };
+    function bindSeg(id, get, set) {
+      const el = ctrls.querySelector('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); sync(); });
+      sync();
+      return sync;
+    }
+    // อุปกรณ์ที่เลือกกับชุดข้อมูลในตารางสลับไปด้วยกัน
+    s.comp = api.currentSet();
+    const syncComp = bindSeg('comp', () => s.comp, (v) => { s.comp = v; s.heat = 0; api.useSet(v); });
+    api.onSetChange = (k) => { s.comp = k; s.heat = 0; syncComp(); };
+    bindSeg('vr', () => s.vRange, (v) => (s.vRange = +v));
+    bindSeg('ir', () => s.iRange, (v) => (s.iRange = +v));
+
+    // แว่นขยายเท่านั้นที่ใช้ pointer บนภาพนี้
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      lens.handle(e, x, y);
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    // คำนวณวงจร: ตัวต้านทานร้อนขึ้นเล็กน้อยเมื่อเปิดไว้นาน, หลอดไฟความต้านทานเพิ่มตามกำลังไฟฟ้า
+    function solve(dt) {
+      const E = EMAX * s.knob;
+      if (!s.on) { s.I = 0; s.V = 0; s.P = 0; }
+      else if (s.comp === 'L') {
+        let R = 3;
+        for (let k = 0; k < 40; k++) {
+          const I = E / (R + R_INT);
+          const Rn = 3 + 4.6 * Math.sqrt(I * I * R);
+          R = 0.5 * R + 0.5 * Rn;
+        }
+        s.I = E / (R + R_INT); s.V = s.I * R; s.P = s.V * s.I;
+      } else {
+        const R = (s.comp === 'A' ? RA : RB) * (1 + 0.03 * s.heat);
+        s.I = E / (R + R_INT); s.V = s.I * R; s.P = s.V * s.I;
+      }
+      // ความร้อนสะสม: เข้าใกล้ P/2W ด้วยเวลาคงตัว 20 s
+      if (s.comp !== 'L') s.heat += ((s.P / 2) - s.heat) * Math.min(dt / 20, 1);
+    }
+    // เข็มแบบหน่วง (ω ≈ 12 rad/s) พร้อมการสั่นเล็กน้อยที่เปลี่ยนช้า
+    function needle(pos, vel, target, jit, dt) {
+      const w = 12, z = 0.55;
+      const tgt = Math.min(Math.max(target + jit, -0.01), 1.04);
+      const a = w * w * (tgt - pos) - 2 * z * w * vel;
+      vel += a * dt; pos += vel * dt;
+      if (pos > 1.05) { pos = 1.05; vel = 0; }
+      if (pos < -0.012) { pos = -0.012; vel = 0; }
+      return [pos, vel];
+    }
+
+    // ---------- วาดฉาก (พิกัดออกแบบ 640×480 แล้วย่อขยายตามจอ) ----------
+    let S = 1, ox = 0, oy = 0;
+    function layout() {
+      S = Math.min(cv.w / 640, cv.h / 480);
+      ox = (cv.w - 640 * S) / 2; oy = (cv.h - 480 * S) / 2;
+    }
+    function meter(ctx, z, x0, y0, w, h, frac, full, unit, over) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#2a303b' : '#3a3f48';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, w, h, 10) : ctx.rect(x0, y0, w, h); ctx.fill();
+      const fx = x0 + 8, fy = y0 + 8, fw = w - 16, fh = h - 40;
+      ctx.fillStyle = '#fbfaf5'; ctx.fillRect(fx, fy, fw, fh);
+      const cx = x0 + w / 2, cy = fy + fh * 0.95, r = fw * 0.42;
+      const a0 = -Math.PI / 2 - (50 * Math.PI) / 180, span = (100 * Math.PI) / 180;
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a0 + span); ctx.stroke();
+      // แถบกระจกเงาใต้สเกล ช่วยลด parallax
+      ctx.strokeStyle = 'rgba(150,170,190,0.55)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, r - 14, a0, a0 + span); ctx.stroke();
+      ctx.strokeStyle = '#1b1b1b';
+      for (let i = 0; i <= 30; i++) {
+        const a = a0 + (span * i) / 30;
+        const l = i % 10 === 0 ? 11 : i % 5 === 0 ? 8 : 5;
+        ctx.lineWidth = (i % 5 === 0 ? 1.1 : 0.6) / Math.sqrt(z);
+        ctx.beginPath(); ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+        ctx.lineTo(cx + (r + l) * Math.cos(a), cy + (r + l) * Math.sin(a)); ctx.stroke();
+        if (i % 10 === 0) {
+          const v = (full * i) / 30;
+          ctx.font = '600 11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(+v.toFixed(2), cx + (r + 21) * Math.cos(a), cy + (r + 21) * Math.sin(a));
+        }
+      }
+      ctx.font = '700 20px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(unit, cx, cy - r * 0.42);
+      // เข็ม
+      const an = a0 + span * frac;
+      ctx.strokeStyle = '#c8412a'; ctx.lineWidth = 1.4 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + (r + 9) * Math.cos(an), cy + (r + 9) * Math.sin(an)); ctx.stroke();
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+      // ป้ายพิสัยและขั้ว
+      ctx.fillStyle = '#e6e9ef'; ctx.font = '12px Sarabun, sans-serif';
+      ctx.fillText('พิสัย 0–' + full + ' ' + unit, cx, y0 + h - 16);
+      ctx.fillStyle = '#c8412a'; ctx.beginPath(); ctx.arc(x0 + w + 2, y0 + h * 0.3, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x0 - 2, y0 + h * 0.3, 6, 0, Math.PI * 2); ctx.fill();
+      if (over) {
+        ctx.fillStyle = Lab.css('--bad'); ctx.font = '700 13px Sarabun, sans-serif';
+        ctx.fillText('เกินพิสัย! เปลี่ยนเป็นพิสัยสูง', cx, y0 - 10);
+      }
+    }
+    function wire(ctx, pts) {
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+    function scene(ctx, z0) {
+      const z = z0 * S;
+      const ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const dark = Lab.dark();
+      ctx.save(); ctx.translate(ox, oy); ctx.scale(S, S);
+      // สายไฟ (แดง = ขั้วบวก, ดำ/เทา = ขั้วลบ)
+      ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#c8412a';
+      wire(ctx, [[150, 300], [150, 66], [228, 66], [228, 75]]);         // + → แอมมิเตอร์
+      wire(ctx, [[412, 75], [412, 66], [560, 66], [560, 190]]);          // แอมมิเตอร์ → อุปกรณ์
+      wire(ctx, [[562, 180], [530, 180], [530, 248], [512, 248]]);       // ขาบนอุปกรณ์ → V+
+      ctx.strokeStyle = dark ? '#9aa3b4' : '#2b2f36';
+      wire(ctx, [[560, 290], [560, 430], [330, 430]]);                   // อุปกรณ์ → สวิตช์
+      wire(ctx, [[260, 430], [50, 430], [50, 300]]);                     // สวิตช์ → ขั้วลบ
+      wire(ctx, [[562, 300], [540, 300], [540, 334], [328, 334], [328, 248], [334, 248]]); // ขาล่างอุปกรณ์ → V−
+      ctx.fillStyle = ink;
+      [[560, 180], [560, 300]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill(); });
+      // สวิตช์ใบมีด
+      ctx.fillStyle = dark ? '#5d6677' : '#4b5563';
+      ctx.fillRect(250, 424, 18, 12); ctx.fillRect(322, 424, 18, 12);
+      ctx.strokeStyle = '#b8892e'; ctx.lineWidth = 4;
+      const sa = s.on ? 0 : -0.55;
+      ctx.beginPath(); ctx.moveTo(262, 428); ctx.lineTo(262 + 68 * Math.cos(sa), 428 + 68 * Math.sin(sa)); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(s.on ? 'สวิตช์: เปิด (วงจรปิด)' : 'สวิตช์: ปิด (วงจรเปิด)', 295, 444);
+      // แหล่งจ่ายไฟ
+      ctx.fillStyle = dark ? '#3a4150' : '#d6dbe3';
+      ctx.fillRect(20, 170, 160, 130);
+      ctx.strokeStyle = dark ? '#566070' : '#9aa3b0'; ctx.lineWidth = 1.5; ctx.strokeRect(20, 170, 160, 130);
+      ctx.fillStyle = ink; ctx.font = '600 12px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+      ctx.fillText('แหล่งจ่ายไฟ DC 0–6 V', 100, 176);
+      const ka = -Math.PI * 1.25 + s.knob * Math.PI * 1.5;
+      ctx.fillStyle = dark ? '#20252e' : '#2b2f36'; ctx.beginPath(); ctx.arc(100, 238, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(100 + 8 * Math.cos(ka), 238 + 8 * Math.sin(ka)); ctx.lineTo(100 + 22 * Math.cos(ka), 238 + 22 * Math.sin(ka)); ctx.stroke();
+      ctx.fillStyle = s.on && s.knob > 0 ? '#3cc48f' : '#555'; ctx.beginPath(); ctx.arc(160, 196, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#c8412a'; ctx.beginPath(); ctx.arc(150, 300, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(50, 300, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '600 13px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+      ctx.fillText('+', 150, 281); ctx.fillText('−', 50, 281);
+      // อุปกรณ์ที่ทดสอบ
+      if (s.comp === 'L') {
+        const glow = Math.min(s.P / 3, 1.2);
+        if (glow > 0.02) {
+          const g = ctx.createRadialGradient(560, 235, 2, 560, 235, 30 + 50 * glow);
+          g.addColorStop(0, 'rgba(255,220,120,' + (0.85 * Math.min(glow, 1)) + ')'); g.addColorStop(1, 'rgba(255,200,80,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(560, 235, 30 + 50 * glow, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = dark ? 'rgba(200,220,240,0.18)' : 'rgba(230,240,250,0.7)';
+        ctx.strokeStyle = muted; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(560, 232, 24, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0'; ctx.fillRect(549, 254, 22, 20);
+        ctx.strokeStyle = glow > 0.05 ? 'rgb(255,' + Math.round(150 + 90 * Math.min(glow, 1)) + ',60)' : '#666'; ctx.lineWidth = 1.5;
+        wire(ctx, [[554, 254], [554, 236], [557, 226], [560, 236], [563, 226], [566, 236], [566, 254]]);
+        ctx.strokeStyle = dark ? '#9aa3b4' : '#2b2f36'; ctx.lineWidth = 2.6;
+        wire(ctx, [[560, 190], [560, 208]]); wire(ctx, [[560, 274], [560, 290]]);
+        ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('หลอดไฟ', 588, 235);
+      } else {
+        ctx.strokeStyle = dark ? '#9aa3b4' : '#2b2f36'; ctx.lineWidth = 2.6;
+        wire(ctx, [[560, 190], [560, 210]]); wire(ctx, [[560, 270], [560, 290]]);
+        ctx.fillStyle = s.comp === 'A' ? '#d9c08a' : '#8fb7d6';
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(550, 208, 20, 64, 7) : ctx.rect(550, 208, 20, 64); ctx.fill();
+        const bands = s.comp === 'A' ? ['#8b4513', '#111', '#111', '#c9a227'] : ['#d33', '#d33', '#111', '#c9a227'];
+        bands.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(550, 218 + i * 11 + (i === 3 ? 8 : 0), 20, 5); });
+        ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('ตัวต้านทาน', 576, 232); ctx.fillText(s.comp, 576, 248);
+      }
+      // มิเตอร์
+      meter(ctx, z, 230, 20, 180, 150, s.nI, s.iRange, 'A', s.I > s.iRange * 1.02);
+      meter(ctx, z, 334, 178, 176, 150, s.nV, s.vRange, 'V', s.V > s.vRange * 1.02);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText('แอมมิเตอร์', 222, 112); ctx.fillText('(ต่ออนุกรม)', 222, 128);
+      ctx.fillText('โวลต์มิเตอร์', 320, 284); ctx.fillText('(ต่อขนาน)', 320, 300);
+      ctx.restore();
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      solve(dt);
+      if (dt > 0) {
+        // การสั่นของเข็มแบบเปลี่ยนช้า (low-pass ของสัญญาณสุ่ม) ราว 0.15% ของเต็มสเกล
+        const k = Math.min(dt * 3, 1);
+        s.jV += (Lab.noise(0.004) - s.jV) * k; s.jI += (Lab.noise(0.004) - s.jI) * k;
+        const n = Math.ceil(dt / 0.004);
+        for (let i = 0; i < n; i++) {
+          [s.nV, s.vV] = needle(s.nV, s.vV, s.V / s.vRange, s.on ? s.jV : 0, dt / n);
+          [s.nI, s.vI] = needle(s.nI, s.vI, s.I / s.iRange, s.on ? s.jI : 0, dt / n);
+        }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'กด 🔍 แว่นขยาย เพื่ออ่านสเกลมิเตอร์', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

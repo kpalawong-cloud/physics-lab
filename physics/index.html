@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/lab.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../">ห้องปฏิบัติการเสมือน</a><span>›</span>ฟิสิกส์</div>
+  <div class="hero">
+    <h1>ห้องปฏิบัติการฟิสิกส์</h1>
+    <p>การทดลองแต่ละเรื่องมี 4 ขั้น: เตรียมการ → ทดลองและบันทึกผล → วิเคราะห์ด้วยกราฟ → สรุปและส่งรายงาน
+      อุปกรณ์ทุกชิ้นวัดได้คลาดเคลื่อนเหมือนของจริง และอุปกรณ์แต่ละเครื่องมีค่าต่างกันเล็กน้อย</p>
+  </div>
+
+  <h2 class="section-title">การทดลองเต็มรูปแบบ</h2>
+  <div class="grid-cards" id="exps"></div>
+
+  <h2 class="section-title">ห้องจำลองเพื่อสำรวจแนวคิด</h2>
+  <div class="grid-cards">
+    <a class="tile" href="sims.html">
+      <h3>ห้องจำลองฟิสิกส์ 60 เรื่อง</h3>
+      <p>กลศาสตร์ แสง ไฟฟ้า คลื่นและเสียง ฟิสิกส์ยุคใหม่ ของไหลและความร้อน ดาราศาสตร์ ปรับค่าแล้วดูผลทันที</p>
+    </a>
+  </div>
+  <footer class="foot">ความคืบหน้าของแต่ละการทดลองบันทึกไว้บนเครื่องนี้ กลับมาทำต่อได้ภายหลัง</footer>
+</div>
+<script>
+const EXPS = [
+  { id: 'ticker', file: 'exp/ticker.html', title: 'การตกอย่างอิสระด้วยเครื่องเคาะสัญญาณเวลา', level: 'ม.4', topic: 'การเคลื่อนที่แนวตรง',
+    desc: 'อ่านระยะจุดบนแถบกระดาษ หาความเร็ว เขียนกราฟ v–t แล้วหาความเร่งโน้มถ่วง' },
+  { id: 'hooke', file: 'exp/hooke.html', title: 'กฎของฮุกและค่านิจของสปริง', level: 'ม.3–ม.4', topic: 'แรงและสมดุล',
+    desc: 'แขวนมวลทีละก้อน อ่านตำแหน่งเข็มชี้บนไม้บรรทัด เขียนกราฟ F–x หาค่านิจสปริง' },
+  { id: 'pendulum', file: 'exp/pendulum.html', title: 'ลูกตุ้มอย่างง่าย', level: 'ม.5', topic: 'การเคลื่อนที่แบบฮาร์มอนิกอย่างง่าย',
+    desc: 'จับเวลาการแกว่ง 10 รอบที่ความยาวต่าง ๆ เขียนกราฟ T²–L แล้วหาค่า g' },
+  { id: 'snell', file: 'exp/snell.html', title: 'การหักเหของแสงผ่านแท่งแก้วครึ่งวงกลม', level: 'ม.5', topic: 'แสงเชิงรังสี',
+    desc: 'วัดมุมตกกระทบและมุมหักเห เขียนกราฟ sin i–sin r หาดรรชนีหักเห และสังเกตมุมวิกฤต' },
+  { id: 'ohm', file: 'exp/ohm.html', title: 'กฎของโอห์ม', level: 'ม.3, ม.6', topic: 'ไฟฟ้ากระแส',
+    desc: 'อ่านมิเตอร์เข็ม เขียนกราฟ V–I ของตัวต้านทานและหลอดไฟ เปรียบเทียบตัวนำโอห์มมิกกับนอนโอห์มมิก' },
+];
+function status(id) {
+  try {
+    const s = JSON.parse(localStorage.getItem('vl-' + id) || 'null');
+    if (!s) return '';
+    const filled = (s.rows || []).filter(r => Object.values(r).some(v => String(v).trim() !== '')).length;
+    if (s.answers && s.answers.concl) return '<span class="chip" style="background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">ทำเสร็จแล้ว</span>';
+    return filled ? '<span class="chip">บันทึกแล้ว ' + filled + ' แถว</span>' : '';
+  } catch (e) { return ''; }
+}
+document.getElementById('exps').innerHTML = EXPS.map(e =>
+  '<a class="tile" href="' + e.file + '"><h3>' + e.title + '</h3><p>' + e.desc + '</p>' +
+  '<div class="meta"><span class="chip">' + e.level + '</span><span class="chip" style="background:var(--soft);color:var(--muted)">' + e.topic + '</span>' + status(e.id) + '</div></a>').join('');
+</script>
+</body>
+</html>
