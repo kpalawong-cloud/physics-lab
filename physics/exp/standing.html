@@ -25,7 +25,8 @@ Lab.init({
   level: 'ม.5–ม.6',
   intro: {
     objective: [
-      'ทำให้เกิดคลื่นนิ่งในเส้นลวดที่มีจำนวนบ่วง (loop) ต่าง ๆ และวัดความถี่ที่เกิดการสั่นพ้อง',
+      'ทำให้เกิดคลื่นนิ่งในเส้นลวดที่มีจำนวนบ่วง (loop) ต่าง ๆ',
+      'วัดคาบของสัญญาณที่ขับเครื่องสั่นด้วยออสซิลโลสโคป แล้วคำนวณความถี่ที่เกิดการสั่นพ้อง',
       'หาความสัมพันธ์ระหว่างอัตราเร็วคลื่นในเส้นลวดกับแรงตึง',
       'หาความหนาแน่นเชิงเส้น μ (มวลต่อความยาว) ของเส้นลวดจากความชันของกราฟ v² กับ T',
     ],
@@ -35,25 +36,37 @@ Lab.init({
       '<div class="eq">L = n · λ/2 &nbsp;→&nbsp; λ = 2L / n</div>' +
       '<p>อัตราเร็วคลื่นในเส้นลวดขึ้นกับแรงตึง T และความหนาแน่นเชิงเส้น μ</p>' +
       '<div class="eq">v = f λ = √(T / μ) &nbsp;→&nbsp; v² = (1/μ) · T</div>' +
-      '<p>กราฟ v² กับ T จึงเป็นเส้นตรงผ่านจุดกำเนิด ความชันเท่ากับ 1/μ ดังนั้น <b>μ = 1 / ความชัน</b> แรงตึงเกิดจากมวลที่แขวน T = Mg</p>',
-    equipment: ['เครื่องสั่นกล (vibrator) ต่อกับเครื่องกำเนิดสัญญาณ แสดงความถี่แบบตัวเลข (ละเอียด 1 Hz)', 'เส้นลวดเบา',
+      '<p>กราฟ v² กับ T จึงเป็นเส้นตรงผ่านจุดกำเนิด ความชันเท่ากับ 1/μ ดังนั้น <b>μ = 1 / ความชัน</b> แรงตึงเกิดจากมวลที่แขวน T = Mg</p>' +
+      '<h3>การวัดคาบด้วยออสซิลโลสโคป</h3>' +
+      '<p>ต่อสัญญาณจากเครื่องกำเนิดสัญญาณเข้าช่อง CH1 จอแบ่งแนวนอนเป็น 10 ช่อง (div) แต่ละช่องมีเวลาเท่ากับค่าที่ตั้งไว้ที่ปุ่ม TIME/DIV ' +
+      'นับว่าสัญญาณ k คาบกินความยาวกี่ช่อง (D) อ่านละเอียดถึง 0.1 ช่องจากขีดย่อยบนเส้นกลางจอ</p>' +
+      '<div class="eq">คาบ P = D × (TIME/DIV) / k &nbsp;&nbsp; ความถี่ f = 1 / P</div>' +
+      '<p>วัดหลายคาบรวมกันช่วยลดความคลาดเคลื่อนสัมพัทธ์ของการอ่านจอ ควรเลือก TIME/DIV ให้สัญญาณ 1–4 คาบเต็มจอ</p>',
+    equipment: ['เครื่องสั่นกล (vibrator) ต่อกับเครื่องกำเนิดสัญญาณ (ปุ่มปรับความถี่ไม่มีตัวเลขบอก)',
+      'ออสซิลโลสโคป (จอ 10 × 8 ช่อง, ขีดย่อย 0.2 ช่อง)', 'เส้นลวดเบา',
       'รอกพร้อมแท่นยึด', 'ที่แขวนมวล 50 g และมวลแบบแผ่น ก้อนละ 50 g', 'ไม้เมตร (ขีดละเอียด 1 mm)'],
     procedure: [
       'ใช้แว่นขยายอ่านไม้เมตร ตรวจสอบความยาวช่วงสั่น L จากจุดที่เส้นลวดติดเครื่องสั่นถึงจุดที่สัมผัสรอก (ควรได้ 1.200 m)',
       'แขวนมวลรวม M (เริ่มจาก 100 g) เปิดเครื่องกำเนิดสัญญาณ แล้วค่อย ๆ ปรับความถี่จากต่ำขึ้นสูง',
-      'เมื่อเส้นลวดสั่นแรงเป็นบ่วงชัดเจน ให้ปรับทีละ 1 Hz หาความถี่ที่บ่วงกว้างที่สุด นับจำนวนบ่วง n แล้วบันทึก M, n และ f',
-      'หาความถี่ของ n = 1, 2, 3, … ที่มวลเดียวกันได้ จากนั้นเปลี่ยนมวล ทำให้ได้อย่างน้อย 6 แถวที่มีแรงตึงต่างกัน',
+      'เมื่อเส้นลวดสั่นแรงเป็นบ่วงชัดเจน ให้ปรับละเอียดหาจุดที่บ่วงกว้างที่สุด แล้วนับจำนวนบ่วง n',
+      'เลือก TIME/DIV ให้เห็นสัญญาณ 1–4 คาบบนจอ ใช้ปุ่ม POSITION เลื่อนจุดที่สัญญาณตัดเส้นกลางขาขึ้นให้ตรงเส้นกริด แล้วใช้แว่นขยายนับว่า k คาบยาว D ช่อง',
+      'บันทึก M, n, TIME/DIV, k และ D ตารางจะคำนวณคาบ P และความถี่ f ให้',
+      'หาการสั่นพ้องของ n = 1, 2, 3, … ที่มวลเดียวกันได้ จากนั้นเปลี่ยนมวล ทำให้ได้อย่างน้อย 6 แถวที่มีแรงตึงต่างกัน',
       'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ v² กับ T',
     ],
     tip: 'ปลายที่ติดเครื่องสั่นไม่ใช่บัพที่สมบูรณ์ เพราะเครื่องสั่นขยับเล็กน้อย ให้นับบ่วงจากรอกเข้ามา บ่วงสุดท้ายข้างเครื่องสั่นนับเป็นหนึ่งบ่วง',
   },
   table: {
     rows: 8,
-    hint: 'M คือมวลรวมที่แขวน (รวมที่แขวน) เป็นกิโลกรัม เช่น 0.150 · แต่ละแถวคือหนึ่งการสั่นพ้อง',
+    hint: 'M คือมวลรวมที่แขวน (รวมที่แขวน) เป็นกิโลกรัม เช่น 0.150 · TIME/DIV เป็นมิลลิวินาที · แต่ละแถวคือหนึ่งการสั่นพ้อง',
     columns: [
       { key: 'M', label: 'มวลแขวน M<br>(kg)', input: true },
       { key: 'n', label: 'จำนวนบ่วง n', input: true },
-      { key: 'f', label: 'ความถี่ f<br>(Hz)', input: true },
+      { key: 'td', label: 'TIME/DIV<br>(ms)', input: true },
+      { key: 'k', label: 'จำนวนคาบ k', input: true },
+      { key: 'D', label: 'ความยาว k คาบ D<br>(div)', input: true },
+      { key: 'P', label: 'คาบ P<br>(ms)', calc: (r) => (r.D * r.td) / r.k, digits: 2 },
+      { key: 'f', label: 'ความถี่ f = 1/P<br>(Hz)', calc: (r) => 1000 / r.P, digits: 1 },
       { key: 'T', label: 'แรงตึง T = Mg<br>(N)', calc: (r) => r.M * G, digits: 3 },
       { key: 'lam', label: 'λ = 2L/n<br>(m)', calc: (r) => (2 * L) / r.n, digits: 3 },
       { key: 'v', label: 'v = fλ<br>(m/s)', calc: (r) => r.f * r.lam, digits: 2 },
@@ -74,36 +87,56 @@ Lab.init({
   },
   questions: [
     'ที่แรงตึงเดียวกัน ความถี่ที่ทำให้เกิด 1, 2, 3 บ่วงมีความสัมพันธ์กันอย่างไร อธิบายด้วยสมการ',
+    'ถ้าอ่านจอออสซิลโลสโคปได้ละเอียด ±0.1 ช่อง การวัด 1 คาบที่ยาว 2 ช่องกับวัด 4 คาบที่ยาว 8 ช่อง ให้ความคลาดเคลื่อนสัมพัทธ์ของคาบต่างกันอย่างไร ควรเลือก TIME/DIV อย่างไร',
     'เมื่อเพิ่มแรงตึง อัตราเร็วคลื่นในเส้นลวดเปลี่ยนไปอย่างไร สอดคล้องกับกราฟ v² กับ T หรือไม่',
     'เพราะเหตุใดเส้นลวดจึงสั่นแรงเฉพาะบางความถี่ ถ้าความถี่อยู่ระหว่างการสั่นพ้องสองค่าจะเห็นอะไร',
     'บัพที่ปลายติดเครื่องสั่นเป็นบัพสมบูรณ์หรือไม่ และส่งผลต่อการวัดอย่างไร',
     'ระบุแหล่งความคลาดเคลื่อนอย่างน้อย 2 แหล่ง เช่น มวลของเส้นลวดส่วนที่ห้อย แรงเสียดทานที่รอก',
   ],
   apparatus(stage, ctrls, api) {
-    stage.innerHTML = '<canvas></canvas>';
+    stage.innerHTML = '<canvas style="height:640px"></canvas>';
     const canvas = stage.querySelector('canvas');
     const cv = Lab.canvas(canvas);
     const lens = Lab.lens(cv, { zoom: 6, r: 80 });
     lens.button(stage);
     MU_TRUE = (0.4 + 0.8 * api.rng()) * 1e-3;
-    const s = { f: 20, on: false, nm: 2, phase: 0, amp: 0 };
+    // f: ความถี่จริงที่เครื่องกำเนิดส่งออก (นักเรียนไม่เห็นตัวเลข ต้องวัดจากออสซิลโลสโคป)
+    const s = { f: 20 + 4 * api.rng(), on: false, nm: 2, phase: 0, amp: 0, td: 10, vd: 1, hp: 0, Vp: 2.6 + 0.6 * api.rng(), t: 0 };
+    const TDIVS = [0.5, 1, 2, 5, 10, 20, 50], VDIVS = [0.5, 1, 2, 5];
 
     ctrls.innerHTML =
-      '<h3>เครื่องกำเนิดสัญญาณ</h3>' +
-      '<div class="watch"><span class="readout" id="fShow">20</span> Hz<small>ความถี่ที่ส่งให้เครื่องสั่น</small></div>' +
-      '<input type="range" id="fK" min="1" max="300" step="1">' +
-      '<div class="row"><button class="btn" id="fm10">−10</button><button class="btn" id="fm1">−1</button><button class="btn" id="fp1">+1</button><button class="btn" id="fp10">+10</button></div>' +
+      '<h3>เครื่องกำเนิดสัญญาณ (ปรับความถี่)</h3>' +
+      '<input type="range" id="fK" min="0" max="1" step="0.0005">' +
+      '<div class="row"><button class="btn" id="fm10">◀◀</button><button class="btn" id="fm1">◀</button><button class="btn" id="fp1">▶</button><button class="btn" id="fp10">▶▶</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">ปุ่มปรับไม่มีตัวเลข ◀ ▶ ปรับละเอียด ◀◀ ▶▶ ปรับหยาบ</p>' +
       '<div class="row"><button class="btn primary" id="pw">เปิดเครื่อง</button></div>' +
+      '<h3>ออสซิลโลสโคป (CH1 ต่อจากเครื่องกำเนิดสัญญาณ)</h3>' +
+      '<div class="row" style="gap:10px"><label style="flex:1;font-size:13px">TIME/DIV<br><select id="tdS" class="btn" style="width:100%"></select></label>' +
+      '<label style="flex:1;font-size:13px">VOLTS/DIV<br><select id="vdS" class="btn" style="width:100%"></select></label></div>' +
+      '<label style="font-size:13px">POSITION (เลื่อนสัญญาณซ้าย-ขวา)</label><input type="range" id="hpS" min="-5" max="5" step="0.01" value="0">' +
+      '<div class="row"><button class="btn" id="hpL">◀ 0.02 ช่อง</button><button class="btn" id="hpR">0.02 ช่อง ▶</button></div>' +
       '<h3>มวลที่แขวน (ก้อนละ 50 g รวมที่แขวน)</h3>' +
       '<p style="margin:0 0 4px" id="mInfo"></p>' +
       '<div class="row"><button class="btn" id="mAdd">+ เพิ่ม 50 g</button><button class="btn" id="mDel">− เอาออก 50 g</button></div>' +
-      '<p class="muted" style="font-size:13px">ปรับความถี่ทีละ 1 Hz รอบ ๆ ยอดการสั่นพ้อง เลือกค่าที่บ่วงกว้างที่สุด</p>';
+      '<p class="muted" style="font-size:13px">ปรับความถี่ละเอียดรอบ ๆ ยอดการสั่นพ้อง เลือกจุดที่บ่วงกว้างที่สุด แล้วจึงวัดคาบบนจอออสซิลโลสโคป</p>';
     const $ = (q) => ctrls.querySelector(q);
+    // ปุ่มปรับแบบลอการิทึม 5–320 Hz: ตำแหน่ง u ∈ [0,1]
+    const F0 = 5, F1 = 320, fOf = (u) => F0 * Math.pow(F1 / F0, u), uOf = (f) => Math.log(f / F0) / Math.log(F1 / F0);
     const fK = $('#fK');
-    const setF = (v) => { s.f = Math.max(1, Math.min(300, Math.round(v))); fK.value = s.f; $('#fShow').textContent = s.f; };
-    setF(20);
-    fK.oninput = () => setF(+fK.value);
-    [['fm10', -10], ['fm1', -1], ['fp1', 1], ['fp10', 10]].forEach(([id, d]) => ($('#' + id).onclick = () => setF(s.f + d)));
+    const setF = (f) => { s.f = Math.max(F0, Math.min(F1, f)); fK.value = uOf(s.f); };
+    setF(s.f);
+    fK.oninput = () => setF(fOf(+fK.value));
+    // ◀ ▶ เปลี่ยน 0.2% (ราว 0.05–0.6 Hz), ◀◀ ▶▶ เปลี่ยน 5%
+    [['fm10', 0.95], ['fm1', 0.998], ['fp1', 1.002], ['fp10', 1.05]].forEach(([id, k]) => ($('#' + id).onclick = () => setF(s.f * k)));
+    const tdS = $('#tdS'), vdS = $('#vdS'), hpS = $('#hpS');
+    tdS.innerHTML = TDIVS.map((v) => '<option value="' + v + '"' + (v === s.td ? ' selected' : '') + '>' + v + ' ms</option>').join('');
+    vdS.innerHTML = VDIVS.map((v) => '<option value="' + v + '"' + (v === s.vd ? ' selected' : '') + '>' + v + ' V</option>').join('');
+    tdS.onchange = () => (s.td = +tdS.value);
+    vdS.onchange = () => (s.vd = +vdS.value);
+    const setHp = (v) => { s.hp = Math.max(-5, Math.min(5, v)); hpS.value = s.hp; };
+    hpS.oninput = () => setHp(+hpS.value);
+    $('#hpL').onclick = () => setHp(s.hp - 0.02);
+    $('#hpR').onclick = () => setHp(s.hp + 0.02);
     $('#pw').onclick = () => {
       s.on = !s.on;
       $('#pw').textContent = s.on ? 'ปิดเครื่อง' : 'เปิดเครื่อง';
@@ -125,7 +158,7 @@ Lab.init({
 
     let ppm, x0, y0;
     function layout() {
-      x0 = 70; ppm = (cv.w - x0 - 80) / 1.3; y0 = cv.h * 0.4;
+      x0 = 70; ppm = (cv.w - x0 - 80) / 1.3; y0 = 140;
     }
     function scene(ctx, z) {
       const dark = Lab.dark(), ink = Lab.css('--ink');
@@ -193,10 +226,61 @@ Lab.init({
       const c = Math.cos(s.phase);
       for (let i = 0; i <= N; i++) { const x = (i / N) * L; ctx.lineTo(x0 + x * ppm, y0 + toPx(disp(1 - x / L)) * c); }
       ctx.stroke();
+      scope(ctx, z);
+    }
+
+    // ---------- ออสซิลโลสโคป: จอ 10 × 8 ช่อง ทริกเกอร์ที่จุดตัดขาขึ้น ----------
+    function scope(ctx, z) {
+      const top = y0 + 150, avail = cv.h - top - 16;
+      const dv = Math.min(avail / 8.6, (cv.w - 60) / 10.8);
+      const W = 10 * dv, H = 8 * dv, sx = (cv.w - W) / 2, sy = top + 0.3 * dv;
+      // ตัวเครื่อง
+      ctx.fillStyle = Lab.dark() ? '#2a2f38' : '#3b414d';
+      ctx.fillRect(sx - 0.35 * dv, sy - 0.3 * dv, W + 0.7 * dv, H + 0.6 * dv);
+      ctx.fillStyle = '#071510'; ctx.fillRect(sx, sy, W, H);
+      // กริด: เส้นช่อง และขีดย่อย 0.2 ช่องบนเส้นกลาง
+      ctx.strokeStyle = 'rgba(120,200,160,0.35)'; ctx.lineWidth = 1 / z;
+      for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(sx + i * dv, sy); ctx.lineTo(sx + i * dv, sy + H); ctx.stroke(); }
+      for (let j = 0; j <= 8; j++) { ctx.beginPath(); ctx.moveTo(sx, sy + j * dv); ctx.lineTo(sx + W, sy + j * dv); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(150,230,190,0.6)';
+      const tk = Math.max(dv * 0.06, 2 / z);
+      for (let i = 0; i <= 50; i++) {
+        const x = sx + (i / 5) * dv, yc = sy + H / 2;
+        ctx.beginPath(); ctx.moveTo(x, yc - tk); ctx.lineTo(x, yc + tk); ctx.stroke();
+      }
+      for (let j = 0; j <= 40; j++) {
+        const y = sy + (j / 5) * dv, xc = sx + W / 2;
+        ctx.beginPath(); ctx.moveTo(xc - tk, y); ctx.lineTo(xc + tk, y); ctx.stroke();
+      }
+      // สัญญาณ: เริ่มที่จุดตัดขาขึ้น (ทริกเกอร์) ที่ขอบซ้าย แล้วเลื่อนด้วย POSITION
+      if (s.on) {
+        const P = 1000 / s.f; // ms
+        ctx.save(); ctx.beginPath(); ctx.rect(sx, sy, W, H); ctx.clip();
+        ctx.strokeStyle = 'rgba(90,255,160,0.25)'; ctx.lineWidth = 4 / z;
+        const trace = () => {
+          ctx.beginPath();
+          for (let i = 0; i <= 600; i++) {
+            const xd = (i / 600) * 10;
+            const tms = (xd - s.hp) * s.td;
+            const V = s.Vp * Math.sin((2 * Math.PI * tms) / P) + s.jit;
+            ctx.lineTo(sx + xd * dv, sy + H / 2 - (V / s.vd) * dv);
+          }
+          ctx.stroke();
+        };
+        trace();
+        ctx.strokeStyle = '#7dffb4'; ctx.lineWidth = 1.3 / z; trace();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#9fe8c0'; ctx.font = 0.32 * dv + 'px Consolas, monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('CH1 ' + s.vd + ' V/div', sx + 0.1 * dv, sy + 0.08 * dv);
+      ctx.textAlign = 'right';
+      ctx.fillText(s.td + ' ms/div', sx + W - 0.1 * dv, sy + 0.08 * dv);
+      ctx.textBaseline = 'alphabetic';
     }
 
     function onPointer(e) {
       const [x, y] = Lab.pos(canvas, e);
+      lens.zoom = y > y0 + 150 ? 3 : 6; // บนจอออสซิลโลสโคปใช้กำลังขยายต่ำกว่า ให้เห็นเส้นสัญญาณกับขีดย่อยพร้อมกัน
       if (lens.handle(e, x, y)) { e.preventDefault(); return; }
     }
     ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
@@ -205,6 +289,7 @@ Lab.init({
       if (!cv.w) return;
       layout();
       s.phase += dt * 2 * Math.PI * 7; // แสดงการสั่นช้า ๆ (สโตรโบสโคป) ไม่ใช่ความถี่จริง
+      s.jit = Lab.noise(0.015); // สัญญาณรบกวนเล็กน้อยบนจอ
       const ctx = cv.ctx;
       ctx.clearRect(0, 0, cv.w, cv.h);
       scene(ctx, 1);
