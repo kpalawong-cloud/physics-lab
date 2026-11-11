@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สเปกตรัมของไฮโดรเจน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 490px; }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const LINES_NOM = 600;      // เส้น/mm ที่พิมพ์บนเกรตติง
+const D_NOM = 1e6 / LINES_NOM; // nm
+// เส้นสเปกตรัมบัลเมอร์ (ความยาวคลื่นในอากาศ)
+const HLINES = [
+  { n: 3, lam: 656.28, col: [255, 45, 40], I: 1.0 },
+  { n: 4, lam: 486.13, col: [60, 215, 255], I: 0.65 },
+  { n: 5, lam: 434.05, col: [120, 90, 255], I: 0.4 },
+  { n: 6, lam: 410.17, col: [150, 70, 230], I: 0.18 },
+];
+let TRUE = null;
+const deg = Math.PI / 180;
+
+Lab.init({
+  id: 'spectrum',
+  short: 'สเปกตรัมของไฮโดรเจน',
+  title: 'สเปกตรัมเส้นของอะตอมไฮโดรเจนด้วยสเปกโตรมิเตอร์เกรตติง',
+  level: 'ม.6',
+  intro: {
+    objective: [
+      'ใช้สเปกโตรมิเตอร์และเกรตติงวัดมุมเลี้ยวเบนของเส้นสเปกตรัมไฮโดรเจน โดยอ่านสเกลเวอร์เนียร์ถึง 1 ลิปดา',
+      'คำนวณความยาวคลื่นของเส้นสเปกตรัมชุดบัลเมอร์',
+      'เขียนกราฟ 1/λ กับ (1/2² − 1/n²) แล้วหาค่าคงตัวริดเบิร์ก',
+    ],
+    theory:
+      '<p>หลอดไฮโดรเจนที่ถูกกระตุ้นด้วยไฟฟ้าให้แสงเฉพาะบางความยาวคลื่น เมื่ออิเล็กตรอนลดระดับพลังงานจากชั้น n ลงมาที่ชั้น 2 (ชุดบัลเมอร์) จะได้แสงในช่วงที่ตามองเห็น โดย</p>' +
+      '<div class="eq">1/λ = R<sub>H</sub> (1/2² − 1/n²) &nbsp;&nbsp; n = 3, 4, 5, 6</div>' +
+      '<p>เกรตติงที่มีระยะห่างระหว่างช่อง d ทำให้แสงความยาวคลื่น λ เลี้ยวเบนเป็นมุม θ ในลำดับที่ m ตาม</p>' +
+      '<div class="eq">d sin θ = m λ</div>' +
+      '<p>มุม θ อ่านจากสเกลวงกลมของสเปกโตรมิเตอร์ ซึ่งมีสเกลหลักละเอียด 0.5° และสเกลเวอร์เนียร์ 30 ช่องยาวเท่ากับสเกลหลัก 29 ช่อง จึงอ่านละเอียดได้ 1 ลิปดา (1′ = 1/60°)</p>' +
+      '<p><b>วิธีอ่าน</b>: ค่าสเกลหลักที่อยู่ก่อนขีดศูนย์ของเวอร์เนียร์ + จำนวนลิปดาจากขีดเวอร์เนียร์ที่ตรงกับขีดสเกลหลักพอดี เช่น สเกลหลัก 152.5° และขีดเวอร์เนียร์ที่ 17 ตรงพอดี → 152° 30′ + 17′ = 152° 47′</p>' +
+      '<p>หมุนกล้องไปหาเส้นสเปกตรัมเดียวกันทั้งด้านซ้าย (φ<sub>L</sub>) และขวา (φ<sub>R</sub>) แล้วใช้ θ = (φ<sub>R</sub> − φ<sub>L</sub>)/2 เพื่อไม่ต้องรู้ตำแหน่งศูนย์ของสเกล</p>',
+    equipment: ['สเปกโตรมิเตอร์พร้อมสเกลวงกลมและเวอร์เนียร์ (ละเอียด 1′)', 'เกรตติง 600 เส้น/mm วางตั้งฉากกับคอลลิเมเตอร์', 'หลอดปล่อยประจุไฮโดรเจนพร้อมแหล่งจ่ายไฟแรงสูง'],
+    procedure: [
+      'มองผ่านกล้อง หมุนกล้องไปหาภาพสลิตสีขาวที่ตรงแนว (ลำดับ m = 0) เพื่อดูว่ามุมตรงแนวอยู่ที่ใด',
+      'หมุนกล้องไปทางขวาจนเห็นเส้นสีแดง (H<sub>α</sub>, n = 3) ลำดับ m = 1 ใช้ปุ่มละเอียดให้เส้นทับเส้นไขว้กลางกล้องพอดี',
+      'ใช้แว่นขยายอ่านสเกลหลักและเวอร์เนียร์ บันทึกเป็นองศาและลิปดา (φ<sub>R</sub>)',
+      'หมุนกล้องไปด้านซ้ายหาเส้นเดียวกันในลำดับเดียวกัน แล้วอ่าน φ<sub>L</sub>',
+      'ทำซ้ำกับเส้นสีฟ้าเขียว (n = 4) สีน้ำเงินม่วง (n = 5) และสีม่วงจาง (n = 6) ถ้าเห็น ลองวัดลำดับ m = 2 ด้วย',
+    ],
+    tip: 'จำนวน n ของเส้นแต่ละสีต้องระบุเอง เส้นที่ความยาวคลื่นยาวที่สุด (สีแดง) คือ n = 3 เส้นถัดไปที่สั้นลงคือ n = 4, 5, 6 ตามลำดับ',
+  },
+  table: {
+    rows: 8,
+    hint: 'บันทึกมุมเป็นองศาและลิปดาแยกช่อง θ = (φ<sub>R</sub> − φ<sub>L</sub>)/2 และ λ = d sin θ / m ใช้ d = 1/600 mm',
+    columns: [
+      { key: 'n', label: 'ชั้นเริ่มต้น n', input: true },
+      { key: 'm', label: 'ลำดับ m', input: true },
+      { key: 'Ld', label: 'φ<sub>L</sub><br>(องศา)', input: true },
+      { key: 'Lm', label: 'φ<sub>L</sub><br>(ลิปดา)', input: true },
+      { key: 'Rd', label: 'φ<sub>R</sub><br>(องศา)', input: true },
+      { key: 'Rm', label: 'φ<sub>R</sub><br>(ลิปดา)', input: true },
+      { key: 'th', label: 'θ<br>(องศา)', calc: (r) => (r.Rd + r.Rm / 60 - (r.Ld + r.Lm / 60)) / 2, digits: 3 },
+      { key: 'lam', label: 'λ<br>(nm)', calc: (r) => (D_NOM * Math.sin(r.th * deg)) / r.m, digits: 1 },
+      { key: 'il', label: '1/λ<br>(μm⁻¹)', calc: (r) => 1000 / r.lam, digits: 4 },
+      { key: 'x', label: '1/2² − 1/n²', calc: (r) => 0.25 - 1 / (r.n * r.n), digits: 4 },
+    ],
+  },
+  graph: {
+    title: '1/λ กับ (1/2² − 1/n²)', x: 'x', y: 'il', xv: 'x', yv: '1/λ', xlabel: '1/2² − 1/n²', ylabel: '1/λ (μm⁻¹)', origin: true,
+    explain: 'ความชัน = R<sub>H</sub> ในหน่วย μm⁻¹ = 10⁶ m⁻¹',
+  },
+  results(fit) {
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'μm⁻¹' },
+      { label: 'ค่าคงตัวริดเบิร์ก R<sub>H</sub>', value: fit.m / 10, unc: fit.sm / 10, unit: '× 10⁷ m⁻¹', accepted: 1.0968 },
+      { label: 'ระดับพลังงานไอออไนเซชันของไฮโดรเจน E = hcR<sub>H</sub>', value: (6.626e-34 * 2.998e8 * fit.m * 1e6) / 1.602e-19, digits: 2, unit: 'eV' },
+      { label: 'R<sub>H</sub> ที่ควรได้จากเกรตติงชุดนี้ (เมื่อใช้ d = 1/600 mm)', value: fit.m / 10, unit: '× 10⁷ m⁻¹', accepted: TRUE && +((1.0971 * LINES_NOM) / TRUE.lines).toFixed(4), hidden: true, digitsTrue: 4 },
+    ];
+  },
+  questions: [
+    'เส้นสเปกตรัมที่มีความยาวคลื่นยาวที่สุดเกิดจากการลดระดับจาก n เท่าใด เพราะเหตุใดจึงมีความยาวคลื่นยาวที่สุด',
+    'เหตุใดภาพสลิตลำดับ m = 0 จึงเป็นสีขาว แต่ลำดับ m = 1, 2 แยกเป็นสี',
+    'ความยาวคลื่นที่วัดได้จากลำดับ m = 1 และ m = 2 ของเส้นเดียวกันต่างกันหรือไม่ ลำดับใดน่าจะแม่นยำกว่า เพราะเหตุใด',
+    'ถ้าเกรตติงไม่ได้วางตั้งฉากกับลำแสงพอดี มุมด้านซ้ายและขวาจะไม่เท่ากัน การใช้ (φ<sub>R</sub> − φ<sub>L</sub>)/2 ช่วยลดความคลาดเคลื่อนได้หรือไม่',
+    'จากค่า R<sub>H</sub> ที่วัดได้ จงทำนายความยาวคลื่นของเส้น n = 7 → 2 และอธิบายว่าเหตุใดจึงมองเห็นได้ยาก',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 84 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      lines: LINES_NOM * (1 + 0.012 * (rng() - 0.5)),
+      phi0: 150 + Math.round(rng() * 600) / 10,          // มุมบนสเกลที่กล้องอยู่ตรงแนวคอลลิเมเตอร์
+      tilt: (rng() - 0.5) * 1.2,                          // เกรตติงเอียงเล็กน้อย (องศา) ทำให้ซ้าย-ขวาไม่สมมาตร
+    };
+    const s = { phi: TRUE.phi0 + 8 + rng() * 4, drag: false };
+    const MIN = TRUE.phi0 - 75, MAX = TRUE.phi0 + 75;
+
+    // มุมของเส้นสเปกตรัมทั้งหมดที่มองเห็น (มุมบนสเกล, ความเข้ม, สี)
+    const FEAT = [{ phi: TRUE.phi0, I: 1, col: [255, 255, 255] }];
+    const dnm = 1e6 / TRUE.lines, ti = TRUE.tilt * deg;
+    HLINES.forEach((h) => [1, 2].forEach((m) => [-1, 1].forEach((side) => {
+      // แสงตกทำมุม tilt กับเกรตติง: d (sin θ_out − sin tilt) = ±mλ
+      const sOut = (side * m * h.lam) / dnm + Math.sin(ti);
+      if (Math.abs(sOut) >= 0.98) return;
+      const th = Math.asin(sOut) - ti;
+      FEAT.push({ phi: TRUE.phi0 + th / deg, I: h.I * (m === 1 ? 1 : 0.45), col: h.col });
+    })));
+
+    ctrls.innerHTML =
+      '<h3>หมุนกล้อง (หยาบ)</h3><input type="range" id="coarse" min="' + MIN + '" max="' + MAX + '" step="0.01">' +
+      '<h3>สกรูปรับละเอียด</h3>' +
+      '<div class="row"><button class="btn" data-d="-1">◀ 1°</button><button class="btn" data-d="-0.1">◀ 0.1°</button><button class="btn" data-d="0.1">0.1° ▶</button><button class="btn" data-d="1">1° ▶</button></div>' +
+      '<div class="row"><button class="btn" data-d="-0.0833333">◀ 5′</button><button class="btn" data-d="-0.0166667">◀ 1′</button><button class="btn" data-d="0.0166667">1′ ▶</button><button class="btn" data-d="0.0833333">5′ ▶</button></div>' +
+      '<p class="muted" style="font-size:13px">ลากกล้องในภาพมุมบนเพื่อหมุนได้ ใช้ภาพในกล้องจัดเส้นสเปกตรัมให้ทับเส้นไขว้ แล้วใช้แว่นขยายอ่านสเกลเวอร์เนียร์</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const coarse = $('#coarse');
+    const setPhi = (v) => { s.phi = Math.max(MIN, Math.min(MAX, v)); coarse.value = s.phi; };
+    setPhi(s.phi);
+    coarse.oninput = () => setPhi(+coarse.value);
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) setPhi(s.phi + +b.dataset.d); });
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.topH = Math.min(340, h * 0.62);
+      L.r = Math.min(w / 5.2, L.topH / 2 - 22);
+      L.cx = w * 0.27; L.cy = L.topH / 2 + 10;
+      L.ex = w * 0.75; L.ey = L.cy; L.er = Math.min(w / 4 - 24, L.topH / 2 - 20);
+      L.vy = L.topH + 76;                // ขอบล่างของสเกลหลัก (ขีดหลักห้อยลงมาชนขอบนี้)
+      L.x0 = 20; L.x1 = w - 20;
+      L.ppd = (L.x1 - L.x0) / 19;         // px ต่อองศาบนแถบเวอร์เนียร์
+      L.v0 = L.x0 + 3 * L.ppd;            // ตำแหน่งขีดศูนย์ของเวอร์เนียร์
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      // ---------- มุมบน: โต๊ะสเปกโตรมิเตอร์ ----------
+      const cx = L.cx, cy = L.cy, r = L.r;
+      ctx.fillStyle = dark ? '#262b34' : '#e2e5eb'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.stroke();
+      // หลอดไฮโดรเจน + คอลลิเมเตอร์ (ทางซ้าย)
+      const tubeX = cx - r - 8;
+      const glow = ctx.createRadialGradient(tubeX, cy, 1, tubeX, cy, 18);
+      glow.addColorStop(0, 'rgba(255,150,220,.95)'); glow.addColorStop(1, 'rgba(255,150,220,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(tubeX, cy, 18, 0, 7); ctx.fill();
+      ctx.fillStyle = dark ? '#5d6575' : '#59606e'; ctx.fillRect(tubeX + 10, cy - 7, r * 0.8, 14);
+      ctx.fillStyle = 'rgba(255,190,230,.25)'; ctx.fillRect(tubeX + 10 + r * 0.8, cy - 3, cx - (tubeX + 10 + r * 0.8), 6);
+      // เกรตติง
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(TRUE.tilt * deg);
+      ctx.fillStyle = dark ? '#a8c8f0' : '#3b6ea8'; ctx.fillRect(-2, -r * 0.3, 4, r * 0.6); ctx.restore();
+      // แสงที่เลี้ยวเบน (จาง ๆ ตามทิศจริง) ช่วยให้รู้ว่าควรหมุนกล้องไปทางไหน
+      FEAT.forEach((f) => {
+        const a = -(f.phi - TRUE.phi0) * deg;
+        ctx.strokeStyle = 'rgba(' + f.col + ',' + 0.35 * f.I + ')'; ctx.lineWidth = 1.2 / z;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r * 1.0, cy + Math.sin(a) * r * 1.0); ctx.stroke();
+      });
+      // กล้องโทรทรรศน์บนแขนหมุน
+      const a = -(s.phi - TRUE.phi0) * deg;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+      ctx.fillStyle = dark ? '#7b8494' : '#3f4552'; ctx.fillRect(r * 0.35, -8, r * 0.95, 16);
+      ctx.fillStyle = dark ? '#a0a8b8' : '#6a7180'; ctx.fillRect(r * 1.3, -5, 14, 10);
+      ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 1 / z; ctx.setLineDash([3 / z, 3 / z]);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(r * 0.35, 0); ctx.stroke(); ctx.setLineDash([]);
+      ctx.restore();
+      ctx.fillStyle = ink; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('หลอดไฮโดรเจน → คอลลิเมเตอร์', Math.max(8, cx - r * 0.35 - 72), cy + r * 0.3 + 4);
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.fillText('มองจากด้านบน', 8, 26);
+
+      // ---------- ภาพในกล้อง ----------
+      const ex = L.ex, ey = L.ey, er = L.er, FOV = 1.2; // ± องศา
+      ctx.save(); ctx.beginPath(); ctx.arc(ex, ey, er, 0, 7); ctx.clip();
+      ctx.fillStyle = '#050608'; ctx.fillRect(ex - er, ey - er, 2 * er, 2 * er);
+      ctx.globalCompositeOperation = 'lighter';
+      FEAT.forEach((f) => {
+        const dphi = f.phi - s.phi;
+        if (Math.abs(dphi) > FOV + 0.2) return;
+        // กล้องหมุนไปทาง φ มากขึ้น ภาพเส้นจึงเลื่อนไปทางตรงข้าม
+        const x = ex - (dphi / FOV) * er, wpx = Math.max(1.5, (0.022 / FOV) * er);
+        const g = ctx.createLinearGradient(x - 3 * wpx, 0, x + 3 * wpx, 0);
+        g.addColorStop(0, 'rgba(' + f.col + ',0)'); g.addColorStop(0.5, 'rgba(' + f.col + ',' + Math.min(1, 0.25 + f.I) + ')'); g.addColorStop(1, 'rgba(' + f.col + ',0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 3 * wpx, ey - er * 0.7, 6 * wpx, er * 1.4);
+      });
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(230,230,230,.75)'; ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(ex, ey - er); ctx.lineTo(ex, ey + er); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex - er, ey); ctx.lineTo(ex + er, ey); ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = dark ? '#7b8494' : '#3f4552'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(ex, ey, er + 2, 0, 7); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('ภาพที่เห็นในกล้อง', ex, ey + er + 6);
+
+      // ---------- สเกลวงกลม (คลี่เป็นแถบ) และเวอร์เนียร์ ----------
+      const vy = L.vy, ppd = L.ppd, v0 = L.v0, X = (p) => v0 + (p - s.phi) * ppd;
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('สเกลหลัก (องศา) และสเกลเวอร์เนียร์ (ลิปดา)', L.x0, vy - 48);
+      ctx.save(); ctx.beginPath(); ctx.rect(L.x0, vy - 44, L.x1 - L.x0, 94); ctx.clip();
+      ctx.fillStyle = dark ? '#e3dcc4' : '#efe6c8'; ctx.fillRect(L.x0, vy - 44, L.x1 - L.x0, 44);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const pFrom = Math.floor((s.phi - 3.5) * 2) / 2, pTo = s.phi + 16.5;
+      for (let p = pFrom; p <= pTo; p += 0.5) {
+        const k = Math.round(p * 2), x = X(k / 2);
+        const len = k % 20 === 0 ? 22 : k % 10 === 0 ? 16 : k % 2 === 0 ? 11 : 7;
+        ctx.lineWidth = (k % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, vy); ctx.lineTo(x, vy - len); ctx.stroke();
+        if (k % 10 === 0) {
+          ctx.font = (k % 20 === 0 ? 11 : 9.5) / Math.min(z, 3) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(((k / 2) % 360 + 360) % 360, x, vy - len - 1);
+        }
+      }
+      // เวอร์เนียร์: 30 ช่องยาว 29 × 0.5° ขีดศูนย์อยู่ที่มุมปัจจุบัน
+      ctx.fillStyle = dark ? '#c9ccd2' : '#d7dade'; ctx.fillRect(X(s.phi) - 10, vy, 14.5 * ppd + 20, 48);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let i = 0; i <= 30; i++) {
+        const x = X(s.phi + (i * 29) / 60), len = i % 5 === 0 ? 14 : 8;
+        ctx.lineWidth = (i % 5 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, vy); ctx.lineTo(x, vy + len); ctx.stroke();
+        if (i % 5 === 0) {
+          ctx.font = 9.5 / Math.min(z, 3) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(i, x, vy + len + 1);
+        }
+      }
+      ctx.restore();
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.8 / z; ctx.strokeRect(L.x0, vy - 44, L.x1 - L.x0, 92);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const ang = () => -Math.atan2(y - L.cy, x - L.cx) / deg + TRUE.phi0;
+      if (e.type === 'pointerdown' && Math.hypot(x - L.cx, y - L.cy) < L.r * 1.5 && Math.hypot(x - L.cx, y - L.cy) > L.r * 0.3) {
+        s.drag = { off: s.phi - ang() }; canvas.setPointerCapture(e.pointerId);
+      }
+      if (s.drag && e.type === 'pointermove') setPhi(ang() + s.drag.off);
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากกล้องเพื่อหมุน', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

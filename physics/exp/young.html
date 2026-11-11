@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การแทรกสอดจากสลิตคู่ของยัง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const SLITS = { A: { nom: 0.25, label: 'สลิตคู่ A (d = 0.25 mm)' }, B: { nom: 0.50, label: 'สลิตคู่ B (d = 0.50 mm)' } };
+const X_SLIT = 0.150;     // ตำแหน่งตัวยึดสลิตบนรางวัด (m)
+const HALF = 40;          // ครึ่งความกว้างสเกลบนฉาก (mm)
+let TRUE = null;
+
+Lab.init({
+  id: 'young',
+  short: 'สลิตคู่ของยัง',
+  title: 'การแทรกสอดของแสงจากสลิตคู่ (การทดลองของยัง)',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'สังเกตริ้วการแทรกสอดของแสงเลเซอร์ที่ผ่านสลิตคู่',
+      'วัดระยะห่างระหว่างแถบสว่างที่อยู่ถัดกัน Δy ที่ระยะฉาก D ต่าง ๆ',
+      'เขียนกราฟ Δy กับ D แล้วหาความยาวคลื่นของแสงเลเซอร์',
+    ],
+    theory:
+      '<p>แสงจากสลิตสองช่องที่ห่างกัน d เป็นแหล่งกำเนิดอาพันธ์ แถบสว่างเกิดเมื่อผลต่างทางเดินของแสงเป็นจำนวนเต็มเท่าของความยาวคลื่น</p>' +
+      '<div class="eq">d sin θ = n λ</div>' +
+      '<p>เมื่อมุมเล็ก sin θ ≈ y/D ตำแหน่งแถบสว่างลำดับ n คือ y<sub>n</sub> = nλD/d แถบที่อยู่ถัดกันจึงห่างกันเท่ากัน</p>' +
+      '<div class="eq">Δy = λD / d</div>' +
+      '<p>กราฟ Δy กับ D เป็นเส้นตรงผ่านจุดกำเนิด มีความชัน λ/d</p>' +
+      '<p>Δy มีค่าเพียงราว 1–3 mm การวัดระยะระหว่างแถบที่อยู่ถัดกันโดยตรงคลาดเคลื่อนมาก ให้อ่านตำแหน่งแถบสว่างลำดับ −k (y<sub>L</sub>) และ +k (y<sub>R</sub>) ที่อยู่ไกลออกไป แล้วหาร</p>' +
+      '<div class="eq">Δy = (y<sub>R</sub> − y<sub>L</sub>) / 2k</div>' +
+      '<p>ความสว่างของแถบลดลงตามซองการเลี้ยวเบนของสลิตแต่ละช่อง ซึ่งกว้างเพียงราว 0.06–0.09 mm</p>',
+    equipment: ['เลเซอร์สีแดง', 'สลิตคู่ A (d = 0.25 mm) และ B (d = 0.50 mm)', 'รางวัดยาว 2 m (ขีดละเอียด 1 mm)', 'ฉากรับแสงพร้อมสเกลมิลลิเมตร'],
+    procedure: [
+      'เลือกสลิตคู่ A อ่านตำแหน่งตัวยึดสลิตและตัวยึดฉากบนรางวัด D = ตำแหน่งฉาก − ตำแหน่งสลิต (บันทึกเป็นเมตร)',
+      'นับแถบสว่างจากแถบกลางออกไปทั้งสองข้างให้ได้ k แถบ (เช่น k = 3–5) ใช้แว่นขยายอ่านตำแหน่งกึ่งกลางแถบที่ −k (y<sub>L</sub>) และ +k (y<sub>R</sub>)',
+      'เปลี่ยนระยะ D อย่างน้อย 5 ค่า แล้วทำซ้ำ',
+      'เลือกสลิตคู่ B แล้วทำซ้ำทั้งหมดในตารางชุดที่ 2',
+    ],
+    tip: 'แถบกลางอยู่ที่ไหนก็ได้บนสเกล (ไม่จำเป็นต้องตรงศูนย์) เพราะใช้ผลต่าง y<sub>R</sub> − y<sub>L</sub> ห้ามมองลำแสงเลเซอร์โดยตรง',
+  },
+  table: {
+    rows: 6,
+    sets: [{ key: 'A', label: 'สลิตคู่ A' }, { key: 'B', label: 'สลิตคู่ B' }],
+    hint: 'แต่ละสลิตคู่มีตารางแยกกัน (สลับตามสลิตที่เลือก) k คือจำนวนแถบนับจากแถบกลางถึงแถบที่อ่าน',
+    columns: [
+      { key: 'D', label: 'ระยะฉาก D<br>(m)', input: true },
+      { key: 'k', label: 'ลำดับแถบ k', input: true },
+      { key: 'yL', label: 'ตำแหน่งแถบ −k<br>y<sub>L</sub> (mm)', input: true },
+      { key: 'yR', label: 'ตำแหน่งแถบ +k<br>y<sub>R</sub> (mm)', input: true },
+      { key: 'dy', label: 'Δy = (y<sub>R</sub> − y<sub>L</sub>)/2k<br>(mm)', calc: (r) => (r.yR - r.yL) / (2 * r.k), digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'Δy กับ D', x: 'D', y: 'dy', xv: 'D', yv: 'Δy', xlabel: 'ระยะฉาก D (m)', ylabel: 'ระยะห่างแถบ Δy (mm)', origin: true,
+    explain: 'ความชัน = λ/d (หน่วย mm/m = 10⁻³) จึงได้ λ = ความชัน × d โดย d เป็นค่าที่ระบุบนสลิตคู่',
+  },
+  results(fit, rows, truth, set) {
+    const d = SLITS[set].nom;              // mm
+    const lam = fit.m * d * 1000;          // nm
+    return [
+      { label: 'ความชันของกราฟ (λ/d)', value: fit.m, unc: fit.sm, unit: 'mm/m' },
+      { label: 'ความยาวคลื่น λ = ความชัน × d (d = ' + d.toFixed(2) + ' mm)', value: lam, unc: fit.sm * d * 1000, unit: 'nm', accepted: 650 },
+      { label: 'ความยาวคลื่นจริงของเลเซอร์เครื่องนี้', value: lam, unit: 'nm', accepted: TRUE && +TRUE.lam.toFixed(1), hidden: true, digitsTrue: 1 },
+      { label: 'ระยะห่างสลิตจริงของสลิตคู่ ' + set + ' (เทียบกับ d ที่ได้จาก λ จริง)', value: (TRUE ? TRUE.lam : 650) / (fit.m * 1000), unit: 'mm', accepted: TRUE && +TRUE.d[set].toFixed(4), hidden: true, digitsTrue: 4 },
+    ];
+  },
+  questions: [
+    'เมื่อเพิ่มระยะ D ระยะห่างระหว่างแถบเปลี่ยนไปอย่างไร ตรงกับสมการ Δy = λD/d หรือไม่',
+    'กราฟของสลิตคู่ A และ B มีความชันต่างกันกี่เท่า สอดคล้องกับอัตราส่วนของ d หรือไม่',
+    'เหตุใดความสว่างของแถบจึงลดลงเมื่ออยู่ห่างจากแถบกลาง และบางแถบหายไป',
+    'การอ่านตำแหน่งแถบลำดับ ±k ที่ไกลออกไป ลดความคลาดเคลื่อนของ Δy ได้อย่างไร',
+    'ถ้าทำการทดลองนี้ในน้ำ (n = 1.33) ระยะห่างระหว่างแถบจะเปลี่ยนไปอย่างไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 85 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      lam: 650 + 6 * (rng() - 0.5),                                  // nm
+      d: { A: 0.25 * (1 + 0.02 * (rng() - 0.5)), B: 0.50 * (1 + 0.02 * (rng() - 0.5)) },
+      a: { A: 0.06 + 0.02 * rng(), B: 0.07 + 0.02 * rng() },          // ความกว้างแต่ละช่อง (mm)
+      off: (rng() - 0.5) * 8,                                         // แนวกลางลวดลายไม่ตรงศูนย์สเกล (mm)
+    };
+    const s = { el: api.currentSet() === 'B' ? 'B' : 'A', D: 0.80 + Math.round(rng() * 30) / 100, drag: false };
+    let patDirty = true, pat = null;
+
+    ctrls.innerHTML =
+      '<h3>สลิตคู่</h3><div class="seg" id="el"><button data-v="A">A (0.25 mm)</button><button data-v="B">B (0.50 mm)</button></div>' +
+      '<h3>ตำแหน่งฉาก</h3><input type="range" id="pos" min="0.45" max="1.95" step="0.001">' +
+      '<div class="row"><button class="btn" id="m10">◀ cm</button><button class="btn" id="m1">◀ mm</button><button class="btn" id="p1">mm ▶</button><button class="btn" id="p10">cm ▶</button></div>' +
+      '<p class="muted" style="font-size:13px">ลากตัวยึดฉากบนรางได้ ต้องอ่านระยะจากรางวัดและตำแหน่งแถบจากสเกลบนฉากเอง</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const pos = $('#pos');
+    const setPos = (x) => { s.D = Math.max(0.45, Math.min(1.95, x)) - X_SLIT; pos.value = s.D + X_SLIT; patDirty = true; };
+    setPos(s.D + X_SLIT);
+    pos.oninput = () => setPos(+pos.value);
+    $('#m10').onclick = () => setPos(s.D + X_SLIT - 0.01); $('#p10').onclick = () => setPos(s.D + X_SLIT + 0.01);
+    $('#m1').onclick = () => setPos(s.D + X_SLIT - 0.001); $('#p1').onclick = () => setPos(s.D + X_SLIT + 0.001);
+    const seg = $('#el');
+    const syncEl = () => seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.el));
+    seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.el = b.dataset.v; api.useSet(s.el); syncEl(); patDirty = true; } });
+    api.onSetChange = (k) => { s.el = k; syncEl(); patDirty = true; };
+    syncEl();
+
+    // ความเข้มบนฉาก: cos² (สลิตคู่) × sinc² (ซองของแต่ละช่อง)
+    function intensity(ymm) {
+      const lam = TRUE.lam * 1e-6, y = ymm - TRUE.off;
+      const st = y / Math.sqrt(y * y + s.D * s.D * 1e6);
+      const d = TRUE.d[s.el], a = TRUE.a[s.el];
+      const c = Math.cos((Math.PI * d * st) / lam);
+      const b = (Math.PI * a * st) / lam, env = Math.abs(b) < 1e-9 ? 1 : (Math.sin(b) / b) ** 2;
+      return c * c * env;
+    }
+    const PW = 3000;
+    function buildPattern() {
+      if (!pat) { pat = document.createElement('canvas'); pat.width = PW; pat.height = 1; }
+      const g = pat.getContext('2d'), img = g.createImageData(PW, 1);
+      for (let i = 0; i < PW; i++) {
+        const ymm = -HALF + ((i + 0.5) / PW) * 2 * HALF;
+        const I = Math.min(1, Math.pow(intensity(ymm), 0.55));
+        img.data[4 * i] = 255; img.data[4 * i + 1] = 40; img.data[4 * i + 2] = 30; img.data[4 * i + 3] = Math.round(255 * I);
+      }
+      g.putImageData(img, 0, 0);
+      patDirty = false;
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.benchY = 70; L.rx0 = 24; L.rx1 = w - 24; L.ppm = (L.rx1 - L.rx0) / 2.0;
+      L.sx0 = 24; L.sx1 = w - 24; L.sy = Math.max(200, h * 0.44); L.sh = h - L.sy - 18;
+    }
+    const BX = (m) => L.rx0 + m * L.ppm;
+
+    function drawScale(ctx, z, x0, y, ppmm, from, to, labelEvery, unitDiv) {
+      const step = ppmm * z >= 1.8 ? 1 : ppmm * z >= 0.35 ? 5 : 10;
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let mm = Math.ceil(from / step) * step; mm <= to; mm += step) {
+        const x = x0 + (mm - from) * ppmm;
+        const l = mm % 10 === 0 ? 9 : mm % 5 === 0 ? 6 : 4;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + l); ctx.stroke();
+        if (mm % labelEvery === 0 || (z > 2.5 && mm % 10 === 0 && ppmm * z * 10 > 18)) {
+          ctx.font = 9.5 / Math.min(z, 3.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(Math.round(mm / unitDiv), x, y + 10);
+        }
+      }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      ctx.fillStyle = dark ? '#2a303b' : '#d9dde5';
+      ctx.fillRect(L.rx0 - 6, L.benchY - 14, L.rx1 - L.rx0 + 12, 22);
+      ctx.fillStyle = dark ? '#d9cfa8' : '#f3e6c2';
+      ctx.fillRect(L.rx0 - 6, L.benchY + 8, L.rx1 - L.rx0 + 12, 30);
+      drawScale(ctx, z, L.rx0, L.benchY + 8, L.ppm / 1000, 0, 2000, 100, 10);
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('รางวัด (cm)', L.rx0, L.benchY + 52);
+      const gx = BX(X_SLIT), sx = BX(X_SLIT + s.D);
+      ctx.fillStyle = dark ? '#555c6a' : '#3b4049';
+      ctx.fillRect(BX(0.005), L.benchY - 10, BX(0.10) - BX(0.005), 14);
+      ctx.fillStyle = 'rgb(255,40,30)'; ctx.fillRect(BX(0.10) - 3, L.benchY - 6, 3, 6);
+      ctx.strokeStyle = 'rgba(255,40,30,0.9)'; ctx.lineWidth = 1.4 / z;
+      ctx.beginPath(); ctx.moveTo(BX(0.10), L.benchY - 3); ctx.lineTo(gx, L.benchY - 3); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,40,30,0.12)';
+      ctx.beginPath(); ctx.moveTo(gx, L.benchY - 3); ctx.lineTo(sx, L.benchY - 9); ctx.lineTo(sx, L.benchY + 3); ctx.closePath(); ctx.fill();
+      const holder = (x, label) => {
+        ctx.fillStyle = dark ? '#8a93a3' : '#5b6372'; ctx.fillRect(x - 2, L.benchY - 22, 4, 30);
+        ctx.fillStyle = Lab.css('--bad');
+        ctx.beginPath(); ctx.moveTo(x, L.benchY + 8); ctx.lineTo(x - 4, L.benchY + 1); ctx.lineTo(x + 4, L.benchY + 1); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = Lab.css('--bad'); ctx.lineWidth = 0.8 / z; ctx.beginPath(); ctx.moveTo(x, L.benchY + 8); ctx.lineTo(x, L.benchY + 22); ctx.stroke();
+        ctx.fillStyle = ink; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(label, x, L.benchY - 24);
+      };
+      holder(gx, 'สลิตคู่ ' + s.el);
+      ctx.fillStyle = dark ? '#c9ced8' : '#ffffff'; ctx.fillRect(sx - 3, L.benchY - 30, 6, 40);
+      holder(sx, 'ฉาก');
+
+      // ฉากมองจากด้านหน้า
+      const sy = L.sy, sh = L.sh;
+      ctx.fillStyle = dark ? '#0d0f13' : '#1b1e24';
+      ctx.fillRect(L.sx0 - 8, sy, L.sx1 - L.sx0 + 16, sh);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ฉากรับแสง (มองจากด้านหน้า) · สเกลเป็นมิลลิเมตร', L.sx0, sy - 6);
+      const scY = sy + sh * 0.3, scH = 46;
+      ctx.fillStyle = dark ? '#e9e4d2' : '#f6f0dc';
+      ctx.fillRect(L.sx0, scY, L.sx1 - L.sx0, scH);
+      const bandY = scY + 16, ppmm = (L.sx1 - L.sx0) / (2 * HALF);
+      if (patDirty) buildPattern();
+      ctx.save();
+      ctx.beginPath(); ctx.rect(L.sx0 - 8, sy, L.sx1 - L.sx0 + 16, sh); ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      // แถบแนวตั้ง (ริ้วของสลิตคู่ยาวในแนวตั้งฉากกับแนวสลิต) ตกบนเส้นฐานของสเกล
+      [[16, 1], [30, 0.35]].forEach(([hh, a]) => { ctx.globalAlpha = a; ctx.drawImage(pat, L.sx0, bandY - hh / 2, L.sx1 - L.sx0, hh); });
+      ctx.restore();
+      // ขีดสเกลพิมพ์บนแผ่นกระดาษ มองเห็นทะลุแสงที่ตกบนมัน จึงวาดทับลวดลาย
+      ctx.globalAlpha = 0.85;
+      drawScale(ctx, z, L.sx0, bandY, ppmm, -HALF, HALF, 10, 1);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 0.6 / z; ctx.beginPath(); ctx.moveTo(L.sx0, bandY); ctx.lineTo(L.sx1, bandY); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(y - L.benchY) < 34 && Math.abs(x - BX(X_SLIT + s.D)) < 22) { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') setPos((x - L.rx0) / L.ppm);
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากตัวยึดฉากเพื่อเปลี่ยนระยะ D', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

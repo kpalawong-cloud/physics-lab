@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ความยาวโฟกัสของเลนส์นูน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 580px; }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const BENCH = 150;      // ความยาวรางวัด (cm)
+const APER = 3.0;       // เส้นผ่านศูนย์กลางเลนส์ที่แสงผ่าน (cm) กำหนดความเบลอเมื่อฉากไม่อยู่ที่ระนาบภาพ
+const OBJ_H = 20;       // ความสูงวัตถุ (ตัว F) mm
+let TRUE = null;
+
+Lab.init({
+  id: 'lens',
+  short: 'ความยาวโฟกัสของเลนส์นูน',
+  title: 'การหาความยาวโฟกัสของเลนส์นูนจากระยะวัตถุและระยะภาพ',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'หาตำแหน่งฉากที่ได้ภาพชัดที่สุดของวัตถุเมื่อวางเลนส์นูนที่ระยะต่าง ๆ',
+      'เขียนกราฟ 1/v กับ 1/u แล้วหาความยาวโฟกัสและกำลังของเลนส์',
+      'ตรวจสอบกำลังขยาย m = h′/h = v/u',
+    ],
+    theory:
+      '<p>เลนส์บางที่มีความยาวโฟกัส f ทำให้เกิดภาพจริงบนฉากเมื่อระยะวัตถุ u มากกว่า f โดยระยะวัตถุ u และระยะภาพ v สัมพันธ์กันตามสมการเลนส์</p>' +
+      '<div class="eq">1/u + 1/v = 1/f</div>' +
+      '<p>จัดรูปเป็น <b>1/v = −(1/u) + 1/f</b> กราฟ 1/v กับ 1/u จึงเป็นเส้นตรงความชัน −1 ที่ตัดแกนตั้งที่ 1/f และตัดแกนนอนที่ 1/f เช่นกัน</p>' +
+      '<p>ถ้าวัดระยะเป็นเมตร 1/f คือ<b>กำลังของเลนส์ P</b> มีหน่วยไดออปเตอร์ (D = m⁻¹)</p>' +
+      '<div class="eq">P = 1/f &nbsp;&nbsp; m = h′/h = v/u</div>' +
+      '<p>ภาพบนฉากเป็นภาพจริงหัวกลับ เมื่อฉากอยู่หน้าหรือหลังระนาบภาพ ภาพจะเบลอ ตำแหน่งที่ภาพคมที่สุดคือระนาบภาพ</p>',
+    equipment: ['รางวัดแสงยาว 150 cm (ขีดละเอียด 1 mm)', 'กล่องไฟพร้อมวัตถุรูปตัว F สูง 20.0 mm', 'เลนส์นูน (ไม่ทราบความยาวโฟกัส) บนตัวยึด', 'ฉากรับภาพพร้อมไม้บรรทัดแนวตั้ง'],
+    procedure: [
+      'อ่านตำแหน่งตัวยึดวัตถุ x<sub>O</sub> บนรางวัด (ใช้แว่นขยายอ่านถึง 0.1 cm)',
+      'เลื่อนเลนส์ไปตำแหน่งหนึ่ง แล้วเลื่อนฉากไปมาจนภาพตัว F บนฉากคมชัดที่สุด',
+      'อ่านตำแหน่งเลนส์ x<sub>L</sub> และตำแหน่งฉาก x<sub>S</sub> บันทึกลงตาราง (ถ้าต้องการ อ่านความสูงภาพ h′ จากไม้บรรทัดบนฉาก)',
+      'เปลี่ยนตำแหน่งเลนส์อย่างน้อย 6 ค่า ให้ระยะวัตถุ u กระจายตั้งแต่ใกล้ f จนถึงประมาณ 5f',
+      'ถ้าหาตำแหน่งภาพชัดไม่ได้ (ภาพเบลอตลอดหรือฉากตกปลายราง) ให้เลื่อนเลนส์ออกห่างวัตถุ',
+    ],
+    tip: 'ภาพคมชัดที่สุดดูยาก ให้เลื่อนฉากเลยจุดที่คมไปทั้งสองข้าง แล้วเลือกตำแหน่งกึ่งกลาง จะลดความคลาดเคลื่อนได้',
+  },
+  table: {
+    rows: 7,
+    hint: 'u = x<sub>L</sub> − x<sub>O</sub>, v = x<sub>S</sub> − x<sub>L</sub> คิดเป็นเซนติเมตร ส่วน 1/u และ 1/v คิดเป็น m⁻¹ (ไดออปเตอร์) ช่อง h′ ไม่บังคับ',
+    columns: [
+      { key: 'xO', label: 'ตำแหน่งวัตถุ x<sub>O</sub><br>(cm)', input: true },
+      { key: 'xL', label: 'ตำแหน่งเลนส์ x<sub>L</sub><br>(cm)', input: true },
+      { key: 'xS', label: 'ตำแหน่งฉาก x<sub>S</sub><br>(cm)', input: true },
+      { key: 'h2', label: 'ความสูงภาพ h′<br>(mm)', input: true },
+      { key: 'u', label: 'u<br>(cm)', calc: (r) => r.xL - r.xO, digits: 1 },
+      { key: 'v', label: 'v<br>(cm)', calc: (r) => r.xS - r.xL, digits: 1 },
+      { key: 'iu', label: '1/u<br>(m⁻¹)', calc: (r) => 100 / r.u, digits: 3 },
+      { key: 'iv', label: '1/v<br>(m⁻¹)', calc: (r) => 100 / r.v, digits: 3 },
+      { key: 'mh', label: 'm = h′/h', calc: (r) => r.h2 / OBJ_H, digits: 2 },
+      { key: 'mv', label: 'm = v/u', calc: (r) => r.v / r.u, digits: 2 },
+    ],
+  },
+  graph: {
+    title: '1/v กับ 1/u', x: 'iu', y: 'iv', xv: '(1/u)', yv: '1/v', xlabel: '1/u (m⁻¹)', ylabel: '1/v (m⁻¹)', origin: false,
+    explain: 'จุดตัดแกนตั้ง = 1/f = กำลังของเลนส์ P (ไดออปเตอร์) ความชันควรใกล้ −1 ไม่ต้องบังคับผ่านจุด (0, 0)',
+  },
+  results(fit) {
+    const P = fit.b, f = 100 / P, xi = -fit.b / fit.m, f2 = 100 / xi;
+    return [
+      { label: 'ความชัน (ทฤษฎี = −1)', value: fit.m, unc: fit.sm, unit: '' },
+      { label: 'กำลังของเลนส์ P = จุดตัดแกนตั้ง', value: P, unc: fit.sb, unit: 'D' },
+      { label: 'ความยาวโฟกัส f = 1/P', value: f, unc: (f * fit.sb) / Math.abs(P), unit: 'cm' },
+      { label: 'ความยาวโฟกัสจากจุดตัดแกนนอน', value: f2, digits: 2, unit: 'cm' },
+      { label: 'ความยาวโฟกัสจริงของเลนส์ชุดนี้', value: f, unit: 'cm', accepted: TRUE && +TRUE.f.toFixed(2), hidden: true, digitsTrue: 2 },
+    ];
+  },
+  questions: [
+    'กราฟที่ได้มีความชันใกล้ −1 หรือไม่ ถ้าไม่ใกล้ แสดงว่ามีความคลาดเคลื่อนแบบใดในการวัด',
+    'เมื่อระยะวัตถุ u ใกล้ f ภาพบนฉากมีขนาดและตำแหน่งเปลี่ยนไปอย่างไร เพราะเหตุใดจึงหาภาพชัดได้ยาก',
+    'กำลังขยายที่วัดจาก h′/h ตรงกับ v/u หรือไม่ ภาพบนฉากหัวกลับทั้งแนวตั้งและแนวนอนหรือไม่ (ดูจากตัว F)',
+    'ถ้าปิดครึ่งบนของเลนส์ด้วยกระดาษ ภาพบนฉากจะเป็นอย่างไร (ภาพหายไปครึ่งหนึ่งหรือไม่) อธิบาย',
+    'ถ้าให้ระยะระหว่างวัตถุกับฉากคงที่เท่ากับ D จะหาตำแหน่งเลนส์ที่ให้ภาพชัดได้กี่ตำแหน่ง และต้องมีเงื่อนไขอะไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 78 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      f: 12 + 6 * rng(),                               // ความยาวโฟกัส (cm)
+      xO: 8 + Math.round(rng() * 40) / 10,             // ตำแหน่งตัวยึดวัตถุ (cm)
+    };
+    const s = { xL: TRUE.xO + 30, xS: TRUE.xO + 95, drag: null };
+
+    const mover = (id, name) =>
+      '<h3>' + name + '</h3><input type="range" id="' + id + 'R" min="0" max="' + BENCH + '" step="0.01">' +
+      '<div class="row"><button class="btn" data-mv="' + id + '" data-d="-1">◀ cm</button><button class="btn" data-mv="' + id + '" data-d="-0.1">◀ mm</button>' +
+      '<button class="btn" data-mv="' + id + '" data-d="0.1">mm ▶</button><button class="btn" data-mv="' + id + '" data-d="1">cm ▶</button></div>';
+    ctrls.innerHTML = mover('xL', 'ตำแหน่งเลนส์') + mover('xS', 'ตำแหน่งฉาก') +
+      '<p class="muted" style="font-size:13px">ลากตัวยึดเลนส์หรือฉากบนรางได้ แถบเลื่อนไม่บอกตัวเลข ต้องอ่านตำแหน่งจากเข็มชี้บนรางวัดเอง</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    function clamp() {
+      s.xL = Math.max(TRUE.xO + 4, Math.min(BENCH - 6, s.xL));
+      s.xS = Math.max(s.xL + 3, Math.min(BENCH - 1, s.xS));
+      $('#xLR').value = s.xL; $('#xSR').value = s.xS;
+    }
+    clamp();
+    $('#xLR').oninput = () => { s.xL = +$('#xLR').value; clamp(); };
+    $('#xSR').oninput = () => { s.xS = +$('#xSR').value; clamp(); };
+    ctrls.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-mv]'); if (!b) return;
+      s[b.dataset.mv] += +b.dataset.d; clamp();
+    });
+
+    // ---------- เรขาคณิต ----------
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.x0 = 22; L.x1 = w - 22; L.ppc = (L.x1 - L.x0) / BENCH; // px ต่อ cm
+      L.axisY = 86; L.railY = 150;
+      L.pY = 232; L.pH = h - L.pY - 12;                          // แผงฉากมองจากด้านหน้า
+      L.pS = Math.min(L.pH, w - 44);                             // ขนาดฉาก (px) แทน 24 cm
+      L.pX = (w - L.pS) / 2;
+      L.k = L.pS / 240;                                          // px ต่อ mm บนฉาก
+    }
+    const BX = (cm) => L.x0 + cm * L.ppc;
+
+    function drawScale(ctx, z, x0, y, ppmm, from, to) {
+      const step = ppmm * z >= 1.8 ? 1 : ppmm * z >= 0.35 ? 5 : 10;
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let mm = Math.ceil(from / step) * step; mm <= to; mm += step) {
+        const x = x0 + (mm - from) * ppmm;
+        const l = mm % 10 === 0 ? 9 : mm % 5 === 0 ? 6 : 4;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + l); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2.5 && mm % 10 === 0)) {
+          ctx.font = 9.5 / Math.min(z, 3.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(Math.round(mm / 10), x, y + 10);
+        }
+      }
+    }
+
+    // ตัว F ในพิกัดวัตถุ (mm, y ขึ้น)
+    const GLYPH = [[-6, -10, 4, 20], [-2, 6, 9, 4], [-2, -1, 6, 4]];
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const ax = L.axisY;
+      // ราง
+      ctx.fillStyle = dark ? '#2a303b' : '#c9ced8'; ctx.fillRect(L.x0 - 8, L.railY - 10, L.x1 - L.x0 + 16, 10);
+      ctx.fillStyle = dark ? '#d9cfa8' : '#f3e6c2'; ctx.fillRect(L.x0 - 8, L.railY, L.x1 - L.x0 + 16, 30);
+      drawScale(ctx, z, L.x0, L.railY, L.ppc / 10, 0, BENCH * 10);
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('รางวัดแสง (cm)', L.x0, L.railY + 44);
+      // แนวแกนแสง
+      ctx.strokeStyle = muted; ctx.globalAlpha = 0.35; ctx.setLineDash([4 / z, 4 / z]); ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(BX(TRUE.xO), ax); ctx.lineTo(BX(s.xS), ax); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      const post = (x) => {
+        ctx.fillStyle = dark ? '#8a93a3' : '#5b6372'; ctx.fillRect(x - 2, ax + 20, 4, L.railY - 10 - ax - 20);
+        ctx.fillRect(x - 9, L.railY - 14, 18, 6);
+        ctx.fillStyle = Lab.css('--bad');
+        ctx.beginPath(); ctx.moveTo(x, L.railY); ctx.lineTo(x - 4, L.railY - 7); ctx.lineTo(x + 4, L.railY - 7); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = Lab.css('--bad'); ctx.lineWidth = 0.7 / z; ctx.beginPath(); ctx.moveTo(x, L.railY); ctx.lineTo(x, L.railY + 12); ctx.stroke();
+      };
+      // กล่องไฟ + วัตถุ
+      const xo = BX(TRUE.xO);
+      ctx.fillStyle = dark ? '#555c6a' : '#3b4049'; ctx.fillRect(xo - 9 * L.ppc, ax - 24, 9 * L.ppc - 2, 48);
+      const g = ctx.createRadialGradient(xo - 2, ax, 1, xo - 2, ax, 26);
+      g.addColorStop(0, 'rgba(255,236,170,.95)'); g.addColorStop(1, 'rgba(255,236,170,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(xo - 2, ax, 26, 0, 7); ctx.fill();
+      ctx.fillStyle = '#e8e2cf'; ctx.fillRect(xo - 1.5, ax - 20, 3, 40);
+      post(xo);
+      // เลนส์
+      const xl = BX(s.xL);
+      ctx.fillStyle = 'rgba(140,200,255,.45)'; ctx.strokeStyle = dark ? '#9fd0ff' : '#2d6fb0'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.ellipse(xl, ax, 5, 30, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#8a93a3' : '#5b6372'; ctx.fillRect(xl - 6, ax - 32, 12, 3); ctx.fillRect(xl - 6, ax + 29, 12, 3);
+      post(xl);
+      // ฉาก
+      const xs = BX(s.xS);
+      ctx.fillStyle = dark ? '#d8dbe2' : '#ffffff'; ctx.strokeStyle = muted; ctx.lineWidth = 0.8 / z;
+      ctx.fillRect(xs - 2, ax - 44, 4, 88); ctx.strokeRect(xs - 2, ax - 44, 4, 88);
+      post(xs);
+      ctx.fillStyle = ink; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('วัตถุ', xo, ax - 28); ctx.fillText('เลนส์', xl, ax - 36); ctx.fillText('ฉาก', xs, ax - 48);
+      // แสงจากวัตถุเข้าเลนส์ (มองเห็นจริงในห้องที่มีฝุ่นเล็กน้อย) หลังเลนส์ไม่วาด เพื่อให้นักเรียนหาภาพด้วยฉากเอง
+      ctx.fillStyle = 'rgba(255,230,150,.10)';
+      ctx.beginPath(); ctx.moveTo(xo, ax - 10); ctx.lineTo(xl, ax - 28); ctx.lineTo(xl, ax + 28); ctx.lineTo(xo, ax + 10); ctx.closePath(); ctx.fill();
+
+      // ---------- ฉากรับภาพมองจากด้านหน้า ----------
+      const pX = L.pX, pY = L.pY, S = L.pS, k = L.k, cx = pX + S / 2, cy = pY + S / 2;
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ฉากรับภาพ (มองจากด้านหน้า ฝั่งเดียวกับเลนส์)', pX, pY - 4);
+      ctx.fillStyle = dark ? '#3a3d44' : '#4a4d55'; ctx.fillRect(pX, pY, S, S);
+      // ภาพ: ฉายตัว F ผ่านเลนส์ ขนาด m = s/u (หัวกลับ) เบลอเป็นวงกลมเส้นผ่านศูนย์กลาง APER·|1 − s(1/f − 1/u)|
+      const u = s.xL - TRUE.xO, sd = s.xS - s.xL;
+      const m = sd / u, blur = APER * 10 * Math.abs(1 - sd * (1 / TRUE.f - 1 / u)); // mm
+      const R = (blur / 2) * k;
+      const pts = [[0, 0]];
+      if (R > 0.3) {
+        for (let i = 0; i < 8; i++) pts.push([0.5 * R * Math.cos(i * 0.785), 0.5 * R * Math.sin(i * 0.785)]);
+        for (let i = 0; i < 14; i++) pts.push([R * Math.cos(i * 0.449 + 0.2), R * Math.sin(i * 0.449 + 0.2)]);
+      }
+      const bright = Math.min(1, 1.3 / (m * m));
+      ctx.save();
+      ctx.beginPath(); ctx.rect(pX, pY, S, S); ctx.clip();
+      ctx.globalCompositeOperation = 'lighter';
+      // แสงพื้นของจานแก้วฝ้ารอบตัว F (วงกลม 40 mm) ทำให้เห็นขอบเขตภาพจาง ๆ
+      ctx.globalAlpha = (0.10 * bright);
+      pts.forEach(([dx, dy]) => {
+        ctx.fillStyle = 'rgb(255,214,140)';
+        ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 20 * Math.abs(m) * k + 0.5, 0, 7); ctx.fill();
+      });
+      ctx.globalAlpha = Math.min(1, (1.6 * bright) / pts.length);
+      ctx.fillStyle = 'rgb(255,240,190)';
+      pts.forEach(([dx, dy]) => {
+        GLYPH.forEach(([gx, gy, gw, gh]) => {
+          // (x, y) → (−m x, −m y): ภาพหัวกลับ บนจอ y ชี้ลง จึงได้ y_px = cy + m·y·k
+          const x0 = cx - m * (gx + gw) * k, y0 = cy + m * gy * k;
+          ctx.fillRect(x0 + dx, y0 + dy, m * gw * k, m * gh * k);
+        });
+      });
+      ctx.restore();
+      // ไม้บรรทัดแนวตั้งกลางฉาก (ศูนย์อยู่ที่แกนแสง) ขีดทุก 1 mm
+      const rx = pX + 14;
+      ctx.fillStyle = dark ? 'rgba(240,235,215,.9)' : 'rgba(246,240,220,.95)'; ctx.fillRect(pX + 2, pY, 12, S);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const showMm = k * z >= 1.8;
+      for (let mm = -120; mm <= 120; mm += showMm ? 1 : 5) {
+        const y = cy - mm * k, l = mm % 10 === 0 ? 9 : mm % 5 === 0 ? 6 : 3.5;
+        ctx.lineWidth = (mm % 10 === 0 ? 0.9 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(rx - l, y); ctx.lineTo(rx, y); ctx.stroke();
+        if (mm % 20 === 0 || (z > 2.5 && mm % 10 === 0)) {
+          ctx.font = 8.5 / Math.min(z, 3.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = dark ? '#ddd' : '#eee'; ctx.fillText(Math.abs(mm / 10), rx + 2, y); ctx.fillStyle = '#111';
+        }
+      }
+      // เส้นแนวนอนผ่านแกนแสง ช่วยจัดแนว
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 0.6 / z;
+      ctx.beginPath(); ctx.moveTo(rx, cy); ctx.lineTo(pX + S, cy); ctx.stroke();
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && y > L.axisY - 50 && y < L.railY + 30) {
+        const dl = Math.abs(x - BX(s.xL)), ds = Math.abs(x - BX(s.xS));
+        const pick = dl < ds ? 'xL' : 'xS';
+        if (Math.min(dl, ds) < 22) { s.drag = { k: pick, off: s[pick] - (x - L.x0) / L.ppc }; canvas.setPointerCapture(e.pointerId); }
+      }
+      if (s.drag && e.type === 'pointermove') { s[s.drag.k] = (x - L.x0) / L.ppc + s.drag.off; clamp(); }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากตัวยึดเลนส์หรือฉากเพื่อเลื่อนบนราง', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

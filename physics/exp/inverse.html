@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ความสว่างกับระยะทาง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 360px; } @media (max-width: 900px) { .stage canvas { height: 340px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const BENCH = 150; // cm
+let TRUE = null;
+
+Lab.init({
+  id: 'inverse',
+  short: 'ความสว่างกับระยะทาง',
+  title: 'ความสว่างบนพื้นที่รับแสงกับระยะห่างจากแหล่งกำเนิดแสง (กฎกำลังสองผกผัน)',
+  level: 'ม.5',
+  intro: {
+    objective: [
+      'วัดความสว่าง (illuminance) ด้วยลักซ์มิเตอร์ที่ระยะห่างจากหลอดไฟต่าง ๆ',
+      'แยกผลของแสงพื้นหลังในห้องออกจากแสงของหลอดไฟ',
+      'ตรวจสอบว่าความสว่างแปรผกผันกับกำลังสองของระยะทาง และหาความเข้มของการส่องสว่างของหลอดไฟ',
+    ],
+    theory:
+      '<p>แหล่งกำเนิดแสงขนาดเล็กปล่อยแสงออกไปทุกทิศทาง ฟลักซ์ส่องสว่างกระจายบนผิวทรงกลมที่มีพื้นที่ 4πr² ความสว่าง E บนพื้นที่ที่ตั้งฉากกับแนวแสงจึงลดลงตามกำลังสองของระยะ</p>' +
+      '<div class="eq">E = I / r²</div>' +
+      '<p>โดย E มีหน่วยลักซ์ (lx = lm/m²), r เป็นเมตร และ I คือความเข้มของการส่องสว่างของหลอด มีหน่วยแคนเดลา (cd)</p>' +
+      '<p>ลักซ์มิเตอร์วัดแสงทั้งหมดที่ตกลงบนหัววัด รวมแสงพื้นหลัง E<sub>0</sub> ในห้องด้วย จึงต้องปิดหลอดไฟเพื่อวัด E<sub>0</sub> แล้วหักออก</p>' +
+      '<div class="eq">E − E<sub>0</sub> = I · (1/r²)</div>' +
+      '<p>กราฟ (E − E<sub>0</sub>) กับ 1/r² เป็นเส้นตรงผ่านจุดกำเนิด ความชันคือ I</p>',
+    equipment: ['หลอดไฟขนาดเล็กบนตัวยึด', 'ลักซ์มิเตอร์พร้อมหัววัดบนตัวยึด', 'รางวัดยาว 150 cm (ขีดละเอียด 1 mm)', 'สวิตช์เปิด-ปิดหลอดไฟ'],
+    procedure: [
+      'ใช้แว่นขยายอ่านตำแหน่งตัวยึดหลอดไฟ x<sub>L</sub> บนรางวัด',
+      'เลื่อนหัววัดไปตำแหน่งหนึ่ง อ่านตำแหน่ง x<sub>S</sub> แล้วอ่านค่าความสว่าง E บนลักซ์มิเตอร์ (ตัวเลขแกว่งเล็กน้อย ให้อ่านค่ากลาง)',
+      'ปิดหลอดไฟ อ่านค่าแสงพื้นหลัง E<sub>0</sub> ที่ตำแหน่งเดิม แล้วเปิดหลอดไฟอีกครั้ง',
+      'เปลี่ยนตำแหน่งหัววัดอย่างน้อย 7 ค่า ตั้งแต่ใกล้หลอด (ประมาณ 20 cm) จนถึงไกลที่สุด',
+    ],
+    tip: 'ช่วงใกล้หลอดความสว่างเปลี่ยนเร็วมาก ให้เก็บข้อมูลถี่ขึ้นในช่วง 20–50 cm',
+  },
+  table: {
+    rows: 8,
+    hint: 'r = (x<sub>S</sub> − x<sub>L</sub>)/100 เป็นเมตร ถ้าแสงพื้นหลังเท่ากันทุกตำแหน่ง ใส่ค่า E<sub>0</sub> ซ้ำได้',
+    columns: [
+      { key: 'xL', label: 'ตำแหน่งหลอด x<sub>L</sub><br>(cm)', input: true },
+      { key: 'xS', label: 'ตำแหน่งหัววัด x<sub>S</sub><br>(cm)', input: true },
+      { key: 'E', label: 'ความสว่าง E<br>(lx)', input: true },
+      { key: 'E0', label: 'แสงพื้นหลัง E<sub>0</sub><br>(lx)', input: true },
+      { key: 'r', label: 'r<br>(m)', calc: (r) => (r.xS - r.xL) / 100, digits: 3 },
+      { key: 'ir2', label: '1/r²<br>(m⁻²)', calc: (r) => 1 / (r.r * r.r), digits: 2 },
+      { key: 'Ec', label: 'E − E<sub>0</sub><br>(lx)', calc: (r) => r.E - r.E0, digits: 0 },
+    ],
+  },
+  graph: {
+    title: '(E − E₀) กับ 1/r²', x: 'ir2', y: 'Ec', xv: '(1/r²)', yv: 'E − E₀', xlabel: '1/r² (m⁻²)', ylabel: 'E − E₀ (lx)', origin: true,
+    explain: 'ความชัน = ความเข้มของการส่องสว่าง I (cd = lx·m²)',
+  },
+  results(fit) {
+    return [
+      { label: 'ความเข้มของการส่องสว่าง I = ความชัน', value: fit.m, unc: fit.sm, unit: 'cd' },
+      { label: 'ฟลักซ์ส่องสว่างรวม Φ = 4πI', value: 4 * Math.PI * fit.m, unc: 4 * Math.PI * fit.sm, unit: 'lm' },
+      { label: 'ความเข้มของการส่องสว่างจริงของหลอดนี้', value: fit.m, unit: 'cd', accepted: TRUE && +TRUE.I.toFixed(2), hidden: true, digitsTrue: 2 },
+    ];
+  },
+  questions: [
+    'ถ้าไม่หักแสงพื้นหลัง E<sub>0</sub> ออก กราฟ E กับ 1/r² จะผ่านจุดกำเนิดหรือไม่ จุดตัดแกนตั้งมีความหมายอะไร',
+    'เมื่อระยะเพิ่มเป็นสองเท่า ความสว่างที่วัดได้ลดลงกี่เท่า ตรงกับกฎกำลังสองผกผันหรือไม่',
+    'ไส้หลอดอาจไม่อยู่ตรงเข็มชี้ของตัวยึดพอดี ความคลาดเคลื่อนนี้มีผลมากที่ระยะใกล้หรือไกล เพราะเหตุใด',
+    'กฎกำลังสองผกผันใช้ไม่ได้กับแหล่งกำเนิดแสงแบบใด (เช่น หลอดฟลูออเรสเซนต์ยาวที่วัดใกล้ ๆ หรือไฟฉายที่มีตัวสะท้อน)',
+    'ถ้าต้องการให้โต๊ะอ่านหนังสือมีความสว่าง 500 lx ด้วยหลอดนี้ ต้องวางหลอดสูงจากโต๊ะเท่าใด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 70 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      I: 35 + 30 * rng(),                         // cd
+      xL: 8 + Math.round(rng() * 40) / 10,        // ตำแหน่งตัวยึดหลอด (cm)
+      dF: (rng() - 0.5) * 0.8,                    // ไส้หลอดเยื้องจากเข็มชี้ (cm)
+      E0: 6 + 10 * rng(),                         // แสงพื้นหลัง (lx)
+    };
+    const s = { xS: TRUE.xL + 40 + rng() * 20, on: true, drag: false, shown: 0, t: 0 };
+
+    ctrls.innerHTML =
+      '<div class="watch"><span class="readout" id="lux">0</span><small>ลักซ์มิเตอร์ (lx)</small></div>' +
+      '<h3>หลอดไฟ</h3><div class="seg" id="sw"><button data-v="1">เปิด</button><button data-v="0">ปิด</button></div>' +
+      '<h3>ตำแหน่งหัววัด</h3><input type="range" id="pos" min="0" max="' + BENCH + '" step="0.01">' +
+      '<div class="row"><button class="btn" data-d="-1">◀ cm</button><button class="btn" data-d="-0.1">◀ mm</button><button class="btn" data-d="0.1">mm ▶</button><button class="btn" data-d="1">cm ▶</button></div>' +
+      '<p class="muted" style="font-size:13px">ลากหัววัดบนรางได้ แถบเลื่อนไม่บอกตัวเลข ต้องอ่านตำแหน่งจากเข็มชี้บนรางวัดเอง</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const pos = $('#pos'), lux = $('#lux'), sw = $('#sw');
+    const setX = (x) => { s.xS = Math.max(TRUE.xL + 12, Math.min(BENCH - 2, x)); pos.value = s.xS; };
+    setX(s.xS);
+    pos.oninput = () => setX(+pos.value);
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) setX(s.xS + +b.dataset.d); });
+    const syncSw = () => sw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === +s.on));
+    sw.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.on = b.dataset.v === '1'; syncSw(); } });
+    syncSw();
+
+    // ค่าจริงที่หัววัด (lx)
+    function trueE() {
+      const r = (s.xS - (TRUE.xL + TRUE.dF)) / 100;
+      return TRUE.E0 + (s.on ? TRUE.I / (r * r) : 0);
+    }
+    function reading() {
+      const E = trueE() * (1 + Lab.noise(0.004)) + Lab.noise(0.6);
+      return E < 1999.5 ? Math.max(0, Math.round(E)).toString() : (Math.round(E / 10) * 10).toString();
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.x0 = 22; L.x1 = w - 22; L.ppc = (L.x1 - L.x0) / BENCH;
+      L.axisY = h * 0.42; L.railY = h * 0.42 + 70;
+    }
+    const BX = (cm) => L.x0 + cm * L.ppc;
+
+    function drawScale(ctx, z, x0, y, ppmm, from, to) {
+      const step = ppmm * z >= 1.8 ? 1 : ppmm * z >= 0.35 ? 5 : 10;
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let mm = Math.ceil(from / step) * step; mm <= to; mm += step) {
+        const x = x0 + (mm - from) * ppmm;
+        const l = mm % 10 === 0 ? 9 : mm % 5 === 0 ? 6 : 4;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + l); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2.5 && mm % 10 === 0)) {
+          ctx.font = 9.5 / Math.min(z, 3.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(Math.round(mm / 10), x, y + 10);
+        }
+      }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      // ห้องมืด
+      ctx.fillStyle = dark ? '#0b0d11' : '#22252c'; ctx.fillRect(0, 0, cv.w, L.railY - 10);
+      const ax = L.axisY, xl = BX(TRUE.xL), xf = BX(TRUE.xL + TRUE.dF);
+      if (s.on) {
+        const g = ctx.createRadialGradient(xf, ax, 2, xf, ax, Math.max(cv.w, 400));
+        g.addColorStop(0, 'rgba(255,225,150,.75)'); g.addColorStop(0.08, 'rgba(255,215,140,.28)'); g.addColorStop(0.5, 'rgba(255,215,140,.04)'); g.addColorStop(1, 'rgba(255,215,140,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, cv.w, L.railY - 10);
+      }
+      // ราง
+      ctx.fillStyle = dark ? '#2a303b' : '#c9ced8'; ctx.fillRect(L.x0 - 8, L.railY - 10, L.x1 - L.x0 + 16, 10);
+      ctx.fillStyle = dark ? '#d9cfa8' : '#f3e6c2'; ctx.fillRect(L.x0 - 8, L.railY, L.x1 - L.x0 + 16, 30);
+      drawScale(ctx, z, L.x0, L.railY, L.ppc / 10, 0, BENCH * 10);
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('รางวัด (cm)', L.x0, L.railY + 44);
+      const post = (x, top) => {
+        ctx.fillStyle = dark ? '#8a93a3' : '#6b7382'; ctx.fillRect(x - 2, top, 4, L.railY - 10 - top);
+        ctx.fillRect(x - 9, L.railY - 14, 18, 6);
+        ctx.fillStyle = Lab.css('--bad');
+        ctx.beginPath(); ctx.moveTo(x, L.railY); ctx.lineTo(x - 4, L.railY - 7); ctx.lineTo(x + 4, L.railY - 7); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = Lab.css('--bad'); ctx.lineWidth = 0.7 / z; ctx.beginPath(); ctx.moveTo(x, L.railY); ctx.lineTo(x, L.railY + 12); ctx.stroke();
+      };
+      // หลอดไฟ
+      post(xl, ax + 12);
+      ctx.fillStyle = '#9aa0aa'; ctx.fillRect(xl - 5, ax + 6, 10, 8);
+      ctx.fillStyle = s.on ? 'rgba(255,245,210,.95)' : 'rgba(200,210,220,.35)';
+      ctx.strokeStyle = 'rgba(220,225,235,.8)'; ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.arc(xl, ax - 2, 9, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = s.on ? '#fff' : '#777'; ctx.lineWidth = 0.9 / z;
+      ctx.beginPath(); ctx.moveTo(xf - 2.5, ax - 1); ctx.lineTo(xf - 1.2, ax - 4); ctx.lineTo(xf, ax - 1); ctx.lineTo(xf + 1.2, ax - 4); ctx.lineTo(xf + 2.5, ax - 1); ctx.stroke();
+      // หัววัด
+      const xs = BX(s.xS);
+      post(xs, ax + 14);
+      ctx.fillStyle = '#2b2f36'; ctx.fillRect(xs - 1, ax - 14, 8, 28);
+      ctx.fillStyle = '#e8eef5'; ctx.fillRect(xs - 2, ax - 9, 3, 18);
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(xs + 7, ax); ctx.quadraticCurveTo(xs + 30, ax + 10, xs + 26, L.railY - 14); ctx.stroke();
+      ctx.fillStyle = '#ddd'; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('หลอดไฟ', xl, ax - 16); ctx.fillText('หัววัดแสง', xs + 3, ax - 18);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(x - BX(s.xS)) < 22 && y > L.axisY - 30 && y < L.railY + 30) {
+        s.drag = { off: s.xS - (x - L.x0) / L.ppc }; canvas.setPointerCapture(e.pointerId);
+      }
+      if (s.drag && e.type === 'pointermove') setX((x - L.x0) / L.ppc + s.drag.off);
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      s.t += dt;
+      if (s.t > 0.4) { s.t = 0; lux.textContent = reading(); } // จอดิจิทัลอัปเดตราว 2.5 ครั้งต่อวินาที
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = '#ccc'; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากหัววัดเพื่อเปลี่ยนระยะ', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>
