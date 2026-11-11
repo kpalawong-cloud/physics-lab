@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ปรากฏการณ์โฟโตอิเล็กทริก · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const HC_EV_NM = 1239.84;                       // hc ในหน่วย eV·nm
+const C_14 = 2997.92458;                        // c/λ ในหน่วย 10¹⁴ Hz เมื่อ λ เป็น nm
+const E_CHARGE = 1.602176634e-19;
+// เส้นสเปกตรัมปรอทกับแผ่นกรองแสงแบบแทรกสอด: ความยาวคลื่น (nm) และความสว่างสัมพัทธ์ที่แคโทดตอบสนอง
+const FILTERS = [
+  { l: 365.0, a: 0.75, col: '#9b5cff', name: 'UV' },
+  { l: 404.7, a: 0.55, col: '#8d4dff', name: 'ม่วง' },
+  { l: 435.8, a: 1.0, col: '#3d5bff', name: 'น้ำเงิน' },
+  { l: 546.1, a: 0.6, col: '#38d14a', name: 'เขียว' },
+  { l: 577.0, a: 0.3, col: '#f2d21a', name: 'เหลือง' },
+];
+let PHI = null;                                  // ฟังก์ชันงานของแคโทด (eV) ซ่อน
+
+Lab.init({
+  id: 'photo',
+  short: 'โฟโตอิเล็กทริก',
+  title: 'ปรากฏการณ์โฟโตอิเล็กทริกและค่าคงตัวของพลังค์',
+  level: 'ม.6',
+  intro: {
+    objective: [
+      'วัดความต่างศักย์หยุดยั้ง (stopping voltage) ของโฟโตอิเล็กตรอนเมื่อใช้แสงความถี่ต่าง ๆ',
+      'หาค่าคงตัวของพลังค์ h จากความชันของกราฟความต่างศักย์หยุดยั้งกับความถี่',
+      'หาฟังก์ชันงานและความถี่ขีดเริ่มของโลหะที่ใช้ทำแคโทด',
+    ],
+    theory:
+      '<p>แสงประกอบด้วยโฟตอนที่มีพลังงาน <b>E = hf</b> เมื่อโฟตอนชนอิเล็กตรอนที่ผิวโลหะ อิเล็กตรอนจะหลุดออกมาได้ถ้า hf มากกว่าฟังก์ชันงาน W ของโลหะ พลังงานจลน์สูงสุดของโฟโตอิเล็กตรอนคือ</p>' +
+      '<div class="eq">E<sub>k,max</sub> = hf − W</div>' +
+      '<p>เมื่อต่อความต่างศักย์ย้อนกลับ (ขั้วบวกที่แคโทด) แล้วเพิ่มขึ้นจนกระแสโฟโตเป็นศูนย์ ค่านั้นคือ<b>ความต่างศักย์หยุดยั้ง</b> V<sub>s</sub> ซึ่ง eV<sub>s</sub> = E<sub>k,max</sub> ดังนั้น</p>' +
+      '<div class="eq">V<sub>s</sub> = (h/e) f − W/e</div>' +
+      '<p>กราฟ V<sub>s</sub> กับ f เป็นเส้นตรง <b>ความชัน = h/e</b> และจุดตัดแกน V<sub>s</sub> = −W/e ความถี่ที่ V<sub>s</sub> = 0 คือความถี่ขีดเริ่ม f₀ = W/h</p>' +
+      '<p>ความเข้มของแสงเปลี่ยนจำนวนโฟตอน จึงเปลี่ยนขนาดกระแส แต่ไม่เปลี่ยนพลังงานจลน์สูงสุด</p>',
+    equipment: ['หลอดไอปรอท (สเปกตรัมเส้น)', 'แผ่นกรองแสงแบบแทรกสอด 5 แผ่น: 365.0, 404.7, 435.8, 546.1, 577.0 nm', 'หลอดโฟโตอิเล็กทริก (phototube) พร้อมช่องปรับความเข้มแสง', 'แหล่งจ่ายความต่างศักย์ย้อนกลับปรับได้ 0–3 V', 'โวลต์มิเตอร์ดิจิทัล (0.01 V)', 'แอมมิเตอร์ไวสูง (พิโคแอมมิเตอร์ ละเอียด 0.001 nA)'],
+    procedure: [
+      'เลือกแผ่นกรองแสง อ่านความยาวคลื่นที่พิมพ์บนแผ่นด้วยแว่นขยาย บันทึกลงตาราง',
+      'เริ่มที่ความต่างศักย์ย้อนกลับ 0 V สังเกตกระแสโฟโต แล้วค่อย ๆ เพิ่มความต่างศักย์',
+      'เมื่อกระแสเหลือน้อย ใช้ปุ่มปรับละเอียดทีละ 0.01 V หาจุดที่กระแสเป็นศูนย์พอดี อ่านค่า V<sub>s</sub> จากโวลต์มิเตอร์',
+      'ทำซ้ำกับแผ่นกรองแสงครบทุกแผ่น',
+      'ลองเปลี่ยนความเข้มแสงที่แผ่นกรองเดิม สังเกตกระแสและความต่างศักย์หยุดยั้ง',
+    ],
+    tip: 'ใกล้จุดหยุดยั้ง กระแสลดลงอย่างช้า ๆ ไม่ได้ตัดลงทันที และอาจติดลบเล็กน้อยเพราะกระแสย้อนจากแอโนด ให้ใช้ "จุดที่กระแสเปลี่ยนจากบวกเป็นศูนย์" อย่างสม่ำเสมอทุกแผ่นกรอง',
+  },
+  table: {
+    rows: 5,
+    hint: 'หนึ่งแถวต่อหนึ่งแผ่นกรองแสง ความถี่คำนวณจาก f = c/λ',
+    columns: [
+      { key: 'lam', label: 'ความยาวคลื่น λ<br>(nm)', input: true },
+      { key: 'Vs', label: 'ความต่างศักย์หยุดยั้ง V<sub>s</sub><br>(V)', input: true },
+      { key: 'f', label: 'ความถี่ f<br>(×10¹⁴ Hz)', calc: (r) => C_14 / r.lam, digits: 3 },
+      { key: 'Ek', label: 'E<sub>k,max</sub><br>(eV)', calc: (r) => r.Vs, digits: 2 },
+    ],
+  },
+  graph: {
+    title: 'ความต่างศักย์หยุดยั้งกับความถี่', x: 'f', y: 'Vs', xv: 'f', yv: 'V<sub>s</sub>', xlabel: 'ความถี่ f (×10¹⁴ Hz)', ylabel: 'ความต่างศักย์หยุดยั้ง Vs (V)', origin: false,
+    explain: 'ความชัน (หน่วย V ต่อ 10¹⁴ Hz) คูณด้วย e/10¹⁴ ได้ h และจุดตัดแกนตั้งเป็นลบของฟังก์ชันงานในหน่วย eV',
+  },
+  results(fit) {
+    const k = (E_CHARGE / 1e14) * 1e34; // แปลงความชันเป็น h ในหน่วย 10⁻³⁴ J·s
+    const f0 = -fit.b / fit.m;
+    return [
+      { label: 'ความชัน h/e', value: fit.m, unc: fit.sm, unit: 'V/(10¹⁴ Hz)' },
+      { label: 'ค่าคงตัวของพลังค์ h = e × ความชัน', value: fit.m * k, unc: fit.sm * k, unit: '×10⁻³⁴ J·s', accepted: 6.626 },
+      { label: 'ฟังก์ชันงาน W = −e × (จุดตัดแกน)', value: -fit.b, unc: fit.sb, unit: 'eV' },
+      { label: 'ความถี่ขีดเริ่ม f₀', value: f0, digits: 2, unit: '×10¹⁴ Hz' },
+      { label: 'ความยาวคลื่นขีดเริ่ม λ₀ = c/f₀', value: C_14 / f0, digits: 0, unit: 'nm' },
+      { label: 'ฟังก์ชันงานของแคโทดหลอดนี้', value: -fit.b, unit: 'eV', accepted: PHI, hidden: true, digitsTrue: 2 },
+    ];
+  },
+  questions: [
+    'เมื่อเพิ่มความเข้มแสงที่แผ่นกรองเดิม กระแสโฟโตและความต่างศักย์หยุดยั้งเปลี่ยนอย่างไร ผลนี้สนับสนุนแนวคิดว่าแสงเป็นอนุภาค (โฟตอน) อย่างไร',
+    'แสงที่มีความยาวคลื่นยาวกว่าความยาวคลื่นขีดเริ่มที่คำนวณได้ จะทำให้เกิดกระแสโฟโตหรือไม่ เพราะเหตุใด',
+    'ความชันและจุดตัดแกนของกราฟมีความหมายทางฟิสิกส์อย่างไร ถ้าเปลี่ยนแคโทดเป็นโลหะชนิดอื่น กราฟจะเปลี่ยนไปอย่างไร',
+    'เหตุใดกระแสจึงไม่ลดลงเป็นศูนย์อย่างทันทีที่ความต่างศักย์หยุดยั้ง และส่งผลต่อค่า h ที่วัดได้อย่างไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    PHI = 1.85 + 0.25 * rng();
+    const K = 4.5 + 2 * rng();          // ความไวของหลอด (nA/V²)
+    const W = 0.03, REV = 0.0009;       // ความกว้างการกระจายพลังงาน (V) และกระแสย้อนจากแอโนด (สัดส่วน)
+    const DARK = 0.0006;                // กระแสมืด (nA)
+    const s = { fi: 2, V: 0, inten: 0.8, lamp: true, Ishown: 0, Vshown: 0, last: 0 };
+
+    ctrls.innerHTML =
+      '<h3>แผ่นกรองแสง</h3><div class="seg" id="flt">' + FILTERS.map((f, i) => '<button data-v="' + i + '">' + (i + 1) + '</button>').join('') + '</div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">ความยาวคลื่นพิมพ์อยู่บนแผ่นกรอง ใช้แว่นขยายอ่าน</p>' +
+      '<h3>ความเข้มแสง (ช่องเปิด)</h3><input type="range" id="int" min="0.15" max="1" step="0.01">' +
+      '<h3>ความต่างศักย์ย้อนกลับ</h3><input type="range" id="vk" min="0" max="3" step="0.001" value="0">' +
+      '<div class="row"><button class="btn" data-d="-0.1">−0.1</button><button class="btn" data-d="-0.01">−0.01</button><button class="btn" data-d="0.01">+0.01</button><button class="btn" data-d="0.1">+0.1</button></div>' +
+      '<div class="two" style="gap:8px;margin-top:8px">' +
+      '<div class="watch" style="font-size:26px"><span class="readout" id="vm">0.00</span><small>โวลต์มิเตอร์ (V)</small></div>' +
+      '<div class="watch" style="font-size:26px;color:#ffd27a"><span class="readout" id="am">0.000</span><small>พิโคแอมมิเตอร์ (nA)</small></div></div>' +
+      '<div class="row" style="margin-top:8px"><button class="btn" id="lamp">ปิดหลอดไฟ</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const sync = () => ctrls.querySelectorAll('#flt button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s.fi));
+    sync();
+    $('#flt').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; s.fi = +b.dataset.v; sync(); };
+    $('#int').value = s.inten; $('#int').oninput = (e) => (s.inten = +e.target.value);
+    const vk = $('#vk');
+    vk.oninput = () => (s.V = +vk.value);
+    ctrls.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => { s.V = Math.max(0, Math.min(3, Math.round((s.V + +b.dataset.d) * 1000) / 1000)); vk.value = s.V; }));
+    $('#lamp').onclick = () => { s.lamp = !s.lamp; $('#lamp').textContent = s.lamp ? 'ปิดหลอดไฟ' : 'เปิดหลอดไฟ'; };
+
+    // กระแสโฟโต: การกระจายพลังงานทำให้ใกล้ Vs ลดลงแบบค่อยเป็นค่อยไป ลบด้วยกระแสย้อนจากแอโนด
+    function current() {
+      if (!s.lamp) return DARK;
+      const f = FILTERS[s.fi], Vs = HC_EV_NM / f.l - PHI;
+      const g = K * f.a * s.inten;
+      const u = Vs - s.V;
+      const sp = W * Math.log1p(Math.exp(u / W));      // softplus
+      return g * (sp * sp - REV) + DARK;
+    }
+
+    function wl2rgba(f, a) { return f.col + Math.round(a * 255).toString(16).padStart(2, '0'); }
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const w = cv.w, h = cv.h, cy = h * 0.42, f = FILTERS[s.fi];
+      // หลอดปรอท
+      const lx = Math.max(40, w * 0.08);
+      ctx.fillStyle = dark ? '#3a4150' : '#5b6370'; ctx.fillRect(lx - 30, cy - 55, 70, 110);
+      if (s.lamp) {
+        const g = ctx.createRadialGradient(lx + 5, cy, 2, lx + 5, cy, 40);
+        g.addColorStop(0, 'rgba(235,240,255,1)'); g.addColorStop(0.4, 'rgba(170,190,255,0.8)'); g.addColorStop(1, 'rgba(120,130,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx + 5, cy, 40, 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = '#ddd'; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Hg', lx + 5, cy + 44);
+      // ลำแสงขาวถึงแผ่นกรอง
+      const fx = w * 0.36, tx = w * 0.72;
+      const ap = 4 + 14 * s.inten;
+      if (s.lamp) { ctx.fillStyle = 'rgba(220,225,255,0.35)'; ctx.fillRect(lx + 40, cy - ap, fx - lx - 40, 2 * ap); }
+      // ช่องเปิด
+      ctx.fillStyle = dark ? '#666' : '#333'; ctx.fillRect(fx - 40, cy - 50, 6, 50 - ap); ctx.fillRect(fx - 40, cy + ap, 6, 50 - ap);
+      // แผ่นกรองแสง (มีตัวเลขความยาวคลื่นพิมพ์ขนาดเล็ก)
+      ctx.fillStyle = dark ? '#444b57' : '#7c8594'; ctx.fillRect(fx - 14, cy - 62, 28, 124);
+      ctx.fillStyle = f.col; ctx.globalAlpha = 0.85; ctx.fillRect(fx - 9, cy - 40, 18, 80); ctx.globalAlpha = 1;
+      ctx.save(); ctx.translate(fx, cy); ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = '#fff'; ctx.font = '600 5px Sarabun, sans-serif'; ctx.fillText(f.l.toFixed(1) + ' nm', 0, -9.5);
+      ctx.restore();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.fillText('แผ่นกรองที่ ' + (s.fi + 1), fx, cy + 76);
+      // ลำแสงสีเดียวไปที่หลอดโฟโต
+      if (s.lamp) {
+        ctx.fillStyle = wl2rgba(f, f.name === 'UV' ? 0.18 : 0.45);
+        ctx.fillRect(fx + 14, cy - ap * 0.8, tx + 14 - fx - 14, 1.6 * ap);
+        if (f.name === 'UV') { ctx.fillStyle = muted; ctx.fillText('แสงอัลตราไวโอเลต (มองไม่เห็น)', (fx + tx) / 2, cy - ap - 12); }
+      }
+      // หลอดโฟโต
+      ctx.strokeStyle = dark ? 'rgba(180,210,240,0.7)' : 'rgba(80,120,160,0.8)'; ctx.lineWidth = 1.5 / z;
+      ctx.fillStyle = Lab.css('--glass');
+      ctx.beginPath(); ctx.ellipse(tx, cy, 50, 70, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = dark ? '#c9ced8' : '#6b7280'; ctx.lineWidth = 6 / z;
+      ctx.beginPath(); ctx.arc(tx - 6, cy, 34, -1.1, 1.1); ctx.stroke(); // แคโทดโค้ง
+      ctx.strokeStyle = ink; ctx.lineWidth = 2 / z;
+      ctx.beginPath(); ctx.moveTo(tx + 4, cy - 30); ctx.lineTo(tx + 4, cy + 30); ctx.stroke(); // แอโนด
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif';
+      ctx.fillText('แคโทด', tx + 40, cy - 48); ctx.fillText('แอโนด', tx + 4, cy + 46);
+      // อิเล็กตรอนที่วิ่งไปถึงแอโนด (จำนวนตามกระแส)
+      const I = current();
+      const n = Math.min(14, Math.round(Math.max(0, I) * 3));
+      ctx.fillStyle = '#5ab0ff';
+      const tt = performance.now() / 600;
+      for (let k = 0; k < n; k++) {
+        const ph = (tt + k * 0.37) % 1, a = -0.9 + 1.8 * ((k * 0.618) % 1);
+        const x0 = tx - 6 + 34 * Math.cos(a), y0 = cy + 34 * Math.sin(a);
+        ctx.beginPath(); ctx.arc(x0 + (tx + 4 - x0) * ph, y0 + (cy + (y0 - cy) * 0.4 - y0) * ph, 1.8, 0, 7); ctx.fill();
+      }
+      // วงจรวัด
+      const by = h - 70;
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(tx + 4, cy + 70); ctx.lineTo(tx + 4, by); ctx.lineTo(w * 0.5, by); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(tx - 40, cy + 30); ctx.lineTo(tx - 70, cy + 80); ctx.lineTo(tx - 70, by - 40); ctx.lineTo(w * 0.5, by - 40); ctx.stroke();
+      ctx.fillStyle = dark ? '#3a4150' : '#d6dbe3'; ctx.fillRect(w * 0.26, by - 58, w * 0.24, 76);
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif';
+      ctx.fillText('แหล่งจ่ายแรงดันย้อนกลับ', w * 0.38, by - 40);
+      ctx.fillText('+ ต่อแคโทด, − ต่อแอโนด', w * 0.38, by - 22);
+      ctx.fillStyle = muted; ctx.fillText('ผ่านพิโคแอมมิเตอร์', w * 0.38, by);
+    }
+
+    const vm = $('#vm'), am = $('#am');
+    Lab.loop((dt, t) => {
+      if (!cv.w) return;
+      if (t - s.last > 0.3) {
+        s.last = t;
+        vm.textContent = Math.max(0, s.V + Lab.noise(0.002)).toFixed(2);
+        const I = current() + Lab.noise(0.0012);
+        am.textContent = (Math.abs(I) < 0.0005 ? 0 : I).toFixed(3);
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ใช้แว่นขยายอ่านตัวเลขบนแผ่นกรองแสง', 10, 8);
+    });
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((ty) => canvas.addEventListener(ty, (e) => { const [x, y] = Lab.pos(canvas, e); lens.handle(e, x, y); e.preventDefault(); }));
+  },
+});
+</script>
+</body>
+</html>

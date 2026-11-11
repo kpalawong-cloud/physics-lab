@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แรงสู่ศูนย์กลาง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;
+const M_STOP = 0.0250;   // มวลจุกยาง (kg) อ่านจากเครื่องชั่ง
+const SLOT = 0.020;      // มวลแต่ละก้อน (kg)
+
+Lab.init({
+  id: 'centripetal',
+  short: 'แรงสู่ศูนย์กลาง',
+  title: 'แรงสู่ศูนย์กลางของการเคลื่อนที่แบบวงกลม',
+  level: 'ม.4–ม.6',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างแรงสู่ศูนย์กลางกับความเร่งสู่ศูนย์กลางของวัตถุที่เคลื่อนที่เป็นวงกลม',
+      'หามวลของจุกยางจากความชันของกราฟ F กับ 4π²r/T² แล้วเทียบกับค่าที่ชั่งได้',
+    ],
+    theory:
+      '<p>จุกยางผูกเชือกที่ร้อยผ่านหลอดแก้ว ปลายล่างแขวนมวล M เมื่อแกว่งจุกยางเป็นวงกลมรัศมี r ด้วยอัตราเร็วคงตัว แรงตึงเชือก (= Mg) เป็นแรงสู่ศูนย์กลาง</p>' +
+      '<div class="eq">F = Mg = m v² / r = m · 4π²r / T²</div>' +
+      '<p>T คือคาบ (เวลาครบ 1 รอบ) หาจากเวลาครบ 20 รอบหารด้วย 20 กราฟ F กับ 4π²r/T² (ความเร่งสู่ศูนย์กลาง a<sub>c</sub>) จึงเป็นเส้นตรงผ่านจุดกำเนิด <b>ความชันคือมวลจุกยาง m</b></p>' +
+      '<p>ในทางปฏิบัติ เชือกเสียดสีกับปากหลอด และเชือกไม่อยู่ในแนวระดับพอดี ทำให้ความชันต่างจากมวลที่ชั่งได้เล็กน้อย</p>',
+    equipment: ['จุกยางมวล 25.0 g', 'เชือกเบาและหลอดแก้วกลวง', 'ที่แขวนและแผ่นมวล (รวมก้อนละ 20 g)', 'คลิปหนีบกระดาษ (บอกรัศมี)', 'ไม้เมตร (ขีดละเอียด 1 mm)', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'แขวนมวล M ด้วยจำนวนก้อนที่ต้องการ (ก้อนละ 20 g) เลื่อนคลิปเพื่อกำหนดรัศมี',
+      'หยุดการแกว่ง (โหมด "วัดรัศมี") ดึงเชือกตามไม้เมตร ใช้แว่นขยายอ่านระยะจากปากหลอดถึงจุดศูนย์กลางจุกยาง = r',
+      'กด "เริ่มแกว่ง" รอให้แกว่งสม่ำเสมอ (คลิปอยู่ใต้ปากหลอดเล็กน้อย) แล้วจับเวลา 20 รอบ นับเมื่อจุกยางผ่านเส้นอ้างอิง',
+      'เปลี่ยน M อย่างน้อย 6 ค่า (รัศมีเดิมหรือต่างกันก็ได้) บันทึก M, r และเวลา 20 รอบ',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ F กับ 4π²r/T²',
+    ],
+    tip: 'คาบควรอยู่ราว 0.5–1.2 s ถ้าหมุนเร็วเกินไปจะนับรอบไม่ทัน ให้เพิ่มรัศมีหรือลดจำนวนก้อน',
+  },
+  table: {
+    rows: 6,
+    hint: 'M คือมวลที่แขวนทั้งหมด (kg) · ปุ่ม "บันทึกเวลาลงตาราง" เติมเวลา 20 รอบในแถวว่างแรก',
+    columns: [
+      { key: 'M', label: 'มวลที่แขวน M<br>(kg)', input: true },
+      { key: 'r', label: 'รัศมี r<br>(m)', input: true },
+      { key: 't20', label: 'เวลา 20 รอบ<br>(s)', input: true },
+      { key: 'T', label: 'คาบ T<br>(s)', calc: (r) => r.t20 / 20, digits: 3 },
+      { key: 'F', label: 'F = Mg<br>(N)', calc: (r) => r.M * G, digits: 3 },
+      { key: 'ac', label: '4π²r/T²<br>(m/s²)', calc: (r) => (4 * Math.PI * Math.PI * r.r) / (r.T * r.T), digits: 1 },
+    ],
+  },
+  graph: {
+    title: 'F กับ 4π²r/T²', x: 'ac', y: 'F', xv: 'a<sub>c</sub>', yv: 'F', xlabel: 'ความเร่งสู่ศูนย์กลาง 4π²r/T² (m/s²)', ylabel: 'แรง F = Mg (N)', origin: true,
+    explain: 'ความชันของกราฟมีหน่วย kg คือมวลของวัตถุที่เคลื่อนที่เป็นวงกลม (จุกยาง)',
+  },
+  results(fit) {
+    return [
+      { label: 'มวลจุกยางจากความชัน', value: fit.m * 1000, unc: fit.sm * 1000, unit: 'g', accepted: M_STOP * 1000 },
+    ];
+  },
+  questions: [
+    'กราฟ F กับ 4π²r/T² เป็นเส้นตรงผ่านจุดกำเนิดหรือไม่ แสดงว่าแรงสู่ศูนย์กลางสัมพันธ์กับความเร่งอย่างไร',
+    'มวลจุกยางที่ได้จากความชันมากกว่าหรือน้อยกว่าค่าที่ชั่ง เพราะเหตุใด',
+    'ถ้าแขวนมวล M เท่าเดิมแต่เพิ่มรัศมีเป็น 2 เท่า คาบจะเปลี่ยนไปอย่างไร',
+    'เหตุใดต้องรักษาคลิปให้อยู่ตำแหน่งเดิมขณะจับเวลา ถ้าคลิปเลื่อนขึ้นลงจะเกิดอะไรกับผลการทดลอง',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 8, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ค่าซ่อน: แรงเสียดทานที่ปากหลอดลดแรงตึงที่ใช้จริง 2–5%
+    const fric = 0.02 + 0.03 * rng();
+
+    const s = { n: 3, r: 0.45 + 0.2 * rng(), spin: false, th: 0, w: 0, wHand: 1, drift: 0, laps: 0, flash: 0 };
+    const M = () => s.n * SLOT;
+    // อัตราเร็วเชิงมุมที่ทำให้คลิปนิ่ง: m ω² r = Mg(1 − f)
+    const wEq = () => Math.sqrt((M() * G * (1 - fric)) / (M_STOP * s.r));
+
+    ctrls.innerHTML =
+      '<h3>มวลที่แขวน</h3><p style="margin:0 0 4px;font-size:14px" id="nTxt"></p>' +
+      '<div class="row"><button class="btn" id="minus">− เอาออก 1 ก้อน</button><button class="btn" id="plus">+ เพิ่ม 1 ก้อน</button></div>' +
+      '<h3>รัศมี (เลื่อนคลิป)</h3><input type="range" id="rr" min="0.25" max="0.90" step="0.001">' +
+      '<h3>การแกว่ง</h3><div class="seg" id="mode"><button data-v="0">วัดรัศมี</button><button data-v="1">เริ่มแกว่ง</button></div>' +
+      '<p class="muted" style="font-size:13px">จุกยาง: เครื่องชั่งอ่านได้ 25.0 g</p>' +
+      '<h3>นาฬิกาจับเวลา</h3><div id="sw"></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const nTxt = () => ($('#nTxt').textContent = 'จำนวนก้อน ' + s.n + ' ก้อน (ก้อนละ 20 g รวมที่แขวน)');
+    nTxt();
+    $('#minus').onclick = () => { if (s.n > 1) { s.n--; nTxt(); } };
+    $('#plus').onclick = () => { if (s.n < 12) { s.n++; nTxt(); } };
+    const rr = $('#rr'); rr.value = s.r;
+    rr.oninput = () => { if (s.spin) { rr.value = s.r; return; } s.r = +rr.value; };
+    const mode = $('#mode');
+    const syncMode = () => mode.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === (s.spin ? '1' : '0')));
+    mode.onclick = (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      s.spin = b.dataset.v === '1';
+      if (s.spin) { s.w = wEq() * 0.6; s.wHand = 1; s.drift = 0; } else { s.w = 0; }
+      syncMode();
+    };
+    syncMode();
+    Lab.stopwatch($('#sw'), api, { send: 't20' });
+
+    // แบ่งภาพ: ซ้าย = มองจากด้านบน (หรือไม้เมตรเมื่อวัดรัศมี), ขวา = มองด้านข้าง
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const W = cv.w, H = cv.h, split = W * 0.66;
+      const stopper = (x, y, k) => {
+        const g = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, k);
+        g.addColorStop(0, '#f08a70'); g.addColorStop(1, '#a83b24');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, k, 0, 7); ctx.fill();
+      };
+      if (s.spin) {
+        // มองจากด้านบน
+        const cx = split / 2, cy = H / 2 + 6, sc = Math.min(split - 40, H - 60) / 2 / 0.95;
+        const R = (s.r + s.drift) * sc;
+        ctx.strokeStyle = muted; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        // เส้นอ้างอิงสำหรับนับรอบ
+        ctx.strokeStyle = s.flash > 0 ? Lab.css('--ok') : Lab.css('--accent'); ctx.lineWidth = s.flash > 0 ? 3 : 1.5;
+        ctx.beginPath(); ctx.moveTo(cx, cy - R - 26); ctx.lineTo(cx, cy - R + 14); ctx.stroke();
+        ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('เส้นอ้างอิง', cx, cy - R - 30);
+        const px = cx + R * Math.sin(s.th), py = cy - R * Math.cos(s.th);
+        ctx.strokeStyle = ink; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+        ctx.fillStyle = dark ? '#c9d6e3' : '#9fb4c8'; ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 7); ctx.fill();
+        stopper(px, py, 9);
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('มองจากด้านบน', 12, H - 12);
+      } else {
+        // วัดรัศมี: ดึงเชือกตึงตามไม้เมตร ขีด 0 ตรงปากหลอด
+        const x0 = 40, y0 = H * 0.45, sc = (split - 80) / 1.0;
+        ctx.fillStyle = dark ? '#a87e48' : '#e6c58f'; ctx.fillRect(x0 - 10, y0 + 1, 1.0 * sc + 20, 30);
+        ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+        const showMm = (sc / 1000) * z >= 2;
+        for (let mm = 0; mm <= 1000; mm += showMm ? 1 : 10) {
+          const x = x0 + (mm / 1000) * sc, l = mm % 100 === 0 ? 16 : mm % 50 === 0 ? 12 : mm % 10 === 0 ? 8 : 4;
+          ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+          ctx.beginPath(); ctx.moveTo(x, y0 + 1); ctx.lineTo(x, y0 + 1 + l); ctx.stroke();
+          if (mm % 100 === 0 || (z > 3 && mm % 10 === 0)) {
+            ctx.font = (mm % 100 === 0 ? 10 / Math.min(z, 3.5) : 2.2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText(mm / 10, x, y0 + 1 + (mm % 100 === 0 ? 17 : 8.5));
+          }
+        }
+        ctx.textBaseline = 'alphabetic';
+        // ปากหลอด (มองด้านข้าง หลอดตั้ง) อยู่ที่ x0
+        ctx.fillStyle = dark ? 'rgba(170,200,230,.5)' : 'rgba(150,190,220,.6)'; ctx.fillRect(x0 - 5, y0 - 2, 10, 70);
+        ctx.strokeStyle = dark ? '#9fb4c8' : '#6b8fb0'; ctx.lineWidth = 1 / z; ctx.strokeRect(x0 - 5, y0 - 2, 10, 70);
+        const xs = x0 + s.r * sc;
+        ctx.strokeStyle = ink; ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xs, y0); ctx.stroke();
+        stopper(xs, y0, (0.0125 * sc));
+        ctx.fillStyle = '#1b1b1b'; ctx.beginPath(); ctx.arc(xs, y0, 0.7 / z, 0, 7); ctx.fill();
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('ขีด 0 ของไม้เมตรตรงปากหลอด · อ่านถึงจุดศูนย์กลางจุกยาง', 12, H - 12);
+      }
+      // มองด้านข้าง: หลอด เชือก คลิป มวลแขวน
+      const tx = split + (W - split) / 2, ty = H * 0.18;
+      ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(split, 30); ctx.lineTo(split, H - 20); ctx.stroke();
+      ctx.fillStyle = dark ? '#b08a68' : '#e3b48a'; ctx.fillRect(tx - 13, ty + 40, 26, 90); // มือ
+      ctx.fillStyle = dark ? 'rgba(170,200,230,.5)' : 'rgba(150,190,220,.6)'; ctx.fillRect(tx - 5, ty, 10, 150);
+      const clipY = ty + 150 + 12 + (s.spin ? -s.drift * 300 : 0);
+      ctx.strokeStyle = ink; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx, clipY + 60); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + (s.spin ? 40 * Math.sin(s.th) : 40), ty - 4); ctx.stroke();
+      ctx.fillStyle = '#c9a227'; ctx.fillRect(tx - 6, clipY - 2, 12, 4); // คลิป
+      // ที่แขวนและแผ่นมวล
+      const my = clipY + 60;
+      for (let i = 0; i < s.n; i++) { ctx.fillStyle = i % 2 ? '#8a6d2f' : '#a8873c'; ctx.fillRect(tx - 14, my + i * 5, 28, 4.5); }
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('มองด้านข้าง', tx, H - 12);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      if (s.spin && dt > 0) {
+        // มือปรับความเร็วให้คลิปอยู่ที่เดิม: เข้าใกล้ ω สมดุล แต่มีการแกว่งไกวเล็กน้อย
+        s.wHand += (1 - s.wHand) * dt * 0.8 + Lab.noise(0.02) * Math.sqrt(dt);
+        s.wHand = Math.max(0.96, Math.min(1.04, s.wHand));
+        const target = wEq() * s.wHand;
+        s.w += (target - s.w) * Math.min(1, dt * 2.5);
+        s.drift = 0.03 * (s.wHand - 1) / 0.04;
+        const before = s.th;
+        s.th += s.w * dt;
+        if (Math.floor(s.th / (2 * Math.PI)) > Math.floor(before / (2 * Math.PI))) s.flash = 0.12;
+      }
+      s.flash = Math.max(0, s.flash - dt);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : s.spin ? 'นับรอบเมื่อจุกยางผ่านเส้นอ้างอิง' : 'อ่านรัศมีจากไม้เมตร', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.25);
+  },
+});
+</script>
+</body>
+</html>

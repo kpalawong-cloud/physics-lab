@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สนามไฟฟ้าและเส้นสมศักย์ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+// กระดาษนำไฟฟ้า 30 × 20 cm แก้สมการลาปลาซบนกริด 0.25 cm
+const PW = 30, PH = 20, HC = 0.25, NX = PW / HC + 1, NY = PH / HC + 1;
+let V0 = null;                 // แรงดันจริงของแหล่งจ่าย (ซ่อน)
+const E_TRUE = {};             // สนามจริงบริเวณกลางของแต่ละแบบขั้วไฟฟ้า (V/m)
+const SETS = [
+  { key: 'P', label: 'แผ่นขนาน' },
+  { key: 'D', label: 'จุดคู่' },
+  { key: 'S', label: 'จุดกับแผ่น' },
+];
+// ขั้วไฟฟ้า: คืนค่าแรงดันสัดส่วน (0 หรือ 1) ถ้าจุด (x, y) อยู่บนขั้ว ไม่งั้น null
+const ELEC = {
+  P: (x, y) => (y >= 2 && y <= 18 ? (x >= 4.8 && x <= 5.2 ? 0 : x >= 24.8 && x <= 25.2 ? 1 : null) : null),
+  D: (x, y) => (Math.hypot(x - 8, y - 10) <= 0.5 ? 0 : Math.hypot(x - 22, y - 10) <= 0.5 ? 1 : null),
+  S: (x, y) => (Math.hypot(x - 8, y - 10) <= 0.5 ? 0 : y >= 2 && y <= 18 && x >= 24.8 && x <= 25.2 ? 1 : null),
+};
+
+Lab.init({
+  id: 'efield',
+  short: 'สนามไฟฟ้า',
+  title: 'สนามไฟฟ้าและเส้นสมศักย์',
+  level: 'ม.4–ม.6',
+  intro: {
+    objective: [
+      'วัดศักย์ไฟฟ้าบนกระดาษนำไฟฟ้าระหว่างขั้วไฟฟ้า และลากเส้นสมศักย์ (equipotential)',
+      'เขียนเส้นสนามไฟฟ้าให้ตั้งฉากกับเส้นสมศักย์ และเปรียบเทียบรูปแบบสนามของขั้วไฟฟ้าแต่ละแบบ',
+      'หาความเข้มสนามไฟฟ้าระหว่างแผ่นขนานจากความชันของกราฟศักย์กับระยะ',
+    ],
+    theory:
+      '<p>กระดาษนำไฟฟ้า (Teledeltos) มีกระแสไหลจากขั้วบวกไปขั้วลบ ศักย์บนกระดาษจึงจำลองศักย์ไฟฟ้าในที่ว่างระหว่างขั้วได้ จุดที่มีศักย์เท่ากันต่อกันเป็น<b>เส้นสมศักย์</b> และ<b>เส้นสนามไฟฟ้า</b>ตั้งฉากกับเส้นสมศักย์เสมอ ชี้จากศักย์สูงไปศักย์ต่ำ</p>' +
+      '<p>ความเข้มสนามไฟฟ้าสัมพันธ์กับการเปลี่ยนศักย์ตามระยะ</p>' +
+      '<div class="eq">E = −ΔV / Δx</div>' +
+      '<p>ระหว่างแผ่นขนานที่ห่างกัน d และต่อกับความต่างศักย์ V₀ สนามเกือบสม่ำเสมอ ศักย์จึงเพิ่มเป็นเส้นตรงกับระยะ</p>' +
+      '<div class="eq">V(x) = E·x + ค่าคงตัว,&nbsp; E ≈ V₀ / d</div>' +
+      '<p>ความชันของกราฟ V กับ x จึงเท่ากับขนาดของสนามไฟฟ้า (เปลี่ยนหน่วย V/cm เป็น V/m โดยคูณ 100) ส่วนขั้วแบบจุด สนามไม่สม่ำเสมอ กราฟจะไม่เป็นเส้นตรง</p>',
+    equipment: ['กระดาษนำไฟฟ้าพิมพ์ตารางกริด 1 cm (30 × 20 cm)', 'ขั้วไฟฟ้าทาสีเงิน 3 แบบ: แผ่นขนาน, จุดคู่, จุดกับแผ่น', 'แหล่งจ่ายไฟกระแสตรง 10 V', 'โวลต์มิเตอร์ดิจิทัล (ละเอียด 0.01 V) พร้อมหัววัด', 'ดินสอสำหรับทำเครื่องหมาย'],
+    procedure: [
+      'เลือกขั้วไฟฟ้า "แผ่นขนาน" ขั้วซ้ายต่อขั้วลบ (0 V) ขั้วขวาต่อขั้วบวก ขั้วลบของโวลต์มิเตอร์ต่อกับขั้วลบของแหล่งจ่าย',
+      'ลากหัววัดไปตามแนวกึ่งกลาง (y = 10 cm) ทีละประมาณ 2 cm อ่านตำแหน่ง x จากกริดด้วยแว่นขยาย และอ่านศักย์ V จากโวลต์มิเตอร์ บันทึกอย่างน้อย 8 จุด',
+      'หาเส้นสมศักย์: เลือกค่าศักย์ เช่น 2, 4, 6, 8 V เลื่อนหัววัดหาจุดที่โวลต์มิเตอร์อ่านค่านั้นหลาย ๆ จุด แล้วทำเครื่องหมาย ต่อจุดเป็นเส้น',
+      'เปลี่ยนเป็นขั้วแบบ "จุดคู่" และ "จุดกับแผ่น" ทำซ้ำ บันทึกศักย์ตามแนวเส้นที่ต่อสองขั้ว (y = 10 cm)',
+      'วาดเส้นสนามไฟฟ้าให้ตั้งฉากกับเส้นสมศักย์ แล้วเปิด "แสดงเส้นสนามไฟฟ้า" เพื่อเปรียบเทียบ',
+    ],
+    tip: 'ตำแหน่งที่อ่านคือ "ปลายหัววัด" (กากบาทสีแดง) ใช้ปุ่มลูกศรเลื่อนทีละ 1 mm เพื่อให้ตรงเส้นกริดพอดี จะอ่านตำแหน่งได้แม่นขึ้น',
+  },
+  table: {
+    rows: 9,
+    sets: SETS,
+    hint: 'ขั้วไฟฟ้าแต่ละแบบมีตารางของตัวเอง ตารางสลับตามขั้วที่เลือก บันทึกตำแหน่งตามแนว y = 10 cm',
+    columns: [
+      { key: 'x', label: 'ตำแหน่ง x<br>(cm)', input: true },
+      { key: 'V', label: 'ศักย์ไฟฟ้า V<br>(V)', input: true },
+      { key: 'xm', label: 'ตำแหน่ง x<br>(m)', calc: (r) => r.x / 100, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'ศักย์ไฟฟ้ากับตำแหน่ง', x: 'xm', y: 'V', xv: 'x', yv: 'V', xlabel: 'ตำแหน่ง x (m)', ylabel: 'ศักย์ไฟฟ้า V (V)', origin: false,
+    explain: 'สำหรับแผ่นขนาน ความชันคือขนาดสนามไฟฟ้า (V/m) ควรเลือกเฉพาะจุดที่อยู่ระหว่างแผ่นทั้งสอง ถ้าเป็นขั้วแบบจุด จุดจะเรียงเป็นเส้นโค้ง ความชันของเส้นตรงจึงเป็นเพียงค่าเฉลี่ย',
+  },
+  results(fit, rows, truth, set) {
+    if (set === 'P') {
+      return [
+        { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'V/m' },
+        { label: 'ความเข้มสนามไฟฟ้า E = |ความชัน|', value: Math.abs(fit.m), unc: fit.sm, unit: 'V/m' },
+        { label: 'สนามไฟฟ้าจริงบริเวณกลางกระดาษชุดนี้', value: Math.abs(fit.m), unit: 'V/m', accepted: E_TRUE.P, hidden: true, digitsTrue: 1 },
+      ];
+    }
+    return [
+      { label: 'ความชันเฉลี่ยของเส้นตรง (สนามไม่สม่ำเสมอ ใช้เป็นค่าเฉลี่ยเท่านั้น)', value: fit.m, unc: fit.sm, unit: 'V/m' },
+      { label: 'ความเหมาะของเส้นตรง R² (ถ้าน้อยกว่า 0.99 แสดงว่าสนามไม่สม่ำเสมอ)', value: fit.r2, digits: 4, unit: '' },
+    ];
+  },
+  questions: [
+    'เส้นสมศักย์ระหว่างแผ่นขนานมีลักษณะอย่างไร ระยะห่างระหว่างเส้นสมศักย์ที่ต่างกันทีละ 2 V เท่ากันหรือไม่ บอกอะไรเกี่ยวกับสนามไฟฟ้า',
+    'สนามไฟฟ้าที่วัดได้ระหว่างแผ่นขนานเท่ากับเท่าใด เทียบกับ V₀/d เมื่อ V₀ = 10 V และ d ≈ 0.20 m ต่างกันเพราะอะไร',
+    'สำหรับขั้วแบบจุดคู่ บริเวณใดมีสนามไฟฟ้าเข้มที่สุด สังเกตได้จากเส้นสมศักย์อย่างไร',
+    'เหตุใดเส้นสนามไฟฟ้าจึงต้องตั้งฉากกับเส้นสมศักย์ และตั้งฉากกับผิวของขั้วไฟฟ้า',
+    'ถ้าเลื่อนประจุบวกไปตามเส้นสมศักย์ งานที่ทำโดยสนามไฟฟ้าเท่ากับเท่าใด เพราะเหตุใด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 5, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    V0 = 9.6 + 0.8 * rng();
+    // ความต้านทานของกระดาษไม่สม่ำเสมอเล็กน้อย (ผลรวมคลื่นไซน์สุ่ม)
+    const modes = [];
+    for (let k = 0; k < 6; k++) modes.push({ a: (rng() - 0.5) * 0.05, kx: 0.15 + rng() * 0.6, ky: 0.15 + rng() * 0.6, p: rng() * 6.28 });
+
+    const sols = {};
+    function solve(key) {
+      if (sols[key]) return sols[key];
+      const N = NX * NY, V = new Float32Array(N), fix = new Int8Array(N), sig = new Float32Array(N);
+      for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+        const x = i * HC, y = j * HC, n = j * NX + i;
+        let s = 1;
+        for (const m of modes) s += m.a * Math.sin(m.kx * x + m.p) * Math.cos(m.ky * y + m.p * 0.7);
+        sig[n] = s;
+        const e = ELEC[key](x, y);
+        if (e != null) { fix[n] = 1; V[n] = e * V0; } else V[n] = (V0 * x) / PW;
+      }
+      // SOR แบบค่าการนำไฟฟ้าไม่สม่ำเสมอ ขอบกระดาษเป็นฉนวน (ไม่มีกระแสออก)
+      const om = 1.93;
+      for (let it = 0; it < 3000; it++) {
+        let dmax = 0;
+        for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+          const n = j * NX + i;
+          if (fix[n]) continue;
+          let sw = 0, sv = 0, w;
+          if (i > 0) { w = sig[n] + sig[n - 1]; sw += w; sv += w * V[n - 1]; }
+          if (i < NX - 1) { w = sig[n] + sig[n + 1]; sw += w; sv += w * V[n + 1]; }
+          if (j > 0) { w = sig[n] + sig[n - NX]; sw += w; sv += w * V[n - NX]; }
+          if (j < NY - 1) { w = sig[n] + sig[n + NX]; sw += w; sv += w * V[n + NX]; }
+          const nv = V[n] + om * (sv / sw - V[n]);
+          const d = Math.abs(nv - V[n]); if (d > dmax) dmax = d;
+          V[n] = nv;
+        }
+        if (dmax < 2e-5) break;
+      }
+      const sol = { V, key };
+      sols[key] = sol;
+      return sol;
+    }
+    function pot(sol, x, y) {
+      x = Math.max(0, Math.min(PW, x)); y = Math.max(0, Math.min(PH, y));
+      const fi = x / HC, fj = y / HC;
+      const i = Math.min(NX - 2, Math.floor(fi)), j = Math.min(NY - 2, Math.floor(fj));
+      const a = fi - i, b = fj - j, V = sol.V;
+      return (1 - a) * (1 - b) * V[j * NX + i] + a * (1 - b) * V[j * NX + i + 1] + (1 - a) * b * V[(j + 1) * NX + i] + a * b * V[(j + 1) * NX + i + 1];
+    }
+    // สนามจริงบริเวณกลางของแผ่นขนาน: ความชันของศักย์ตามแนว y = 10 ช่วง x = 8–22 cm
+    (function () {
+      const s = solve('P'), xs = [], ys = [];
+      for (let x = 8; x <= 22; x += 0.5) { xs.push(x / 100); ys.push(pot(s, x, 10)); }
+      E_TRUE.P = Lab.fit(xs, ys, false).m;
+    })();
+
+    const marks = Lab.store.get('vl-efield-marks', { P: [], D: [], S: [] });
+    const s = { key: api.currentSet(), px: 12, py: 10, mode: 'probe', drag: false, field: false, reading: 0, lastRead: 0 };
+    let overlay = {};
+
+    ctrls.innerHTML =
+      '<h3>ขั้วไฟฟ้า</h3><div class="seg" id="cfg">' + SETS.map((x) => '<button data-v="' + x.key + '">' + x.label + '</button>').join('') + '</div>' +
+      '<h3>โวลต์มิเตอร์</h3><div class="watch"><span class="readout" id="vm">0.00</span><small>ศักย์ที่ปลายหัววัด (V)</small></div>' +
+      '<h3>การใช้งานบนกระดาษ</h3><div class="seg" id="mode"><button data-v="probe">ย้ายหัววัด</button><button data-v="mark">ทำเครื่องหมาย</button></div>' +
+      '<div class="row"><button class="btn" id="ml">◀</button><button class="btn" id="mu">▲</button><button class="btn" id="md">▼</button><button class="btn" id="mr">▶</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 6px">ปุ่มลูกศรเลื่อนหัววัดทีละ 1 mm · โหมดทำเครื่องหมาย: แตะบนกระดาษเพื่อจุดดินสอ (ระบบจดค่าศักย์ที่อ่านได้ไว้ข้างจุด)</p>' +
+      '<div class="row"><button class="btn" id="markHere">ทำเครื่องหมายที่หัววัด</button></div>' +
+      '<div class="row"><button class="btn" id="undo">ลบจุดล่าสุด</button><button class="btn" id="clr">ลบทั้งหมด</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-top:8px"><input type="checkbox" id="fld"> แสดงเส้นสนามไฟฟ้าและเส้นสมศักย์ (เฉลย)</label>';
+    const $ = (q) => ctrls.querySelector(q);
+    function syncSeg(id, v) { ctrls.querySelectorAll('#' + id + ' button').forEach((b) => b.classList.toggle('on', b.dataset.v === v)); }
+    syncSeg('cfg', s.key); syncSeg('mode', s.mode);
+    $('#cfg').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; s.key = b.dataset.v; syncSeg('cfg', s.key); api.useSet(s.key); };
+    api.onSetChange = (k) => { s.key = k; syncSeg('cfg', k); };
+    $('#mode').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; s.mode = b.dataset.v; syncSeg('mode', s.mode); };
+    const nudge = (dx, dy) => { s.px = Math.max(0, Math.min(PW, Math.round((s.px + dx) * 10) / 10)); s.py = Math.max(0, Math.min(PH, Math.round((s.py + dy) * 10) / 10)); };
+    $('#ml').onclick = () => nudge(-0.1, 0); $('#mr').onclick = () => nudge(0.1, 0);
+    $('#mu').onclick = () => nudge(0, 0.1); $('#md').onclick = () => nudge(0, -0.1);
+    const saveMarks = () => Lab.store.set('vl-efield-marks', marks);
+    function addMark(x, y) { marks[s.key].push([x, y, +meterValue(x, y).toFixed(2)]); saveMarks(); }
+    $('#markHere').onclick = () => addMark(s.px, s.py);
+    $('#undo').onclick = () => { marks[s.key].pop(); saveMarks(); };
+    $('#clr').onclick = () => { if (confirm('ลบเครื่องหมายทั้งหมดของขั้วแบบนี้?')) { marks[s.key] = []; saveMarks(); } };
+    $('#fld').onchange = (e) => (s.field = e.target.checked);
+
+    // โวลต์มิเตอร์: ค่าจริง + สัญญาณรบกวนเล็กน้อยจากการสัมผัสของหัววัด
+    function meterValue(x, y) {
+      const e = ELEC[s.key](x, y);
+      const v = e != null ? e * V0 : pot(solve(s.key), x, y);
+      return Math.max(0, v + Lab.noise(0.004));
+    }
+
+    // เส้นเฉลย: เส้นสมศักย์ (marching squares) และเส้นสนาม (ไล่ตาม −∇V)
+    function buildOverlay(key) {
+      if (overlay[key]) return overlay[key];
+      const sol = solve(key), V = sol.V, iso = [];
+      for (let k = 1; k <= 9; k++) {
+        const L = (k * V0) / 10, segs = [];
+        for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX - 1; i++) {
+          const v = [V[j * NX + i], V[j * NX + i + 1], V[(j + 1) * NX + i + 1], V[(j + 1) * NX + i]];
+          const c = [[0, 0], [1, 0], [1, 1], [0, 1]], pts = [];
+          for (let e = 0; e < 4; e++) {
+            const a = v[e], b = v[(e + 1) % 4];
+            if ((a - L) * (b - L) < 0) {
+              const t = (L - a) / (b - a), p = c[e], q = c[(e + 1) % 4];
+              pts.push([(i + p[0] + t * (q[0] - p[0])) * HC, (j + p[1] + t * (q[1] - p[1])) * HC]);
+            }
+          }
+          if (pts.length >= 2) segs.push([pts[0], pts[1]]);
+          if (pts.length === 4) segs.push([pts[2], pts[3]]);
+        }
+        iso.push(segs);
+      }
+      const seeds = [];
+      if (key === 'D') for (let k = 0; k < 16; k++) { const a = (k / 16) * 6.283; seeds.push([22 + 0.65 * Math.cos(a), 10 + 0.65 * Math.sin(a)]); }
+      else for (let y = 2.5; y <= 17.6; y += 1.5) seeds.push([24.6, y]);
+      if (key !== 'D') { seeds.push([25.4, 6]); seeds.push([25.4, 14]); seeds.push([24.6, 1.8]); seeds.push([24.6, 18.2]); }
+      const lines = seeds.map((p0) => {
+        const pts = [p0]; let [x, y] = p0;
+        for (let n = 0; n < 900; n++) {
+          const h = 0.06;
+          const gx = (pot(sol, x + h, y) - pot(sol, x - h, y)) / (2 * h), gy = (pot(sol, x, y + h) - pot(sol, x, y - h)) / (2 * h);
+          const g = Math.hypot(gx, gy); if (g < 1e-4) break;
+          x -= (0.08 * gx) / g; y -= (0.08 * gy) / g;
+          if (x < 0 || x > PW || y < 0 || y > PH) break;
+          pts.push([x, y]);
+          if (ELEC[key](x, y) === 0) break;
+        }
+        return pts;
+      });
+      return (overlay[key] = { iso, lines });
+    }
+
+    let ppc, X0, Y0;
+    function layout() {
+      ppc = Math.min((cv.w - 56) / PW, (cv.h - 110) / PH);
+      X0 = (cv.w - PW * ppc) / 2 + 8; Y0 = 76;
+    }
+    const X = (x) => X0 + x * ppc, Y = (y) => Y0 + (PH - y) * ppc;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // แหล่งจ่ายไฟ
+      const bx = cv.w / 2 - 70;
+      ctx.fillStyle = dark ? '#3a4150' : '#d6dbe3'; ctx.fillRect(bx, 10, 140, 44);
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.strokeRect(bx, 10, 140, 44);
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('แหล่งจ่าย DC 10 V', bx + 70, 24);
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(bx + 22, 42, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = '#d33'; ctx.beginPath(); ctx.arc(bx + 118, 42, 6, 0, 7); ctx.fill();
+      // กระดาษนำไฟฟ้า
+      ctx.fillStyle = dark ? '#2b2e33' : '#3c3f45';
+      ctx.fillRect(X(0), Y(PH), PW * ppc, PH * ppc);
+      // กริด: เส้น mm เมื่อขยาย, เส้น cm, เส้นทุก 5 cm
+      const mmOn = (ppc / 10) * z >= 2;
+      if (mmOn) {
+        ctx.strokeStyle = 'rgba(230,235,245,0.13)'; ctx.lineWidth = 0.5 / z; ctx.beginPath();
+        for (let k = 0; k <= PW * 10; k++) if (k % 10) { ctx.moveTo(X(k / 10), Y(0)); ctx.lineTo(X(k / 10), Y(PH)); }
+        for (let k = 0; k <= PH * 10; k++) if (k % 10) { ctx.moveTo(X(0), Y(k / 10)); ctx.lineTo(X(PW), Y(k / 10)); }
+        ctx.stroke();
+      }
+      for (let x = 0; x <= PW; x++) {
+        ctx.strokeStyle = x % 5 ? 'rgba(230,235,245,0.35)' : 'rgba(240,245,255,0.7)'; ctx.lineWidth = (x % 5 ? 0.7 : 1.1) / z;
+        ctx.beginPath(); ctx.moveTo(X(x), Y(0)); ctx.lineTo(X(x), Y(PH)); ctx.stroke();
+      }
+      for (let y = 0; y <= PH; y++) {
+        ctx.strokeStyle = y % 5 ? 'rgba(230,235,245,0.35)' : 'rgba(240,245,255,0.7)'; ctx.lineWidth = (y % 5 ? 0.7 : 1.1) / z;
+        ctx.beginPath(); ctx.moveTo(X(0), Y(y)); ctx.lineTo(X(PW), Y(y)); ctx.stroke();
+      }
+      // เลขกำกับกริด (cm)
+      ctx.fillStyle = muted; ctx.font = 10 / Math.min(z, 2.5) + 'px Sarabun, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (let x = 0; x <= PW; x += ppc > 20 ? 1 : 2) ctx.fillText(x, X(x), Y(0) + 3 / z);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let y = 0; y <= PH; y += 2) ctx.fillText(y, X(0) - 4 / z, Y(y));
+      // ขั้วไฟฟ้าสีเงิน
+      ctx.fillStyle = dark ? '#c9ced8' : '#d9dee6'; ctx.strokeStyle = '#8a929f'; ctx.lineWidth = 1 / z;
+      const bar = (x0) => { ctx.fillRect(X(x0), Y(18), 0.4 * ppc, 16 * ppc); ctx.strokeRect(X(x0), Y(18), 0.4 * ppc, 16 * ppc); };
+      const dot = (x, y) => { ctx.beginPath(); ctx.arc(X(x), Y(y), 0.5 * ppc, 0, 7); ctx.fill(); ctx.stroke(); };
+      let negP, posP;
+      if (s.key === 'P') { bar(4.8); bar(24.8); negP = [5, 18]; posP = [25, 18]; }
+      else if (s.key === 'D') { dot(8, 10); dot(22, 10); negP = [8, 10.5]; posP = [22, 10.5]; }
+      else { dot(8, 10); bar(24.8); negP = [8, 10.5]; posP = [25, 18]; }
+      // สายไฟจากแหล่งจ่าย
+      ctx.lineWidth = 2 / z;
+      ctx.strokeStyle = '#222'; ctx.beginPath(); ctx.moveTo(bx + 22, 48); ctx.bezierCurveTo(bx + 22, 70, X(negP[0]), Y(negP[1]) - 30, X(negP[0]), Y(negP[1])); ctx.stroke();
+      ctx.strokeStyle = '#d33'; ctx.beginPath(); ctx.moveTo(bx + 118, 48); ctx.bezierCurveTo(bx + 118, 70, X(posP[0]), Y(posP[1]) - 30, X(posP[0]), Y(posP[1])); ctx.stroke();
+      // เฉลย
+      if (s.field) {
+        const ov = buildOverlay(s.key);
+        ctx.strokeStyle = 'rgba(255,170,60,0.9)'; ctx.lineWidth = 1.2 / z; ctx.setLineDash([4 / z, 3 / z]);
+        ctx.beginPath();
+        ov.iso.forEach((segs) => segs.forEach(([a, b]) => { ctx.moveTo(X(a[0]), Y(a[1])); ctx.lineTo(X(b[0]), Y(b[1])); }));
+        ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(110,170,255,0.95)'; ctx.lineWidth = 1.3 / z;
+        ov.lines.forEach((pts) => {
+          ctx.beginPath(); pts.forEach((p, k) => (k ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])))); ctx.stroke();
+          const m = pts[Math.floor(pts.length / 2)], m2 = pts[Math.floor(pts.length / 2) + 1];
+          if (m2) {
+            const a = Math.atan2(Y(m2[1]) - Y(m[1]), X(m2[0]) - X(m[0]));
+            ctx.save(); ctx.translate(X(m[0]), Y(m[1])); ctx.rotate(a); ctx.fillStyle = 'rgba(110,170,255,0.95)';
+            ctx.beginPath(); ctx.moveTo(5 / z, 0); ctx.lineTo(-3 / z, -3 / z); ctx.lineTo(-3 / z, 3 / z); ctx.fill(); ctx.restore();
+          }
+        });
+      }
+      // เครื่องหมายดินสอ
+      ctx.font = 9 / Math.min(z, 3) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      marks[s.key].forEach(([x, y, v]) => {
+        ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 1.3 / z; const r = 3 / Math.sqrt(z);
+        ctx.beginPath(); ctx.moveTo(X(x) - r, Y(y) - r); ctx.lineTo(X(x) + r, Y(y) + r); ctx.moveTo(X(x) - r, Y(y) + r); ctx.lineTo(X(x) + r, Y(y) - r); ctx.stroke();
+        ctx.fillStyle = '#ffe14d'; ctx.fillText(v.toFixed(1), X(x) + r + 1, Y(y) - 1);
+      });
+      // หัววัด: ปากกาเอียงขึ้นขวา ปลายเป็นกากบาทสีแดง
+      const tx = X(s.px), ty = Y(s.py);
+      ctx.strokeStyle = dark ? '#aab' : '#555'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(tx + 34, ty - 46); ctx.bezierCurveTo(tx + 60, ty - 70, bx + 30, 90, bx + 22, 54); ctx.stroke();
+      ctx.save(); ctx.translate(tx, ty); ctx.rotate(-0.94);
+      ctx.fillStyle = dark ? '#c9ced8' : '#2b2f36'; ctx.fillRect(6, -3.5, 50, 7);
+      ctx.fillStyle = '#c33'; ctx.fillRect(0.5, -1, 6, 2);
+      ctx.restore();
+      ctx.strokeStyle = '#ff4040'; ctx.lineWidth = 1 / z; const c = 5;
+      ctx.beginPath(); ctx.moveTo(tx - c, ty); ctx.lineTo(tx + c, ty); ctx.moveTo(tx, ty - c); ctx.lineTo(tx, ty + c); ctx.stroke();
+    }
+
+    function toPaper(x, y) { return [(x - X0) / ppc, PH - (y - Y0) / ppc]; }
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      layout();
+      const [qx, qy] = toPaper(x, y);
+      const inside = qx >= 0 && qx <= PW && qy >= 0 && qy <= PH;
+      if (e.type === 'pointerdown' && inside) {
+        if (s.mode === 'mark') { addMark(qx, qy); }
+        else { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+      }
+      if (s.drag && (e.type === 'pointerdown' || e.type === 'pointermove')) {
+        s.px = Math.max(0, Math.min(PW, qx)); s.py = Math.max(0, Math.min(PH, qy));
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    const vm = $('#vm');
+    Lab.loop((dt, t) => {
+      if (!cv.w) return;
+      layout();
+      if (t - s.lastRead > 0.3) { s.lastRead = t; vm.textContent = meterValue(s.px, s.py).toFixed(2); }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : s.mode === 'mark' ? 'แตะกระดาษเพื่อทำเครื่องหมาย' : 'ลากหัววัดบนกระดาษ', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

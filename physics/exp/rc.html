@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วงจร RC · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .laps { max-height: 170px; overflow-y: auto; border: 1px solid var(--line); border-radius: 9px; margin-top: 6px; font-size: 14px; }
+  .laps table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .laps td, .laps th { padding: 3px 8px; border-bottom: 1px solid var(--line); text-align: center; }
+  .laps th { background: var(--soft); font-weight: 600; position: sticky; top: 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const R_NOM = { R1: 47e3, R2: 100e3 };   // ค่าที่พิมพ์บนตัวต้านทาน (Ω)
+const C_NOM = 470e-6;                     // ค่าที่พิมพ์บนตัวเก็บประจุ (F)
+const R_METER = 10e6, R_LEAK = 30e6;      // ความต้านทานภายในโวลต์มิเตอร์และการรั่วของตัวเก็บประจุ
+const RP = (R_METER * R_LEAK) / (R_METER + R_LEAK);
+const TRUE = {};                          // ค่าจริงของอุปกรณ์ชุดนี้ (ซ่อน)
+const par = (a, b) => (a * b) / (a + b);
+
+Lab.init({
+  id: 'rc',
+  short: 'วงจร RC',
+  title: 'วงจรไฟฟ้ากระแสตรงและวงจร RC',
+  level: 'ม.6',
+  intro: {
+    objective: [
+      'ศึกษาการประจุและการคายประจุของตัวเก็บประจุผ่านตัวต้านทาน',
+      'หาค่าคงตัวเวลา τ = RC จากความชันของกราฟ ln V กับเวลา',
+      'หาความจุของตัวเก็บประจุ และเปรียบเทียบค่าคงตัวเวลาเมื่อใช้ตัวต้านทานต่างกัน',
+    ],
+    theory:
+      '<p>ในวงจรไฟฟ้ากระแสตรง กระแสผ่านตัวต้านทานเป็นไปตาม <b>V = IR</b> และในวงจรอนุกรมผลรวมความต่างศักย์คร่อมแต่ละส่วนเท่ากับแรงเคลื่อนไฟฟ้าของแหล่งจ่าย</p>' +
+      '<p>เมื่อตัวเก็บประจุที่มีประจุเต็ม (ความต่างศักย์ V₀) คายประจุผ่านตัวต้านทาน R กระแส I = V/R ทำให้ประจุลดลง อัตราการลดจึงแปรตามค่าที่เหลืออยู่ ได้ความสัมพันธ์แบบเอกซ์โพเนนเชียล</p>' +
+      '<div class="eq">V(t) = V₀ e<sup>−t/RC</sup></div>' +
+      '<p>ใส่ลอการิทึมธรรมชาติทั้งสองข้างจะได้สมการเส้นตรง</p>' +
+      '<div class="eq">ln V = ln V₀ − (1/τ) t,&nbsp; τ = RC</div>' +
+      '<p>ความชันของกราฟ ln V กับ t จึงเท่ากับ −1/τ เมื่อ t = τ ความต่างศักย์เหลือ 37% ของค่าเริ่มต้น ขณะประจุ ความต่างศักย์เพิ่มขึ้นตาม V = E(1 − e<sup>−t/RC</sup>)</p>',
+    equipment: ['แหล่งจ่ายไฟกระแสตรง 6 V', 'สวิตช์สองทาง (A = ประจุ, B = คายประจุ)', 'ตัวต้านทาน R1 = 47 kΩ และ R2 = 100 kΩ (ความคลาดเคลื่อน ±5%)', 'ตัวเก็บประจุอิเล็กโทรไลต์ 470 µF (±10%)', 'โวลต์มิเตอร์ดิจิทัล (ความต้านทานภายใน 10 MΩ)', 'นาฬิกาจับเวลาที่จดเวลาย่อย (lap) ได้'],
+    procedure: [
+      'เลือกตัวต้านทาน R1 โยกสวิตช์ไปที่ A เพื่อประจุตัวเก็บประจุ รอจนโวลต์มิเตอร์อ่านค่าคงที่ (ประมาณ 5 เท่าของ τ)',
+      'รีเซ็ตนาฬิกา แล้วโยกสวิตช์ไปที่ B (นาฬิกาเริ่มนับพร้อมกันถ้าเลือกไว้) บันทึก V ที่ t = 0',
+      'ทุก ๆ 10 s กด "จดเวลา" พร้อมอ่านโวลต์มิเตอร์ (นาฬิกาจะจดค่าที่หน้าจอโวลต์มิเตอร์ ณ ขณะนั้นไว้ให้) จนได้อย่างน้อย 8 ค่า',
+      'คัดลอกเวลาและความต่างศักย์ลงตาราง ตารางคำนวณ ln V ให้',
+      'เปลี่ยนเป็น R2 แล้วทำซ้ำ ตารางจะสลับชุดข้อมูลให้เอง',
+    ],
+    tip: 'ตัวเก็บประจุอิเล็กโทรไลต์มีขั้ว ขั้วบวกต้องต่อด้านศักย์สูงเสมอ อย่าเก็บข้อมูลเมื่อ V ต่ำกว่าราว 0.3 V เพราะความคลาดเคลื่อนสัมพัทธ์ของ ln V จะสูงมาก',
+  },
+  table: {
+    rows: 10,
+    sets: [{ key: 'R1', label: 'R1 = 47 kΩ' }, { key: 'R2', label: 'R2 = 100 kΩ' }],
+    hint: 'ตัวต้านทานแต่ละตัวมีตารางของตัวเอง ตารางสลับตามตัวต้านทานที่เลือก',
+    columns: [
+      { key: 't', label: 'เวลา t<br>(s)', input: true },
+      { key: 'V', label: 'ความต่างศักย์ V<br>(V)', input: true },
+      { key: 'lnV', label: 'ln V', calc: (r) => (r.V > 0 ? Math.log(r.V) : NaN), digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'ln V กับเวลา (การคายประจุ)', x: 't', y: 'lnV', xv: 't', yv: 'ln V', xlabel: 'เวลา t (s)', ylabel: 'ln V', origin: false,
+    explain: 'ความชัน = −1/τ และจุดตัดแกนตั้ง = ln V₀ ถ้าจุดช่วงท้ายเบนออกจากเส้นตรง อาจมาจากความละเอียดของมิเตอร์เมื่อ V เล็ก',
+  },
+  results(fit, rows, truth, set) {
+    const tau = -1 / fit.m, utau = fit.sm / (fit.m * fit.m);
+    const R = R_NOM[set];
+    return [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 's⁻¹' },
+      { label: 'ค่าคงตัวเวลา τ = −1/ความชัน', value: tau, unc: utau, unit: 's' },
+      { label: 'ความจุ C = τ/R (ใช้ R ที่พิมพ์ ' + R / 1000 + ' kΩ)', value: (tau / R) * 1e6, unc: (utau / R) * 1e6, unit: 'µF', accepted: 470 },
+      { label: 'ความต่างศักย์เริ่มต้น V₀ = e^(จุดตัดแกน)', value: Math.exp(fit.b), unc: Math.exp(fit.b) * fit.sb, unit: 'V' },
+      { label: 'ค่าคงตัวเวลาจริงของวงจรชุดนี้', value: tau, unit: 's', accepted: TRUE[set], hidden: true, digitsTrue: 1 },
+    ];
+  },
+  questions: [
+    'กราฟ V กับ t และกราฟ ln V กับ t มีลักษณะอย่างไร เหตุใดจึงเลือกเขียนกราฟ ln V กับ t',
+    'ค่าคงตัวเวลาของวงจรที่ใช้ R1 และ R2 ต่างกันอย่างไร สอดคล้องกับ τ = RC หรือไม่',
+    'ความจุที่คำนวณได้ต่างจากค่าที่พิมพ์บนตัวเก็บประจุ (470 µF) เท่าใด อยู่ในช่วงความคลาดเคลื่อน ±10% หรือไม่',
+    'ขณะประจุ กระแสในวงจรเปลี่ยนแปลงอย่างไรตามเวลา และเหตุใดเมื่อประจุเต็มแล้วกระแสจึงเกือบเป็นศูนย์',
+    'โวลต์มิเตอร์มีความต้านทานภายใน 10 MΩ ส่งผลต่อการคายประจุหรือไม่ ถ้าใช้ตัวต้านทาน 10 MΩ แทน R1 จะเกิดอะไรขึ้น',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const EMF = 5.9 + 0.2 * rng();
+    const C = C_NOM * (0.92 + 0.16 * rng());
+    const Rt = { R1: R_NOM.R1 * (0.96 + 0.08 * rng()), R2: R_NOM.R2 * (0.96 + 0.08 * rng()) };
+    TRUE.R1 = C * par(Rt.R1, RP); TRUE.R2 = C * par(Rt.R2, RP);
+
+    const s = { r: api.currentSet(), sw: 'M', V: 0, I: 0, flow: 0, lastShow: 0, shown: 0 };
+
+    ctrls.innerHTML =
+      '<h3>ตัวต้านทาน</h3><div class="seg" id="res"><button data-v="R1">R1 · 47 kΩ</button><button data-v="R2">R2 · 100 kΩ</button></div>' +
+      '<h3>สวิตช์สองทาง</h3><div class="seg" id="sw"><button data-v="A">A ประจุ</button><button data-v="M">กลาง</button><button data-v="B">B คายประจุ</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="auto" checked> เริ่มนาฬิกาพร้อมโยกสวิตช์</label>' +
+      '<h3>โวลต์มิเตอร์ (คร่อมตัวเก็บประจุ)</h3><div class="watch"><span class="readout" id="vm">0.00</span><small>ความต่างศักย์ (V)</small></div>' +
+      '<h3>นาฬิกาจับเวลา</h3><div class="watch" style="color:#ffd27a"><span class="readout" id="sw_t">0.0</span><small>เวลา (s)</small></div>' +
+      '<div class="row"><button class="btn primary" id="go">เริ่ม</button><button class="btn" id="lap" disabled>จดเวลา</button><button class="btn" id="rst">รีเซ็ต</button></div>' +
+      '<div class="laps"><table><thead><tr><th>#</th><th>t (s)</th><th>V ที่อ่านได้ (V)</th></tr></thead><tbody id="lapList"></tbody></table></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const sync = (id, v) => ctrls.querySelectorAll('#' + id + ' button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    sync('res', s.r); sync('sw', s.sw);
+    $('#res').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; s.r = b.dataset.v; sync('res', s.r); api.useSet(s.r); };
+    api.onSetChange = (k) => { s.r = k; sync('res', k); };
+
+    // นาฬิกาจับเวลาพร้อมรายการจดเวลา (lap)
+    const W = { run: false, t0: 0, acc: 0, laps: [] };
+    const now = () => performance.now() / 1000;
+    const wval = () => W.acc + (W.run ? now() - W.t0 : 0);
+    function wStart() { if (W.run) return; W.t0 = now(); W.run = true; $('#go').textContent = 'หยุด'; $('#go').classList.remove('primary'); $('#lap').disabled = false; }
+    function wStop() { if (!W.run) return; W.acc += now() - W.t0; W.run = false; $('#go').textContent = 'เริ่ม'; $('#go').classList.add('primary'); $('#lap').disabled = true; }
+    function renderLaps() {
+      $('#lapList').innerHTML = W.laps.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + l[0].toFixed(1) + '</td><td>' + l[1] + '</td></tr>').join('');
+      const box = ctrls.querySelector('.laps'); box.scrollTop = box.scrollHeight;
+    }
+    $('#go').onclick = () => (W.run ? wStop() : wStart());
+    $('#lap').onclick = () => { W.laps.push([wval(), $('#vm').textContent]); renderLaps(); };
+    $('#rst').onclick = () => { wStop(); W.acc = 0; W.laps = []; renderLaps(); };
+    $('#sw').onclick = (e) => {
+      const b = e.target.closest('button'); if (!b || b.dataset.v === s.sw) return;
+      s.sw = b.dataset.v; sync('sw', s.sw);
+      if (s.sw !== 'M' && $('#auto').checked && !W.run && wval() === 0) {
+        wStart();
+        W.laps.push([0, $('#vm').textContent]); renderLaps(); // จดค่าที่ t = 0 ให้ทันที
+      }
+    };
+
+    // ฟิสิกส์: ใช้ผลเฉลยแม่นตรงต่อช่วงเวลา จึงถูกต้องแม้เฟรมกระตุก
+    function step(dt) {
+      const R = Rt[s.r];
+      let Vinf, tau;
+      if (s.sw === 'A') { Vinf = (EMF * RP) / (R + RP); tau = C * par(R, RP); }
+      else if (s.sw === 'B') { Vinf = 0; tau = C * par(R, RP); }
+      else { Vinf = 0; tau = C * RP; }
+      s.V = Vinf + (s.V - Vinf) * Math.exp(-dt / tau);
+      s.I = s.sw === 'A' ? (EMF - s.V) / R : s.sw === 'B' ? -s.V / R : 0; // + = ประจุ
+    }
+
+    // วาดวงจรในกรอบออกแบบ 660 × 400 แล้วย่อขยายให้พอดี
+    const Wd = 660, Hd = 400;
+    let sc = 1, ox = 0, oy = 0;
+    function layout() { sc = Math.min(cv.w / Wd, cv.h / Hd); ox = (cv.w - Wd * sc) / 2; oy = (cv.h - Hd * sc) / 2; }
+    const pathCharge = [[80, 160], [80, 70], [250, 70], [330, 110], [560, 110], [560, 190]];
+    const pathCharge2 = [[560, 240], [560, 330], [80, 330], [80, 250]];
+    const pathDis = [[560, 190], [560, 110], [330, 110], [250, 150], [250, 330], [560, 330], [560, 240]];
+    function along(path, u) {
+      const segs = []; let L = 0;
+      for (let i = 1; i < path.length; i++) { const l = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); segs.push(l); L += l; }
+      let d = ((u % L) + L) % L;
+      for (let i = 0; i < segs.length; i++) {
+        if (d <= segs[i]) { const t = d / segs[i]; return [path[i][0] + t * (path[i + 1][0] - path[i][0]), path[i][1] + t * (path[i + 1][1] - path[i][1]), Math.atan2(path[i + 1][1] - path[i][1], path[i + 1][0] - path[i][0])]; }
+        d -= segs[i];
+      }
+      return path[path.length - 1].concat(0);
+    }
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      ctx.save(); ctx.translate(ox, oy); ctx.scale(sc, sc);
+      const lw = 2 / Math.sqrt(z);
+      ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.lineCap = 'round';
+      const line = (pts) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); };
+      // สายไฟ
+      line([[80, 190], [80, 70], [235, 70]]);
+      line([[235, 150], [250, 150], [250, 330]]);
+      line([[330, 110], [395, 110]]); line([[505, 110], [560, 110], [560, 195]]);
+      line([[560, 235], [560, 330], [80, 330], [80, 230]]);
+      // แบตเตอรี่
+      ctx.lineWidth = 3 / Math.sqrt(z);
+      line([[55, 190], [105, 190]]); ctx.lineWidth = 6 / Math.sqrt(z); line([[67, 205], [93, 205]]);
+      ctx.lineWidth = 3 / Math.sqrt(z); line([[55, 218], [105, 218]]); ctx.lineWidth = 6 / Math.sqrt(z); line([[67, 230], [93, 230]]);
+      ctx.fillStyle = ink; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText('+', 50, 188); ctx.fillText('E = 6 V', 50, 212);
+      // สวิตช์สองทาง
+      ctx.lineWidth = lw;
+      ctx.fillStyle = ink;
+      [[235, 70], [235, 150], [330, 110]].forEach((p) => { ctx.beginPath(); ctx.arc(p[0], p[1], 4.5, 0, 7); ctx.fill(); });
+      const tip = s.sw === 'A' ? [240, 72] : s.sw === 'B' ? [240, 148] : [262, 112];
+      ctx.strokeStyle = dark ? '#e0b84f' : '#a87b10'; ctx.lineWidth = 4 / Math.sqrt(z);
+      line([[330, 110], tip]);
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('A', 226, 62); ctx.fillText('B', 226, 160);
+      ctx.textAlign = 'center'; ctx.fillText('สวิตช์', 300, 140);
+      // ตัวต้านทานพร้อมแถบสี
+      const bands = s.r === 'R1' ? ['#e6c21a', '#7b3fa0', '#e8792b', '#c9a227'] : ['#7a4a1f', '#111', '#e6c21a', '#c9a227'];
+      ctx.fillStyle = dark ? '#c8b07a' : '#e3cf9b'; ctx.strokeStyle = ink; ctx.lineWidth = 1.2 / Math.sqrt(z);
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(395, 96, 110, 28, 10) : ctx.rect(395, 96, 110, 28); ctx.fill(); ctx.stroke();
+      bands.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(412 + i * 19 + (i === 3 ? 12 : 0), 96, 8, 28); });
+      ctx.fillStyle = ink; ctx.font = '14px Sarabun, sans-serif';
+      ctx.fillText(s.r === 'R1' ? 'R1 = 47 kΩ' : 'R2 = 100 kΩ', 450, 82);
+      // ตัวเก็บประจุ
+      ctx.strokeStyle = ink; ctx.lineWidth = 3.5 / Math.sqrt(z);
+      line([[530, 197], [590, 197]]);
+      ctx.beginPath(); ctx.moveTo(530, 238); ctx.quadraticCurveTo(560, 226, 590, 238); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('+', 524, 190); ctx.fillText('470 µF', 522, 218);
+      // ประจุบนแผ่น (จำนวนเครื่องหมายตามความต่างศักย์)
+      const nq = Math.round((s.V / 6) * 6);
+      ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      for (let k = 0; k < nq; k++) { ctx.fillStyle = '#d33'; ctx.fillText('+', 535 + k * 10, 205); ctx.fillStyle = '#36c'; ctx.fillText('−', 535 + k * 10, 226); }
+      // โวลต์มิเตอร์คร่อมตัวเก็บประจุ
+      ctx.strokeStyle = ink; ctx.lineWidth = lw;
+      line([[560, 150], [625, 150], [625, 190]]); line([[625, 240], [625, 290], [560, 290]]);
+      ctx.fillStyle = dark ? '#232934' : '#fff';
+      ctx.beginPath(); ctx.arc(625, 215, 24, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.fillText('V', 625, 216);
+      ctx.fillStyle = Lab.css('--ok'); ctx.font = '12px Consolas, monospace'; ctx.fillText(s.shown.toFixed(2) + ' V', 625, 256);
+      [[560, 150], [560, 290]].forEach((p) => { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, 7); ctx.fill(); });
+      // กระแส: จุดเคลื่อนตามทิศกระแสสามัญ ความเร็วตามขนาดกระแส
+      if (Math.abs(s.I) > 2e-7) {
+        ctx.fillStyle = dark ? '#ffd27a' : '#e08a00';
+        const paths = s.I > 0 ? [pathCharge, pathCharge2] : [pathDis];
+        paths.forEach((p) => {
+          for (let k = 0; k < 18; k++) {
+            const [x, y, a] = along(p, s.flow + k * 38);
+            ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+            ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.fill(); ctx.restore();
+          }
+        });
+        ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(s.I > 0 ? 'กำลังประจุ' : 'กำลังคายประจุ', 400, 300);
+      }
+      ctx.restore();
+    }
+
+    const vm = $('#vm'), tdisp = $('#sw_t');
+    Lab.loop((dt, t) => {
+      if (!cv.w) return;
+      step(dt);
+      s.flow += dt * Math.min(140, Math.abs(s.I) * 1.2e6);
+      if (t - s.lastShow > 0.25) { s.lastShow = t; s.shown = Math.max(0, s.V + Lab.noise(0.002)); vm.textContent = s.shown.toFixed(2); }
+      tdisp.textContent = wval().toFixed(1);
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลูกศรสีส้มแสดงทิศกระแสสามัญ', 10, 8);
+    }, 3600);
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((ty) => canvas.addEventListener(ty, (e) => { const [x, y] = Lab.pos(canvas, e); lens.handle(e, x, y); e.preventDefault(); }));
+  },
+});
+</script>
+</body>
+</html>

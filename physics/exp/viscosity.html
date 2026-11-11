@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ความหนืดของของเหลว · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;
+const RHO_S = 7800;     // ความหนาแน่นลูกเหล็ก (kg/m³)
+const RHO_F = 1260;     // ความหนาแน่นกลีเซอรีน (kg/m³)
+const D_TUBE = 0.100;   // เส้นผ่านศูนย์กลางภายในกระบอกตวง (m)
+const H_LIQ = 0.90;     // ความสูงของเหลว (m)
+let ETA_TRUE = null;    // ความหนืดจริงของกลีเซอรีนขวดนี้ (Pa·s)
+
+Lab.init({
+  id: 'viscosity',
+  short: 'ความหนืด',
+  title: 'ความหนืดของของเหลว (กฎของสโตกส์)',
+  level: 'ม.5–ม.6',
+  intro: {
+    objective: [
+      'วัดเส้นผ่านศูนย์กลางของลูกเหล็กด้วยไมโครมิเตอร์',
+      'วัดความเร็วปลาย (terminal velocity) ของลูกเหล็กที่ตกในกลีเซอรีน',
+      'หาสัมประสิทธิ์ความหนืด η ของกลีเซอรีนจากความชันของกราฟ v กับ r²',
+    ],
+    theory:
+      '<p>ลูกทรงกลมรัศมี r ที่เคลื่อนที่ช้า ๆ ในของเหลวหนืดถูกแรงหนืดตาม<b>กฎของสโตกส์</b></p>' +
+      '<div class="eq">F<sub>หนืด</sub> = 6π η r v</div>' +
+      '<p>เมื่อลูกเหล็กตกจนแรงโน้มถ่วงสมดุลกับแรงลอยตัวและแรงหนืด ลูกจะเคลื่อนที่ด้วย<b>ความเร็วปลาย</b>คงตัว</p>' +
+      '<div class="eq">(4/3)πr³ (ρ<sub>s</sub> − ρ<sub>f</sub>) g = 6π η r v &nbsp;→&nbsp; v = [2(ρ<sub>s</sub> − ρ<sub>f</sub>) g / 9η] · r²</div>' +
+      '<p>กราฟ v กับ r² จึงเป็นเส้นตรงผ่านจุดกำเนิด ดังนั้น <b>η = 2(ρ<sub>s</sub> − ρ<sub>f</sub>) g / (9 × ความชัน)</b> ' +
+      'กำหนด ρ<sub>s</sub> = 7800 kg/m³, ρ<sub>f</sub> = 1260 kg/m³, g = 9.8 m/s²</p>' +
+      '<p>การอ่านไมโครมิเตอร์: ค่าบนปลอก (sleeve) ละเอียด 0.5 mm + ค่าบนปลอกหมุน (thimble) 50 ช่อง ช่องละ 0.01 mm</p>',
+    equipment: ['กระบอกตวงสูงบรรจุกลีเซอรีน (เส้นผ่านศูนย์กลางภายใน 10.0 cm) พร้อมไม้เมตรข้างกระบอก', 'หนังยางรัดกระบอก 2 เส้นใช้เป็นเส้นบอกตำแหน่ง',
+      'ลูกเหล็ก 6 ขนาด', 'ไมโครมิเตอร์ (ละเอียด 0.01 mm)', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'เลือกลูกเหล็ก อ่านเส้นผ่านศูนย์กลาง d จากไมโครมิเตอร์ (ใช้แว่นขยาย) บันทึกเป็นมิลลิเมตร',
+      'ลากหนังยางเส้นบนให้ต่ำกว่าผิวของเหลวอย่างน้อย 10 cm (ให้ลูกเหล็กถึงความเร็วปลายก่อน) อ่านตำแหน่งหนังยางทั้งสองเส้นบนไม้เมตร ระยะห่าง s = ผลต่าง',
+      'กด "ปล่อยลูกเหล็ก" เริ่มจับเวลาเมื่อลูกผ่านหนังยางเส้นบน หยุดเมื่อผ่านเส้นล่าง บันทึกเวลา t',
+      'ทำซ้ำกับลูกเหล็กทุกขนาด ลูกเล็กตกช้า ปรับให้หนังยางใกล้กันได้',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ v กับ r²',
+    ],
+    tip: 'มองเส้นหนังยางกับลูกเหล็กในระดับสายตาเดียวกันเพื่อไม่ให้เกิดพารัลแลกซ์ และควรเลือกระยะ s ที่ทำให้เวลาตกไม่น้อยกว่า 3 วินาที',
+  },
+  table: {
+    rows: 6,
+    hint: 'หนึ่งแถวต่อลูกเหล็กหนึ่งลูก ปุ่ม "บันทึกเวลาลงตาราง" เติมเวลาในแถวที่ว่างแถวแรก',
+    columns: [
+      { key: 'd', label: 'เส้นผ่านศูนย์กลาง d<br>(mm)', input: true },
+      { key: 's', label: 'ระยะระหว่างหนังยาง s<br>(cm)', input: true },
+      { key: 't', label: 'เวลา t<br>(s)', input: true },
+      { key: 'r2', label: 'r²<br>(mm²)', calc: (r) => (r.d / 2) ** 2, digits: 3 },
+      { key: 'v', label: 'ความเร็วปลาย v = s/t<br>(m/s)', calc: (r) => r.s / 100 / r.t, digits: 4 },
+    ],
+  },
+  graph: {
+    title: 'v กับ r²', x: 'r2', y: 'v', xv: 'r²', yv: 'v', xlabel: 'r² (mm²)', ylabel: 'ความเร็วปลาย v (m/s)', origin: true,
+    explain: 'ความชันมีหน่วย (m/s)/mm² ต้องคูณ 10⁶ เพื่อแปลงเป็น (m/s)/m² ก่อนคำนวณ η · ผนังกระบอกทำให้ลูกเหล็กตกช้ากว่าในของเหลวไม่จำกัดขอบเขต จึงมีค่าที่แก้ผลของผนังให้เปรียบเทียบ',
+  },
+  results(fit, rows) {
+    const k = fit.m * 1e6; // (m/s)/m²
+    const eta = (2 * (RHO_S - RHO_F) * G) / (9 * k);
+    // แก้ผลของผนังกระบอกด้วยตัวประกอบของฟักเซน 1 + 2.1 d/D โดยใช้ d เฉลี่ย
+    const ds = rows.map((r) => r.d).filter((x) => isFinite(x));
+    const dm = ds.length ? ds.reduce((a, b) => a + b, 0) / ds.length : NaN;
+    const fx = 1 + (2.1 * dm) / 1000 / D_TUBE;
+    const out = [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: '(m/s)/mm²' },
+      { label: 'ความหนืด η = 2(ρs − ρf)g / (9 × ความชัน)', value: eta, unc: (eta * fit.sm) / fit.m, unit: 'Pa·s' },
+    ];
+    if (isFinite(fx)) out.push({ label: 'η หลังแก้ผลของผนัง = η / (1 + 2.1 d̄/D) (d̄ = ' + dm.toFixed(2) + ' mm)', value: eta / fx, unc: (eta * fit.sm) / fit.m / fx, unit: 'Pa·s' });
+    return out.concat([
+      { label: 'ความหนืดของกลีเซอรีนขวดนี้ (เทียบกับค่าหลังแก้ผลของผนัง)', value: isFinite(fx) ? eta / fx : eta, unit: 'Pa·s', accepted: ETA_TRUE, hidden: true, digitsTrue: 3 },
+    ]);
+  },
+  questions: [
+    'เหตุใดจึงต้องวางหนังยางเส้นบนให้ต่ำกว่าผิวของเหลวพอสมควร',
+    'ลูกเหล็กขนาดใหญ่ตกเร็วกว่าลูกเล็กกี่เท่า เมื่อเส้นผ่านศูนย์กลางเพิ่มเป็น 2 เท่า สอดคล้องกับทฤษฎีหรือไม่',
+    'ผนังกระบอกตวงทำให้ลูกเหล็กตกช้ากว่าที่กฎของสโตกส์ทำนาย (ปรากฏการณ์ผนัง) ผลนี้ทำให้ค่า η ที่วัดได้มากหรือน้อยกว่าค่าจริง และลูกขนาดใดได้รับผลมากที่สุด',
+    'ถ้ากลีเซอรีนอุ่นขึ้น ความหนืดจะเปลี่ยนไปอย่างไร และส่งผลต่อเวลาตกอย่างไร',
+    'ระบุแหล่งความคลาดเคลื่อนอื่นอย่างน้อย 2 แหล่ง และวิธีลด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    ETA_TRUE = 0.9 + 0.5 * rng();
+    // ลูกเหล็ก 6 ลูก: ขนาดระบุ + ความคลาดเคลื่อนจากการผลิต
+    const NOM = [2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
+    const balls = NOM.map((d) => d + (rng() - 0.5) * 0.02);
+    const s = {
+      ball: 0, y: null, v: 0, falling: false,
+      b1: 0.65, b2: 0.40, // ตำแหน่งหนังยาง: ความสูงจากก้นกระบอก (m)
+      drag: null,
+    };
+
+    ctrls.innerHTML =
+      '<h3>เลือกลูกเหล็ก</h3>' +
+      '<div class="seg" id="bsel">' + balls.map((_, i) => '<button data-b="' + i + '">' + (i + 1) + '</button>').join('') + '</div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">ลูกที่เลือกถูกหนีบอยู่ในไมโครมิเตอร์ (มุมขวาบนของภาพ)</p>' +
+      '<div class="row"><button class="btn primary" id="drop">ปล่อยลูกเหล็ก</button><button class="btn" id="fish">เก็บลูกขึ้น</button></div>' +
+      '<h3>หนังยาง (ลากบนภาพได้)</h3>' +
+      '<div class="row"><button class="btn" id="u1">บน ▲</button><button class="btn" id="d1">บน ▼</button><button class="btn" id="u2">ล่าง ▲</button><button class="btn" id="d2">ล่าง ▼</button></div>' +
+      '<h3>นาฬิกาจับเวลา</h3><div id="sw"></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const syncSel = () => ctrls.querySelectorAll('#bsel button').forEach((b) => b.classList.toggle('on', +b.dataset.b === s.ball));
+    ctrls.querySelectorAll('#bsel button').forEach((b) => (b.onclick = () => { if (s.falling) return; s.ball = +b.dataset.b; s.y = null; syncSel(); }));
+    syncSel();
+    $('#drop').onclick = () => { if (s.falling) return; s.y = H_LIQ + 0.02; s.v = 0; s.falling = true; };
+    $('#fish').onclick = () => { s.y = null; s.falling = false; };
+    const clampBands = () => {
+      s.b1 = Math.max(0.1, Math.min(H_LIQ - 0.03, s.b1));
+      s.b2 = Math.max(0.03, Math.min(s.b1 - 0.03, s.b2));
+    };
+    [['u1', 'b1', 0.01], ['d1', 'b1', -0.01], ['u2', 'b2', 0.01], ['d2', 'b2', -0.01]].forEach(([id, k, d]) => ($('#' + id).onclick = () => { s[k] += d; clampBands(); }));
+    Lab.stopwatch($('#sw'), api, { send: 't' });
+
+    // ความเร็วปลายตามสโตกส์ หารด้วยตัวประกอบผนัง (Faxén โดยประมาณ)
+    function vTerm(dmm) {
+      const r = dmm / 2000;
+      return ((2 * (RHO_S - RHO_F) * G) / (9 * ETA_TRUE)) * r * r / (1 + 2.1 * (dmm / 1000) / D_TUBE);
+    }
+
+    // เรขาคณิต
+    let ppm, cx, by, tw;
+    function layout() {
+      ppm = (cv.h - 60) / 1.0; by = cv.h - 24; cx = Math.min(cv.w * 0.28, 200); tw = D_TUBE * ppm * 1.2;
+    }
+    const Y = (hm) => by - hm * ppm;
+    const MX = () => cx + tw + 80; // ขอบซ้ายของไมโครมิเตอร์
+
+    function micrometer(ctx, z) {
+      // ไมโครมิเตอร์วาดใหญ่ มุมขวาบน
+      const dark = Lab.dark();
+      const d = balls[s.ball];
+      const ox = MX(), oy = 110, mmPx = Math.min(30, (cv.w - ox - 150) / 11.5);
+      const ax = ox; // ผิวแท่นรับ (anvil)
+      const sx = ax + d * mmPx; // ผิวแกนหมุน (spindle) = ขอบปลอกหมุน
+      // โครงตัว C
+      ctx.strokeStyle = dark ? '#8a93a3' : '#6b7280'; ctx.lineWidth = 12;
+      ctx.beginPath(); ctx.moveTo(ax - 18, oy); ctx.lineTo(ax - 18, oy + 90); ctx.lineTo(ax + 9 * mmPx, oy + 90); ctx.lineTo(ax + 9 * mmPx, oy + 14); ctx.stroke();
+      ctx.fillStyle = dark ? '#aab2bf' : '#b8bec8';
+      ctx.fillRect(ax - 24, oy - 8, 24, 16); // แท่นรับ
+      // ลูกเหล็ก
+      if (s.y == null) {
+        const r = (d / 2) * mmPx;
+        const g = ctx.createRadialGradient(ax + r * 0.7, oy - r * 0.3, 1, ax + r, oy, r);
+        g.addColorStop(0, '#f3f5f8'); g.addColorStop(1, '#59606c');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ax + r, oy, r, 0, 7); ctx.fill();
+      }
+      // แกนหมุน
+      ctx.fillStyle = dark ? '#aab2bf' : '#c9ced8';
+      ctx.fillRect(sx, oy - 6, ax + 6 * mmPx - sx + 1, 12);
+      // ปลอก (sleeve) ยึดกับโครง: เริ่มที่ตำแหน่ง 6 mm นับจากแท่นรับ? ใช้สเกลเริ่ม 0 ที่ ax + 6mm (ระยะ 0 ของสเกลตรงกับ d = 0)
+      const s0 = ax + 6 * mmPx; // ขีด 0 ของปลอกเมื่อปากปิด
+      const thEdge = s0 + d * mmPx;
+      ctx.fillStyle = dark ? '#c3c9d3' : '#e3e6ec';
+      ctx.fillRect(s0 - 10, oy - 16, thEdge - s0 + 10, 32);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(s0 - 4, oy); ctx.lineTo(thEdge, oy); ctx.stroke(); // เส้นอ้างอิง
+      for (let h = 0; h <= Math.floor(d * 2 + 1e-9); h++) {
+        const x = s0 + h * 0.5 * mmPx;
+        if (x > thEdge) break;
+        ctx.beginPath();
+        if (h % 2 === 0) { ctx.moveTo(x, oy); ctx.lineTo(x, oy - 11); } else { ctx.moveTo(x, oy); ctx.lineTo(x, oy + 9); }
+        ctx.stroke();
+        if (h % 2 === 0 && (h / 2) % 5 === 0) {
+          ctx.font = 11 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(h / 2, x, oy - 11);
+        }
+      }
+      // ปลอกหมุน (thimble) 50 ช่อง: ช่องที่ตรงเส้นอ้างอิงคือค่าหลักร้อยของมิลลิเมตร
+      const R = 34, tLen = 90;
+      const gr = ctx.createLinearGradient(0, oy - R, 0, oy + R);
+      gr.addColorStop(0, dark ? '#6b7280' : '#c3c9d3'); gr.addColorStop(0.5, dark ? '#c3c9d3' : '#f5f6f8'); gr.addColorStop(1, dark ? '#6b7280' : '#aab2bf');
+      ctx.fillStyle = gr; ctx.fillRect(thEdge, oy - R, tLen, 2 * R);
+      ctx.strokeStyle = '#555'; ctx.strokeRect(thEdge, oy - R, tLen, 2 * R);
+      const v = ((d % 0.5) / 0.5) * 50; // ช่องที่อยู่ตรงเส้นอ้างอิง
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let k = 0; k < 50; k++) {
+        let dk = k - v; dk -= 50 * Math.round(dk / 50);
+        const ph = (dk * 2 * Math.PI) / 50;
+        if (Math.cos(ph) <= 0.15) continue;
+        const y = oy - R * Math.sin(ph);
+        const l = k % 5 === 0 ? 14 : 8;
+        ctx.lineWidth = 0.7 / z;
+        ctx.beginPath(); ctx.moveTo(thEdge, y); ctx.lineTo(thEdge + l, y); ctx.stroke();
+        if (k % 5 === 0) {
+          ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(k, thEdge + 16, y);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // หัวเกลียวกระทบ (ratchet)
+      ctx.fillStyle = dark ? '#555c68' : '#8a93a3';
+      ctx.fillRect(thEdge + tLen, oy - 16, 26, 32);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('ไมโครมิเตอร์ · ลูกที่ ' + (s.ball + 1), ax - 20, oy + 116);
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink');
+      const x0 = cx - tw / 2, x1 = cx + tw / 2;
+      // ของเหลว
+      ctx.fillStyle = dark ? 'rgba(230,200,120,0.18)' : 'rgba(240,215,140,0.35)';
+      ctx.fillRect(x0, Y(H_LIQ), tw, Y(0) - Y(H_LIQ));
+      // ผนังกระบอก
+      ctx.strokeStyle = dark ? 'rgba(170,210,240,.8)' : 'rgba(80,140,190,.9)'; ctx.lineWidth = 2 / z;
+      ctx.beginPath(); ctx.moveTo(x0, Y(1.0)); ctx.lineTo(x0, Y(0)); ctx.lineTo(x1, Y(0)); ctx.lineTo(x1, Y(1.0)); ctx.stroke();
+      ctx.fillStyle = dark ? '#4a5160' : '#9aa3b0'; ctx.fillRect(x0 - 20, Y(0), tw + 40, 8);
+      // ผิวของเหลว
+      ctx.strokeStyle = dark ? 'rgba(240,210,140,.7)' : 'rgba(190,150,60,.8)'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(x0, Y(H_LIQ)); ctx.lineTo(x1, Y(H_LIQ)); ctx.stroke();
+      // ไม้เมตรติดข้างกระบอก (ขีด 0 ที่ก้น)
+      const rx0 = x1 + 4, rw = 30;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(rx0, Y(1.0) - 4, rw, Y(0) - Y(1.0) + 4);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= 1000; mm += showMm ? 1 : 10) {
+        const y = Y(mm / 1000);
+        const l = mm % 100 === 0 ? 0.6 : mm % 50 === 0 ? 0.45 : mm % 10 === 0 ? 0.3 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(rx0, y); ctx.lineTo(rx0 + l * rw, y); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 10 : 8) / Math.min(z, 3.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, rx0 + rw - 1 / z, y);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // หนังยาง 2 เส้น
+      [s.b1, s.b2].forEach((b) => {
+        ctx.fillStyle = dark ? '#e0563b' : '#c8412a';
+        ctx.fillRect(x0 - 3, Y(b) - 1.2, tw + 6, 2.4);
+      });
+      // ลูกเหล็กที่ตก
+      if (s.y != null) {
+        const r = Math.max((balls[s.ball] / 2000) * ppm, 2.2);
+        ctx.fillStyle = dark ? '#c3c9d3' : '#4b5563';
+        ctx.beginPath(); ctx.arc(cx, Y(Math.max(s.y, balls[s.ball] / 2000)), r, 0, 7); ctx.fill();
+      }
+      micrometer(ctx, z);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      lens.zoom = x > MX() - 40 ? 3 : 6; // อ่านไมโครมิเตอร์ใช้กำลังขยายต่ำกว่าไม้เมตร
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(x - cx) < tw / 2 + 30) {
+        const h = (by - y) / ppm;
+        const k = Math.abs(h - s.b1) < Math.abs(h - s.b2) ? 'b1' : 'b2';
+        if (Math.abs(h - s[k]) < 0.04) { s.drag = k; canvas.setPointerCapture(e.pointerId); }
+      } else if (e.type === 'pointermove' && s.drag) {
+        s[s.drag] = (by - y) / ppm; clampBands();
+      } else if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.falling && dt > 0) {
+        const d = balls[s.ball], vt = vTerm(d);
+        const tau = (2 * (d / 2000) ** 2 * RHO_S) / (9 * ETA_TRUE) + 0.02; // ใช้เวลาเข้าสู่ความเร็วปลายสั้นมาก (+ช่วงตกผ่านผิว)
+        const n = Math.ceil(dt / 0.002);
+        for (let i = 0; i < n; i++) {
+          const h = dt / n;
+          if (s.y > H_LIQ) s.v += G * h; // ในอากาศช่วงสั้น ๆ
+          else s.v += ((vt - s.v) / tau) * h;
+          s.y -= s.v * h;
+        }
+        if (s.y <= d / 2000) { s.y = d / 2000; s.falling = false; }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากหนังยางสีแดงขึ้นลงได้', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.25);
+  },
+});
+</script>
+</body>
+</html>

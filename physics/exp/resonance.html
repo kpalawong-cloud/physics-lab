@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การสั่นพ้องของเสียง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const D_TUBE = 3.5;       // เส้นผ่านศูนย์กลางภายในหลอด (cm)
+const FORKS = [384, 426.7, 480, 512, 640, 768];
+let V_TRUE = null, T_ROOM = null, E_TRUE = null;
+
+Lab.init({
+  id: 'resonance',
+  short: 'การสั่นพ้องของเสียง',
+  title: 'การสั่นพ้องของเสียงในหลอดเรโซแนนซ์',
+  level: 'ม.5–ม.6',
+  intro: {
+    objective: [
+      'หาตำแหน่งที่เกิดการสั่นพ้องของเสียงในหลอดปลายปิดสำหรับส้อมเสียงความถี่ต่าง ๆ',
+      'หาอัตราเร็วเสียงในอากาศจากกราฟระหว่างความยาวหลอดที่เกิดการสั่นพ้องครั้งแรกกับ 1/f',
+      'หาค่าแก้ปลายหลอด (end correction) และเปรียบเทียบอัตราเร็วเสียงสองวิธี',
+    ],
+    theory:
+      '<p>ในหลอดที่ปลายหนึ่งปิดด้วยลูกสูบ เสียงสะท้อนกลับมาซ้อนกับเสียงที่เข้าไปเกิดเป็นคลื่นนิ่ง มี<b>บัพการกระจัดที่ผิวลูกสูบ</b> และ<b>ปฏิบัพใกล้ปากหลอด</b> ' +
+      'ปฏิบัพจริงอยู่นอกปากหลอดเล็กน้อยเป็นระยะ e (ค่าแก้ปลายหลอด ประมาณ 0.3 เท่าของเส้นผ่านศูนย์กลางหลอด) การสั่นพ้องเกิดเมื่อ</p>' +
+      '<div class="eq">L<sub>1</sub> + e = λ/4, &nbsp; L<sub>2</sub> + e = 3λ/4 &nbsp;→&nbsp; L<sub>2</sub> − L<sub>1</sub> = λ/2</div>' +
+      '<p>เมื่อ λ = v/f จะได้</p><div class="eq">L<sub>1</sub> = (v/4) · (1/f) − e</div>' +
+      '<p>กราฟ L<sub>1</sub> กับ 1/f เป็นเส้นตรง ความชัน = v/4 และจุดตัดแกน L<sub>1</sub> = −e ' +
+      'อีกวิธีหนึ่งคือ v = 2f(L<sub>2</sub> − L<sub>1</sub>) ซึ่งไม่ขึ้นกับค่าแก้ปลายหลอด อัตราเร็วเสียงในอากาศขึ้นกับอุณหภูมิ v ≈ 331 + 0.6T (T เป็น °C)</p>',
+    equipment: ['หลอดเรโซแนนซ์พร้อมลูกสูบ (เส้นผ่านศูนย์กลางภายใน 3.5 cm) และสเกลเซนติเมตรตามแนวหลอด', 'ชุดส้อมเสียง 6 ความถี่ (ความถี่พิมพ์บนส้อม)', 'ค้อนยางเคาะส้อมเสียง'],
+    procedure: [
+      'เลือกส้อมเสียง เลื่อนลูกสูบไปที่ปากหลอด (L ใกล้ 0) แล้วกด "เคาะส้อมเสียง"',
+      'ค่อย ๆ เลื่อนลูกสูบออกจากปากหลอด ฟังเสียงหรือดูมาตรวัดความดัง หาตำแหน่งที่เสียงดังที่สุดครั้งแรก',
+      'ปรับละเอียดไปมารอบตำแหน่งนั้นเพื่อหาจุดดังสุด แล้วใช้แว่นขยายอ่านตำแหน่งผิวลูกสูบ L₁ (cm) บนสเกล',
+      'เลื่อนต่อไปหาตำแหน่งดังที่สุดครั้งที่สอง อ่าน L₂ (เคาะส้อมใหม่เมื่อเสียงเบาลง)',
+      'ทำซ้ำกับส้อมเสียงทุกความถี่ แล้วไปขั้นวิเคราะห์ผล',
+    ],
+    tip: 'เปิดเสียงของอุปกรณ์ก่อนทดลอง ถ้าใช้หูฟังจะได้ยินจุดดังสุดชัดขึ้น ถ้าไม่มีเสียงให้ดูมาตรวัดความดังแทน เสียงจางลงตามเวลาเหมือนส้อมเสียงจริง เทียบความดังในช่วงเวลาสั้น ๆ',
+  },
+  table: {
+    rows: 6,
+    hint: 'หนึ่งแถวต่อส้อมเสียงหนึ่งอัน · 1/f แสดงในหน่วย ×10⁻³ s (มิลลิวินาที)',
+    columns: [
+      { key: 'f', label: 'ความถี่ f<br>(Hz)', input: true },
+      { key: 'L1', label: 'ตำแหน่งสั่นพ้องครั้งแรก L₁<br>(cm)', input: true },
+      { key: 'L2', label: 'ตำแหน่งสั่นพ้องครั้งที่สอง L₂<br>(cm)', input: true },
+      { key: 'inv', label: '1/f<br>(×10⁻³ s)', calc: (r) => 1000 / r.f, digits: 4 },
+      { key: 'half', label: 'λ/2 = L₂ − L₁<br>(cm)', calc: (r) => r.L2 - r.L1, digits: 2 },
+      { key: 'v', label: 'v = 2f(L₂ − L₁)<br>(m/s)', calc: (r) => (2 * r.f * r.half) / 100, digits: 1 },
+    ],
+  },
+  graph: {
+    title: 'L₁ กับ 1/f', x: 'inv', y: 'L1', xv: '(1/f)', yv: 'L₁', xlabel: '1/f (×10⁻³ s)', ylabel: 'L₁ (cm)', origin: false,
+    explain: 'ความชันมีหน่วย cm/ms ซึ่งเท่ากับ 10 m/s ดังนั้น v = 4 × ความชัน × 10 · จุดตัดแกน L₁ ติดลบ ขนาดเท่ากับค่าแก้ปลายหลอด',
+  },
+  results(fit, rows) {
+    const v = 40 * fit.m, sv = 40 * fit.sm;
+    const vs = rows.map((r) => r.v).filter((x) => isFinite(x));
+    const mean = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : NaN;
+    const sd = vs.length > 1 ? Math.sqrt(vs.reduce((a, b) => a + (b - mean) ** 2, 0) / (vs.length - 1)) : NaN;
+    const out = [
+      { label: 'ความชันของกราฟ', value: fit.m, unc: fit.sm, unit: 'cm/ms' },
+      { label: 'อัตราเร็วเสียงจากความชัน v = 40 × ความชัน', value: v, unc: sv, unit: 'm/s' },
+      { label: 'ค่าแก้ปลายหลอด e = −จุดตัดแกน', value: -fit.b, unc: fit.sb, unit: 'cm' },
+      { label: 'ค่าแก้ปลายหลอดตามทฤษฎี 0.3D', value: 0.3 * D_TUBE, digits: 2, unit: 'cm' },
+    ];
+    if (isFinite(mean)) out.push({ label: 'อัตราเร็วเสียงเฉลี่ยจาก 2f(L₂ − L₁) (' + vs.length + ' ค่า)', value: mean, unc: vs.length > 1 ? sd / Math.sqrt(vs.length) : null, digits: 1, unit: 'm/s' });
+    out.push({ label: 'อัตราเร็วเสียงจริงในห้องนี้', value: v, unit: 'm/s', accepted: V_TRUE, hidden: true, digitsTrue: 1 });
+    out.push({ label: 'อุณหภูมิห้องที่คำนวณจาก v (331 + 0.6T)', value: (v - 331) / 0.6, unit: '°C', accepted: T_ROOM, hidden: true, digitsTrue: 1 });
+    return out;
+  },
+  questions: [
+    'ระยะ L₂ − L₁ มีความสัมพันธ์กับความยาวคลื่นอย่างไร และเหตุใดวิธีนี้จึงไม่ต้องรู้ค่าแก้ปลายหลอด',
+    'ค่าแก้ปลายหลอดที่ได้จากกราฟใกล้เคียง 0.3D หรือไม่ ถ้าไม่คิดค่าแก้ปลายหลอดจะทำให้อัตราเร็วเสียงที่คำนวณจาก L₁ อย่างเดียวผิดไปอย่างไร',
+    'ประมาณอุณหภูมิของห้องจากอัตราเร็วเสียงที่วัดได้',
+    'ส้อมเสียงความถี่สูงให้ระยะ L₁ สั้นหรือยาวกว่าส้อมความถี่ต่ำ อธิบายด้วยสมการ',
+    'ระบุแหล่งความคลาดเคลื่อนอย่างน้อย 2 แหล่ง และวิธีลด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 5, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    T_ROOM = 26 + 6 * rng();
+    V_TRUE = 331 + 0.6 * T_ROOM;
+    E_TRUE = 0.3 * D_TUBE * (0.93 + 0.14 * rng()); // cm
+    const BETA = 0.075; // การสูญเสียพลังงานในหลอด (กำหนดความกว้างของยอดการสั่นพ้อง)
+
+    const s = { fork: 0, L: 3, ring: 0, sound: true, drag: false, level: 0 };
+
+    ctrls.innerHTML =
+      '<h3>ส้อมเสียง (Hz)</h3>' +
+      '<div class="seg" id="fsel" style="flex-wrap:wrap">' + FORKS.map((f, i) => '<button data-i="' + i + '" style="flex:1 0 30%">' + f + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn primary" id="hit">เคาะส้อมเสียง</button><button class="btn" id="mute">หยุดเสียง</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="snd" checked> เปิดเสียงจริงจากลำโพง</label>' +
+      '<h3>มาตรวัดความดัง</h3>' +
+      '<div style="height:16px;border-radius:8px;background:var(--soft);overflow:hidden;border:1px solid var(--line)"><div id="bar" style="height:100%;width:0;background:var(--ok)"></div></div>' +
+      '<h3>ตำแหน่งลูกสูบ</h3>' +
+      '<input type="range" id="pos" min="0" max="95" step="0.02">' +
+      '<div class="row"><button class="btn" id="m10">−1 cm</button><button class="btn" id="m1">−1 mm</button><button class="btn" id="p1">+1 mm</button><button class="btn" id="p10">+1 cm</button></div>' +
+      '<p class="muted" style="font-size:13px">ลากก้านลูกสูบบนภาพได้ แถบเลื่อนไม่บอกค่า ต้องอ่านตำแหน่งจากสเกล</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const pos = $('#pos');
+    const setL = (v) => { s.L = Math.max(0, Math.min(95, v)); pos.value = s.L; };
+    setL(s.L);
+    pos.oninput = () => (s.L = +pos.value);
+    [['m10', -1], ['m1', -0.1], ['p1', 0.1], ['p10', 1]].forEach(([id, d]) => ($('#' + id).onclick = () => setL(s.L + d)));
+    const syncF = () => ctrls.querySelectorAll('#fsel button').forEach((b) => b.classList.toggle('on', +b.dataset.i === s.fork));
+    ctrls.querySelectorAll('#fsel button').forEach((b) => (b.onclick = () => { s.fork = +b.dataset.i; s.ring = 0; stopAudio(); syncF(); }));
+    syncF();
+    $('#snd').onchange = (e) => { s.sound = e.target.checked; if (!s.sound) stopAudio(); };
+
+    // ---------- เสียง (WebAudio เริ่มเมื่อผู้ใช้กดเท่านั้น) ----------
+    let actx = null, osc = null, gain = null;
+    function startAudio() {
+      if (!s.sound) return;
+      try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        if (actx.state === 'suspended') actx.resume();
+        stopAudio();
+        osc = actx.createOscillator(); gain = actx.createGain();
+        osc.type = 'sine'; osc.frequency.value = FORKS[s.fork];
+        gain.gain.value = 0;
+        osc.connect(gain).connect(actx.destination); osc.start();
+      } catch (e) { osc = null; }
+    }
+    function stopAudio() {
+      if (osc) { try { gain.gain.setTargetAtTime(0, actx.currentTime, 0.02); osc.stop(actx.currentTime + 0.1); } catch (e) {} }
+      osc = null; gain = null;
+    }
+    $('#hit').onclick = () => { s.ring = 1; startAudio(); };
+    $('#mute').onclick = () => { s.ring = 0; stopAudio(); };
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { s.ring = 0; stopAudio(); } });
+
+    // ความดังสัมพัทธ์ของการสั่นพ้องในหลอดปลายปิด (1 ที่ยอด)
+    function resp(Lcm) {
+      const k = (2 * Math.PI * FORKS[s.fork]) / (V_TRUE * 100); // ต่อ cm
+      const b = BETA + 0.0008 * Lcm; // ยิ่งหลอดยาวยิ่งสูญเสียมาก
+      const sh = Math.sinh(b) ** 2;
+      return sh / (Math.cos(k * (Lcm + E_TRUE)) ** 2 + sh);
+    }
+
+    let xo, yo, ppc, rad;
+    function layout() { xo = 150; ppc = (cv.w - xo - 30) / 102; yo = cv.h * 0.48; rad = Math.max((D_TUBE / 2) * ppc, 10); }
+    const X = (cm) => xo + cm * ppc;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // หลอด
+      ctx.fillStyle = Lab.css('--glass');
+      ctx.fillRect(X(0), yo - rad, 100 * ppc, 2 * rad);
+      ctx.strokeStyle = dark ? 'rgba(170,210,240,.8)' : 'rgba(80,140,190,.9)'; ctx.lineWidth = 2 / z;
+      ctx.beginPath(); ctx.moveTo(X(0), yo - rad); ctx.lineTo(X(100), yo - rad); ctx.lineTo(X(100), yo + rad); ctx.lineTo(X(0), yo + rad); ctx.stroke();
+      // ลูกสูบและก้าน
+      const xp = X(s.L);
+      ctx.fillStyle = dark ? '#8a93a3' : '#6b7280';
+      ctx.fillRect(xp, yo - 2.5, X(100) + 26 - xp, 5);
+      ctx.fillStyle = dark ? '#c9a24a' : '#9c6b2a';
+      ctx.fillRect(xp, yo - rad + 1.5, 6, 2 * rad - 3);
+      ctx.fillStyle = ink; ctx.fillRect(X(100) + 22, yo - 9, 8, 18); // ด้ามจับ
+      // สเกลเหนือหลอด ขีด 0 ตรงปากหลอด
+      const sy = yo - rad - 34, sh = 30;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(X(0) - 4, sy, 100 * ppc + 8, sh);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppc / 10, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= 1000; mm += showMm ? 1 : 10) {
+        const x = X(mm / 10);
+        const l = mm % 100 === 0 ? 0.55 : mm % 50 === 0 ? 0.42 : mm % 10 === 0 ? 0.3 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, sy + sh); ctx.lineTo(x, sy + sh - l * sh); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 11 : 9) / Math.min(z, 3) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(mm / 10, x, sy + 1 / z);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // เส้นชี้ผิวลูกสูบขึ้นไปถึงสเกล
+      ctx.strokeStyle = 'rgba(220,40,40,.85)'; ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(xp, yo - rad); ctx.lineTo(xp, sy + sh); ctx.stroke();
+      // ส้อมเสียงหน้าปากหลอด สั่นเมื่อถูกเคาะ
+      const fx = X(0) - 34, wob = s.ring * 2.2 * Math.sin(performance.now() / 18);
+      ctx.strokeStyle = dark ? '#c3c9d3' : '#6b7280'; ctx.lineWidth = 5 / Math.sqrt(z); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(fx - 7 - wob, yo - 46); ctx.lineTo(fx - 7, yo + 8); ctx.quadraticCurveTo(fx, yo + 18, fx + 7, yo + 8); ctx.lineTo(fx + 7 + wob, yo - 46);
+      ctx.moveTo(fx, yo + 14); ctx.lineTo(fx, yo + 50); ctx.stroke(); ctx.lineCap = 'butt';
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(FORKS[s.fork] + ' Hz', fx, yo + 66);
+      // มาตรวัดความดังบนภาพ
+      const mx = 20, my = yo + rad + 60, mw = 110;
+      ctx.fillStyle = Lab.css('--soft'); ctx.fillRect(mx, my, mw, 10);
+      ctx.fillStyle = Lab.css('--ok'); ctx.fillRect(mx, my, mw * Math.sqrt(Math.max(0, s.level)), 10);
+      ctx.strokeStyle = Lab.css('--line'); ctx.strokeRect(mx, my, mw, 10);
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.fillText('ความดังที่ได้ยิน', mx, my - 6);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(y - yo) < rad + 14 && x > X(s.L) - 10) { s.drag = { x, L: s.L }; canvas.setPointerCapture(e.pointerId); }
+      else if (e.type === 'pointermove' && s.drag) setL(s.drag.L + (x - s.drag.x) / ppc);
+      else if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    const bar = $('#bar');
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      s.ring *= Math.exp(-dt / 4); // ส้อมเสียงจางลง
+      if (s.ring < 0.01 && osc) { s.ring = 0; stopAudio(); }
+      const loud = s.ring * (0.04 + 0.96 * resp(s.L));
+      s.level += (loud - s.level) * Math.min(1, dt * 12);
+      bar.style.width = (Math.sqrt(Math.max(0, s.level)) * 100).toFixed(1) + '%';
+      if (gain && actx) gain.gain.setTargetAtTime(0.25 * loud, actx.currentTime, 0.03);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากก้านลูกสูบเพื่อเลื่อน · เคาะส้อมเสียงแล้วฟังจุดที่ดังที่สุด', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

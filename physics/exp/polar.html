@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โพลาไรเซชันของแสง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const D2R = Math.PI / 180;
+let TRUE = null; // ค่าซ่อน: แนวแกนโพลาไรเซอร์เทียบศูนย์สเกล, ความเข้มสูงสุด, แสงพื้นหลัง, อัตราส่วนการดับแสง
+
+Lab.init({
+  id: 'polar',
+  short: 'โพลาไรเซชันของแสง',
+  title: 'โพลาไรเซชันของแสงและกฎของมาลุส',
+  level: 'ม.5–ม.6',
+  intro: {
+    objective: [
+      'ศึกษาความเข้มแสงที่ผ่านแผ่นโพลารอยด์สองแผ่นเมื่อหมุนแผ่นวิเคราะห์ (analyser) ไปมุมต่าง ๆ',
+      'ตรวจสอบกฎของมาลุสด้วยกราฟความเข้ม I กับ cos²θ',
+      'สังเกตผลของการแทรกแผ่นโพลารอยด์แผ่นที่สามระหว่างแผ่นที่ไขว้กัน',
+    ],
+    theory:
+      '<p>แสงจากหลอดไฟเป็นแสงไม่โพลาไรซ์ เมื่อผ่านแผ่นโพลาไรเซอร์ (polariser) จะเหลือเฉพาะการสั่นในแนวแกนผ่าน (transmission axis) ของแผ่น</p>' +
+      '<p>เมื่อแสงโพลาไรซ์นี้ผ่านแผ่นวิเคราะห์ที่แกนทำมุม θ กับแกนของโพลาไรเซอร์ ความเข้มที่ผ่านออกมาเป็นไปตาม<b>กฎของมาลุส</b></p>' +
+      '<div class="eq">I = I₀ cos²θ</div>' +
+      '<p>ในการทดลองจริงมีแสงจากห้องและแผ่นโพลารอยด์ดับแสงได้ไม่สมบูรณ์ จึงเขียนเป็น</p>' +
+      '<div class="eq">I = I₀ cos²θ + I<sub>b</sub></div>' +
+      '<p>กราฟ I กับ cos²θ เป็นเส้นตรง ความชันคือ I₀ จุดตัดแกน I คือแสงพื้นหลัง I<sub>b</sub></p>' +
+      '<p>มุม θ = 0 คือตำแหน่งที่แสงผ่านมากที่สุด ซึ่ง<b>อาจไม่ตรงกับขีด 0 บนสเกล</b> ต้องหาเองก่อนเริ่มวัด</p>',
+    equipment: ['หลอดไฟ (แสงไม่โพลาไรซ์)', 'แผ่นโพลาไรเซอร์ (ยึดอยู่กับที่)', 'แผ่นวิเคราะห์บนวงแหวนหมุนพร้อมสเกล 360° (ขีดละเอียด 1°)', 'แผ่นโพลารอยด์แผ่นที่สาม', 'โฟโตไดโอดพร้อมมิเตอร์วัดกระแส (µA)'],
+    procedure: [
+      'หมุนแผ่นวิเคราะห์จนมิเตอร์อ่านค่าได้<b>น้อยที่สุด</b> แล้วใช้แว่นขยายอ่านมุมบนสเกล φ<sub>min</sub> ตำแหน่งที่แสงผ่านมากที่สุดคือ φ<sub>max</sub> = φ<sub>min</sub> ± 90°',
+      'หมุนไปที่ φ<sub>max</sub> อ่านกระแสสูงสุด แล้วนับมุมนี้เป็น θ = 0°',
+      'หมุนแผ่นวิเคราะห์ไปทีละ 10° (θ = 0°, 10°, … , 90°) อ่านค่าบนสเกลให้ตรง φ<sub>max</sub> + θ แล้วบันทึก θ และกระแส I',
+      'ไปขั้นวิเคราะห์ผล เขียนกราฟ I กับ cos²θ',
+      'ส่วนเสริม: หมุนแผ่นวิเคราะห์ให้ไขว้กับโพลาไรเซอร์ (แสงดับ) แล้วแทรกแผ่นที่สามที่ 45° สังเกตมิเตอร์ เพื่อตอบคำถามท้ายการทดลอง',
+    ],
+    tip: 'ตำแหน่งแสงน้อยที่สุดหาได้แม่นกว่าตำแหน่งแสงมากที่สุด เพราะใกล้ค่าสูงสุด cos²θ เปลี่ยนช้ามาก ค่ามิเตอร์ที่กระเพื่อมเล็กน้อยให้อ่านค่ากลาง ๆ',
+  },
+  table: {
+    rows: 10,
+    hint: 'บันทึก θ เป็นมุมเทียบกับตำแหน่งแสงผ่านมากที่สุด (ไม่ใช่ค่าบนสเกลโดยตรง)',
+    columns: [
+      { key: 'th', label: 'มุม θ<br>(องศา)', input: true },
+      { key: 'I', label: 'กระแสจากโฟโตไดโอด I<br>(µA)', input: true },
+      { key: 'c2', label: 'cos²θ', calc: (r) => Math.cos(r.th * D2R) ** 2, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'I กับ cos²θ', x: 'c2', y: 'I', xv: 'cos²θ', yv: 'I', xlabel: 'cos²θ', ylabel: 'กระแส I (µA)', origin: false,
+    explain: 'ถ้าจุดเรียงเป็นเส้นตรง แสดงว่าเป็นไปตามกฎของมาลุส ความชันคือ I₀ และจุดตัดแกน I คือแสงพื้นหลัง',
+  },
+  results(fit) {
+    return [
+      { label: 'ความเข้มสูงสุดที่ผ่านแผ่นวิเคราะห์ I₀ (ความชัน)', value: fit.m, unc: fit.sm, unit: 'µA' },
+      { label: 'แสงพื้นหลัง I<sub>b</sub> (จุดตัดแกน)', value: fit.b, unc: fit.sb, unit: 'µA' },
+      { label: 'I₀ จริงของชุดอุปกรณ์นี้', value: fit.m, unit: 'µA', accepted: TRUE && TRUE.I0 * (1 - TRUE.e), hidden: true, digitsTrue: 1 },
+      { label: 'แสงพื้นหลังจริง (รวมแสงที่ดับไม่หมด)', value: fit.b, unit: 'µA', accepted: TRUE && TRUE.Ib + TRUE.I0 * TRUE.e, hidden: true, digitsTrue: 2 },
+    ];
+  },
+  questions: [
+    'กราฟ I กับ cos²θ เป็นเส้นตรงหรือไม่ สอดคล้องกับกฎของมาลุสอย่างไร',
+    'ตำแหน่งที่แสงผ่านมากที่สุดตรงกับขีด 0° ของสเกลหรือไม่ เหตุใดการหามุมจากตำแหน่งแสงน้อยที่สุดจึงแม่นยำกว่า',
+    'จุดตัดแกน I ไม่เป็นศูนย์เพราะเหตุใด',
+    'เมื่อแผ่นวิเคราะห์ไขว้กับโพลาไรเซอร์ (แสงดับ) แล้วแทรกแผ่นที่สามที่มุม 45° ระหว่างกลาง แสงผ่านออกมาได้อีกครั้ง ได้ประมาณกี่เปอร์เซ็นต์ของ I₀ อธิบายด้วยกฎของมาลุส',
+    'ยกตัวอย่างการใช้แผ่นโพลารอยด์ในชีวิตประจำวัน 2 ตัวอย่าง',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      off: (rng() < 0.5 ? -1 : 1) * (2.5 + 6 * rng()), // แกนโพลาไรเซอร์อยู่ที่ขีดนี้บนสเกล (องศา)
+      I0: 82 + 14 * rng(),
+      Ib: 0.5 + 0.6 * rng(),
+      e: 0.004 + 0.008 * rng(),
+    };
+    const s = { phi: Math.round(rng() * 360), mid: false, drag: null, shown: 0, tShow: 0 };
+
+    ctrls.innerHTML =
+      '<h3>หมุนแผ่นวิเคราะห์</h3>' +
+      '<div class="row"><button class="btn" id="m5">◀ 5°</button><button class="btn" id="m1">◀ 1°</button><button class="btn" id="p1">1° ▶</button><button class="btn" id="p5">5° ▶</button></div>' +
+      '<div class="row"><button class="btn" id="m02">◀ 0.2°</button><button class="btn" id="p02">0.2° ▶</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 0">หรือลากวงแหวนสเกลในภาพเพื่อหมุน ต้องอ่านมุมจากสเกลเอง</p>' +
+      '<h3>แผ่นโพลารอยด์แผ่นที่สาม</h3>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="mid"> แทรกแผ่นที่ 45° จากแกนโพลาไรเซอร์</label>' +
+      '<h3>มิเตอร์</h3><div class="watch"><span class="readout" id="meter">0.0</span><small>กระแสจากโฟโตไดโอด (µA)</small></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const rot = (d) => (s.phi = (((s.phi + d) % 360) + 360) % 360);
+    $('#m5').onclick = () => rot(-5); $('#p5').onclick = () => rot(5);
+    $('#m1').onclick = () => rot(-1); $('#p1').onclick = () => rot(1);
+    $('#m02').onclick = () => rot(-0.2); $('#p02').onclick = () => rot(0.2);
+    $('#mid').onchange = (e) => (s.mid = e.target.checked);
+    const meter = $('#meter');
+
+    // ความเข้มที่โฟโตไดโอดรับได้ (µA)
+    function intensity() {
+      const th = (s.phi - TRUE.off) * D2R, e = TRUE.e;
+      if (!s.mid) return TRUE.Ib + TRUE.I0 * ((1 - e) * Math.cos(th) ** 2 + e);
+      const t2 = (1 - e) * 0.5 * Math.cos(th - 45 * D2R) ** 2 * (1 - e) + e * 0.5;
+      return TRUE.Ib + TRUE.I0 * t2;
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.by = 58; // แนวแกนแสงของภาพม้านั่ง
+      L.R = Math.min(w * 0.36, (h - 154) * 0.5);
+      L.cx = w * 0.5; L.cy = 112 + L.R + 6;
+    }
+
+    function disc(ctx, x, y, r, ang, label, z, active) {
+      const dark = Lab.dark();
+      ctx.fillStyle = active === false ? 'transparent' : dark ? 'rgba(120,130,150,0.45)' : 'rgba(90,100,120,0.35)';
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.ellipse(x, y, 7, r, 0, 0, 7); ctx.fill(); ctx.stroke();
+      // ทิศแกนผ่าน (มองจากด้านข้างเห็นเป็นเส้นยาวตาม cos)
+      const a = ang * D2R;
+      ctx.strokeStyle = Lab.css('--ink'); ctx.lineWidth = 1.4 / z;
+      ctx.beginPath(); ctx.moveTo(x - 5 * Math.sin(a), y - r * 0.8 * Math.cos(a)); ctx.lineTo(x + 5 * Math.sin(a), y + r * 0.8 * Math.cos(a)); ctx.stroke();
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(label, x, y + r + 4);
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted'), w = cv.w;
+      const I = intensity(), frac = Math.min(1, I / 100);
+      // ----- ม้านั่งแสง (มองจากด้านข้าง) -----
+      const x0 = 30, x1 = w - 30, by = L.by;
+      ctx.fillStyle = dark ? '#2a303b' : '#d9dde5'; ctx.fillRect(x0, by + 30, x1 - x0, 8);
+      const xs = (f) => x0 + f * (x1 - x0);
+      // หลอดไฟ
+      ctx.fillStyle = dark ? '#fff2b0' : '#ffd54a';
+      ctx.beginPath(); ctx.arc(xs(0.04), by, 13, 0, 7); ctx.fill();
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('หลอดไฟ', xs(0.04), by + 40);
+      // ลำแสง: ความสว่างลดตามช่วง
+      const seg = (a, b, alpha) => { ctx.fillStyle = 'rgba(255,220,90,' + alpha + ')'; ctx.fillRect(xs(a), by - 6, xs(b) - xs(a), 12); };
+      seg(0.06, 0.3, 0.55);
+      const afterP = 0.5 * 0.55;
+      const afterM = s.mid ? afterP * 0.5 : afterP;
+      seg(0.3, s.mid ? 0.5 : 0.7, afterP);
+      if (s.mid) seg(0.5, 0.7, afterM);
+      seg(0.7, 0.88, Math.max(0.02, frac * 0.55));
+      disc(ctx, xs(0.3), by, 24, TRUE.off, 'โพลาไรเซอร์', z);
+      if (s.mid) disc(ctx, xs(0.5), by, 24, TRUE.off + 45, 'แผ่นที่สาม', z);
+      disc(ctx, xs(0.7), by, 24, s.phi, 'แผ่นวิเคราะห์', z);
+      // โฟโตไดโอด
+      ctx.fillStyle = dark ? '#555c6a' : '#3b4049'; ctx.fillRect(xs(0.88), by - 12, 26, 24);
+      ctx.fillStyle = muted; ctx.textAlign = 'center'; ctx.fillText('โฟโตไดโอด', xs(0.88) + 13, by + 40);
+
+      // ----- วงแหวนสเกลของแผ่นวิเคราะห์ (มองตามแนวแสง) -----
+      const cx = L.cx, cy = L.cy, R = L.R;
+      ctx.fillStyle = dark ? '#262b35' : '#ffffff';
+      ctx.beginPath(); ctx.arc(cx, cy, R + 28, 0, 7); ctx.fill();
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.stroke();
+      // แผ่นโพลารอยด์ด้านใน แสดงทิศแกนผ่านด้วยเส้นขนาน
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, R - 24, 0, 7); ctx.clip();
+      ctx.fillStyle = 'rgba(255,220,90,' + (0.08 + frac * 0.6) + ')'; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      ctx.translate(cx, cy); ctx.rotate(s.phi * D2R);
+      ctx.strokeStyle = dark ? 'rgba(200,210,230,0.25)' : 'rgba(60,70,90,0.18)'; ctx.lineWidth = 1 / z;
+      for (let x = -R; x <= R; x += 7) { ctx.beginPath(); ctx.moveTo(x, -R); ctx.lineTo(x, R); ctx.stroke(); }
+      ctx.restore();
+      // ขีดองศาบนวงแหวน หมุนไปพร้อมแผ่นวิเคราะห์ ค่าที่ขีดชี้ด้านบน = มุมที่อ่านได้
+      ctx.strokeStyle = ink;
+      const fine = z >= 2 ? 0.5 : 1;
+      for (let d = 0; d < 360; d += fine) {
+        const a = -Math.PI / 2 + (d - s.phi) * D2R;
+        const half = d % 1 !== 0;
+        const l = half ? 4 : d % 10 === 0 ? 14 : d % 5 === 0 ? 10 : 6;
+        ctx.lineWidth = (d % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(cx + R * Math.cos(a), cy + R * Math.sin(a)); ctx.lineTo(cx + (R - l) * Math.cos(a), cy + (R - l) * Math.sin(a)); ctx.stroke();
+        if (d % 10 === 0) {
+          ctx.save(); ctx.translate(cx + (R + 12) * Math.cos(a), cy + (R + 12) * Math.sin(a)); ctx.rotate(a + Math.PI / 2);
+          ctx.fillStyle = ink; ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(d, 0, 0); ctx.restore();
+        }
+      }
+      // ขีดชี้คงที่ด้านบน
+      ctx.fillStyle = Lab.css('--bad');
+      // สามเหลี่ยมอยู่นอกวงแหวน ส่วนในวงใช้เส้นผมบาง ๆ เพื่อไม่บังขีดสเกล
+      ctx.beginPath(); ctx.moveTo(cx, cy - R - 29); ctx.lineTo(cx - 6, cy - R - 41); ctx.lineTo(cx + 6, cy - R - 41); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = Lab.css('--bad'); ctx.lineWidth = 0.7 / z;
+      ctx.beginPath(); ctx.moveTo(cx, cy - R - 29); ctx.lineTo(cx, cy - R + 18); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.textBaseline = 'bottom'; ctx.fillText('สเกลแผ่นวิเคราะห์', 10, cv.h - 26); ctx.fillText('(อ่านที่ขีดชี้สีแดง)', 10, cv.h - 10);
+    }
+
+    // ลากวงแหวนเพื่อหมุน
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const a = Math.atan2(y - L.cy, x - L.cx) / D2R, r = Math.hypot(x - L.cx, y - L.cy);
+      if (e.type === 'pointerdown' && r < L.R + 34 && r > 20) { s.drag = { a }; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') {
+        let da = a - s.drag.a; if (da > 180) da -= 360; if (da < -180) da += 360;
+        rot(-da); s.drag.a = a;
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt, t) => {
+      if (!cv.w) return;
+      // มิเตอร์ดิจิทัล: อัปเดต 4 ครั้งต่อวินาที มีสัญญาณรบกวนเล็กน้อย
+      if (t - s.tShow > 0.25) {
+        s.tShow = t;
+        const I = intensity();
+        s.shown = Math.max(0, I + Lab.noise(0.12 + 0.002 * I));
+        meter.textContent = s.shown.toFixed(1);
+      }
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากวงแหวนสเกลเพื่อหมุนแผ่นวิเคราะห์', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

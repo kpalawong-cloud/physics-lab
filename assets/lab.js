@@ -583,7 +583,12 @@
       useSet: (k) => useSet(k, true),
       currentSet: () => state.cur,
     };
-    cfg.apparatus(document.getElementById('stage'), document.getElementById('ctrls'), api);
+    // ถ้าส่วนอุปกรณ์พัง ให้ตารางและขั้นอื่นยังใช้ได้ และแสดงข้อความแทนภาพ
+    try { cfg.apparatus(document.getElementById('stage'), document.getElementById('ctrls'), api); }
+    catch (err) {
+      console.error(err);
+      document.getElementById('stage').insertAdjacentHTML('beforeend', '<div class="note warn">อุปกรณ์จำลองโหลดไม่สำเร็จ ลองโหลดหน้าใหม่ (' + String(err.message || err).replace(/</g, '&lt;') + ')</div>');
+    }
     renderTable();
     go(state.step);
     if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (state.step === 3) drawGraph(); });

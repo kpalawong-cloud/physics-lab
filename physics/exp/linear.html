@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การเคลื่อนที่แนวเส้นตรง · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.78;
+const FEET = 1.000;                       // ระยะระหว่างขารางลม (m)
+const BLOCKS = { '1': 0.0100, '2': 0.0200 }; // ความหนาที่พิมพ์บนแท่งรอง (m)
+const A_TRUE = {};                         // ความเร่งจริงของแต่ละชุด (รวมแรงต้านที่เหลือ)
+const avg = (a) => { a = a.filter(isFinite); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN; };
+
+Lab.init({
+  id: 'linear',
+  short: 'การเคลื่อนที่แนวเส้นตรง',
+  title: 'การเคลื่อนที่แนวเส้นตรงบนรางลม',
+  level: 'ม.4–ม.6',
+  intro: {
+    objective: [
+      'ศึกษาความสัมพันธ์ระหว่างระยะทางกับเวลาของวัตถุที่เคลื่อนที่ด้วยความเร่งคงตัวจากหยุดนิ่ง',
+      'หาความเร่งของรถบนรางลมเอียงจากกราฟ s กับ t² และนำไปหาค่า g',
+    ],
+    theory:
+      '<p>รถเลื่อนบนเบาะลมจึงแทบไม่มีแรงเสียดทาน เมื่อรางเอียงมุม θ รถมีความเร่งคงตัวตามแนวราง</p>' +
+      '<div class="eq">a = g sin θ &nbsp;,&nbsp; sin θ = h / L</div>' +
+      '<p>h คือความหนาของแท่งรองใต้ขาราง L คือระยะระหว่างขาราง (1.000 m) เมื่อปล่อยรถจากหยุดนิ่งที่ประตูแสงที่ 1</p>' +
+      '<div class="eq">s = ½ a t²</div>' +
+      '<p>กราฟ s กับ t² เป็นเส้นตรง <b>ความชัน = a/2</b> จึงได้ a = 2 × ความชัน และ g = a / sin θ ' +
+      'ถ้ากราฟไม่ผ่านจุดกำเนิดพอดี แสดงว่าตำแหน่งเริ่มของรถไม่ตรงประตูแสงที่ 1 (ความคลาดเคลื่อนเชิงระบบ)</p>',
+    equipment: ['รางลมยาว 1.2 m พร้อมเครื่องเป่าลม', 'รถเลื่อนพร้อมแผ่นกั้นแสง', 'ประตูแสง 2 ตัวและเครื่องจับเวลา (ละเอียด 0.1 ms)', 'แท่งรองหนา 1.00 cm และ 2.00 cm', 'สเกลเมตรบนราง (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'เลือกแท่งรอง 1.00 cm ประตูแสงที่ 1 อยู่ที่ตำแหน่งเริ่มของรถ อ่านตำแหน่งของประตูแสงที่ 1 บนสเกลราง',
+      'เลื่อนประตูแสงที่ 2 แล้วใช้แว่นขยายอ่านตำแหน่ง ระยะ s = ตำแหน่งประตู 2 − ตำแหน่งประตู 1 (บันทึกเป็นเมตร)',
+      'กด "ปล่อยรถ" อ่านเวลาจากเครื่องจับเวลา ทำซ้ำ 3 ครั้งที่ระยะเดิม',
+      'เปลี่ยนระยะ s อย่างน้อย 6 ค่า ระหว่าง 0.20–0.90 m',
+      'เปลี่ยนเป็นแท่งรอง 2.00 cm แล้วทำซ้ำ (ตารางจะสลับชุดข้อมูลให้)',
+    ],
+    tip: 'ภาพแสดงความเอียงของรางมากกว่าจริงเพื่อให้เห็นชัด รางจริงเอียงเพียงราว 1°',
+  },
+  table: {
+    rows: 6,
+    sets: [{ key: '1', label: 'แท่งรอง 1.00 cm' }, { key: '2', label: 'แท่งรอง 2.00 cm' }],
+    hint: 'ปุ่ม "บันทึกเวลาลงตาราง" เติม t₁, t₂, t₃ ของแถวเดียวกันตามลำดับ ต้องกรอกระยะ s เอง',
+    columns: [
+      { key: 's', label: 'ระยะ s<br>(m)', input: true },
+      { key: 't1', label: 't₁<br>(s)', input: true },
+      { key: 't2', label: 't₂<br>(s)', input: true },
+      { key: 't3', label: 't₃<br>(s)', input: true },
+      { key: 'tm', label: 'เวลาเฉลี่ย t<br>(s)', calc: (r) => avg([r.t1, r.t2, r.t3]), digits: 4 },
+      { key: 'tsq', label: 't²<br>(s²)', calc: (r) => r.tm * r.tm, digits: 4 },
+    ],
+  },
+  graph: {
+    title: 's กับ t²', x: 'tsq', y: 's', xv: 't²', yv: 's', xlabel: 't² (s²)', ylabel: 'ระยะ s (m)', origin: false,
+    explain: 'ความชันคือ a/2 จุดตัดแกน s ควรใกล้ศูนย์',
+  },
+  results(fit, rows, truth, set) {
+    const h = BLOCKS[set], sin = h / FEET;
+    const a = 2 * fit.m, sa = 2 * fit.sm;
+    return [
+      { label: 'ความเร่ง a = 2 × ความชัน', value: a, unc: sa, unit: 'm/s²' },
+      { label: 'sin θ = h / L', value: sin, digits: 4, unit: '' },
+      { label: 'g = a / sin θ', value: a / sin, unc: sa / sin, unit: 'm/s²', accepted: G },
+      { label: 'ความเร่งจริงของรถ (' + (set === '1' ? 'แท่งรอง 1.00 cm' : 'แท่งรอง 2.00 cm') + ')', value: a, unit: 'm/s²', accepted: A_TRUE[set], hidden: true, digitsTrue: 4 },
+    ];
+  },
+  questions: [
+    'กราฟ s กับ t² เป็นเส้นตรงหรือไม่ บอกอะไรเกี่ยวกับความเร่งของรถ',
+    'เหตุใดจึงเขียนกราฟ s กับ t² แทนกราฟ s กับ t',
+    'ค่า g ที่ได้จากแท่งรองทั้งสองต่างกันหรือไม่ ชุดใดน่าเชื่อถือกว่า เพราะเหตุใด',
+    'ค่า g ที่ได้มักน้อยกว่า 9.78 m/s² เล็กน้อย เกิดจากอะไร',
+    'ถ้าวางรถให้แผ่นกั้นแสงอยู่หลังประตูแสงที่ 1 ไป 1 cm ก่อนปล่อย กราฟจะเปลี่ยนไปอย่างไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 8, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ค่าซ่อน: ความหนาจริงของแท่งรองต่างจากที่พิมพ์เล็กน้อย และแรงต้านอากาศ/แรงเสียดทานที่เหลือ
+    const hTrue = { '1': 0.0100 * (1 + (rng() - 0.5) * 0.01), '2': 0.0200 * (1 + (rng() - 0.5) * 0.01) };
+    const drag = 0.0008 + 0.0022 * rng();
+    for (const k in hTrue) A_TRUE[k] = G * (hTrue[k] / FEET) - drag;
+    const P1 = 0.200; // ตำแหน่งประตูแสงที่ 1 บนสเกล (m)
+
+    const s = { set: api.currentSet(), p2: 0.55 + 0.3 * rng(), run: false, t: 0, x: 0, meas: null, tShow: 0 };
+
+    ctrls.innerHTML =
+      '<h3>แท่งรองใต้ขาราง</h3><div class="seg" id="blk"><button data-v="1">1.00 cm</button><button data-v="2">2.00 cm</button></div>' +
+      '<h3>ตำแหน่งประตูแสงที่ 2</h3><input type="range" id="p2" min="0.35" max="1.10" step="0.0005">' +
+      '<div class="row"><button class="btn" data-d="-0.01">◀ cm</button><button class="btn" data-d="-0.001">◀ mm</button><button class="btn" data-d="0.001">mm ▶</button><button class="btn" data-d="0.01">cm ▶</button></div>' +
+      '<div class="row"><button class="btn primary" id="go">ปล่อยรถ</button></div>' +
+      '<h3>เครื่องจับเวลา</h3><div class="watch"><span class="readout" id="tm">0.0000</span><small>เวลาจากประตู 1 ถึงประตู 2 (s)</small></div>' +
+      '<div class="row"><button class="btn" id="send" disabled>บันทึกเวลาลงตาราง</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const p2el = $('#p2');
+    const setP2 = (v) => { if (s.run) return; s.p2 = Math.max(0.35, Math.min(1.10, v)); p2el.value = s.p2; };
+    setP2(s.p2);
+    p2el.oninput = () => (s.run ? (p2el.value = s.p2) : (s.p2 = +p2el.value));
+    ctrls.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => setP2(s.p2 + +b.dataset.d)));
+    const blk = $('#blk');
+    const syncBlk = () => blk.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.set));
+    blk.onclick = (e) => { const b = e.target.closest('button'); if (!b || s.run) return; s.set = b.dataset.v; syncBlk(); api.useSet(s.set); s.x = 0; s.meas = null; };
+    api.onSetChange = (k) => { s.set = k; syncBlk(); };
+    syncBlk();
+    $('#go').onclick = () => {
+      s.run = true; s.t = 0; s.x = 0; s.meas = null; $('#tm').textContent = '0.0000'; $('#send').disabled = true; $('#go').disabled = true;
+      // เวลาที่เครื่องจับได้: ความคลาดเคลื่อนสุ่มจากการปล่อยรถ (ตำแหน่งเริ่ม/แรงมือ) เล็กน้อย
+      const a = A_TRUE[s.set], d = s.p2 - P1;
+      s.tMeas = Math.sqrt((2 * d) / a) * (1 + Lab.noise(0.0015)) + Lab.noise(0.0004);
+    };
+    $('#send').onclick = () => { if (s.meas != null && !api.fillNext(['t1', 't2', 't3'], s.meas.toFixed(4))) alert('ตารางเต็มแล้ว กด "เพิ่มแถว" ก่อน'); };
+
+    // เรขาคณิต: วาดในกรอบที่หมุนตามรางลม (u = ระยะตามราง, m)
+    let pp, ox, oy, ang;
+    function layout() {
+      pp = (cv.w - 70) / 1.24;
+      ang = Math.atan((BLOCKS[s.set] / FEET) * 6); // แสดงความเอียงเกินจริง 6 เท่า
+      ox = 30; oy = cv.h * 0.4;
+    }
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // โต๊ะ
+      const yTable = oy + Math.sin(ang) * 1.1 * pp + 34;
+      ctx.fillStyle = dark ? '#3a3226' : '#d9c3a0'; ctx.fillRect(0, yTable, cv.w, 14);
+      ctx.save(); ctx.translate(ox, oy); ctx.rotate(ang);
+      const U = (u) => u * pp;
+      // ขาราง: ซ้ายวางบนแท่งรอง
+      ctx.fillStyle = dark ? '#6b7280' : '#4b5563';
+      const legL = (yTable - oy) / Math.cos(ang);
+      ctx.fillRect(U(0.1) - 4, 10, 8, 24);
+      ctx.fillRect(U(1.1) - 4, 10, 8, 22);
+      ctx.restore();
+      // แท่งรอง (ขยายความหนาตามภาพ)
+      const fx = ox + Math.cos(ang) * U(0.1), fy = oy + Math.sin(ang) * U(0.1) + 34;
+      ctx.fillStyle = dark ? '#8a6a3a' : '#c79a55'; ctx.fillRect(fx - 22, fy, 44, yTable - fy);
+      ctx.fillStyle = dark ? '#f2e6cf' : '#5a3d14'; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(s.set === '1' ? '1.00 cm' : '2.00 cm', fx, yTable - 4);
+      ctx.save(); ctx.translate(ox, oy); ctx.rotate(ang);
+      // รางลม
+      const g = ctx.createLinearGradient(0, -6, 0, 12);
+      g.addColorStop(0, dark ? '#9aa3b0' : '#e6e9ee'); g.addColorStop(1, dark ? '#5d6470' : '#a4acb8');
+      ctx.fillStyle = g; ctx.fillRect(0, -6, U(1.24), 18);
+      ctx.strokeStyle = '#3d434b'; ctx.lineWidth = 1 / z; ctx.strokeRect(0, -6, U(1.24), 18);
+      // รูลม
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      for (let u = 0.03; u < 1.22; u += 0.03) { ctx.beginPath(); ctx.arc(U(u), -2, 0.8, 0, 7); ctx.fill(); }
+      // สเกลเมตรบนหน้าราง (0 ที่ปลายซ้าย)
+      ctx.fillStyle = dark ? '#e8d8b0' : '#fbf4dc'; ctx.fillRect(0, 12, U(1.24), 16);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const showMm = (pp / 1000) * z >= 2;
+      for (let mm = 0; mm <= 1230; mm += showMm ? 1 : 10) {
+        const x = U(mm / 1000), l = mm % 100 === 0 ? 10 : mm % 50 === 0 ? 8 : mm % 10 === 0 ? 6 : 3.5;
+        ctx.lineWidth = (mm % 10 === 0 ? 0.9 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(x, 12); ctx.lineTo(x, 12 + l); ctx.stroke();
+        if (mm % 100 === 0 || (z > 3 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 9 / Math.min(z, 3.5) : 2.4) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(mm / 10, x, 12 + (mm % 100 === 0 ? 10.5 : 7));
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // ประตูแสง: ขีดชี้ลงสเกล
+      function gate(u, label) {
+        const x = U(u);
+        ctx.fillStyle = dark ? '#2f6fde' : '#2f6fde';
+        ctx.fillRect(x - 7, -40, 3, 34); ctx.fillRect(x + 4, -40, 3, 34); ctx.fillRect(x - 7, -42, 14, 4);
+        ctx.fillStyle = 'rgba(230,30,30,.8)'; ctx.fillRect(x - 4, -24, 8, 1);
+        ctx.strokeStyle = '#d22'; ctx.lineWidth = 0.6 / z;
+        ctx.beginPath(); ctx.moveTo(x, -6); ctx.lineTo(x, 26); ctx.stroke();
+        ctx.fillStyle = muted; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, -46);
+      }
+      gate(P1, 'ประตู 1'); gate(s.p2, 'ประตู 2');
+      // รถเลื่อน: แผ่นกั้นแสงอยู่หน้ารถ เริ่มที่ประตู 1
+      const front = P1 + s.x;
+      ctx.fillStyle = dark ? '#c0563b' : '#e0563b';
+      ctx.beginPath(); ctx.moveTo(U(front) - U(0.12), -6); ctx.lineTo(U(front) - U(0.11), -18); ctx.lineTo(U(front) - U(0.01), -18); ctx.lineTo(U(front), -6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = ink; ctx.fillRect(U(front) - 1.2, -34, 1.6, 16); // แผ่นกั้นแสง
+      // กันชนท้ายราง
+      ctx.fillStyle = '#555'; ctx.fillRect(U(1.2), -16, 5, 10);
+      ctx.restore();
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.run) {
+        s.t += dt;
+        const a = A_TRUE[s.set];
+        s.x = 0.5 * a * s.t * s.t;
+        const d = s.p2 - P1;
+        if (s.meas == null) $('#tm').textContent = Math.min(s.t, s.tMeas).toFixed(4);
+        if (s.meas == null && s.x >= d) { s.meas = s.tMeas; $('#tm').textContent = s.meas.toFixed(4); $('#send').disabled = false; }
+        if (P1 + s.x >= 1.19) { s.x = 1.19 - P1; s.run = false; $('#go').disabled = false; if (s.meas == null) { s.meas = s.tMeas; $('#tm').textContent = s.meas.toFixed(4); $('#send').disabled = false; } }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ภาพเอียงเกินจริง 6 เท่า · อ่านตำแหน่งประตูแสงจากขีดสีแดงบนสเกล', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>

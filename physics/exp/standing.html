@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คลื่นนิ่งในเส้นลวด · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const G = 9.8;
+const L = 1.200;          // ความยาวช่วงสั่นจากเครื่องสั่นถึงรอก (m)
+const BW = 1.0;           // ครึ่งความกว้างของยอดการสั่นพ้อง (Hz) ต้องปรับละเอียดทีละ 1 Hz
+let MU_TRUE = null;       // ความหนาแน่นเชิงเส้นของเส้นลวดชุดนี้ (kg/m)
+
+Lab.init({
+  id: 'standing',
+  short: 'คลื่นนิ่งในเส้นลวด',
+  title: 'คลื่นนิ่งในเส้นลวด (การทดลองของเมลด์)',
+  level: 'ม.5–ม.6',
+  intro: {
+    objective: [
+      'ทำให้เกิดคลื่นนิ่งในเส้นลวดที่มีจำนวนบ่วง (loop) ต่าง ๆ และวัดความถี่ที่เกิดการสั่นพ้อง',
+      'หาความสัมพันธ์ระหว่างอัตราเร็วคลื่นในเส้นลวดกับแรงตึง',
+      'หาความหนาแน่นเชิงเส้น μ (มวลต่อความยาว) ของเส้นลวดจากความชันของกราฟ v² กับ T',
+    ],
+    theory:
+      '<p>คลื่นที่เครื่องสั่นส่งไปตามเส้นลวดสะท้อนกลับที่รอก คลื่นไปและคลื่นสะท้อนซ้อนทับกันเกิดเป็น<b>คลื่นนิ่ง</b> ซึ่งมีบัพ (node) อยู่กับที่และปฏิบัพ (antinode) สั่นแรงที่สุด ' +
+      'คลื่นนิ่งชัดเจนเฉพาะเมื่อความยาว L เท่ากับจำนวนเต็มเท่าของครึ่งความยาวคลื่น (การสั่นพ้อง)</p>' +
+      '<div class="eq">L = n · λ/2 &nbsp;→&nbsp; λ = 2L / n</div>' +
+      '<p>อัตราเร็วคลื่นในเส้นลวดขึ้นกับแรงตึง T และความหนาแน่นเชิงเส้น μ</p>' +
+      '<div class="eq">v = f λ = √(T / μ) &nbsp;→&nbsp; v² = (1/μ) · T</div>' +
+      '<p>กราฟ v² กับ T จึงเป็นเส้นตรงผ่านจุดกำเนิด ความชันเท่ากับ 1/μ ดังนั้น <b>μ = 1 / ความชัน</b> แรงตึงเกิดจากมวลที่แขวน T = Mg</p>',
+    equipment: ['เครื่องสั่นกล (vibrator) ต่อกับเครื่องกำเนิดสัญญาณ แสดงความถี่แบบตัวเลข (ละเอียด 1 Hz)', 'เส้นลวดเบา',
+      'รอกพร้อมแท่นยึด', 'ที่แขวนมวล 50 g และมวลแบบแผ่น ก้อนละ 50 g', 'ไม้เมตร (ขีดละเอียด 1 mm)'],
+    procedure: [
+      'ใช้แว่นขยายอ่านไม้เมตร ตรวจสอบความยาวช่วงสั่น L จากจุดที่เส้นลวดติดเครื่องสั่นถึงจุดที่สัมผัสรอก (ควรได้ 1.200 m)',
+      'แขวนมวลรวม M (เริ่มจาก 100 g) เปิดเครื่องกำเนิดสัญญาณ แล้วค่อย ๆ ปรับความถี่จากต่ำขึ้นสูง',
+      'เมื่อเส้นลวดสั่นแรงเป็นบ่วงชัดเจน ให้ปรับทีละ 1 Hz หาความถี่ที่บ่วงกว้างที่สุด นับจำนวนบ่วง n แล้วบันทึก M, n และ f',
+      'หาความถี่ของ n = 1, 2, 3, … ที่มวลเดียวกันได้ จากนั้นเปลี่ยนมวล ทำให้ได้อย่างน้อย 6 แถวที่มีแรงตึงต่างกัน',
+      'ไปขั้นวิเคราะห์ผลเพื่อเขียนกราฟ v² กับ T',
+    ],
+    tip: 'ปลายที่ติดเครื่องสั่นไม่ใช่บัพที่สมบูรณ์ เพราะเครื่องสั่นขยับเล็กน้อย ให้นับบ่วงจากรอกเข้ามา บ่วงสุดท้ายข้างเครื่องสั่นนับเป็นหนึ่งบ่วง',
+  },
+  table: {
+    rows: 8,
+    hint: 'M คือมวลรวมที่แขวน (รวมที่แขวน) เป็นกิโลกรัม เช่น 0.150 · แต่ละแถวคือหนึ่งการสั่นพ้อง',
+    columns: [
+      { key: 'M', label: 'มวลแขวน M<br>(kg)', input: true },
+      { key: 'n', label: 'จำนวนบ่วง n', input: true },
+      { key: 'f', label: 'ความถี่ f<br>(Hz)', input: true },
+      { key: 'T', label: 'แรงตึง T = Mg<br>(N)', calc: (r) => r.M * G, digits: 3 },
+      { key: 'lam', label: 'λ = 2L/n<br>(m)', calc: (r) => (2 * L) / r.n, digits: 3 },
+      { key: 'v', label: 'v = fλ<br>(m/s)', calc: (r) => r.f * r.lam, digits: 2 },
+      { key: 'v2', label: 'v²<br>(m²/s²)', calc: (r) => r.v * r.v, digits: 0 },
+    ],
+  },
+  graph: {
+    title: 'v² กับ T', x: 'T', y: 'v2', xv: 'T', yv: 'v²', xlabel: 'แรงตึง T (N)', ylabel: 'v² (m²/s²)', origin: true,
+    explain: 'จุดที่มีแรงตึงเท่ากันแต่ n ต่างกันควรให้ v เท่ากัน ถ้าไม่เท่าแสดงว่าตั้งความถี่ไม่ตรงยอดการสั่นพ้อง',
+  },
+  results(fit) {
+    const mu = 1000 / fit.m; // g/m
+    return [
+      { label: 'ความชันของกราฟ = 1/μ', value: fit.m, unc: fit.sm, unit: 'm/kg' },
+      { label: 'ความหนาแน่นเชิงเส้น μ = 1/ความชัน', value: mu, unc: (mu * fit.sm) / fit.m, unit: 'g/m' },
+      { label: 'ความหนาแน่นเชิงเส้นของเส้นลวดชุดนี้', value: mu, unit: 'g/m', accepted: MU_TRUE * 1000, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'ที่แรงตึงเดียวกัน ความถี่ที่ทำให้เกิด 1, 2, 3 บ่วงมีความสัมพันธ์กันอย่างไร อธิบายด้วยสมการ',
+    'เมื่อเพิ่มแรงตึง อัตราเร็วคลื่นในเส้นลวดเปลี่ยนไปอย่างไร สอดคล้องกับกราฟ v² กับ T หรือไม่',
+    'เพราะเหตุใดเส้นลวดจึงสั่นแรงเฉพาะบางความถี่ ถ้าความถี่อยู่ระหว่างการสั่นพ้องสองค่าจะเห็นอะไร',
+    'บัพที่ปลายติดเครื่องสั่นเป็นบัพสมบูรณ์หรือไม่ และส่งผลต่อการวัดอย่างไร',
+    'ระบุแหล่งความคลาดเคลื่อนอย่างน้อย 2 แหล่ง เช่น มวลของเส้นลวดส่วนที่ห้อย แรงเสียดทานที่รอก',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 6, r: 80 });
+    lens.button(stage);
+    MU_TRUE = (0.4 + 0.8 * api.rng()) * 1e-3;
+    const s = { f: 20, on: false, nm: 2, phase: 0, amp: 0 };
+
+    ctrls.innerHTML =
+      '<h3>เครื่องกำเนิดสัญญาณ</h3>' +
+      '<div class="watch"><span class="readout" id="fShow">20</span> Hz<small>ความถี่ที่ส่งให้เครื่องสั่น</small></div>' +
+      '<input type="range" id="fK" min="1" max="300" step="1">' +
+      '<div class="row"><button class="btn" id="fm10">−10</button><button class="btn" id="fm1">−1</button><button class="btn" id="fp1">+1</button><button class="btn" id="fp10">+10</button></div>' +
+      '<div class="row"><button class="btn primary" id="pw">เปิดเครื่อง</button></div>' +
+      '<h3>มวลที่แขวน (ก้อนละ 50 g รวมที่แขวน)</h3>' +
+      '<p style="margin:0 0 4px" id="mInfo"></p>' +
+      '<div class="row"><button class="btn" id="mAdd">+ เพิ่ม 50 g</button><button class="btn" id="mDel">− เอาออก 50 g</button></div>' +
+      '<p class="muted" style="font-size:13px">ปรับความถี่ทีละ 1 Hz รอบ ๆ ยอดการสั่นพ้อง เลือกค่าที่บ่วงกว้างที่สุด</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const fK = $('#fK');
+    const setF = (v) => { s.f = Math.max(1, Math.min(300, Math.round(v))); fK.value = s.f; $('#fShow').textContent = s.f; };
+    setF(20);
+    fK.oninput = () => setF(+fK.value);
+    [['fm10', -10], ['fm1', -1], ['fp1', 1], ['fp10', 10]].forEach(([id, d]) => ($('#' + id).onclick = () => setF(s.f + d)));
+    $('#pw').onclick = () => {
+      s.on = !s.on;
+      $('#pw').textContent = s.on ? 'ปิดเครื่อง' : 'เปิดเครื่อง';
+      $('#pw').classList.toggle('primary', !s.on);
+    };
+    const showM = () => ($('#mInfo').textContent = 'มวลแขวนรวม: ' + s.nm + ' × 50 g');
+    $('#mAdd').onclick = () => { if (s.nm < 12) s.nm++; showM(); };
+    $('#mDel').onclick = () => { if (s.nm > 1) s.nm--; showM(); };
+    showM();
+
+    // แอมพลิจูดของเส้นลวดที่ถูกขับที่ปลาย x = 0 และยึดแน่นที่รอก x = L (มีการหน่วงเล็กน้อย)
+    // y(x) ∝ sin(k(L−x)) / sin(kL) โดย k มีส่วนจินตภาพ ทำให้ยอดสั่นพ้องสูงจำกัด
+    function shape() {
+      const T = s.nm * 0.05 * G, v = Math.sqrt(T / MU_TRUE);
+      const a = (2 * Math.PI * s.f * L) / v, b = (a * BW) / s.f;
+      const den = Math.sqrt(Math.sin(a) ** 2 + Math.sinh(b) ** 2);
+      return { a, b, den, a0: 0.6 }; // a0: แอมพลิจูดของเครื่องสั่น (mm)
+    }
+
+    let ppm, x0, y0;
+    function layout() {
+      x0 = 70; ppm = (cv.w - x0 - 80) / 1.3; y0 = cv.h * 0.4;
+    }
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink');
+      const xp = x0 + L * ppm, pr = 16;
+      // โต๊ะ
+      ctx.fillStyle = dark ? '#3a4150' : '#c9ced8';
+      ctx.fillRect(10, y0 + 110, cv.w - 20, 8);
+      // เครื่องสั่น
+      ctx.fillStyle = dark ? '#3a6fb8' : '#3b7be0';
+      ctx.fillRect(x0 - 50, y0 - 26, 44, 52);
+      ctx.fillStyle = dark ? '#8a93a3' : '#6b7280';
+      ctx.fillRect(x0 - 8, y0 - 3, 8, 6);
+      ctx.fillStyle = '#fff'; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('VIB', x0 - 28, y0 + 4);
+      ctx.fillStyle = dark ? '#4a5160' : '#6b7280';
+      ctx.fillRect(x0 - 50, y0 + 26, 44, y0 + 110 - (y0 + 26));
+      // รอกและแท่น
+      ctx.fillStyle = dark ? '#8a93a3' : '#9aa3b0';
+      ctx.fillRect(xp + pr - 4, y0 - 4, 8, 118);
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.5 / z;
+      ctx.fillStyle = dark ? '#5d6677' : '#d6dae2';
+      ctx.beginPath(); ctx.arc(xp, y0 + pr, pr, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(xp, y0 + pr, 2.5, 0, 7); ctx.fillStyle = ink; ctx.fill();
+      // เส้นลวดส่วนห้อยและมวล
+      const hy = y0 + pr + 40 + 0;
+      ctx.strokeStyle = ink; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(xp + pr, y0 + pr); ctx.lineTo(xp + pr, hy); ctx.stroke();
+      ctx.fillStyle = dark ? '#c9a24a' : '#b8892f';
+      for (let i = 0; i < s.nm; i++) ctx.fillRect(xp + pr - 14, hy + i * 5, 28, 4);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif';
+      ctx.fillText(s.nm * 50 + ' g', xp + pr + 34, hy + 10);
+      // ไม้เมตรเหนือเส้นลวด ขีด 0 ตรงจุดที่ลวดติดเครื่องสั่น ขีดอยู่ขอบล่าง
+      const ry = y0 - 92, rh = 30;
+      ctx.fillStyle = dark ? '#a87e48' : '#e6c58f';
+      ctx.fillRect(x0 - 6, ry, 1.3 * ppm + 12, rh);
+      ctx.strokeStyle = '#1b1b1b'; ctx.fillStyle = '#1b1b1b';
+      const mmPx = ppm / 1000, showMm = mmPx * z >= 2;
+      for (let mm = 0; mm <= 1300; mm += showMm ? 1 : 10) {
+        const x = x0 + mm * mmPx;
+        const l = mm % 100 === 0 ? 0.55 : mm % 50 === 0 ? 0.42 : mm % 10 === 0 ? 0.3 : mm % 5 === 0 ? 0.22 : 0.14;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, ry + rh); ctx.lineTo(x, ry + rh - l * rh); ctx.stroke();
+        if (mm % 100 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 100 === 0 ? 11 : 9) / Math.min(z, 3.5) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(mm / 10, x, ry + 1 / z);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+      // เส้นลวดที่สั่น: แถบจาง ๆ คือขอบเขตการสั่น เส้นทึบคือรูปร่างขณะหนึ่ง
+      const sh = shape(), N = 400, maxPx = 46;
+      const disp = (u) => {
+        // u = (L−x)/L ; คืนค่าการกระจัด (m) แบบมีเครื่องหมาย
+        return s.on ? (sh.a0 * Math.sin(sh.a * u)) / sh.den : 0;
+      };
+      const toPx = (mm) => maxPx * Math.tanh(mm / 5); // ขยายภาพการสั่น และลวดยืดได้จำกัดจึงอิ่มตัว
+      const env = (u) => (s.on ? (sh.a0 * Math.sqrt(Math.sin(sh.a * u) ** 2 + Math.sinh(sh.b * u) ** 2)) / sh.den : 0);
+      ctx.fillStyle = dark ? 'rgba(150,190,255,0.22)' : 'rgba(47,111,222,0.18)';
+      ctx.beginPath();
+      for (let i = 0; i <= N; i++) { const x = (i / N) * L; ctx.lineTo(x0 + x * ppm, y0 - toPx(env(1 - x / L))); }
+      for (let i = N; i >= 0; i--) { const x = (i / N) * L; ctx.lineTo(x0 + x * ppm, y0 + toPx(env(1 - x / L))); }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.3 / z;
+      ctx.beginPath();
+      const c = Math.cos(s.phase);
+      for (let i = 0; i <= N; i++) { const x = (i / N) * L; ctx.lineTo(x0 + x * ppm, y0 + toPx(disp(1 - x / L)) * c); }
+      ctx.stroke();
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      s.phase += dt * 2 * Math.PI * 7; // แสดงการสั่นช้า ๆ (สโตรโบสโคป) ไม่ใช่ความถี่จริง
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ภาพการสั่นแสดงแบบช้า (เหมือนดูด้วยไฟกะพริบ)', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

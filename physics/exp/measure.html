@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การวัดและความคลาดเคลื่อน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+let RHO_TRUE = null;   // ความหนาแน่นของโลหะชุดนี้ (g/cm³)
+const mean3 = (r) => { const a = [r.d1, r.d2, r.d3].filter(isFinite); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : NaN; };
+const sd3 = (r) => {
+  const a = [r.d1, r.d2, r.d3].filter(isFinite);
+  if (a.length < 2) return NaN;
+  const m = a.reduce((s, v) => s + v, 0) / a.length;
+  return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1));
+};
+
+Lab.init({
+  id: 'measure',
+  short: 'การวัดและความคลาดเคลื่อน',
+  title: 'การวัดและความคลาดเคลื่อน: หาความหนาแน่นของโลหะ',
+  level: 'ม.4–ม.6',
+  intro: {
+    objective: [
+      'อ่านค่าจากเวอร์เนียร์คาลิปเปอร์ (ละเอียด 0.02 mm) และไมโครมิเตอร์ (ละเอียด 0.01 mm) ได้ถูกต้อง',
+      'ตรวจและแก้ความคลาดเคลื่อนศูนย์ (zero error) ของเครื่องมือวัด',
+      'หาค่าเฉลี่ยและส่วนเบี่ยงเบนมาตรฐานของการวัดซ้ำ และหาความหนาแน่นของโลหะจากกราฟมวลกับปริมาตร',
+    ],
+    theory:
+      '<p><b>ความคลาดเคลื่อนเชิงระบบ</b> (systematic error) ทำให้ค่าที่วัดเบี่ยงไปทางเดียวกันทุกครั้ง เช่น เครื่องมือมีความคลาดเคลื่อนศูนย์ แก้ได้ด้วยการหักค่านั้นออก</p>' +
+      '<div class="eq">ค่าจริง = ค่าที่อ่านได้ − ค่าความคลาดเคลื่อนศูนย์</div>' +
+      '<p><b>ความคลาดเคลื่อนสุ่ม</b> (random error) ทำให้ค่าที่วัดซ้ำกระจายรอบค่าจริง ลดได้ด้วยการวัดหลายครั้งแล้วหาค่าเฉลี่ย ความกระจายบอกด้วยส่วนเบี่ยงเบนมาตรฐาน</p>' +
+      '<div class="eq">d̄ = Σdᵢ / N &nbsp;&nbsp; s = √[ Σ(dᵢ − d̄)² / (N − 1) ]</div>' +
+      '<p>ปริมาตรทรงกระบอก V = πd²L/4 ความคลาดเคลื่อนสัมพัทธ์ของ V ประมาณ 2(Δd/d) + ΔL/L จึงต้องวัด d ให้ละเอียดเป็นพิเศษ</p>' +
+      '<p>วัตถุทำจากโลหะชนิดเดียวกัน มวล m = ρV กราฟ m กับ V จึงเป็นเส้นตรงผ่านจุดกำเนิด ความชันคือความหนาแน่น ρ</p>' +
+      '<p><b>เลขนัยสำคัญ</b>: บันทึกทุกหลักที่เครื่องมืออ่านได้ เช่น เวอร์เนียร์ 12.34 mm, ไมโครมิเตอร์ 12.345 mm (หลักสุดท้ายประมาณครึ่งช่อง)</p>',
+    equipment: ['เวอร์เนียร์คาลิปเปอร์ ช่องเวอร์เนียร์ 50 ช่อง (0.02 mm)', 'ไมโครมิเตอร์ ระยะเกลียว 0.5 mm ปลอกหมุน 50 ช่อง (0.01 mm)', 'เครื่องชั่งดิจิทัล (0.01 g)', 'ทรงกระบอกโลหะชนิดเดียวกัน 6 ชิ้น'],
+    procedure: [
+      'เลือกไมโครมิเตอร์ เลือก "ไม่มีวัตถุ" แล้วหมุนปิดจนสุด อ่านค่าความคลาดเคลื่อนศูนย์ จดไว้',
+      'เลือกทรงกระบอกที่ 1 วัดเส้นผ่านศูนย์กลาง d ด้วยไมโครมิเตอร์ 3 ตำแหน่ง (ตำแหน่ง 1, 2, 3) หักความคลาดเคลื่อนศูนย์ก่อนบันทึก',
+      'ใช้เวอร์เนียร์คาลิปเปอร์วัดความยาว L ของทรงกระบอก',
+      'ชั่งมวล m ด้วยเครื่องชั่ง',
+      'ทำซ้ำกับทรงกระบอกทุกชิ้น แถวที่ n ของตารางคือทรงกระบอกที่ n',
+    ],
+    tip: 'การอ่านเวอร์เนียร์: อ่านสเกลหลักที่ขีด 0 ของเวอร์เนียร์ (mm) แล้วหาขีดเวอร์เนียร์ที่ตรงกับขีดสเกลหลักพอดี เลขบนเวอร์เนียร์คือทศนิยม เช่น ตรงที่ "3" ช่องที่สองถัดไป = 0.34 mm',
+  },
+  table: {
+    rows: 6,
+    hint: 'แถวที่ n = ทรงกระบอกที่ n · d ที่บันทึกต้องหักความคลาดเคลื่อนศูนย์แล้ว · ช่องสีเทาคำนวณให้อัตโนมัติ',
+    columns: [
+      { key: 'm', label: 'มวล m<br>(g)', input: true },
+      { key: 'd1', label: 'd ครั้งที่ 1<br>(mm)', input: true },
+      { key: 'd2', label: 'd ครั้งที่ 2<br>(mm)', input: true },
+      { key: 'd3', label: 'd ครั้งที่ 3<br>(mm)', input: true },
+      { key: 'dm', label: 'd̄<br>(mm)', calc: (r) => mean3(r), digits: 3 },
+      { key: 'sd', label: 'ส่วนเบี่ยงเบน<br>มาตรฐาน s (mm)', calc: (r) => sd3(r), digits: 3 },
+      { key: 'L', label: 'ความยาว L<br>(mm)', input: true },
+      { key: 'V', label: 'ปริมาตร V<br>(cm³)', calc: (r) => (Math.PI * r.dm * r.dm * r.L) / 4 / 1000, digits: 3 },
+    ],
+  },
+  graph: {
+    title: 'มวลกับปริมาตร', x: 'V', y: 'm', xv: 'V', yv: 'm', xlabel: 'ปริมาตร V (cm³)', ylabel: 'มวล m (g)', origin: true,
+    explain: 'วัตถุทุกชิ้นเป็นโลหะเดียวกัน ความชันของกราฟ m กับ V คือความหนาแน่น ถ้ามีจุดหลุดเส้นมาก ให้ตรวจการอ่านเครื่องมือของชิ้นนั้นอีกครั้ง',
+  },
+  results(fit) {
+    return [
+      { label: 'ความหนาแน่น ρ = ความชัน', value: fit.m, unc: fit.sm, unit: 'g/cm³', accepted: 2.70 },
+      { label: 'ความหนาแน่นของโลหะชุดนี้', value: fit.m, unit: 'g/cm³', accepted: RHO_TRUE, hidden: true, digitsTrue: 3 },
+    ];
+  },
+  questions: [
+    'ไมโครมิเตอร์ชุดนี้มีความคลาดเคลื่อนศูนย์เท่าใด เป็นความคลาดเคลื่อนชนิดใด ถ้าไม่หักออกจะมีผลต่อความหนาแน่นที่ได้อย่างไร',
+    'ค่า d ที่วัดซ้ำ 3 ตำแหน่งไม่เท่ากันเพราะอะไร ส่วนเบี่ยงเบนมาตรฐานบอกอะไร',
+    'เหตุใดจึงวัดเส้นผ่านศูนย์กลางด้วยไมโครมิเตอร์ แต่วัดความยาวด้วยเวอร์เนียร์คาลิปเปอร์',
+    'ถ้าวัด d คลาดเคลื่อน 1% และ L คลาดเคลื่อน 1% ปริมาตรจะคลาดเคลื่อนประมาณกี่เปอร์เซ็นต์ เพราะเหตุใด',
+    'เทียบความหนาแน่นที่ได้กับตารางความหนาแน่นของโลหะ โลหะนี้น่าจะเป็นโลหะชนิดใด',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 10, r: 90 });
+    lens.button(stage);
+    const rng = api.rng;
+
+    // ค่าซ่อนของอุปกรณ์ชุดนี้
+    RHO_TRUE = 2.70 * (0.985 + 0.03 * rng());
+    const ZERO = Math.round((rng() * 0.07 - 0.035) * 100) / 100 || 0.02; // ความคลาดเคลื่อนศูนย์ไมโครมิเตอร์ (mm)
+    const objs = [];
+    for (let i = 0; i < 6; i++) {
+      const d = 8 + i * 3.1 + rng() * 1.6;           // mm
+      const L = 14 + rng() * 22;                     // mm
+      // เส้นผ่านศูนย์กลางแต่ละตำแหน่งต่างกันเล็กน้อย (วัตถุไม่กลมสมบูรณ์)
+      const dp = [0, 1, 2].map(() => d + (rng() - 0.5) * 0.04);
+      const dm = (dp[0] + dp[1] + dp[2]) / 3;
+      const m = (RHO_TRUE * Math.PI * dm * dm * L) / 4 / 1000;
+      objs.push({ d, L, dp, m: m + (rng() - 0.5) * 0.02 });
+    }
+
+    const s = { inst: 'mic', obj: 0, side: 'd', pos: 0, req: 30, mreq: 25, bal: 0, balT: 0 };
+
+    ctrls.innerHTML =
+      '<h3>เครื่องมือ</h3>' +
+      '<div class="seg" id="inst"><button data-v="ver">เวอร์เนียร์</button><button data-v="mic">ไมโครมิเตอร์</button><button data-v="bal">เครื่องชั่ง</button></div>' +
+      '<h3>วัตถุ</h3>' +
+      '<div class="seg" id="obj">' + '<button data-v="-1">ไม่มี</button>' + objs.map((o, i) => '<button data-v="' + i + '">' + (i + 1) + '</button>').join('') + '</div>' +
+      '<div id="cSide"><h3>วัดด้าน</h3><div class="seg" id="side"><button data-v="d">เส้นผ่านศูนย์กลาง</button><button data-v="L">ความยาว</button></div></div>' +
+      '<div id="cPos"><h3>ตำแหน่งที่วัดบนวัตถุ</h3><div class="seg" id="pos"><button data-v="0">1</button><button data-v="1">2</button><button data-v="2">3</button></div></div>' +
+      '<div id="cJaw"><h3 id="jawT">เลื่อนปากวัด</h3>' +
+      '<input type="range" id="jaw" min="0" max="1" step="0.0001">' +
+      '<div class="row"><button class="btn" data-j="-1">◀◀</button><button class="btn" data-j="-0.1">◀</button><button class="btn" data-j="0.1">▶</button><button class="btn" data-j="1">▶▶</button></div>' +
+      '<div class="row"><button class="btn" id="close">หมุนปิดจนแตะวัตถุ</button></div></div>' +
+      '<h3>กำลังขยายของแว่นขยาย</h3><div class="seg" id="zoom"><button data-v="5">×5</button><button data-v="10">×10</button><button data-v="20">×20</button></div>' +
+      '<p class="muted" style="font-size:13px;margin-top:8px">ปากวัดจะหยุดเมื่อแตะวัตถุ ไม่บีบเข้าไปได้อีก</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const maxOpen = () => (s.inst === 'mic' ? 25 : 120);
+    const jaw = $('#jaw');
+    const size = () => {
+      if (s.obj < 0) return 0;
+      const o = objs[s.obj];
+      return s.inst === 'mic' || s.side === 'd' ? o.dp[s.pos] : o.L;
+    };
+    // ระยะเปิดจริงของปากวัด: หยุดที่ผิววัตถุ
+    const open = () => Math.max(s.inst === 'mic' ? s.mreq : s.req, size());
+    function syncJaw() { jaw.value = (s.inst === 'mic' ? s.mreq : s.req) / maxOpen(); }
+    function setReq(v) {
+      v = Math.max(0, Math.min(maxOpen(), v));
+      v = Math.max(v, size());
+      if (s.inst === 'mic') s.mreq = v; else s.req = v;
+      syncJaw();
+    }
+    jaw.oninput = () => setReq(+jaw.value * maxOpen());
+    ctrls.querySelectorAll('[data-j]').forEach((b) => (b.onclick = () => {
+      // ไมโครมิเตอร์: ▶ = 0.005 mm, ▶▶ = 0.1 mm · เวอร์เนียร์: ▶ = 0.01 mm, ▶▶ = 1 mm
+      const big = Math.abs(+b.dataset.j) === 1, mic = s.inst === 'mic';
+      const k = Math.sign(+b.dataset.j) * (big ? (mic ? 0.1 : 1) : (mic ? 0.005 : 0.01));
+      setReq((mic ? s.mreq : s.req) + k);
+    }));
+    $('#close').onclick = () => setReq(0);
+    function bind(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); sync(); refresh(); });
+      sync();
+    }
+    function refresh() {
+      $('#cSide').style.display = s.inst === 'ver' ? '' : 'none';
+      $('#cPos').style.display = s.inst === 'bal' ? 'none' : '';
+      $('#cJaw').style.display = s.inst === 'bal' ? 'none' : '';
+      $('#jawT').textContent = s.inst === 'mic' ? 'หมุนปลอกหมุน (thimble)' : 'เลื่อนปากวัด';
+      setReq(s.inst === 'mic' ? s.mreq : s.req);
+    }
+    bind('inst', () => s.inst, (v) => (s.inst = v));
+    bind('obj', () => s.obj, (v) => { s.obj = +v; s.req = Math.max(s.req, size() + 3); s.mreq = Math.min(25, Math.max(s.mreq, size() + 1)); });
+    bind('side', () => s.side, (v) => { s.side = v; s.req = Math.max(s.req, size() + 3); });
+    bind('pos', () => s.pos, (v) => (s.pos = +v));
+    bind('zoom', () => lens.zoom, (v) => (lens.zoom = +v));
+    s.obj = 0; ctrls.querySelector('#obj [data-v="0"]').classList.add('on');
+    ctrls.querySelector('#obj [data-v="-1"]').classList.remove('on');
+    refresh();
+
+    const ink = () => Lab.css('--ink');
+    const metal = (ctx, x, y, w, h, dark) => {
+      const g = ctx.createLinearGradient(x, y, x, y + h);
+      g.addColorStop(0, dark ? '#7d8693' : '#d5dae1'); g.addColorStop(0.5, dark ? '#a9b2bf' : '#f2f4f7'); g.addColorStop(1, dark ? '#5c6470' : '#aab2bd');
+      ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+    };
+    // วัตถุทรงกระบอก (อะลูมิเนียม) มองด้านข้าง: w = ความกว้างตามแนวปากวัด, h = ความสูง
+    function cylinder(ctx, x, y, w, h, z, axisVertical) {
+      const g = axisVertical ? ctx.createLinearGradient(x, 0, x + w, 0) : ctx.createLinearGradient(0, y, 0, y + h);
+      g.addColorStop(0, '#9aa1a8'); g.addColorStop(0.35, '#e9ecef'); g.addColorStop(1, '#868d95');
+      ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#5b6168'; ctx.lineWidth = 0.8 / z; ctx.strokeRect(x, y, w, h);
+    }
+
+    /* ---------- เวอร์เนียร์คาลิปเปอร์ ---------- */
+    function sceneVernier(ctx, z) {
+      const dark = Lab.dark();
+      const pp = (cv.w - 80) / 138;           // px ต่อ mm
+      const x0 = 56, yB = 120;                // x0 = ผิวในของปากวัดตาย, yB = ขอบล่างของแท่งสเกลหลัก
+      const op = open();
+      const xm = x0 + op * pp;
+      // แท่งสเกลหลัก
+      metal(ctx, x0 - 34, yB - 34, 136 * pp + 34, 34, dark);
+      ctx.strokeStyle = '#4b525c'; ctx.lineWidth = 1 / z; ctx.strokeRect(x0 - 34, yB - 34, 136 * pp + 34, 34);
+      // ปากวัดตาย (ล่าง) และปากวัดใน (บน)
+      ctx.fillStyle = dark ? '#8a93a0' : '#b7bec8';
+      ctx.beginPath(); ctx.moveTo(x0 - 34, yB); ctx.lineTo(x0, yB); ctx.lineTo(x0, yB + 46 * pp); ctx.lineTo(x0 - 12, yB + 50 * pp); ctx.lineTo(x0 - 34, yB + 20); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // วัตถุระหว่างปากวัด
+      if (s.obj >= 0) {
+        const o = objs[s.obj];
+        if (s.side === 'd') cylinder(ctx, x0, yB + 14, o.dp[s.pos] * pp, Math.min(o.L, 40) * pp, z, true);
+        else cylinder(ctx, x0, yB + 14 + (40 - o.d) * pp * 0.3, o.L * pp, o.d * pp, z, false);
+      }
+      // สเกลหลัก: ขีด mm ที่ขอบล่างของแท่ง
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let mm = 0; mm <= 135; mm++) {
+        const x = x0 + mm * pp, l = mm % 10 === 0 ? 13 : mm % 5 === 0 ? 9 : 6;
+        ctx.lineWidth = 1 / z;
+        ctx.beginPath(); ctx.moveTo(x, yB); ctx.lineTo(x, yB - l); ctx.stroke();
+        if (mm % 10 === 0) { ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(mm / 10, x, yB - 14); }
+      }
+      ctx.font = '9px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('cm', x0 + 136 * pp, yB - 14);
+      // แผ่นเวอร์เนียร์ (เลื่อนได้) พร้อมปากวัดเลื่อน
+      const vw = 54 * pp;
+      ctx.fillStyle = dark ? 'rgba(150,160,175,0.95)' : 'rgba(225,230,236,0.97)';
+      ctx.fillRect(xm - 8, yB, vw, 30);
+      ctx.strokeStyle = '#4b525c'; ctx.lineWidth = 1 / z; ctx.strokeRect(xm - 8, yB, vw, 30);
+      ctx.fillStyle = dark ? '#8a93a0' : '#b7bec8';
+      ctx.beginPath(); ctx.moveTo(xm, yB + 30); ctx.lineTo(xm, yB + 46 * pp); ctx.lineTo(xm + 12, yB + 50 * pp); ctx.lineTo(xm + 30, yB + 30); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let k = 0; k <= 50; k++) {
+        const x = xm + k * 0.98 * pp, l = k % 5 === 0 ? 10 : 6;
+        ctx.lineWidth = 1 / z;
+        ctx.beginPath(); ctx.moveTo(x, yB); ctx.lineTo(x, yB + l); ctx.stroke();
+        if (k % 5 === 0) { ctx.font = '8.5px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(k / 5, x, yB + 11); }
+      }
+      ctx.font = '8px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('0.02 mm', xm + 2, yB + 21);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    /* ---------- ไมโครมิเตอร์ ---------- */
+    function sceneMic(ctx, z) {
+      const dark = Lab.dark();
+      const pp = Math.min((cv.w - 110) / 80, 11);
+      const cy = cv.h * 0.42, xa = 70;
+      const x = open(), reading = x + ZERO;
+      const xf = xa + x * pp;                  // ผิวแกนวัด
+      const xz = xa + 30 * pp;                 // ขีด 0 ของปลอก
+      const xe = xz + reading * pp;            // ขอบปลอกหมุน
+      const rs = 4 * pp, rt = 6.5 * pp;
+      // โครงรูปตัว U
+      ctx.strokeStyle = dark ? '#5b6370' : '#3d4450'; ctx.lineWidth = 9 * pp / 4;
+      ctx.beginPath(); ctx.moveTo(xa - 4 * pp, cy); ctx.lineTo(xa - 4 * pp, cy + 26 * pp); ctx.lineTo(xz - 2 * pp, cy + 26 * pp); ctx.lineTo(xz - 2 * pp, cy); ctx.stroke();
+      ctx.lineWidth = 1 / z;
+      // แอนวิล
+      metal(ctx, xa - 7 * pp, cy - 3 * pp, 7 * pp, 6 * pp, dark);
+      ctx.strokeStyle = '#3d434b'; ctx.strokeRect(xa - 7 * pp, cy - 3 * pp, 7 * pp, 6 * pp);
+      // วัตถุ
+      if (s.obj >= 0) {
+        const o = objs[s.obj], d = o.dp[s.pos];
+        cylinder(ctx, xa, cy - Math.min(o.L, 30) * pp / 2, d * pp, Math.min(o.L, 30) * pp, z, true);
+      }
+      // แกนวัด
+      metal(ctx, xf, cy - 1.8 * pp, xz - xf, 3.6 * pp, dark);
+      ctx.strokeStyle = '#3d434b'; ctx.strokeRect(xf, cy - 1.8 * pp, xz - xf, 3.6 * pp);
+      // ปลอก (sleeve) พร้อมสเกล
+      metal(ctx, xz - 3 * pp, cy - rs, 29 * pp, 2 * rs, dark);
+      ctx.strokeStyle = '#3d434b'; ctx.strokeRect(xz - 3 * pp, cy - rs, 29 * pp, 2 * rs);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(xz - 1 * pp, cy); ctx.lineTo(Math.min(xe, xz + 26 * pp), cy); ctx.stroke();
+      for (let hm = 0; hm <= 50; hm++) {
+        const xx = xz + hm * 0.5 * pp;
+        if (xx > xe - 0.2) break;
+        ctx.beginPath();
+        if (hm % 2 === 0) { ctx.moveTo(xx, cy); ctx.lineTo(xx, cy - (hm % 10 === 0 ? 2.2 : 1.5) * pp); }
+        else { ctx.moveTo(xx, cy); ctx.lineTo(xx, cy + 1.5 * pp); }
+        ctx.stroke();
+        if (hm % 10 === 0) { ctx.font = Math.max(8, 1.6 * pp) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(hm / 2, xx, cy - 2.4 * pp); }
+      }
+      // ปลอกหมุน (thimble)
+      const tw = 22 * pp;
+      const g = ctx.createLinearGradient(0, cy - rt, 0, cy + rt);
+      g.addColorStop(0, dark ? '#59616d' : '#9aa3ae'); g.addColorStop(0.45, dark ? '#c4cbd4' : '#f4f6f8'); g.addColorStop(1, dark ? '#474e58' : '#7f8893');
+      ctx.fillStyle = g; ctx.fillRect(xe, cy - rt, tw, 2 * rt);
+      ctx.strokeStyle = '#3d434b'; ctx.strokeRect(xe, cy - rt, tw, 2 * rt);
+      // ขีดบนปลอกหมุน: 50 ช่องรอบวง
+      const frac = (((reading % 0.5) + 0.5) % 0.5) / 0.5 * 50;
+      ctx.save(); ctx.beginPath(); ctx.rect(xe - 1, cy - rt, tw, 2 * rt); ctx.clip();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let j = 0; j < 50; j++) {
+        let dj = j - frac; dj -= 50 * Math.round(dj / 50);
+        const ph = (dj * 2 * Math.PI) / 50;
+        if (Math.cos(ph) < 0.2) continue;
+        const y = cy + rt * Math.sin(ph);
+        const l = (j % 5 === 0 ? 2.4 : 1.4) * pp;
+        ctx.lineWidth = (1 / z) * (0.5 + 0.5 * Math.cos(ph));
+        ctx.beginPath(); ctx.moveTo(xe, y); ctx.lineTo(xe + l, y); ctx.stroke();
+        if (j % 5 === 0) {
+          ctx.font = Math.max(7, 1.5 * pp) * (0.6 + 0.4 * Math.cos(ph)) + 'px Sarabun, sans-serif';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(j, xe + l + 0.6 * pp, y);
+        }
+      }
+      ctx.restore();
+      // ตัวกันลื่น (ratchet)
+      metal(ctx, xe + tw, cy - 3.5 * pp, 9 * pp, 7 * pp, dark);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('ระยะเกลียว 0.5 mm · ปลอกหมุน 50 ช่อง', xa - 6 * pp, cy + 30 * pp);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    /* ---------- เครื่องชั่ง ---------- */
+    function sceneBal(ctx, z, t) {
+      const dark = Lab.dark(), cx = cv.w / 2, cy = cv.h * 0.5;
+      ctx.fillStyle = dark ? '#2d333d' : '#e1e5eb'; ctx.fillRect(cx - 150, cy, 300, 110);
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1 / z; ctx.strokeRect(cx - 150, cy, 300, 110);
+      metal(ctx, cx - 110, cy - 8, 220, 8, dark);
+      ctx.fillStyle = '#10141b'; ctx.fillRect(cx - 80, cy + 30, 160, 50);
+      const m = s.obj >= 0 ? objs[s.obj].m : 0;
+      // ตัวเลขแกว่งหลักสุดท้ายเล็กน้อย
+      if (t - s.balT > 0.7) { s.balT = t; s.bal = Math.round((m + Lab.noise(0.004)) * 100) / 100; if (Math.abs(s.bal) < 0.005) s.bal = 0; }
+      ctx.fillStyle = '#8ff0b0'; ctx.font = '600 30px Consolas, monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(s.bal.toFixed(2), cx + 50, cy + 55);
+      ctx.font = '16px Sarabun, sans-serif'; ctx.fillText('g', cx + 70, cy + 57);
+      if (s.obj >= 0) {
+        const o = objs[s.obj], k = 3.2;
+        cylinder(ctx, cx - (o.d * k) / 2, cy - 8 - o.L * k, o.d * k, o.L * k, z, true);
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    let T = 0;
+    Lab.loop((dt, t) => {
+      if (!cv.w) return;
+      T = t;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      const sc = s.inst === 'ver' ? sceneVernier : s.inst === 'mic' ? sceneMic : (c, z) => sceneBal(c, z, T);
+      sc(ctx, 1);
+      if (s.inst !== 'bal') lens.draw(sc);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : s.inst === 'bal' ? 'อ่านมวลจากจอเครื่องชั่ง' : 'เปิดแว่นขยายเพื่ออ่านสเกลละเอียด', 10, 8);
+      ctx.textBaseline = 'alphabetic';
+    });
+  },
+});
+</script>
+</body>
+</html>

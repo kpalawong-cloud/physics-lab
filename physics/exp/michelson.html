@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การแทรกสอดแบบไมเคิลสัน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const LAM_HENE = 632.8;   // nm
+let TRUE = null;          // ค่าซ่อนของเครื่องนี้: อัตราทดคันโยก, ความยาวคลื่นแหล่งแสงที่ไม่ทราบ
+
+Lab.init({
+  id: 'michelson',
+  short: 'อินเตอร์เฟอโรมิเตอร์ไมเคิลสัน',
+  title: 'การแทรกสอดแบบไมเคิลสัน',
+  level: 'ม.5–ม.6',
+  intro: {
+    objective: [
+      'สังเกตริ้วการแทรกสอดรูปวงกลมของอินเตอร์เฟอโรมิเตอร์ไมเคิลสัน',
+      'นับจำนวนริ้วที่เปลี่ยนไปเมื่อเลื่อนกระจก แล้วหาความยาวคลื่นของแสง',
+      'ใช้เลเซอร์ฮีเลียม-นีออนที่ทราบความยาวคลื่นตรวจสอบ (calibrate) สเกลไมโครมิเตอร์',
+    ],
+    theory:
+      '<p>แสงถูกแบ่งด้วยแผ่นแยกลำแสง (beam splitter) ไปสะท้อนที่กระจก M<sub>1</sub> และ M<sub>2</sub> แล้วกลับมารวมกัน ผลต่างทางเดินแสงคือ 2d เมื่อ d คือผลต่างระยะของกระจกทั้งสอง</p>' +
+      '<div class="eq">2d cos θ = m λ &nbsp;&nbsp;(แถบสว่าง)</div>' +
+      '<p>เมื่อเลื่อนกระจก M<sub>1</sub> ไป Δd ริ้วที่จุดกลางจะเปลี่ยน (เกิดใหม่หรือหายเข้าไป) ไป N ริ้ว โดย</p>' +
+      '<div class="eq">2 Δd = N λ &nbsp;&nbsp;→&nbsp;&nbsp; Δd = (λ/2) · N</div>' +
+      '<p>กราฟ Δd กับ N เป็นเส้นตรงผ่านจุดกำเนิด ความชันคือ λ/2 ดังนั้น <b>λ = 2 × ความชัน</b></p>' +
+      '<p>กระจก M<sub>1</sub> ถูกเลื่อนผ่านคันโยกทดรอบ ไมโครมิเตอร์ 1 ช่องบนดรัม = 1 µm ตามที่ระบุ แต่อัตราทดจริงอาจคลาดเล็กน้อย จึงต้องตรวจสอบด้วยแสงที่ทราบความยาวคลื่น</p>',
+    equipment: ['อินเตอร์เฟอโรมิเตอร์ไมเคิลสัน (แผ่นแยกลำแสง, แผ่นชดเชย, กระจก M₁ และ M₂)', 'ไมโครมิเตอร์พร้อมคันโยกทดรอบ (1 ช่อง = 1 µm)', 'เลเซอร์ฮีเลียม-นีออน 632.8 nm', 'แหล่งแสงเลเซอร์ที่ไม่ทราบความยาวคลื่น', 'เลนส์กระจายแสง และฉากรับภาพ'],
+    procedure: [
+      'เลือกแหล่งแสง He-Ne หมุนไมโครมิเตอร์ไปทางเดียวกันเล็กน้อยก่อนเริ่ม เพื่อขจัดระยะคลอนของเฟือง (backlash)',
+      'ใช้แว่นขยายอ่านค่าไมโครมิเตอร์เริ่มต้น (ปลอกบอกหลักร้อย µm, ดรัมบอกหน่วย µm ประมาณค่าถึง 0.1 ช่อง)',
+      'หมุนไมโครมิเตอร์ช้า ๆ ไปทางเดิม พร้อมนับจำนวนริ้วที่ผ่านกากบาทตรงกลาง (ใช้ปุ่มมอเตอร์หมุนช้าได้) จนครบ N ริ้วแล้วหยุด อ่านค่าสุดท้าย',
+      'ทำซ้ำสำหรับ N = 10, 20, 30, 40, 50 (หรือนับต่อเนื่องแล้วอ่านค่าทุก 10 ริ้ว)',
+      'เปลี่ยนเป็นแหล่งแสงที่ไม่ทราบความยาวคลื่น แล้วทำซ้ำ',
+    ],
+    tip: 'หยุดอ่านค่าเมื่อจุดกลางมืดหรือสว่างเต็มที่เหมือนตอนเริ่มนับ และหมุนไปทางเดียวตลอด ถ้าหมุนกลับทิศ ระยะคลอนจะทำให้ค่าคลาดเคลื่อน',
+  },
+  table: {
+    rows: 6,
+    sets: [{ key: 'HN', label: 'He-Ne 632.8 nm' }, { key: 'X', label: 'แสงไม่ทราบ λ' }],
+    hint: 'แหล่งแสงแต่ละชนิดมีตารางของตัวเอง (สลับตามแหล่งแสงที่เลือก) ค่าไมโครมิเตอร์บันทึกเป็น µm',
+    columns: [
+      { key: 'N', label: 'จำนวนริ้วที่นับ N', input: true },
+      { key: 'r1', label: 'ค่าไมโครมิเตอร์เริ่ม<br>(µm)', input: true },
+      { key: 'r2', label: 'ค่าไมโครมิเตอร์สุดท้าย<br>(µm)', input: true },
+      { key: 'dd', label: 'ระยะเลื่อนกระจก Δd<br>(µm)', calc: (r) => Math.abs(r.r2 - r.r1), digits: 2 },
+    ],
+  },
+  graph: {
+    title: 'Δd กับจำนวนริ้ว N', x: 'N', y: 'dd', xv: 'N', yv: 'Δd', xlabel: 'จำนวนริ้ว N', ylabel: 'ระยะเลื่อนกระจก Δd (µm)', origin: true,
+    explain: 'ความชัน = λ/2 จึงได้ λ = 2 × ความชัน ถ้าใช้ He-Ne แล้วได้ไม่ตรง 632.8 nm แสดงว่าสเกลไมโครมิเตอร์ต้องแก้ด้วยตัวคูณ k = 632.8 / λ ที่วัดได้',
+  },
+  results(fit, rows, truth, set) {
+    const lam = 2 * fit.m * 1000, ul = 2 * fit.sm * 1000;
+    if (set === 'X') {
+      return [
+        { label: 'ความชัน (λ/2)', value: fit.m, unc: fit.sm, unit: 'µm/ริ้ว' },
+        { label: 'ความยาวคลื่น λ = 2 × ความชัน (ยังไม่แก้สเกล)', value: lam, unc: ul, unit: 'nm' },
+        { label: 'ความยาวคลื่นจริงของแหล่งแสงนี้', value: lam, unit: 'nm', accepted: TRUE && TRUE.lamX, hidden: true, digitsTrue: 1 },
+      ];
+    }
+    return [
+      { label: 'ความชัน (λ/2)', value: fit.m, unc: fit.sm, unit: 'µm/ริ้ว' },
+      { label: 'ความยาวคลื่น λ = 2 × ความชัน', value: lam, unc: ul, unit: 'nm', accepted: LAM_HENE },
+      { label: 'ตัวคูณแก้สเกลไมโครมิเตอร์ k = 632.8 / λ', value: LAM_HENE / lam, unc: (LAM_HENE / lam) * (ul / lam), unit: '' },
+      { label: 'ตัวคูณแก้สเกลจริงของเครื่องนี้', value: LAM_HENE / lam, unit: '', accepted: TRUE && TRUE.kappa, hidden: true, digitsTrue: 4 },
+    ];
+  },
+  questions: [
+    'เมื่อเลื่อนกระจก M₁ ไปครึ่งความยาวคลื่น ผลต่างทางเดินแสงเปลี่ยนไปเท่าใด และริ้วที่จุดกลางเปลี่ยนไปกี่ริ้ว',
+    'ค่าความยาวคลื่นของ He-Ne ที่วัดได้ต่างจาก 632.8 nm เท่าใด ใช้ผลนี้แก้ค่าความยาวคลื่นของแหล่งแสงที่ไม่ทราบได้อย่างไร (แสดงการคำนวณ)',
+    'เหตุใดจึงนับริ้วจำนวนมาก (เช่น 50 ริ้ว) แทนการนับเพียงไม่กี่ริ้ว',
+    'ระยะคลอนของเฟือง (backlash) คืออะไร มีผลต่อการวัดอย่างไร และป้องกันได้อย่างไร',
+    'ถ้าต้องการวัดความหนาของแผ่นฟิล์มบางด้วยอินเตอร์เฟอโรมิเตอร์นี้ จะทำอย่างไร',
+  ],
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    TRUE = {
+      kappa: 1 + (rng() < 0.5 ? -1 : 1) * (0.008 + 0.012 * rng()), // อัตราทดจริง/ที่ระบุ
+      lamX: 532 + 8 * (rng() - 0.5),
+    };
+    const BL = 0.6;    // ระยะคลอน (ช่อง)
+    const D0 = 380;    // ผลต่างทางเดินแสงพื้นฐาน (µm)
+    const s = {
+      src: api.currentSet() === 'X' ? 'X' : 'HN',
+      R: 180 + Math.round(rng() * 3000) / 10,  // ค่าที่อ่านได้บนไมโครมิเตอร์ (µm ตามสเกล)
+      eff: 0, motor: 0, counter: false, cnt0: 0, drag: null,
+    };
+    s.eff = s.R;
+    const lam = () => (s.src === 'HN' ? LAM_HENE : TRUE.lamX) / 1000; // µm
+    const dTrue = () => TRUE.kappa * s.eff; // ระยะกระจกเลื่อนจริง (µm)
+    const order = () => (2 * (D0 + dTrue())) / lam();
+
+    ctrls.innerHTML =
+      '<h3>แหล่งแสง</h3><div class="seg" id="src"><button data-v="HN">He-Ne 632.8 nm</button><button data-v="X">ไม่ทราบ λ</button></div>' +
+      '<h3>หมุนไมโครมิเตอร์</h3>' +
+      '<div class="row"><button class="btn" id="m1">◀ 1</button><button class="btn" id="m01">◀ 0.1</button><button class="btn" id="p01">0.1 ▶</button><button class="btn" id="p1">1 ▶</button></div>' +
+      '<p class="muted" style="font-size:13px;margin:2px 0 6px">หน่วยเป็นช่องบนดรัม หรือลากซ้าย-ขวาบนดรัมในภาพ</p>' +
+      '<h3>มอเตอร์หมุนช้า (ช่วยนับ)</h3>' +
+      '<div class="row"><button class="btn" id="mL">◀ หมุน</button><button class="btn" id="mS">หยุด</button><button class="btn" id="mR">หมุน ▶</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px"><input type="checkbox" id="cnt"> แสดงตัวนับริ้ว (ปกติให้นับเอง)</label>' +
+      '<div class="row" id="cntRow" style="display:none"><span class="muted" style="flex:2;font-size:13px">ค่าตัวนับแสดงใต้ภาพริ้ว</span><button class="btn" id="cntZero">ตั้งศูนย์</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    // หมุนไมโครมิเตอร์: ค่าบนสเกลเปลี่ยนทันที แต่กระจกเคลื่อนเมื่อพ้นระยะคลอน
+    function turn(dv) {
+      s.R = Math.max(0, Math.min(2400, s.R + dv));
+      if (s.R - s.eff > BL / 2) s.eff = s.R - BL / 2;
+      else if (s.eff - s.R > BL / 2) s.eff = s.R + BL / 2;
+    }
+    $('#m1').onclick = () => turn(-1); $('#p1').onclick = () => turn(1);
+    $('#m01').onclick = () => turn(-0.1); $('#p01').onclick = () => turn(0.1);
+    $('#mL').onclick = () => (s.motor = -1); $('#mR').onclick = () => (s.motor = 1); $('#mS').onclick = () => (s.motor = 0);
+    $('#cnt').onchange = (e) => { s.counter = e.target.checked; $('#cntRow').style.display = s.counter ? '' : 'none'; s.cnt0 = order(); };
+    $('#cntZero').onclick = () => (s.cnt0 = order());
+    const srcEl = $('#src');
+    const syncSrc = () => srcEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.src));
+    srcEl.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; s.src = b.dataset.v; syncSrc(); api.useSet(s.src); s.cnt0 = order(); });
+    api.onSetChange = (k) => { s.src = k; syncSrc(); s.cnt0 = order(); };
+    syncSrc();
+
+    // สีของแสงตามความยาวคลื่น
+    const col = () => (s.src === 'HN' ? [255, 45, 35] : [70, 255, 90]);
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      const narrow = w < 640;
+      L.lw = narrow ? w : w * 0.52;
+      // ภาพริ้ว
+      L.fr = narrow ? Math.min(w * 0.3, h * 0.2) : Math.min((w - L.lw) * 0.44, h * 0.36);
+      L.fx = narrow ? w - L.fr - 14 : L.lw + (w - L.lw) / 2;
+      L.fy = narrow ? L.fr + 34 : h * 0.42;
+      // ไมโครมิเตอร์
+      L.dx = narrow ? w * 0.5 : L.lw * 0.5; L.dy = h - (narrow ? 70 : 82); L.dr = narrow ? 52 : 62;
+      L.tv = { x0: 16, y0: 36, w: narrow ? w * 0.55 : L.lw - 30, h: (narrow ? h * 0.5 : h * 0.58) - 36 };
+    }
+
+    // ---------- ภาพริ้ววงกลม (คำนวณต่อพิกเซล) ----------
+    const FN = 220;
+    const fcan = document.createElement('canvas'); fcan.width = FN; fcan.height = FN;
+    const fctx = fcan.getContext('2d'), fimg = fctx.createImageData(FN, FN);
+    const TH_MAX = 0.095;
+    function renderFringes() {
+      const M = order(), c = col(), Mf = M - Math.floor(M);
+      const d = fimg.data, h = FN / 2;
+      for (let j = 0; j < FN; j++) for (let i = 0; i < FN; i++) {
+        const x = (i + 0.5 - h) / h, y = (j + 0.5 - h) / h, r2 = x * x + y * y, k = 4 * (j * FN + i);
+        if (r2 > 1) { d[k + 3] = 0; continue; }
+        const th2 = r2 * TH_MAX * TH_MAX;
+        // เฟส = 2π·M·cosθ ≈ 2π(M − Mθ²/2) ใช้ส่วนเศษของ M เพื่อความแม่นยำ
+        const ph = 2 * Math.PI * (Mf - (M * th2) / 2);
+        const env = Math.exp(-r2 * 1.1);
+        const I = env * (0.06 + 0.94 * 0.5 * (1 + 0.92 * Math.cos(ph)));
+        d[k] = c[0] * I; d[k + 1] = c[1] * I; d[k + 2] = c[2] * I; d[k + 3] = 255;
+      }
+      fctx.putImageData(fimg, 0, 0);
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const c = col(), beam = 'rgba(' + c + ',0.85)';
+      // ----- มุมมองจากด้านบน -----
+      const T = L.tv, bx = T.x0 + T.w * 0.42, by = T.y0 + T.h * 0.55; // ตำแหน่งแผ่นแยกลำแสง
+      ctx.fillStyle = dark ? '#20252e' : '#e6e9ef';
+      ctx.fillRect(T.x0, T.y0, T.w, T.h);
+      const m1x = T.x0 + T.w * 0.86 + (s.eff - 1200) * 0.004, m2y = T.y0 + T.h * 0.1;
+      ctx.strokeStyle = beam; ctx.lineWidth = 1.6 / z;
+      ctx.beginPath();
+      ctx.moveTo(T.x0 + 40, by); ctx.lineTo(m1x, by);             // เลเซอร์ → BS → M1
+      ctx.moveTo(bx, by); ctx.lineTo(bx, m2y);                    // BS → M2
+      ctx.moveTo(bx, by); ctx.lineTo(bx, T.y0 + T.h - 4);         // ไปที่ฉาก
+      ctx.stroke();
+      // เลเซอร์ + เลนส์
+      ctx.fillStyle = dark ? '#555c6a' : '#3b4049'; ctx.fillRect(T.x0 + 4, by - 8, 36, 16);
+      ctx.fillStyle = 'rgb(' + c + ')'; ctx.fillRect(T.x0 + 38, by - 3, 3, 6);
+      ctx.strokeStyle = dark ? '#9fc6e6' : '#4a86b5'; ctx.lineWidth = 2 / z;
+      ctx.beginPath(); ctx.ellipse(T.x0 + 62, by, 3, 10, 0, 0, 7); ctx.stroke();
+      // แผ่นแยกลำแสงและแผ่นชดเชย (เอียง 45°)
+      const plate = (x, y, colr) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.fillStyle = colr; ctx.fillRect(-16, -2.5, 32, 5); ctx.restore(); };
+      plate(bx, by, dark ? 'rgba(160,210,240,.75)' : 'rgba(80,150,200,.75)');
+      plate(bx + 32, by, dark ? 'rgba(160,210,240,.35)' : 'rgba(80,150,200,.35)');
+      // กระจก
+      ctx.fillStyle = dark ? '#c9ced8' : '#6b7280';
+      ctx.fillRect(m1x, by - 16, 5, 32);
+      ctx.fillRect(bx - 16, m2y - 5, 32, 5);
+      // รางเลื่อน M1 และคันโยกไปไมโครมิเตอร์
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(m1x + 5, by); ctx.lineTo(T.x0 + T.w - 6, by + 30); ctx.lineTo(T.x0 + T.w - 6, T.y0 + T.h); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('M₁ (เลื่อนได้)', m1x, by - 18); ctx.fillText('M₂', bx + 26, m2y + 2);
+      ctx.textBaseline = 'top'; ctx.fillText('ฉาก', bx, T.y0 + T.h + 2);
+      ctx.fillText('เลเซอร์', T.x0 + 22, by + 10);
+      ctx.fillText('แผ่นแยกลำแสง', bx - 34, by + 14);
+
+      // ----- ภาพริ้วบนฉาก -----
+      ctx.save();
+      ctx.beginPath(); ctx.arc(L.fx, L.fy, L.fr, 0, 7); ctx.clip();
+      ctx.fillStyle = '#000'; ctx.fillRect(L.fx - L.fr, L.fy - L.fr, 2 * L.fr, 2 * L.fr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(fcan, L.fx - L.fr, L.fy - L.fr, 2 * L.fr, 2 * L.fr);
+      ctx.restore();
+      ctx.strokeStyle = muted; ctx.lineWidth = 1.5 / z; ctx.beginPath(); ctx.arc(L.fx, L.fy, L.fr, 0, 7); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 0.8 / z;
+      ctx.beginPath(); ctx.moveTo(L.fx - 14, L.fy); ctx.lineTo(L.fx + 14, L.fy); ctx.moveTo(L.fx, L.fy - 14); ctx.lineTo(L.fx, L.fy + 14); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('ภาพริ้วบนฉาก (นับริ้วที่ผ่านกากบาท)', L.fx, L.fy + L.fr + 6);
+      if (s.counter) {
+        ctx.fillStyle = Lab.css('--accent'); ctx.font = '600 15px Sarabun, sans-serif';
+        ctx.fillText('ตัวนับ: ' + Math.round(order() - s.cnt0), L.fx, L.fy + L.fr + 24);
+      }
+
+      // ----- ไมโครมิเตอร์: ปลอก (หลักร้อย µm) + ดรัม 100 ช่อง -----
+      const R = s.R, dx = L.dx, dy = L.dy, dr = L.dr;
+      // ปลอกเส้นตรง: 1 ขีด = 100 µm แสดงช่วง ±400 µm รอบค่าปัจจุบัน
+      const sx0 = 16, sx1 = dx - dr - 14, sy = dy;
+      ctx.fillStyle = dark ? '#4a5160' : '#c3c9d3'; ctx.fillRect(sx0, sy - 12, sx1 - sx0, 24);
+      const pp100 = 34; // px ต่อ 100 µm
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      for (let k = Math.floor((R - 1200) / 100); k <= Math.ceil(R / 100); k++) {
+        const x = sx1 - (R - k * 100) / 100 * pp100;
+        if (x < sx0 + 2 || x > sx1) continue;
+        ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.moveTo(x, sy); ctx.lineTo(x, sy - 9); ctx.stroke();
+        if (k % 1 === 0) { ctx.font = 9 / Math.min(z, 2.5) + 'px Sarabun, sans-serif'; ctx.fillText(k, x, sy - 10); }
+        const xh = x + pp100 / 2; // ขีดครึ่ง (50 µm) ด้านล่าง
+        if (xh < sx1) { ctx.beginPath(); ctx.moveTo(xh, sy); ctx.lineTo(xh, sy + 6); ctx.stroke(); }
+      }
+      ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.moveTo(sx0, sy); ctx.lineTo(sx1, sy); ctx.stroke();
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = '10.5px Sarabun, sans-serif';
+      ctx.fillText('ปลอก: ×100 µm', sx0, sy + 14);
+      // ดรัม (มองจากด้านหน้า) หมุนตาม R
+      ctx.fillStyle = dark ? '#8a93a3' : '#dfe3ea';
+      ctx.beginPath(); ctx.arc(dx, dy, dr, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.2 / z; ctx.stroke();
+      const rot = ((R % 100) / 100) * 2 * Math.PI;
+      for (let k = 0; k < 100; k++) {
+        const a = -Math.PI / 2 + (k / 100) * 2 * Math.PI - rot; // ช่อง k อยู่ใต้ขีดชี้ (ด้านบน) เมื่อ R mod 100 = k
+        const l = k % 10 === 0 ? 12 : k % 5 === 0 ? 9 : 6;
+        ctx.strokeStyle = '#111'; ctx.lineWidth = (k % 10 === 0 ? 1.2 : 0.7) / z;
+        ctx.beginPath(); ctx.moveTo(dx + dr * Math.cos(a), dy + dr * Math.sin(a)); ctx.lineTo(dx + (dr - l) * Math.cos(a), dy + (dr - l) * Math.sin(a)); ctx.stroke();
+        if (k % 10 === 0) {
+          ctx.fillStyle = '#111'; ctx.font = 9 / Math.min(z, 2.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(k, dx + (dr - 20) * Math.cos(a), dy + (dr - 20) * Math.sin(a));
+        }
+      }
+      // ขีดชี้คงที่ด้านบนดรัม
+      ctx.fillStyle = Lab.css('--bad');
+      ctx.beginPath(); ctx.moveTo(dx, dy - dr + 1); ctx.lineTo(dx - 5, dy - dr - 9); ctx.lineTo(dx + 5, dy - dr - 9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = muted; ctx.font = '10.5px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ดรัม: 1 ช่อง = 1 µm', dx + dr + 8, dy);
+      // ขีดชี้บนปลอก (ขอบดรัม)
+      ctx.strokeStyle = Lab.css('--bad'); ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(sx1, sy - 14); ctx.lineTo(sx1, sy + 12); ctx.stroke();
+    }
+
+    // ลากบนดรัมซ้าย-ขวาเพื่อหมุน (40 px ต่อ 1 ช่อง)
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.hypot(x - L.dx, y - L.dy) < L.dr + 10) { s.drag = { x }; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') { turn((x - s.drag.x) / 40); s.drag.x = x; }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      if (s.motor && dt > 0) turn(s.motor * 0.25 * dt); // ~0.8 ริ้ว/วินาที สำหรับ He-Ne
+      layout();
+      renderFringes();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากซ้าย-ขวาบนดรัมเพื่อหมุนไมโครมิเตอร์', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>
