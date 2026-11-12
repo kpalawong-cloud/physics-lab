@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เงาของวัตถุ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 560px; } @media (max-width: 900px) { .stage canvas { height: 540px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const X_OBJ = 60, X_SCR = 100;  // ตำแหน่งตุ๊กตาและฉากบนราง (cm)
+const OBJ_H = 6;                // ความสูงตุ๊กตากระดาษ (cm)
+const SCR_H = 40;               // ความสูงฉาก (cm) แกนแสงอยู่ที่ 20 cm
+
+Lab.init({
+  id: 'shadow',
+  kid: true,
+  short: 'เงาของวัตถุ',
+  title: 'ขนาดของเงากับระยะห่างจากไฟฉาย',
+  level: 'ป.6–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'สำรวจเงาของวัตถุทึบแสง โปร่งแสง และโปร่งใส'], [35, 'วัดขนาดเงาเมื่อเลื่อนไฟฉาย'], [15, 'เขียนกราฟ และสังเกตเงามืด-เงามัวจากหลอดใหญ่'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'สังเกตเงาของวัตถุทึบแสง วัตถุโปร่งแสง และวัตถุโปร่งใส',
+      'วัดความสูงของเงาบนฉาก เมื่อเลื่อนไฟฉายเข้าใกล้หรือออกห่างจากวัตถุ',
+      'สังเกตเงามืดและเงามัว เมื่อใช้แหล่งกำเนิดแสงขนาดใหญ่',
+    ],
+    theory:
+      '<p>แสงเดินทางเป็น<b>เส้นตรง</b> เมื่อมีวัตถุทึบแสงมาขวาง แสงผ่านไปไม่ได้ ด้านหลังวัตถุจึงเกิด<b>เงา</b> ซึ่งมีรูปร่างเหมือนวัตถุ</p>' +
+      '<p><b>วัตถุทึบแสง</b> (กระดาษแข็ง ไม้) แสงผ่านไม่ได้ เกิดเงาเข้ม · <b>วัตถุโปร่งแสง</b> (กระดาษไข พลาสติกขุ่น) แสงผ่านได้บางส่วน เกิดเงาจาง · <b>วัตถุโปร่งใส</b> (กระจกใส) แสงผ่านได้เกือบหมด แทบไม่เกิดเงา</p>' +
+      '<p>ถ้าแหล่งกำเนิดแสงมีขนาดใหญ่ เงาจะมีสองส่วน คือ <b>เงามืด</b> ตรงกลางที่ไม่มีแสงไปถึงเลย และ<b>เงามัว</b> รอบขอบที่มีแสงบางส่วนไปถึง สุริยุปราคาก็เกิดจากเงามืดและเงามัวของดวงจันทร์</p>' +
+      '<p>วัดความสูงเงาจากไม้บรรทัดบนฉาก: อ่านตำแหน่ง<b>ขอบบน</b>และ<b>ขอบล่าง</b>ของเงา แล้วนำมาลบกัน</p>',
+    equipment: ['ไฟฉาย (เลือกหลอดเล็กหรือหลอดใหญ่ได้) บนรางวัด 0–100 cm', 'ตุ๊กตากระดาษสูง 6 cm วางที่ตำแหน่ง 60 cm', 'ฉากรับเงาที่ตำแหน่ง 100 cm พร้อมไม้บรรทัดแนวตั้ง', 'แผ่นกระดาษแข็ง กระดาษไข และแผ่นพลาสติกใสตัดเป็นรูปตุ๊กตา'],
+    procedure: [
+      'เลือกหลอดเล็ก ลองเปลี่ยนวัตถุเป็นทึบแสง โปร่งแสง และโปร่งใส สังเกตเงาบนฉาก',
+      'เลือกวัตถุทึบแสง วางไฟฉายที่ 10 cm อ่านตำแหน่งไฟฉายบนรางวัด',
+      'อ่านตำแหน่งขอบบนและขอบล่างของเงาบนไม้บรรทัดของฉาก (ใช้แว่นขยายช่วย) บันทึกลงตาราง',
+      'เลื่อนไฟฉายเข้าหาตุ๊กตาทีละ 5 cm (15, 20, … 45 cm) แล้วบันทึกทุกครั้ง',
+      'เปลี่ยนเป็นหลอดใหญ่ สังเกตขอบของเงา แล้วตอบคำถามเรื่องเงามืดและเงามัว',
+    ],
+    tip: 'ระยะไฟฉายถึงตุ๊กตา = 60 − ตำแหน่งไฟฉาย ตารางคำนวณให้อัตโนมัติ',
+  },
+  predict: [
+    { q: 'ถ้าเลื่อนไฟฉายเข้าใกล้ตุ๊กตามากขึ้น เงาบนฉากจะเป็นอย่างไร', choices: ['ใหญ่ขึ้น', 'เท่าเดิม', 'เล็กลง'] },
+    { q: 'ตุ๊กตาแบบใดจะเกิดเงาเข้มที่สุด', choices: ['ตุ๊กตากระดาษแข็ง (ทึบแสง)', 'ตุ๊กตากระดาษไข (โปร่งแสง)', 'ตุ๊กตาพลาสติกใส (โปร่งใส)'] },
+  ],
+  table: {
+    rows: 8,
+    hint: 'ใช้ตุ๊กตาทึบแสงและหลอดเล็กตอนบันทึกตาราง ความสูงเงา = ขอบบน − ขอบล่าง',
+    columns: [
+      { key: 'xL', label: 'ตำแหน่งไฟฉาย<br>(cm)', input: true },
+      { key: 'd', label: 'ระยะไฟฉายถึงตุ๊กตา<br>(cm)', calc: (r) => X_OBJ - r.xL, digits: 0 },
+      { key: 'top', label: 'ขอบบนของเงา<br>(cm)', input: true },
+      { key: 'bot', label: 'ขอบล่างของเงา<br>(cm)', input: true },
+      { key: 'H', label: 'ความสูงเงา<br>(cm)', calc: (r) => r.top - r.bot, digits: 1 },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'ความสูงเงากับระยะไฟฉายถึงตุ๊กตา', x: 'd', y: 'H', xlabel: 'ระยะไฟฉายถึงตุ๊กตา (cm)', ylabel: 'ความสูงเงา (cm)',
+    explain: 'ดูว่าเมื่อไฟฉายอยู่ใกล้ตุ๊กตา (ระยะน้อย) เงาสูงหรือเตี้ย เส้นกราฟลดลงเร็วตอนต้นหรือตอนปลาย',
+  },
+  questions: [
+    { q: 'เมื่อไฟฉายอยู่ใกล้ตุ๊กตามากขึ้น เงาบนฉากเป็นอย่างไร', choices: ['ใหญ่ขึ้น', 'เท่าเดิม', 'เล็กลง'], why: true },
+    { q: 'รูปร่างของเงาเหมือนกับอะไร', choices: ['เหมือนรูปร่างของวัตถุ', 'เป็นวงกลมเสมอ', 'เหมือนรูปร่างของไฟฉาย'] },
+    { q: 'ตุ๊กตาพลาสติกใสเกิดเงาน้อยมาก เพราะเหตุใด', choices: ['แสงผ่านได้เกือบหมด', 'แสงสะท้อนกลับหมด', 'พลาสติกใสร้อนเกินไป'] },
+    { q: 'เมื่อใช้หลอดใหญ่ ขอบของเงาเปลี่ยนไปอย่างไร', choices: ['คมชัดขึ้น', 'มีเงามัวสีจาง ๆ ล้อมรอบเงามืด', 'เงาหายไปทั้งหมด'], why: true },
+    { q: 'คนที่อยู่ในบริเวณเงามืดของดวงจันทร์บนโลก จะเห็นสุริยุปราคาแบบใด', choices: ['สุริยุปราคาเต็มดวง', 'สุริยุปราคาบางส่วน', 'ไม่เห็นสุริยุปราคา'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: ขนาดของเงาขึ้นกับระยะไฟฉายอย่างไร และเงาของวัตถุแต่ละแบบต่างกันอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 85 });
+    lens.button(stage);
+    const rng = api.rng;
+    const DY = (rng() - 0.5) * 0.6; // ไฟฉายสูงต่ำกว่าแกนเล็กน้อย (cm) เงาจึงไม่อยู่กลางพอดี
+    const s = { xL: 20, src: 'S', mat: 'O', drag: false };
+
+    ctrls.innerHTML =
+      '<h3>หลอดไฟฉาย</h3><div class="seg" id="src"><button data-v="S">หลอดเล็ก</button><button data-v="B">หลอดใหญ่</button></div>' +
+      '<h3>ตุ๊กตาทำจาก</h3><div class="seg" id="mat"><button data-v="O">ทึบแสง</button><button data-v="T">โปร่งแสง</button><button data-v="C">โปร่งใส</button></div>' +
+      '<h3>ตำแหน่งไฟฉาย (เลื่อนทีละ cm)</h3><input type="range" id="pos" min="5" max="50" step="0.1">' +
+      '<div class="row"><button class="btn" data-d="-5">◀◀ 5</button><button class="btn" data-d="-1">◀ 1</button><button class="btn" data-d="1">1 ▶</button><button class="btn" data-d="5">5 ▶▶</button></div>' +
+      '<p class="muted" style="font-size:14px">ลากไฟฉายบนรางได้ อ่านตำแหน่งจากเข็มชี้สีแดงบนรางวัด</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const pos = $('#pos');
+    const setX = (x) => { s.xL = Math.max(5, Math.min(50, Math.round(x * 10) / 10)); pos.value = s.xL; };
+    setX(s.xL);
+    pos.oninput = () => setX(+pos.value);
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) setX(s.xL + +b.dataset.d); });
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === get()));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync();
+    }
+    seg('src', () => s.src, (v) => (s.src = v));
+    seg('mat', () => s.mat, (v) => (s.mat = v));
+
+    // รูปตุ๊กตา (cm, y ขึ้น, ศูนย์อยู่ที่แกนแสง สูง 6 cm จาก −3 ถึง +3)
+    function dollPath(ctx, X, Y) {
+      ctx.beginPath();
+      ctx.arc(X(0), Y(2.2), Math.abs(X(0.8) - X(0)), 0, 7);
+      ctx.moveTo(X(-0.9), Y(1.4)); ctx.lineTo(X(0.9), Y(1.4)); ctx.lineTo(X(2.0), Y(0.2)); ctx.lineTo(X(1.6), Y(-0.1)); ctx.lineTo(X(0.9), Y(0.6));
+      ctx.lineTo(X(0.9), Y(-0.6)); ctx.lineTo(X(1.3), Y(-3)); ctx.lineTo(X(0.4), Y(-3)); ctx.lineTo(X(0), Y(-1)); ctx.lineTo(X(-0.4), Y(-3)); ctx.lineTo(X(-1.3), Y(-3));
+      ctx.lineTo(X(-0.9), Y(-0.6)); ctx.lineTo(X(-0.9), Y(0.6)); ctx.lineTo(X(-1.6), Y(-0.1)); ctx.lineTo(X(-2.0), Y(0.2)); ctx.closePath();
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.x0 = 24; L.x1 = w - 24; L.ppc = (L.x1 - L.x0) / 100;
+      L.ax = 92; L.rail = 150;
+      L.sTop = 230; L.sH = h - L.sTop - 14; L.k = L.sH / SCR_H; // px ต่อ cm บนฉาก
+      L.sW = Math.min(w - 48, L.sH * 1.1); L.sX = (w - L.sW) / 2;
+    }
+    const BX = (cm) => L.x0 + cm * L.ppc;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // ราง (มองจากด้านข้าง)
+      ctx.fillStyle = dark ? '#2a303b' : '#c9ced8'; ctx.fillRect(L.x0 - 8, L.rail - 10, L.x1 - L.x0 + 16, 10);
+      ctx.fillStyle = dark ? '#d9cfa8' : '#f3e6c2'; ctx.fillRect(L.x0 - 8, L.rail, L.x1 - L.x0 + 16, 28);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let c = 0; c <= 100; c++) {
+        const x = BX(c), l = c % 10 === 0 ? 11 : c % 5 === 0 ? 7 : 4;
+        ctx.lineWidth = (c % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, L.rail); ctx.lineTo(x, L.rail + l); ctx.stroke();
+        if (c % 10 === 0 || (z > 2 && c % 5 === 0)) { ctx.font = (c % 10 ? 9 : 11) / Math.min(z, 2.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(c, x, L.rail + 13); }
+      }
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('รางวัด (cm)', L.x0, L.rail + 30);
+      const post = (x) => {
+        ctx.fillStyle = dark ? '#8a93a3' : '#5b6372'; ctx.fillRect(x - 2, L.ax + 14, 4, L.rail - 10 - L.ax - 14); ctx.fillRect(x - 9, L.rail - 14, 18, 5);
+        ctx.fillStyle = '#d23a2a'; ctx.beginPath(); ctx.moveTo(x, L.rail); ctx.lineTo(x - 4, L.rail - 7); ctx.lineTo(x + 4, L.rail - 7); ctx.closePath(); ctx.fill();
+      };
+      // แสงจากไฟฉาย
+      const xl = BX(s.xL), xo = BX(X_OBJ), xs = BX(X_SCR);
+      ctx.fillStyle = 'rgba(255,230,150,.18)';
+      ctx.beginPath(); ctx.moveTo(xl + 10, L.ax); ctx.lineTo(xs, L.ax - 50); ctx.lineTo(xs, L.ax + 50); ctx.closePath(); ctx.fill();
+      // ไฟฉาย
+      ctx.fillStyle = dark ? '#5d6575' : '#3b4049'; ctx.fillRect(xl - 26, L.ax - 7, 26, 14);
+      ctx.fillRect(xl - 2, L.ax - (s.src === 'B' ? 12 : 9), 8, s.src === 'B' ? 24 : 18);
+      ctx.fillStyle = '#fff6d0'; ctx.fillRect(xl + 6, L.ax - (s.src === 'B' ? 10 : 3), 3, s.src === 'B' ? 20 : 6);
+      post(xl);
+      // ตุ๊กตา (มองด้านข้างเป็นแผ่นบาง)
+      ctx.fillStyle = s.mat === 'O' ? '#b07a3e' : s.mat === 'T' ? 'rgba(240,240,225,.75)' : 'rgba(170,220,255,.35)';
+      ctx.strokeStyle = muted; ctx.lineWidth = 0.6 / z;
+      ctx.fillRect(xo - 1.5, L.ax - 3 * L.ppc * 1.6, 3, 6 * L.ppc * 1.6); ctx.strokeRect(xo - 1.5, L.ax - 3 * L.ppc * 1.6, 3, 6 * L.ppc * 1.6);
+      post(xo);
+      // ฉาก
+      ctx.fillStyle = dark ? '#d8dbe2' : '#fff'; ctx.fillRect(xs - 2, L.ax - 54, 4, 108); ctx.strokeRect(xs - 2, L.ax - 54, 4, 108);
+      post(xs);
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ไฟฉาย', xl - 10, L.ax - 16); ctx.fillText('ตุ๊กตา', xo, L.ax - 32); ctx.fillText('ฉาก', xs, L.ax - 58);
+
+      // ---------- ฉากมองจากด้านหน้า ----------
+      const sX = L.sX, sY = L.sTop, sW = L.sW, sH = L.sH, k = L.k;
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = '12px Sarabun, sans-serif';
+      ctx.fillText('ฉากรับเงา (มองจากด้านหลังไฟฉาย)', sX, sY - 4);
+      ctx.fillStyle = dark ? '#e9e6dc' : '#fffdf4'; ctx.fillRect(sX, sY, sW, sH);
+      // เงา: ฉายจากจุดหลายจุดบนหลอด (หลอดใหญ่ทำให้เกิดเงามัว)
+      const d = X_OBJ - s.xL, D = X_SCR - s.xL, m = D / d;
+      const cx = sX + sW / 2 + 12, axY = sY + sH - 20 * k; // แกนแสงอยู่สูง 20 cm จากขอบล่างฉาก
+      const R = s.src === 'B' ? 2.0 : 0.15; // รัศมีหลอด (cm)
+      const pts = [[0, 0]];
+      for (let i = 0; i < 10; i++) pts.push([0.55 * R * Math.cos(i * 0.628), 0.55 * R * Math.sin(i * 0.628)]);
+      for (let i = 0; i < 18; i++) pts.push([R * Math.cos(i * 0.349 + 0.1), R * Math.sin(i * 0.349 + 0.1)]);
+      const dens = s.mat === 'O' ? 0.92 : s.mat === 'T' ? 0.4 : 0.05;
+      ctx.save(); ctx.beginPath(); ctx.rect(sX, sY, sW, sH); ctx.clip();
+      const a = 1 - Math.pow(1 - dens, 1 / pts.length);
+      pts.forEach(([px, py]) => {
+        const sx = px * (1 - m), sy = (py + DY) * (1 - m); // การเลื่อนของเงาจากจุดกำเนิดแสงที่เยื้องแกน
+        ctx.fillStyle = 'rgba(25,25,35,' + a + ')';
+        dollPath(ctx, (x) => cx + (sx + x * m) * k, (y) => axY - (sy + y * m) * k);
+        ctx.fill();
+      });
+      ctx.restore();
+      // ไม้บรรทัดแนวตั้งด้านซ้ายของฉาก (0 ที่ขอบล่าง)
+      const rx = sX + 30;
+      ctx.fillStyle = 'rgba(246,236,200,.95)'; ctx.fillRect(sX, sY, 30, sH);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const showMm = k * z >= 3.2;
+      for (let mm = 0; mm <= SCR_H * 10; mm += showMm ? 1 : 5) {
+        const y = sY + sH - (mm / 10) * k, l = mm % 10 === 0 ? 10 : mm % 5 === 0 ? 6 : 3.5;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(rx - l, y); ctx.lineTo(rx, y); ctx.stroke();
+        if (mm % 50 === 0 || (z > 1.8 && mm % 10 === 0)) {
+          ctx.font = (mm % 50 ? 7 : 10) / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, sX + 2, y);
+        }
+      }
+      // ไม้บรรทัดยาวพาดทั้งฉาก (เส้นช่วยอ่านแนวนอนทุก 5 cm)
+      ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.lineWidth = 0.6 / z;
+      for (let c = 5; c < SCR_H; c += 5) { const y = sY + sH - c * k; ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(sX + sW, y); ctx.stroke(); }
+      ctx.strokeStyle = muted; ctx.lineWidth = 1 / z; ctx.strokeRect(sX, sY, sW, sH);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(x - BX(s.xL) + 10) < 30 && y > L.ax - 30 && y < L.rail + 20) { s.drag = { off: s.xL - (x - L.x0) / L.ppc }; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') setX((x - L.x0) / L.ppc + s.drag.off);
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากไฟฉายบนรางเพื่อเลื่อน', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

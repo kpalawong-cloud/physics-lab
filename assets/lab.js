@@ -212,6 +212,10 @@
   /* ---------- สร้างหน้าการทดลอง ---------- */
   Lab.init = function (cfg) {
     const KEY = 'vl-' + cfg.id;
+    // โหมดเด็ก (ป.6–ม.1): ตัวอักษรใหญ่ ทายผลก่อนทดลอง คำถามแบบเลือกตอบ กราฟลากเส้นเชื่อมจุดแทนการหาเส้นตรง
+    if (cfg.kid) document.body.classList.add('kid');
+    const LINE = cfg.graph.mode === 'line';
+    const PRED = cfg.predict || [];
     const saved = store.get(KEY, {});
     const qStep = +new URLSearchParams(location.search).get('step'); // ลิงก์ตรงไปยังขั้น เช่น ?step=2
     const state = {
@@ -255,10 +259,12 @@
       // ขั้น 1
       '<section class="step" data-step="1">' +
       '<div class="two">' +
-      '<div class="card"><h2>จุดประสงค์</h2>' + list(intro.objective, 'ul') + '<h2 style="margin-top:14px">ทฤษฎีที่เกี่ยวข้อง</h2>' + intro.theory + '</div>' +
-      '<div class="card"><h2>อุปกรณ์</h2>' + list(intro.equipment, 'ul') + '<h2 style="margin-top:14px">วิธีการทดลอง</h2>' + list(intro.procedure, 'ol') +
+      '<div class="card"><h2>จุดประสงค์</h2>' + list(intro.objective, 'ul') + '<h2 style="margin-top:14px">' + (cfg.kid ? 'ความรู้ก่อนทดลอง' : 'ทฤษฎีที่เกี่ยวข้อง') + '</h2>' + intro.theory + '</div>' +
+      '<div class="card">' + (intro.plan ? '<h2>แผนการเรียน (ประมาณ ' + intro.plan.reduce((a, p) => a + p[0], 0) + ' นาที)</h2><table class="res plan">' +
+        intro.plan.map((p) => '<tr><td>' + p[1] + '</td><td>' + p[0] + ' นาที</td></tr>').join('') + '</table><h2 style="margin-top:14px">อุปกรณ์</h2>' : '<h2>อุปกรณ์</h2>') + list(intro.equipment, 'ul') + '<h2 style="margin-top:14px">วิธีการทดลอง</h2>' + list(intro.procedure, 'ol') +
       (intro.tip ? '<div class="note">' + intro.tip + '</div>' : '') + '</div>' +
       '</div>' +
+      (PRED.length ? '<div class="card qa" style="margin-top:14px"><h2>ทายก่อนทดลอง</h2><p class="muted" style="font-size:14px">ยังไม่ต้องรู้คำตอบ เลือกข้อที่คิดว่าน่าจะเป็น แล้วไปทดลองดูว่าจริงหรือไม่</p><div id="predQ"></div></div>' : '') +
       '<div class="card no-print" style="margin-top:14px"><h2>ผู้ทำการทดลอง</h2><div class="field">' +
       '<div><label>ชื่อ-นามสกุล</label><input id="stName"></div><div><label>ชั้น</label><input id="stCls"></div><div><label>เลขที่</label><input id="stNo" inputmode="numeric"></div>' +
       '</div></div>' +
@@ -279,7 +285,7 @@
       '<div class="bench"><div class="card graph"><h2>กราฟ ' + cfg.graph.title + '</h2><canvas id="graph"></canvas>' +
       '<p class="fitline" id="fitLine"></p></div>' +
       '<div class="card"><h2>การวิเคราะห์</h2>' +
-      '<label class="no-print" style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="checkbox" id="origin"> บังคับเส้นตรงผ่านจุด (0, 0)</label>' +
+      '<label class="no-print" style="display:' + (LINE ? 'none' : 'flex') + ';gap:8px;align-items:center;margin-bottom:8px"><input type="checkbox" id="origin"> บังคับเส้นตรงผ่านจุด (0, 0)</label>' +
       (multi ? '<p style="font-size:14px;margin:0 0 4px">แสดงผลของชุดข้อมูล</p><div class="seg no-print setseg"></div>' : '') +
       '<p class="muted" style="font-size:14px">' + (cfg.graph.explain || '') + '</p>' +
       '<table class="res" id="results"></table><div id="truth"></div></div></div>' +
@@ -287,6 +293,7 @@
       '</section>' +
       // ขั้น 4
       '<section class="step" data-step="4">' +
+      (PRED.length ? '<div class="card qa"><h2>เทียบกับที่ทายไว้</h2><div id="predCheck"></div></div>' : '') +
       '<div class="card qa"><h2>คำถามท้ายการทดลอง</h2><div id="qs"></div></div>' +
       '<div class="card qa"><h2>สรุปผลการทดลอง</h2><div id="concl"></div></div>' +
       '<div class="card no-print"><h2>ส่งรายงาน</h2><p class="muted" style="font-size:14px">กด "พิมพ์รายงาน" แล้วเลือก "บันทึกเป็น PDF" เพื่อส่งครู ข้อมูลทั้งหมดบันทึกอัตโนมัติบนเครื่องนี้</p>' +
@@ -301,6 +308,7 @@
       app.querySelectorAll('.step').forEach((s) => s.classList.toggle('on', +s.dataset.step === n));
       app.querySelectorAll('.steps button').forEach((b) => b.classList.toggle('on', +b.dataset.go === n));
       if (n === 3) { analyse(); }
+      if (n === 4) PRED.forEach((p, i) => { const el = document.getElementById('pv' + i); if (el) el.textContent = state.answers['p' + i] != null ? p.choices[state.answers['p' + i]] : 'ยังไม่ได้ทาย'; });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (api.onStep) api.onStep(n);
     }
@@ -469,6 +477,12 @@
           ctx.beginPath(); ctx.moveTo(X(x0), Y(fit.m * x0 + fit.b)); ctx.lineTo(X(x1), Y(fit.m * x1 + fit.b)); ctx.stroke();
           ctx.restore();
         }
+        if (LINE && d.pts.length > 1) {
+          const sp = d.pts.slice().sort((a, b) => a[0] - b[0]);
+          ctx.strokeStyle = multi ? d.col : acc; ctx.lineWidth = cur || !multi ? 2 : 1.3; ctx.globalAlpha = cur || !multi ? 1 : 0.6;
+          ctx.beginPath(); sp.forEach((p, j) => (j ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])))); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
         ctx.fillStyle = multi ? d.col : Lab.css('--bad');
         d.pts.forEach((p) => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 4.2, 0, Math.PI * 2); ctx.fill(); });
       });
@@ -491,19 +505,27 @@
         const p = points(state.sets[st.key]);
         fits[st.key] = p.length >= 2 ? Lab.fit(p.map((q) => q[0]), p.map((q) => q[1]), state.origin) : null;
       });
+      if (LINE) fits = {};
       lastFit = fits[state.cur];
       app.querySelectorAll('.setseg').forEach(renderSetSeg);
       requestAnimationFrame(drawGraph);
       const fl = document.getElementById('fitLine'), res = document.getElementById('results');
-      if (!lastFit) {
+      let rows;
+      if (LINE) {
+        const np = points(state.rows).length;
+        fl.innerHTML = '<span style="font-family:Sarabun,sans-serif;font-size:15px">' + (np ? (multi ? setLabel(state.cur) + ' · ' : '') + 'จุดข้อมูล ' + np + ' จุด ลากเส้นเชื่อมตามลำดับ' : 'ยังไม่มีข้อมูล') + '</span>';
+        rows = cfg.results ? cfg.results(null, computed(), api.truth || {}, state.cur) || [] : [];
+      } else if (!lastFit) {
         fl.textContent = 'ต้องมีข้อมูลอย่างน้อย 2 จุด (แนะนำ 5 จุดขึ้นไป)';
         res.innerHTML = ''; document.getElementById('truth').innerHTML = ''; return;
       }
+      else {
       const f = lastFit, g = cfg.graph;
       fl.innerHTML = (multi ? setLabel(state.cur) + ' · ' : '') + 'เส้นตรงที่เหมาะสมที่สุด: ' + g.yv + ' = (' + Lab.fmtUnc(f.m, f.sm) + ') ' + g.xv +
         (f.origin ? '' : ' ' + (f.b < 0 ? '− ' : '+ ') + Lab.fmtUnc(Math.abs(f.b), f.sb)) +
         ' &nbsp;<span class="muted" style="font-family:Sarabun,sans-serif;font-size:13px">(R² = ' + f.r2.toFixed(4) + ', ' + f.n + ' จุด)</span>';
-      const rows = cfg.results(f, computed(), api.truth || {}, state.cur);
+      rows = cfg.results(f, computed(), api.truth || {}, state.cur);
+      }
       res.innerHTML = rows.filter((r) => !r.hidden).map((r) => {
         let pct = '';
         if (r.accepted != null && !r.hidden) {
@@ -532,8 +554,22 @@
       t.value = state.answers[key] || '';
       t.oninput = () => { state.answers[key] = t.value; save(); };
     }
+    function qaChoice(el, key, label, choices, why) {
+      const name = 'q-' + key;
+      el.insertAdjacentHTML('beforeend', '<div class="mc"><div class="mcq">' + label + '</div>' +
+        choices.map((c, j) => '<label class="opt"><input type="radio" name="' + name + '" value="' + j + '"' + (state.answers[key] === j ? ' checked' : '') + '><span>' + c + '</span></label>').join('') +
+        (why ? '<input class="why" id="' + name + '-w" placeholder="เพราะ…" autocomplete="off">' : '') + '</div>');
+      el.querySelectorAll('input[name="' + name + '"]').forEach((r) => (r.onchange = () => { state.answers[key] = +r.value; save(); }));
+      if (why) { const w = document.getElementById(name + '-w'); w.value = state.answers[key + 'w'] || ''; w.oninput = () => { state.answers[key + 'w'] = w.value; save(); }; }
+    }
     const qs = document.getElementById('qs');
-    cfg.questions.forEach((q, i) => qa(qs, 'q' + i, (i + 1) + '. ' + q));
+    cfg.questions.forEach((q, i) => (typeof q === 'string' ? qa(qs, 'q' + i, (i + 1) + '. ' + q) : qaChoice(qs, 'q' + i, (i + 1) + '. ' + q.q, q.choices, q.why)));
+    const pq = document.getElementById('predQ'), pc = document.getElementById('predCheck');
+    PRED.forEach((p, i) => {
+      qaChoice(pq, 'p' + i, (i + 1) + '. ' + p.q, p.choices, false);
+      pc.insertAdjacentHTML('beforeend', '<p style="margin:12px 0 0"><b>' + (i + 1) + '. ' + p.q + '</b><br>ฉันทายว่า: <span id="pv' + i + '" style="color:var(--accent)"></span></p>');
+      qa(pc, 'pr' + i, 'ผลการทดลองจริงเป็นอย่างไร ตรงกับที่ทายไว้หรือไม่');
+    });
     qa(document.getElementById('concl'), 'concl', cfg.conclusionPrompt || 'สรุปผลการทดลองตามจุดประสงค์ พร้อมค่าที่วัดได้และความคลาดเคลื่อน');
 
     // ---------- พิมพ์รายงาน ----------

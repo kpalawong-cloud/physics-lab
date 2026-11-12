@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>น้ำแข็งละลายจนน้ำเดือด · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 560px; } @media (max-width: 900px) { .stage canvas { height: 520px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+Lab.init({
+  id: 'ice',
+  kid: true,
+  short: 'น้ำแข็งละลายจนน้ำเดือด',
+  title: 'อุณหภูมิของน้ำแข็งที่ได้รับความร้อน จนละลายและเดือด',
+  level: 'ป.6–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [5, 'ฝึกอ่านเทอร์โมมิเตอร์'], [35, 'ให้ความร้อนและบันทึกอุณหภูมิทุก 1 นาที'], [20, 'เขียนกราฟ หาช่วงที่อุณหภูมิไม่เปลี่ยน'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'อ่านอุณหภูมิจากเทอร์โมมิเตอร์และบันทึกทุก 1 นาที',
+      'เขียนกราฟอุณหภูมิกับเวลา เมื่อให้ความร้อนแก่น้ำแข็งจนละลายและเดือด',
+      'บอกได้ว่าขณะน้ำแข็งละลายและขณะน้ำเดือด อุณหภูมิเปลี่ยนหรือไม่',
+    ],
+    theory:
+      '<p>สารมี 3 สถานะ คือ <b>ของแข็ง</b> (น้ำแข็ง) <b>ของเหลว</b> (น้ำ) และ<b>แก๊ส</b> (ไอน้ำ) เมื่อสารได้รับความร้อน อุณหภูมิมักสูงขึ้น หรือสารอาจ<b>เปลี่ยนสถานะ</b></p>' +
+      '<p><b>การหลอมเหลว</b>: ของแข็งกลายเป็นของเหลว อุณหภูมิที่น้ำแข็งละลายเรียกว่า<b>จุดหลอมเหลว</b> · <b>การเดือด</b>: ของเหลวกลายเป็นไอทั่วทั้งของเหลว เห็นฟองไอน้ำผุดขึ้นมา อุณหภูมินั้นเรียกว่า<b>จุดเดือด</b></p>' +
+      '<p><b>เทอร์โมมิเตอร์</b>: อ่านค่าที่ปลายของเหลวสีแดงในหลอดแก้ว สายตาต้องอยู่ระดับเดียวกับปลายของเหลว สเกลละเอียดช่องละ 1 °C ตัวเลขบอกทุก 10 °C</p>' +
+      '<p>นาฬิกาในการทดลองนี้เดินเร็วกว่าจริงได้ (×10, ×30) เพื่อให้ทันในคาบเรียน และหยุดให้เองทุก 1 นาทีเพื่อให้อ่านอุณหภูมิ</p>',
+    equipment: ['บีกเกอร์ใส่น้ำแข็งก้อนเล็ก 200 g (จากช่องแช่แข็ง)', 'ตะเกียงแอลกอฮอล์ ขาตั้ง และตะแกรง', 'เทอร์โมมิเตอร์ −10 ถึง 110 °C', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'อ่านอุณหภูมิเริ่มต้นของน้ำแข็ง บันทึกที่เวลา 0 นาที',
+      'จุดตะเกียง แล้วกด "เริ่มจับเวลา" นาฬิกาจะหยุดเองทุก 1 นาที',
+      'เมื่อนาฬิกาหยุด ใช้แว่นขยายอ่านเทอร์โมมิเตอร์ บันทึกอุณหภูมิลงตาราง แล้วกด "เริ่มจับเวลา" ต่อ',
+      'สังเกตและจดสิ่งที่เห็น เช่น น้ำแข็งละลายหมดนาทีที่เท่าใด น้ำเริ่มเดือดนาทีที่เท่าใด',
+      'บันทึกต่อจนน้ำเดือดไปแล้วอย่างน้อย 4 นาที แล้วดับตะเกียง',
+    ],
+    tip: 'ห้ามแตะบีกเกอร์และตะเกียงขณะร้อน ในการทดลองจริงต้องมีครูดูแลเสมอ',
+  },
+  predict: [
+    { q: 'ขณะที่น้ำแข็งกำลังละลาย (ยังมีน้ำแข็งเหลืออยู่) อุณหภูมิจะเป็นอย่างไร', choices: ['สูงขึ้นเรื่อย ๆ', 'เกือบคงที่', 'ลดลง'] },
+    { q: 'เมื่อน้ำเดือดแล้ว ถ้ายังให้ความร้อนต่อไป อุณหภูมิของน้ำจะเป็นอย่างไร', choices: ['สูงขึ้นเรื่อย ๆ เกิน 100 °C', 'คงที่ประมาณ 100 °C', 'ลดลง'] },
+  ],
+  table: {
+    rows: 22,
+    hint: 'บันทึกทุก 1 นาที เริ่มที่นาทีที่ 0 ถ้าแถวไม่พอ กด "เพิ่มแถว"',
+    columns: [
+      { key: 't', label: 'เวลา<br>(นาที)', input: true },
+      { key: 'T', label: 'อุณหภูมิ<br>(°C)', input: true },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'อุณหภูมิกับเวลา', x: 't', y: 'T', xlabel: 'เวลา (นาที)', ylabel: 'อุณหภูมิ (°C)',
+    explain: 'หาช่วงที่เส้นกราฟเกือบเป็นแนวราบ (อุณหภูมิไม่เปลี่ยน) ช่วงนั้นเกิดอะไรขึ้นในบีกเกอร์',
+  },
+  questions: [
+    { q: 'ช่วงที่น้ำแข็งกำลังละลาย อุณหภูมิประมาณเท่าใด', choices: ['ประมาณ −10 °C', 'ประมาณ 0 °C', 'ประมาณ 50 °C'] },
+    { q: 'ขณะน้ำแข็งละลาย ตะเกียงยังให้ความร้อนอยู่ แต่อุณหภูมิไม่สูงขึ้น ความร้อนนั้นไปไหน', choices: ['หายไปเฉย ๆ', 'ใช้ในการเปลี่ยนน้ำแข็งเป็นน้ำ', 'ทำให้บีกเกอร์เย็นลง'], why: true },
+    { q: 'จากกราฟ จุดเดือดของน้ำที่วัดได้ประมาณเท่าใด', choices: ['ประมาณ 0 °C', 'ประมาณ 50 °C', 'ประมาณ 100 °C'] },
+    { q: 'ฟองที่ผุดขึ้นมาตอนน้ำเดือดคืออะไร', choices: ['อากาศ', 'ไอน้ำ', 'ฝุ่น'] },
+    { q: 'ถ้าใช้น้ำแข็ง 400 g (มากขึ้นเป็นสองเท่า) ช่วงที่อุณหภูมิค้างอยู่ที่ 0 °C จะยาวขึ้นหรือสั้นลง', choices: ['ยาวขึ้น', 'เท่าเดิม', 'สั้นลง'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: อุณหภูมิเปลี่ยนแปลงอย่างไรเมื่อน้ำแข็งได้รับความร้อน และขณะเปลี่ยนสถานะเกิดอะไรขึ้น',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const HW = { P: 170 + 25 * rng(), Tb: 99.3 + 0.6 * rng(), T0: -12 + 4 * rng() }; // กำลังตะเกียง (W), จุดเดือด, อุณหภูมิเริ่มต้น
+    const M0 = 200, ROOM = 28, K = 0.45;
+    let s;
+    const cubes = []; for (let i = 0; i < 9; i++) cubes.push({ x: rng(), y: rng(), a: rng() - 0.5 });
+    const bubbles = [];
+    function reset() { s = { t: 0, T: HW.T0, Tth: HW.T0, ice: M0, water: 0, steam: 0, fire: false, run: false, speed: 10, auto: true, nextStop: 60 }; }
+    reset();
+
+    ctrls.innerHTML =
+      '<div class="watch"><span class="readout" id="clk">00:00</span><small>นาฬิกา (นาที : วินาที)</small></div>' +
+      '<div class="row"><button class="btn primary" id="go">เริ่มจับเวลา</button></div>' +
+      '<h3>ตะเกียง</h3><div class="seg" id="fire"><button data-v="0">ดับ</button><button data-v="1">จุด</button></div>' +
+      '<h3>ความเร็วนาฬิกา</h3><div class="seg" id="spd"><button data-v="1">×1</button><button data-v="10">×10</button><button data-v="30">×30</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px"><input type="checkbox" id="auto" checked> หยุดเองทุก 1 นาที</label>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่ (น้ำแข็งก้อนใหม่)</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const clk = $('#clk'), go = $('#go');
+    const showGo = () => { go.textContent = s.run ? 'หยุดชั่วคราว' : 'เริ่มจับเวลา'; go.classList.toggle('primary', !s.run); };
+    go.onclick = () => { s.run = !s.run; if (s.run && s.t >= s.nextStop - 1e-6) s.nextStop += 60; showGo(); };
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); return sync;
+    }
+    const syncFire = seg('fire', () => +s.fire, (v) => (s.fire = v === '1'));
+    const syncSpd = seg('spd', () => s.speed, (v) => (s.speed = +v));
+    $('#auto').onchange = (e) => { s.auto = e.target.checked; if (s.auto) s.nextStop = Math.floor(s.t / 60 + 1e-9) * 60 + 60; };
+    $('#reset').onclick = () => { if (s.t > 0 && !confirm('เริ่มใหม่ด้วยน้ำแข็งก้อนใหม่? (ข้อมูลในตารางยังอยู่)')) return; reset(); syncFire(); syncSpd(); $('#auto').checked = true; showGo(); };
+
+    // ฟิสิกส์: ความร้อนจากตะเกียง − ความร้อนที่เสียให้อากาศ ทำให้อุณหภูมิสูงขึ้น หรือใช้เปลี่ยนสถานะ
+    function step(dt) {
+      const Pin = (s.fire ? HW.P : 0) - K * (s.T - ROOM) * (0.5 + s.water / M0);
+      if (s.ice > 0 && s.T < 0) {
+        s.T += (Pin * dt) / (s.ice * 2.1 + s.water * 4.18);
+        if (s.T > 0) s.T = 0;
+      } else if (s.ice > 0) {
+        s.T = 0;
+        const dm = (Pin * dt) / 334;
+        if (dm > 0) { const m = Math.min(s.ice, dm); s.ice -= m; s.water += m; }
+      } else if (s.T < HW.Tb || Pin < 0) {
+        s.T = Math.min(HW.Tb, s.T + (Pin * dt) / (s.water * 4.18));
+      } else {
+        const dm = (Pin * dt) / 2260; s.water -= dm; s.steam += dm;
+      }
+      // เทอร์โมมิเตอร์ตอบสนองช้าเล็กน้อย ขณะน้ำแข็งละลาย น้ำรอบเทอร์โมมิเตอร์อุ่นกว่า 0 °C เล็กน้อย
+      const target = s.ice > 0 && s.T === 0 ? 0.8 * (1 - s.ice / M0) : s.T;
+      s.Tth += (target - s.Tth) * Math.min(1, dt / 6);
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.tx = Math.min(w - 70, w * 0.78); L.tTop = 40; L.tBot = h - 40; // เทอร์โมมิเตอร์แนวตั้ง
+      L.ppd = (L.tBot - 40 - L.tTop - 10) / 120;                      // px ต่อ °C (−10 ถึง 110)
+      L.bx = Math.min(w * 0.36, L.tx - 170); L.by = h - 170; L.bw = Math.min(200, w * 0.36); L.bh = 190;
+    }
+    const TY = (T) => L.tBot - 40 - (T + 10) * L.ppd;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { bx, by, bw, bh } = L;
+      // ขาตั้งและตะเกียง
+      ctx.strokeStyle = dark ? '#8a93a3' : '#4a505b'; ctx.lineWidth = 3 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(bx - bw / 2 - 10, by); ctx.lineTo(bx + bw / 2 + 10, by);
+      ctx.moveTo(bx - bw / 2, by); ctx.lineTo(bx - bw / 2 - 20, by + 150); ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw / 2 + 20, by + 150); ctx.stroke();
+      const ly = by + 150;
+      ctx.fillStyle = 'rgba(170,215,240,.55)'; ctx.strokeStyle = muted; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.ellipse(bx, ly - 26, 34, 26, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#8a93a3' : '#6b7382'; ctx.fillRect(bx - 6, ly - 60, 12, 10);
+      if (s.fire) {
+        const fl = 1 + 0.08 * Math.sin(performance.now() / 70);
+        const g = ctx.createRadialGradient(bx, ly - 80, 2, bx, ly - 78, 30 * fl);
+        g.addColorStop(0, 'rgba(255,255,230,.95)'); g.addColorStop(0.35, 'rgba(120,170,255,.75)'); g.addColorStop(1, 'rgba(255,150,40,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(bx, ly - 82, 12 * fl, 26 * fl, 0, 0, 7); ctx.fill();
+      }
+      // บีกเกอร์
+      const top = by - bh;
+      const liquid = s.water / M0, iceF = s.ice / M0;
+      const lvl = by - 6 - (bh - 30) * (0.55 * (liquid + iceF * 0.9) + 0.02);
+      ctx.fillStyle = s.T > 60 ? 'rgba(150,200,240,.55)' : 'rgba(170,215,245,.55)';
+      if (s.water > 0.5) ctx.fillRect(bx - bw / 2 + 3, lvl, bw - 6, by - 3 - lvl);
+      // ก้อนน้ำแข็ง (เล็กลงเมื่อละลาย ลอยอยู่ใกล้ผิวน้ำ)
+      if (s.ice > 0.2) {
+        const sz = 30 * Math.cbrt(iceF);
+        cubes.forEach((c, i) => {
+          const x = bx - bw / 2 + 18 + c.x * (bw - 36);
+          const y = s.water > 5 ? lvl + 4 + c.y * 14 : by - 8 - sz - c.y * 50 - (i % 3) * sz * 0.6;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(c.a);
+          ctx.fillStyle = 'rgba(235,248,255,.92)'; ctx.strokeStyle = 'rgba(140,180,210,.9)'; ctx.lineWidth = 1 / z;
+          ctx.fillRect(-sz / 2, -sz / 2, sz, sz); ctx.strokeRect(-sz / 2, -sz / 2, sz, sz);
+          ctx.restore();
+        });
+      }
+      // ฟองไอน้ำ
+      bubbles.forEach((b) => { ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.arc(bx - bw / 2 + 10 + b.x * (bw - 20), b.y, b.r, 0, 7); ctx.stroke(); });
+      // ไอน้ำเหนือบีกเกอร์
+      if (s.T > 85 && s.ice <= 0) {
+        const a = Math.min(0.35, (s.T - 85) / 40);
+        for (let i = 0; i < 4; i++) {
+          const tt = performance.now() / 900 + i * 1.7, yy = top - 10 - ((tt * 30) % 60);
+          ctx.fillStyle = 'rgba(220,225,235,' + a * (1 - ((tt * 30) % 60) / 60) + ')';
+          ctx.beginPath(); ctx.arc(bx - 30 + i * 20 + 6 * Math.sin(tt * 2), yy, 10, 0, 7); ctx.fill();
+        }
+      }
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(bx - bw / 2 - 6, top); ctx.lineTo(bx - bw / 2, top + 4); ctx.lineTo(bx - bw / 2, by - 3); ctx.lineTo(bx + bw / 2, by - 3); ctx.lineTo(bx + bw / 2, top + 4); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('บีกเกอร์', bx, by + 6);
+
+      // เทอร์โมมิเตอร์ (จุ่มในบีกเกอร์ ต่อด้วยเส้นประบอกว่าเป็นอันเดียวกัน)
+      const tx = L.tx, bulbY = L.tBot - 20;
+      ctx.strokeStyle = muted; ctx.setLineDash([4 / z, 4 / z]); ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(bx + bw * 0.25, by - 20); ctx.lineTo(tx - 12, bulbY); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = dark ? '#f2eee2' : '#fbfaf5'; ctx.strokeStyle = dark ? '#c9ced8' : '#8a93a3'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(tx - 34, L.tTop - 14, 68, L.tBot - L.tTop + 6, 12) : ctx.rect(tx - 34, L.tTop - 14, 68, L.tBot - L.tTop + 6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#e8eef3'; ctx.fillRect(tx - 3, L.tTop, 6, bulbY - L.tTop);
+      ctx.fillStyle = '#d0282a';
+      const ty = TY(Math.max(-10, Math.min(110, s.Tth)));
+      ctx.fillRect(tx - 2, ty, 4, bulbY - ty);
+      ctx.beginPath(); ctx.arc(tx, bulbY, 8, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let T = -10; T <= 110; T++) {
+        const y = TY(T), l = T % 10 === 0 ? 12 : T % 5 === 0 ? 8 : 5;
+        ctx.lineWidth = (T % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(tx + 5, y); ctx.lineTo(tx + 5 + l, y); ctx.stroke();
+        if (T % 10 === 0) { ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(T, tx - 7, y); }
+      }
+      ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('°C', tx + 18, L.tTop - 1);
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+      ctx.fillText('เทอร์โมมิเตอร์', tx, L.tBot - 2);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (s.run) {
+        let simDt = dt * s.speed;
+        if (s.auto && s.t + simDt >= s.nextStop) { simDt = s.nextStop - s.t; s.run = false; showGo(); }
+        // แบ่งเป็นขั้นย่อยให้การคำนวณเสถียร
+        const n = Math.max(1, Math.ceil(simDt / 0.5));
+        for (let i = 0; i < n; i++) { step(simDt / n); s.t += simDt / n; }
+        if (!s.run) s.t = s.nextStop;
+      } else if (!s.run && s.fire === false) { /* หยุดนิ่ง */ }
+      const mm = Math.floor(s.t / 60), ss = Math.floor(s.t % 60);
+      clk.textContent = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+      // ฟอง: เกิดเมื่อร้อนใกล้เดือด (ตามเวลาจำลอง)
+      if (cv.w) {
+        layout();
+        const lvl = L.by - 6 - (L.bh - 30) * (0.55 * (s.water / M0) + 0.02);
+        const rate = s.ice > 0 ? 0 : s.T >= HW.Tb - 0.05 ? 40 : s.T > 80 ? (s.T - 80) * 0.8 : 0;
+        if (s.run && Math.random() < rate * dt * Math.min(3, s.speed / 5 + 0.5)) bubbles.push({ x: Math.random(), y: L.by - 8, r: 2 + Math.random() * (s.T >= HW.Tb - 0.05 ? 5 : 2), v: 40 + Math.random() * 60 });
+        bubbles.forEach((b) => (b.y -= b.v * dt));
+        for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].y < lvl) bubbles.splice(i, 1);
+        const ctx = cv.ctx;
+        ctx.clearRect(0, 0, cv.w, cv.h);
+        scene(ctx, 1);
+        lens.draw(scene);
+        ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'เมื่อนาฬิกาหยุด ให้อ่านเทอร์โมมิเตอร์', 10, 8);
+      }
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>

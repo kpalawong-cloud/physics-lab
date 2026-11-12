@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แม่เหล็กไฟฟ้า · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 480px; } @media (max-width: 900px) { .stage canvas { height: 440px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+Lab.init({
+  id: 'electromagnet',
+  kid: true,
+  short: 'แม่เหล็กไฟฟ้า',
+  title: 'แม่เหล็กไฟฟ้าจากตะปูและขดลวด',
+  level: 'ป.6–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ลองเปิด-ปิดสวิตช์ ดูว่าตะปูดูดคลิปได้เมื่อใด'], [35, 'นับคลิปที่จำนวนรอบต่าง ๆ ทั้งถ่าน 1 และ 2 ก้อน'], [15, 'เขียนกราฟและเปรียบเทียบ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'สร้างแม่เหล็กไฟฟ้าจากตะปูเหล็กพันด้วยขดลวด',
+      'นับจำนวนคลิปหนีบกระดาษที่แม่เหล็กไฟฟ้าดูดได้ เมื่อเปลี่ยนจำนวนรอบของขดลวด',
+      'เปรียบเทียบความแรงของแม่เหล็กไฟฟ้าเมื่อใช้ถ่าน 1 ก้อนและ 2 ก้อน',
+    ],
+    theory:
+      '<p>เมื่อมีกระแสไฟฟ้าไหลผ่านสายไฟ จะเกิด<b>สนามแม่เหล็ก</b>รอบสายไฟ ถ้าพันสายไฟเป็นขดหลายรอบรอบแท่งเหล็ก แท่งเหล็กจะกลายเป็นแม่เหล็ก เรียกว่า <b>แม่เหล็กไฟฟ้า</b></p>' +
+      '<p>แม่เหล็กไฟฟ้าต่างจากแม่เหล็กถาวรตรงที่ <b>เปิด-ปิดได้</b> เมื่อปิดสวิตช์ ไม่มีกระแสไฟฟ้า ความเป็นแม่เหล็กก็หายไป</p>' +
+      '<p>ในการทดลองนี้ เราวัดความแรงของแม่เหล็กไฟฟ้าโดย<b>นับจำนวนคลิป</b>ที่ตะปูดูดขึ้นมาได้ ยิ่งดูดได้มาก แปลว่ายิ่งแรง</p>' +
+      '<p>ตัวแปรต้น: จำนวนรอบของขดลวด · ตัวแปรตาม: จำนวนคลิปที่ดูดได้ · ตัวแปรควบคุม: ตะปูตัวเดิม คลิปแบบเดียวกัน จำนวนถ่านในแต่ละชุด</p>',
+    equipment: ['ตะปูเหล็กยาว 1 ตัว', 'สายไฟเคลือบฉนวนสำหรับพันขดลวด', 'ถ่านไฟฉาย 2 ก้อนในรางถ่าน และสวิตช์', 'คลิปหนีบกระดาษเหล็กในจาน'],
+    procedure: [
+      'ใช้ถ่าน 1 ก้อน ตั้งจำนวนรอบขดลวด 10 รอบ แล้วกดสวิตช์ "เปิด"',
+      'กดปุ่ม "จุ่มลงแล้วยกขึ้น" นับจำนวนคลิปที่ติดตะปูขึ้นมา (ใช้แว่นขยายช่วยนับได้) บันทึกเป็นครั้งที่ 1',
+      'กด "ปล่อยคลิป" แล้วทำซ้ำอีกครั้ง บันทึกเป็นครั้งที่ 2',
+      'เพิ่มจำนวนรอบทีละ 10 รอบ จนถึง 60 รอบ บันทึกทุกครั้ง',
+      'เปลี่ยนเป็นถ่าน 2 ก้อน (ตารางจะสลับเป็นชุด "ถ่าน 2 ก้อน") แล้วทำซ้ำทั้งหมด',
+      'ลองปิดสวิตช์ขณะที่คลิปติดอยู่ สังเกตว่าเกิดอะไรขึ้น',
+    ],
+    tip: 'ทำซ้ำ 2 ครั้งแล้วหาค่าเฉลี่ย เพราะแต่ละครั้งคลิปอาจติดขึ้นมาไม่เท่ากัน',
+  },
+  predict: [
+    { q: 'ถ้าพันขดลวดรอบตะปูมากขึ้น ตะปูจะดูดคลิปได้อย่างไร', choices: ['ได้มากขึ้น', 'ได้เท่าเดิม', 'ได้น้อยลง'] },
+    { q: 'ถ้าเปลี่ยนจากถ่าน 1 ก้อนเป็น 2 ก้อน ตะปูจะดูดคลิปได้อย่างไร', choices: ['ได้มากขึ้น', 'ได้เท่าเดิม', 'ได้น้อยลง'] },
+  ],
+  table: {
+    rows: 6,
+    sets: [{ key: 'B1', label: 'ถ่าน 1 ก้อน' }, { key: 'B2', label: 'ถ่าน 2 ก้อน' }],
+    hint: 'ตาราง "ถ่าน 1 ก้อน" และ "ถ่าน 2 ก้อน" แยกกัน จะสลับเองตามจำนวนถ่านที่เลือก',
+    columns: [
+      { key: 'N', label: 'จำนวนรอบขดลวด<br>(รอบ)', input: true },
+      { key: 'c1', label: 'จำนวนคลิป<br>ครั้งที่ 1', input: true },
+      { key: 'c2', label: 'จำนวนคลิป<br>ครั้งที่ 2', input: true },
+      { key: 'avg', label: 'ค่าเฉลี่ย<br>(ตัว)', calc: (r) => (isFinite(r.c2) ? (r.c1 + r.c2) / 2 : r.c1), digits: 1 },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'จำนวนคลิปกับจำนวนรอบขดลวด', x: 'N', y: 'avg', xlabel: 'จำนวนรอบขดลวด (รอบ)', ylabel: 'จำนวนคลิปเฉลี่ย (ตัว)',
+    explain: 'เส้นสีหนึ่งคือถ่าน 1 ก้อน อีกสีคือถ่าน 2 ก้อน ดูว่าเส้นขึ้นหรือลง และเส้นไหนอยู่สูงกว่า',
+  },
+  questions: [
+    { q: 'เมื่อจำนวนรอบขดลวดมากขึ้น ตะปูดูดคลิปได้อย่างไร', choices: ['มากขึ้น', 'เท่าเดิม', 'น้อยลง'], why: true },
+    { q: 'เมื่อใช้ถ่าน 2 ก้อนแทน 1 ก้อน (จำนวนรอบเท่ากัน) ตะปูดูดคลิปได้อย่างไร', choices: ['มากขึ้น', 'เท่าเดิม', 'น้อยลง'], why: true },
+    { q: 'เมื่อปิดสวิตช์ขณะที่คลิปติดตะปูอยู่ เกิดอะไรขึ้น', choices: ['คลิปยังติดอยู่ทั้งหมด', 'คลิปหล่นลง', 'คลิปติดแน่นขึ้น'], why: true },
+    { q: 'ข้อใดใช้แม่เหล็กไฟฟ้า', choices: ['เครนยกเศษเหล็กในโรงงาน', 'แม่เหล็กติดตู้เย็น', 'เข็มทิศ'] },
+    { q: 'ถ้าต้องการให้แม่เหล็กไฟฟ้าแรงขึ้น ควรทำอย่างไร', choices: ['พันขดลวดน้อยลง', 'พันขดลวดมากขึ้นหรือเพิ่มถ่าน', 'ใช้แท่งไม้แทนตะปู'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: จำนวนรอบขดลวดและจำนวนถ่านมีผลต่อความแรงของแม่เหล็กไฟฟ้าอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 2.5, r: 90 });
+    lens.button(stage);
+    const rng = api.rng;
+    const A = 0.12 + 0.04 * rng(); // ความแรงต่อรอบของตะปูชุดนี้
+    const s = { N: 10, bat: api.currentSet() === 'B2' ? 2 : 1, on: false, lift: 0, phase: 'up', held: 0, falling: [] };
+    // ตำแหน่งคลิปในจาน (สุ่มครั้งเดียว)
+    const pile = []; for (let i = 0; i < 70; i++) pile.push({ x: rng() * 2 - 1, y: rng(), a: rng() * 3.14 });
+
+    ctrls.innerHTML =
+      '<h3>จำนวนรอบขดลวด</h3><div class="row"><button class="btn" id="nm">− 10 รอบ</button><button class="btn" id="np">+ 10 รอบ</button></div>' +
+      '<p id="nLbl" style="margin:2px 0 0;font-weight:600"></p>' +
+      '<h3>ถ่านไฟฉาย</h3><div class="seg" id="bat"><button data-v="1">1 ก้อน</button><button data-v="2">2 ก้อน</button></div>' +
+      '<h3>สวิตช์</h3><div class="seg" id="sw"><button data-v="0">ปิด</button><button data-v="1">เปิด</button></div>' +
+      '<h3>ตะปู</h3><div class="row"><button class="btn primary" id="dip">จุ่มลงแล้วยกขึ้น</button></div><div class="row"><button class="btn" id="drop">ปล่อยคลิป</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const nLbl = $('#nLbl');
+    const showN = () => (nLbl.textContent = 'ขดลวด ' + s.N + ' รอบ');
+    showN();
+    const dropAll = () => { for (let i = 0; i < s.held; i++) s.falling.push({ i, y: 0, v: 0 }); s.held = 0; };
+    $('#nm').onclick = () => { s.N = Math.max(10, s.N - 10); dropAll(); showN(); };
+    $('#np').onclick = () => { s.N = Math.min(60, s.N + 10); dropAll(); showN(); };
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); return sync;
+    }
+    const syncBat = seg('bat', () => s.bat, (v) => { s.bat = +v; dropAll(); api.useSet('B' + v); });
+    seg('sw', () => +s.on, (v) => { s.on = v === '1'; if (!s.on) dropAll(); });
+    api.onSetChange = (k) => { s.bat = k === 'B2' ? 2 : 1; syncBat(); dropAll(); };
+    $('#dip').onclick = () => { if (s.phase === 'up') { dropAll(); s.phase = 'down'; } };
+    $('#drop').onclick = dropAll;
+
+    // จำนวนคลิปที่ดูดได้: เพิ่มตามจำนวนรอบ × กระแส และอิ่มตัวเมื่อแรงมาก สุ่มต่างกันเล็กน้อยทุกครั้ง
+    function pick() {
+      if (!s.on) return 0;
+      const I = s.bat === 1 ? 1 : 1.9, x = A * s.N * I, M = 24;
+      const mean = M * (1 - Math.exp(-x / M));
+      return Math.max(0, Math.round(mean + Lab.noise(0.7)));
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.nx = w * 0.56; L.top = 70; L.len = 210;
+      L.dishY = h - 46; L.dishW = Math.min(260, w * 0.36);
+    }
+
+    function clip(ctx, x, y, a, z) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+      ctx.strokeStyle = '#8f98a6'; ctx.lineWidth = 1.6 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(-3, -9); ctx.lineTo(-3, 8); ctx.arc(0, 8, 3, Math.PI, 0, true); ctx.lineTo(3, -7); ctx.arc(0.5, -7, 2.5, 0, Math.PI, true); ctx.lineTo(-2, 5); ctx.stroke();
+      ctx.restore();
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const w = cv.w, nx = L.nx;
+      const dip = L.dishY - 34 - (L.top + L.len); // ระยะที่ตะปูเลื่อนลงไปถึงจาน
+      const off = s.lift * dip;
+      const t0 = L.top + off, tip = t0 + L.len;
+      // จานคลิป
+      ctx.fillStyle = dark ? '#3a404b' : '#c9ced8';
+      ctx.beginPath(); ctx.ellipse(nx, L.dishY, L.dishW / 2, 16, 0, 0, 7); ctx.fill();
+      pile.forEach((p, i) => { if (i < 70) clip(ctx, nx + p.x * L.dishW * 0.38, L.dishY - 10 + p.y * 12, p.a, z); });
+      // ถ่าน + สวิตช์ทางซ้าย
+      const bx = Math.max(60, w * 0.16), by = 170;
+      for (let i = 0; i < 2; i++) {
+        const used = i < s.bat, y0 = by - 50 + i * 50;
+        ctx.fillStyle = used ? '#2a2d33' : (dark ? '#3a3f48' : '#c9ced8'); ctx.fillRect(bx - 14, y0 + 2, 28, 46);
+        if (used) { ctx.fillStyle = '#d24a2a'; ctx.fillRect(bx - 14, y0 + 2, 28, 12); }
+        ctx.fillStyle = used ? '#fff' : muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(used ? '1.5 V' : 'ว่าง', bx, y0 + 32);
+      }
+      const wire = s.on ? '#b8641c' : (dark ? '#8a93a3' : '#4a505b');
+      ctx.strokeStyle = wire; ctx.lineWidth = 2.5 / Math.sqrt(z);
+      const c0 = t0 + 30, c1 = t0 + L.len - 40; // ช่วงที่พันขดลวด
+      ctx.beginPath();
+      ctx.moveTo(bx, by - 50); ctx.lineTo(bx, by - 90); ctx.lineTo(bx + 40, by - 90);
+      ctx.moveTo(bx + 80, by - 90); ctx.bezierCurveTo(nx - 120, by - 90, nx - 60, c0 - 20, nx - 10, c0);
+      ctx.moveTo(bx, by + 50); ctx.lineTo(bx, by + 90); ctx.bezierCurveTo(bx + 60, by + 130, nx - 60, c1 + 40, nx - 10, c1);
+      ctx.stroke();
+      // สวิตช์
+      ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(bx + 40, by - 90, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(bx + 80, by - 90, 4, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 3 / Math.sqrt(z); ctx.beginPath(); ctx.moveTo(bx + 40, by - 90);
+      if (s.on) ctx.lineTo(bx + 80, by - 90); else ctx.lineTo(bx + 74, by - 114); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('สวิตช์ ' + (s.on ? 'เปิด' : 'ปิด'), bx + 60, by - 118);
+      if (s.bat === 1) { ctx.strokeStyle = wire; ctx.lineWidth = 2.5 / Math.sqrt(z); ctx.beginPath(); ctx.moveTo(bx + 14, by + 2); ctx.lineTo(bx + 22, by + 2); ctx.lineTo(bx + 22, by + 46); ctx.lineTo(bx + 14, by + 46); ctx.stroke(); }
+      // ตะปู
+      ctx.fillStyle = dark ? '#9aa3b0' : '#7d8693';
+      ctx.fillRect(nx - 16, t0 - 6, 32, 7);
+      ctx.beginPath(); ctx.moveTo(nx - 5, t0); ctx.lineTo(nx + 5, t0); ctx.lineTo(nx + 5, tip - 10); ctx.lineTo(nx, tip); ctx.lineTo(nx - 5, tip - 10); ctx.closePath(); ctx.fill();
+      // ขดลวด: วาดจำนวนรอบจริง
+      ctx.strokeStyle = s.on ? '#c8742a' : '#a8692e'; ctx.lineWidth = Math.max(0.8, Math.min(2, 120 / s.N)) / Math.sqrt(z);
+      for (let i = 0; i < s.N; i++) {
+        const y = c0 + ((c1 - c0) * (i + 0.5)) / s.N;
+        ctx.beginPath(); ctx.ellipse(nx, y, 10, 3, 0, 0, Math.PI); ctx.stroke();
+      }
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ขดลวด ' + s.N + ' รอบ', nx + 18, (c0 + c1) / 2);
+      // คลิปที่ติดปลายตะปู: เรียงเป็นพวงห้อยลงมา นับได้ทีละตัว
+      for (let i = 0; i < s.held; i++) {
+        const col = i % 4, row = Math.floor(i / 4);
+        const x = nx + (col - 1.5) * 13, y = tip + 10 + row * 19;
+        clip(ctx, x, y, (col - 1.5) * 0.12, z);
+      }
+      s.falling.forEach((f) => { const col = f.i % 4, row = Math.floor(f.i / 4); clip(ctx, nx + (col - 1.5) * 13, tip + 10 + row * 19 + f.y, f.y * 0.02, z); });
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (s.phase === 'down') { s.lift = Math.min(1, s.lift + dt * 1.6); if (s.lift >= 1) { s.phase = 'rise'; s.held = pick(); } }
+      else if (s.phase === 'rise') { s.lift = Math.max(0, s.lift - dt * 1.2); if (s.lift <= 0) s.phase = 'up'; }
+      s.falling.forEach((f) => { f.v += 900 * dt; f.y += f.v * dt; });
+      s.falling = s.falling.filter((f) => f.y < 400);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'กด "จุ่มลงแล้วยกขึ้น" แล้วนับคลิปที่ติดตะปู', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วงจรไฟฟ้าอนุกรมและขนาน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 460px; } @media (max-width: 900px) { .stage canvas { height: 420px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+Lab.init({
+  id: 'circuit',
+  kid: true,
+  short: 'วงจรอนุกรมและขนาน',
+  title: 'หลอดไฟในวงจรอนุกรมและวงจรขนาน',
+  level: 'ป.6–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [15, 'สำรวจวงจร ลองเปิด-ปิดสวิตช์และถอดหลอด'], [30, 'วัดความสว่างและบันทึกตาราง'], [15, 'เขียนกราฟและเปรียบเทียบ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'ต่อหลอดไฟแบบอนุกรมและแบบขนาน แล้วสังเกตความสว่าง',
+      'วัดความสว่างของหลอดไฟด้วยเครื่องวัดแสง เมื่อเพิ่มจำนวนหลอด',
+      'บอกได้ว่าเมื่อถอดหลอดไฟออก 1 หลอด หลอดที่เหลือเป็นอย่างไร',
+    ],
+    theory:
+      '<p>ไฟฟ้าไหลได้เมื่อมี<b>ทางเดินครบรอบ</b> จากขั้วบวกของถ่าน ผ่านสายไฟและหลอดไฟ กลับมาที่ขั้วลบ เรียกว่า <b>วงจรปิด</b></p>' +
+      '<p><b>วงจรอนุกรม</b>: หลอดไฟเรียงต่อกันเป็นแถวเดียว ไฟฟ้ามีทางเดินทางเดียว ต้องผ่านทุกหลอด</p>' +
+      '<p><b>วงจรขนาน</b>: หลอดไฟแต่ละหลอดต่ออยู่คนละแขนง ไฟฟ้ามีหลายทางให้เดิน</p>' +
+      '<p><b>เครื่องวัดแสง</b> มีหัววัดติดอยู่ข้างหลอดที่ 1 เข็มชี้ตัวเลขยิ่งมาก แปลว่าหลอดยิ่งสว่าง ให้อ่านตัวเลขที่เข็มชี้ (สเกลละเอียดช่องละ 2)</p>',
+    equipment: ['ถ่านไฟฉาย 2 ก้อนในรางถ่าน', 'หลอดไฟเหมือนกัน 3 หลอดพร้อมขั้ว', 'สายไฟและสวิตช์', 'เครื่องวัดแสง (หน่วยความสว่าง 0–100)'],
+    procedure: [
+      'เลือก "อนุกรม" และ 1 หลอด ใช้ถ่าน 2 ก้อน กดสวิตช์ "เปิด"',
+      'อ่านค่าความสว่างบนเครื่องวัดแสง (กดแว่นขยายช่วยอ่านได้) บันทึกลงตาราง "อนุกรม"',
+      'เพิ่มเป็น 2 หลอด และ 3 หลอด แล้วบันทึกทุกครั้ง',
+      'เลือก "ขนาน" แล้วทำซ้ำ 1, 2, 3 หลอด บันทึกลงตาราง "ขนาน"',
+      'ลองแตะหลอดไฟเพื่อถอดออก 1 หลอด ทั้งในวงจรอนุกรมและขนาน สังเกตหลอดที่เหลือ',
+      'ลองเปลี่ยนเป็นถ่าน 1 ก้อน สังเกตความสว่าง (ไม่ต้องบันทึกลงตาราง)',
+    ],
+    tip: 'ใช้ถ่าน 2 ก้อนตลอดตอนบันทึกตาราง เพื่อให้เปรียบเทียบกันได้ ถ้าตัวเลขแกว่งเล็กน้อย ให้อ่านค่ากลาง',
+  },
+  predict: [
+    { q: 'ถ้าต่อหลอดไฟแบบอนุกรมเพิ่มจาก 1 หลอดเป็น 3 หลอด หลอดแต่ละหลอดจะสว่างอย่างไร', choices: ['สว่างขึ้น', 'สว่างเท่าเดิม', 'สว่างน้อยลง'] },
+    { q: 'ถ้าต่อหลอดไฟแบบขนานเพิ่มจาก 1 หลอดเป็น 3 หลอด หลอดแต่ละหลอดจะสว่างอย่างไร', choices: ['สว่างขึ้น', 'สว่างเกือบเท่าเดิม', 'สว่างน้อยลงมาก'] },
+    { q: 'ถ้าถอดหลอดไฟออก 1 หลอดในวงจรอนุกรม หลอดที่เหลือจะเป็นอย่างไร', choices: ['ดับหมด', 'ยังติดเหมือนเดิม', 'สว่างขึ้น'] },
+  ],
+  table: {
+    rows: 3,
+    sets: [{ key: 'S', label: 'อนุกรม' }, { key: 'P', label: 'ขนาน' }],
+    hint: 'ตาราง "อนุกรม" และ "ขนาน" แยกกัน จะสลับเองตามแบบวงจรที่เลือก',
+    columns: [
+      { key: 'k', label: 'จำนวนหลอดไฟ<br>(หลอด)', input: true },
+      { key: 'B', label: 'ความสว่างของหลอดที่ 1<br>(อ่านจากเครื่องวัดแสง)', input: true },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'ความสว่างกับจำนวนหลอดไฟ', x: 'k', y: 'B', xlabel: 'จำนวนหลอดไฟ (หลอด)', ylabel: 'ความสว่างของหลอด',
+    explain: 'เส้นสีหนึ่งคือวงจรอนุกรม อีกสีคือวงจรขนาน ดูว่าเส้นไหนลดลง เส้นไหนเกือบคงที่',
+  },
+  questions: [
+    { q: 'เมื่อต่อหลอดไฟแบบอนุกรมมากขึ้น ความสว่างของแต่ละหลอดเป็นอย่างไร', choices: ['สว่างขึ้น', 'เท่าเดิม', 'สว่างน้อยลง'], why: true },
+    { q: 'เมื่อต่อหลอดไฟแบบขนานมากขึ้น ความสว่างของแต่ละหลอดเป็นอย่างไร', choices: ['สว่างน้อยลงมาก', 'เกือบเท่าเดิม', 'สว่างขึ้นมาก'], why: true },
+    { q: 'เมื่อถอดหลอดไฟ 1 หลอดออกจากวงจรขนาน หลอดที่เหลือเป็นอย่างไร', choices: ['ดับหมด', 'ยังติดอยู่', 'กะพริบ'], why: true },
+    { q: 'เมื่อใช้ถ่าน 1 ก้อนแทน 2 ก้อน หลอดไฟสว่างอย่างไร', choices: ['สว่างน้อยลง', 'เท่าเดิม', 'สว่างขึ้น'] },
+    { q: 'ไฟในบ้านของเรา เมื่อปิดไฟห้องนอน ไฟห้องครัวยังติดอยู่ ไฟในบ้านต่อแบบใด', choices: ['แบบอนุกรม', 'แบบขนาน'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: วงจรอนุกรมกับวงจรขนานต่างกันอย่างไร (ความสว่างและการถอดหลอด)',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3.5, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const R = [10, 10, 10].map(() => 10 * (1 + 0.03 * (rng() - 0.5))); // ความต้านทานหลอดแต่ละหลอด (Ω) ไม่เท่ากันพอดี
+    const RIN = 0.4, EMF = 1.5;
+    const s = { mode: api.currentSet() === 'P' ? 'P' : 'S', k: 1, bat: 2, on: false, out: [false, false, false], needle: 0, shown: 0 };
+
+    ctrls.innerHTML =
+      '<h3>แบบวงจร</h3><div class="seg" id="mode"><button data-v="S">อนุกรม</button><button data-v="P">ขนาน</button></div>' +
+      '<h3>จำนวนหลอดไฟ</h3><div class="seg" id="kk"><button data-v="1">1 หลอด</button><button data-v="2">2 หลอด</button><button data-v="3">3 หลอด</button></div>' +
+      '<h3>ถ่านไฟฉาย</h3><div class="seg" id="bat"><button data-v="1">1 ก้อน</button><button data-v="2">2 ก้อน</button></div>' +
+      '<h3>สวิตช์</h3><div class="seg" id="sw"><button data-v="0">ปิด</button><button data-v="1">เปิด</button></div>' +
+      '<p class="muted" style="font-size:14px">แตะที่หลอดไฟในภาพเพื่อถอดออกหรือใส่กลับ</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const segs = {};
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); segs[id] = sync;
+    }
+    seg('mode', () => s.mode, (v) => { s.mode = v; api.useSet(v); });
+    seg('kk', () => s.k, (v) => { s.k = +v; s.out = [false, false, false]; });
+    seg('bat', () => s.bat, (v) => (s.bat = +v));
+    seg('sw', () => +s.on, (v) => (s.on = v === '1'));
+    api.onSetChange = (k) => { s.mode = k; segs.mode(); };
+
+    // กำลังไฟฟ้าของหลอดแต่ละหลอด (W)
+    function powers() {
+      const P = [0, 0, 0];
+      if (!s.on) return P;
+      const V = EMF * s.bat, r = RIN * s.bat;
+      if (s.mode === 'S') {
+        if (s.out.slice(0, s.k).some((x) => x)) return P;
+        let Rt = 0; for (let i = 0; i < s.k; i++) Rt += R[i];
+        const I = V / (Rt + r);
+        for (let i = 0; i < s.k; i++) P[i] = I * I * R[i];
+      } else {
+        let G = 0; for (let i = 0; i < s.k; i++) if (!s.out[i]) G += 1 / R[i];
+        if (G === 0) return P;
+        const Vb = (V * (1 / G)) / (1 / G + r);
+        for (let i = 0; i < s.k; i++) if (!s.out[i]) P[i] = (Vb * Vb) / R[i];
+      }
+      return P;
+    }
+    const PREF = 0.771; // กำลังของ 1 หลอดกับถ่าน 2 ก้อน ≈ 80 หน่วย
+    const bright = (p) => Math.min(1.2, p / PREF);
+
+    let L = {}, bulbs = [];
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 560;
+      L.left = 64; L.right = L.narrow ? w - 30 : w * 0.66;
+      L.top = 96; L.bot = L.narrow ? h * 0.52 : h - 80;
+      L.mx = L.narrow ? w / 2 : (L.right + w) / 2 + 6; L.my = L.narrow ? h - 34 : h * 0.55; L.mr = L.narrow ? Math.min(110, w / 2 - 30) : Math.min(105, (w - L.right) / 2 - 12);
+      bulbs = [];
+      for (let i = 0; i < s.k; i++) {
+        if (s.mode === 'S') bulbs.push({ x: L.left + 90 + ((L.right - L.left - 120) * (i + 0.5)) / s.k, y: L.top });
+        else bulbs.push({ x: L.left + 110 + (L.right - L.left - 130) * (s.k === 1 ? 0.5 : i / (s.k - 1)), y: (L.top + L.bot) / 2 });
+      }
+    }
+
+    function drawBulb(ctx, z, b, i, P) {
+      const dark = Lab.dark();
+      const out = s.out[i];
+      // ขั้วหลอด
+      ctx.fillStyle = dark ? '#6c7380' : '#7d8492'; ctx.fillRect(b.x - 16, b.y + 6, 32, 14);
+      ctx.fillStyle = dark ? '#c9ced8' : '#2f343d'; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('หลอด ' + (i + 1), b.x, b.y + 24);
+      if (out) {
+        ctx.strokeStyle = dark ? '#9aa3b4' : '#666'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(b.x, b.y - 10, 15, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = Lab.css('--bad'); ctx.fillText('ถอดออก', b.x, b.y - 18);
+        return;
+      }
+      const br = bright(P[i]);
+      if (br > 0.01) {
+        const g = ctx.createRadialGradient(b.x, b.y - 10, 2, b.x, b.y - 10, 18 + 70 * Math.sqrt(br));
+        g.addColorStop(0, 'rgba(255,235,150,' + Math.min(1, 0.4 + br) + ')'); g.addColorStop(1, 'rgba(255,220,120,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y - 10, 18 + 70 * Math.sqrt(br), 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = br > 0.01 ? 'rgba(255,248,215,' + (0.55 + 0.45 * Math.min(1, br)) + ')' : (dark ? 'rgba(200,210,225,.25)' : 'rgba(220,230,240,.8)');
+      ctx.strokeStyle = dark ? '#aab3c2' : '#8a93a3'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.arc(b.x, b.y - 10, 15, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = br > 0.01 ? '#ff9a2a' : '#777'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(b.x - 6, b.y + 4); ctx.lineTo(b.x - 4, b.y - 12); ctx.lineTo(b.x, b.y - 8); ctx.lineTo(b.x + 4, b.y - 12); ctx.lineTo(b.x + 6, b.y + 4); ctx.stroke();
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const P = powers();
+      const wire = s.on ? (dark ? '#e0a050' : '#b8641c') : (dark ? '#8a93a3' : '#4a505b');
+      ctx.strokeStyle = wire; ctx.lineWidth = 3 / Math.sqrt(z); ctx.lineJoin = 'round';
+      const { left, right, top, bot } = L;
+      // วงจรหลัก (สี่เหลี่ยม) ถ่านอยู่ด้านซ้าย สวิตช์ด้านล่าง
+      // สวิตช์อยู่บนสายบนใกล้ถ่าน ทุกกิ่งของวงจรขนานจึงต้องผ่านสวิตช์
+      const swX = left + 46, by0 = (top + bot) / 2;
+      const last = s.mode === 'S' ? right : bulbs[bulbs.length - 1].x;
+      ctx.beginPath();
+      ctx.moveTo(left, by0 - 50); ctx.lineTo(left, top); ctx.lineTo(swX - 22, top);
+      ctx.moveTo(swX + 22, top);
+      if (s.mode === 'S') {
+        bulbs.forEach((b) => { ctx.lineTo(b.x - 16, top); ctx.moveTo(b.x + 16, top); });
+        ctx.lineTo(right, top); ctx.lineTo(right, bot);
+      } else {
+        ctx.lineTo(last, top);
+        bulbs.forEach((b) => { ctx.moveTo(b.x, top); ctx.lineTo(b.x, b.y - 26); ctx.moveTo(b.x, b.y + 20); ctx.lineTo(b.x, bot); });
+      }
+      ctx.moveTo(last, bot); ctx.lineTo(left, bot); ctx.lineTo(left, by0 + 50);
+      ctx.stroke();
+      // สวิตช์
+      ctx.fillStyle = ink;
+      ctx.beginPath(); ctx.arc(swX - 22, top, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(swX + 22, top, 4, 0, 7); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 3 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(swX - 22, top);
+      if (s.on) ctx.lineTo(swX + 22, top); else ctx.lineTo(swX + 16, top - 24);
+      ctx.stroke();
+      ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = muted;
+      ctx.fillText('สวิตช์ ' + (s.on ? 'เปิด' : 'ปิด'), swX, top - 28);
+      // ถ่าน
+      const by = (top + bot) / 2;
+      for (let i = 0; i < 2; i++) {
+        const y0 = by - 50 + i * 50, used = i < s.bat;
+        ctx.fillStyle = used ? '#2a2d33' : (dark ? '#3a3f48' : '#c9ced8'); ctx.fillRect(left - 14, y0 + 2, 28, 46);
+        if (used) { ctx.fillStyle = '#d24a2a'; ctx.fillRect(left - 14, y0 + 2, 28, 12); ctx.fillStyle = '#ccc'; ctx.fillRect(left - 5, y0 - 2, 10, 4); }
+        ctx.fillStyle = used ? '#fff' : muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+        ctx.fillText(used ? '1.5 V' : 'ว่าง', left, y0 + 32);
+        if (used) { ctx.fillText('+', left, y0 + 8); }
+      }
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ถ่าน', left - 46, by);
+      if (s.bat === 1) { ctx.strokeStyle = wire; ctx.lineWidth = 3 / Math.sqrt(z); ctx.beginPath(); ctx.moveTo(left + 14, by + 2); ctx.lineTo(left + 22, by + 2); ctx.lineTo(left + 22, by + 46); ctx.lineTo(left + 14, by + 46); ctx.stroke(); }
+      bulbs.forEach((b, i) => drawBulb(ctx, z, b, i, P));
+      // หัววัดแสงข้างหลอดที่ 1
+      const b1 = bulbs[0], hx = b1.x + 24, hy = b1.y - 30;
+      ctx.fillStyle = '#1f2329'; ctx.fillRect(hx, hy, 14, 10); ctx.fillStyle = '#5cc8ff'; ctx.fillRect(hx, hy + 3, 3, 4);
+      ctx.strokeStyle = dark ? '#6c7380' : '#555'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(hx + 14, hy + 5); ctx.bezierCurveTo(hx + 60, hy - 40, L.mx - 40, L.my - L.mr - 60, L.mx, L.my - L.mr - 16); ctx.stroke();
+      // เครื่องวัดแสง (หน้าปัดเข็ม 0–100)
+      const mx = L.mx, my = L.my, mr = L.mr;
+      ctx.fillStyle = dark ? '#2a2f38' : '#ffffff'; ctx.strokeStyle = muted; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(mx - mr - 14, my - mr - 18, 2 * mr + 28, mr + 46, 12) : ctx.rect(mx - mr - 14, my - mr - 18, 2 * mr + 28, mr + 46); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#f2ecd8' : '#fbf6e6'; ctx.beginPath(); ctx.arc(mx, my, mr, Math.PI, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let v = 0; v <= 100; v += 2) {
+        const a = Math.PI + (v / 100) * Math.PI, l = v % 10 === 0 ? 13 : 7;
+        ctx.lineWidth = (v % 10 === 0 ? 1.4 : 0.8) / z;
+        ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 4), my + Math.sin(a) * (mr - 4)); ctx.lineTo(mx + Math.cos(a) * (mr - 4 - l), my + Math.sin(a) * (mr - 4 - l)); ctx.stroke();
+        if (v % 10 === 0) {
+          ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(v, mx + Math.cos(a) * (mr - 28), my + Math.sin(a) * (mr - 28));
+        }
+      }
+      const a = Math.PI + (Math.max(0, Math.min(104, s.needle)) / 100) * Math.PI;
+      ctx.strokeStyle = '#c8412a'; ctx.lineWidth = 1.6 / z;
+      ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(a) * (mr - 6), my + Math.sin(a) * (mr - 6)); ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('เครื่องวัดแสง', mx, my + 8);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown') {
+        bulbs.forEach((b, i) => { if (Math.hypot(x - b.x, y - (b.y - 6)) < 26) s.out[i] = !s.out[i]; });
+      }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      // เข็มเคลื่อนเข้าหาค่าจริงแบบหน่วง พร้อมสั่นเล็กน้อย
+      const target = bright(powers()[0]) * 80;
+      s.needle += (target - s.needle) * Math.min(1, dt * 4) + (target > 0 ? Lab.noise(0.08) : 0);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะหลอดไฟเพื่อถอดหรือใส่กลับ', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>
