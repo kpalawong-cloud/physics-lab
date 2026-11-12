@@ -31,11 +31,11 @@ Lab.init({
       '<p>ไฟฟ้าไหลได้เมื่อมี<b>ทางเดินครบรอบ</b> จากขั้วบวกของถ่าน ผ่านสายไฟและหลอดไฟ กลับมาที่ขั้วลบ เรียกว่า <b>วงจรปิด</b></p>' +
       '<p><b>วงจรอนุกรม</b>: หลอดไฟเรียงต่อกันเป็นแถวเดียว ไฟฟ้ามีทางเดินทางเดียว ต้องผ่านทุกหลอด</p>' +
       '<p><b>วงจรขนาน</b>: หลอดไฟแต่ละหลอดต่ออยู่คนละแขนง ไฟฟ้ามีหลายทางให้เดิน</p>' +
-      '<p><b>เครื่องวัดแสง</b> มีหัววัดติดอยู่ข้างหลอดที่ 1 เข็มชี้ตัวเลขยิ่งมาก แปลว่าหลอดยิ่งสว่าง ให้อ่านตัวเลขที่เข็มชี้ (สเกลละเอียดช่องละ 2)</p>',
+      '<p><b>เครื่องวัดแสง</b> มีหัววัดที่ย้ายไปวางข้างหลอดไหนก็ได้ เข็มชี้ตัวเลขยิ่งมาก แปลว่าหลอดยิ่งสว่าง ให้อ่านตัวเลขที่เข็มชี้ (สเกลละเอียดช่องละ 2)</p>',
     equipment: ['ถ่านไฟฉาย 2 ก้อนในรางถ่าน', 'หลอดไฟเหมือนกัน 3 หลอดพร้อมขั้ว', 'สายไฟและสวิตช์', 'เครื่องวัดแสง (หน่วยความสว่าง 0–100)'],
     procedure: [
       'เลือก "อนุกรม" และ 1 หลอด ใช้ถ่าน 2 ก้อน กดสวิตช์ "เปิด"',
-      'อ่านค่าความสว่างบนเครื่องวัดแสง (กดแว่นขยายช่วยอ่านได้) บันทึกลงตาราง "อนุกรม"',
+      'อ่านค่าความสว่างบนเครื่องวัดแสง (กดแว่นขยายช่วยอ่านได้) บันทึกลงตาราง "อนุกรม" ลองย้ายหัววัดไปหลอดอื่นด้วย ว่าแต่ละหลอดสว่างเท่ากันหรือไม่',
       'เพิ่มเป็น 2 หลอด และ 3 หลอด แล้วบันทึกทุกครั้ง',
       'เลือก "ขนาน" แล้วทำซ้ำ 1, 2, 3 หลอด บันทึกลงตาราง "ขนาน"',
       'ลองแตะหลอดไฟเพื่อถอดออก 1 หลอด ทั้งในวงจรอนุกรมและขนาน สังเกตหลอดที่เหลือ',
@@ -54,7 +54,7 @@ Lab.init({
     hint: 'ตาราง "อนุกรม" และ "ขนาน" แยกกัน จะสลับเองตามแบบวงจรที่เลือก',
     columns: [
       { key: 'k', label: 'จำนวนหลอดไฟ<br>(หลอด)', input: true },
-      { key: 'B', label: 'ความสว่างของหลอดที่ 1<br>(อ่านจากเครื่องวัดแสง)', input: true },
+      { key: 'B', label: 'ความสว่างของหลอด<br>(อ่านจากเครื่องวัดแสง)', input: true },
     ],
   },
   graph: {
@@ -78,14 +78,15 @@ Lab.init({
     const rng = api.rng;
     const R = [10, 10, 10].map(() => 10 * (1 + 0.03 * (rng() - 0.5))); // ความต้านทานหลอดแต่ละหลอด (Ω) ไม่เท่ากันพอดี
     const RIN = 0.4, EMF = 1.5;
-    const s = { mode: api.currentSet() === 'P' ? 'P' : 'S', k: 1, bat: 2, on: false, out: [false, false, false], needle: 0, shown: 0 };
+    const s = { mode: api.currentSet() === 'P' ? 'P' : 'S', k: 1, bat: 2, on: false, out: [false, false, false], needle: 0, shown: 0, probe: 0, pdrag: null };
 
     ctrls.innerHTML =
       '<h3>แบบวงจร</h3><div class="seg" id="mode"><button data-v="S">อนุกรม</button><button data-v="P">ขนาน</button></div>' +
       '<h3>จำนวนหลอดไฟ</h3><div class="seg" id="kk"><button data-v="1">1 หลอด</button><button data-v="2">2 หลอด</button><button data-v="3">3 หลอด</button></div>' +
       '<h3>ถ่านไฟฉาย</h3><div class="seg" id="bat"><button data-v="1">1 ก้อน</button><button data-v="2">2 ก้อน</button></div>' +
       '<h3>สวิตช์</h3><div class="seg" id="sw"><button data-v="0">ปิด</button><button data-v="1">เปิด</button></div>' +
-      '<p class="muted" style="font-size:14px">แตะที่หลอดไฟในภาพเพื่อถอดออกหรือใส่กลับ</p>';
+      '<h3>หัววัดแสงอยู่ที่</h3><div class="seg" id="probe"><button data-v="0">หลอด 1</button><button data-v="1">หลอด 2</button><button data-v="2">หลอด 3</button></div>' +
+      '<p class="muted" style="font-size:14px">ลากหัววัดสีดำไปวางข้างหลอดที่ต้องการวัดได้ แตะที่หลอดไฟเพื่อถอดออกหรือใส่กลับ</p>';
     const $ = (q) => ctrls.querySelector(q);
     const segs = {};
     function seg(id, get, set) {
@@ -95,9 +96,13 @@ Lab.init({
       sync(); segs[id] = sync;
     }
     seg('mode', () => s.mode, (v) => { s.mode = v; api.useSet(v); });
-    seg('kk', () => s.k, (v) => { s.k = +v; s.out = [false, false, false]; });
+    seg('kk', () => s.k, (v) => { s.k = +v; s.out = [false, false, false]; if (s.probe >= s.k) { s.probe = 0; segs.probe(); } syncProbeBtns(); });
     seg('bat', () => s.bat, (v) => (s.bat = +v));
     seg('sw', () => +s.on, (v) => (s.on = v === '1'));
+    seg('probe', () => s.probe, (v) => { s.probe = Math.min(+v, s.k - 1); });
+    // ปุ่มหลอดที่ยังไม่มีในวงจรกดไม่ได้
+    function syncProbeBtns() { $('#probe').querySelectorAll('button').forEach((b) => (b.disabled = +b.dataset.v >= s.k)); segs.probe(); }
+    syncProbeBtns();
     api.onSetChange = (k) => { s.mode = k; segs.mode(); };
 
     // กำลังไฟฟ้าของหลอดแต่ละหลอด (W)
@@ -206,8 +211,8 @@ Lab.init({
       ctx.fillText('ถ่าน', left - 46, by);
       if (s.bat === 1) { ctx.strokeStyle = wire; ctx.lineWidth = 3 / Math.sqrt(z); ctx.beginPath(); ctx.moveTo(left + 14, by + 2); ctx.lineTo(left + 22, by + 2); ctx.lineTo(left + 22, by + 46); ctx.lineTo(left + 14, by + 46); ctx.stroke(); }
       bulbs.forEach((b, i) => drawBulb(ctx, z, b, i, P));
-      // หัววัดแสงข้างหลอดที่ 1
-      const b1 = bulbs[0], hx = b1.x + 24, hy = b1.y - 30;
+      // หัววัดแสง: วางข้างหลอดที่เลือก หรือตามนิ้วขณะลาก
+      const hp = probePos(), hx = hp[0], hy = hp[1];
       ctx.fillStyle = '#1f2329'; ctx.fillRect(hx, hy, 14, 10); ctx.fillStyle = '#5cc8ff'; ctx.fillRect(hx, hy + 3, 3, 4);
       ctx.strokeStyle = dark ? '#6c7380' : '#555'; ctx.lineWidth = 1.2 / z;
       ctx.beginPath(); ctx.moveTo(hx + 14, hy + 5); ctx.bezierCurveTo(hx + 60, hy - 40, L.mx - 40, L.my - L.mr - 60, L.mx, L.my - L.mr - 16); ctx.stroke();
@@ -234,28 +239,47 @@ Lab.init({
       ctx.fillText('เครื่องวัดแสง', mx, my + 8);
     }
 
+    function probePos() {
+      if (s.pdrag) return [s.pdrag.x - 7, s.pdrag.y - 5];
+      const b = bulbs[Math.min(s.probe, bulbs.length - 1)];
+      return [b.x + 24, b.y - 30];
+    }
     function onPointer(e) {
       const [x, y] = Lab.pos(canvas, e);
       if (lens.handle(e, x, y)) { e.preventDefault(); return; }
       if (e.type === 'pointerdown') {
-        bulbs.forEach((b, i) => { if (Math.hypot(x - b.x, y - (b.y - 6)) < 26) s.out[i] = !s.out[i]; });
+        const [hx, hy] = probePos();
+        if (Math.abs(x - (hx + 7)) < 22 && Math.abs(y - (hy + 5)) < 20) { s.pdrag = { x, y }; canvas.setPointerCapture(e.pointerId); }
+        else bulbs.forEach((b, i) => { if (Math.hypot(x - b.x, y - (b.y - 6)) < 26) s.out[i] = !s.out[i]; });
+      }
+      if (s.pdrag && e.type === 'pointermove') { s.pdrag.x = x; s.pdrag.y = y; }
+      if (s.pdrag && (e.type === 'pointerup' || e.type === 'pointercancel')) {
+        // วางแล้วติดกับหลอดที่ใกล้ที่สุด
+        let best = 0, bd = 1e9;
+        bulbs.forEach((b, i) => { const d = Math.hypot(x - b.x, y - b.y); if (d < bd) { bd = d; best = i; } });
+        s.probe = best; s.pdrag = null; segs.probe();
       }
       e.preventDefault();
     }
-    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
 
     Lab.loop((dt) => {
       if (!cv.w) return;
       layout();
       // เข็มเคลื่อนเข้าหาค่าจริงแบบหน่วง พร้อมสั่นเล็กน้อย
-      const target = bright(powers()[0]) * 80;
+      // ขณะลากหัววัด แสงที่ได้ขึ้นกับระยะถึงหลอดที่ใกล้ที่สุด
+      const P = powers();
+      let target;
+      if (s.pdrag) {
+        target = 0; bulbs.forEach((b, i) => { const d = Math.hypot(s.pdrag.x - b.x, s.pdrag.y - (b.y - 10)); target += bright(P[i]) * 80 * Math.min(1, (36 * 36) / (d * d + 1)); });
+      } else target = bright(P[Math.min(s.probe, s.k - 1)]) * 80;
       s.needle += (target - s.needle) * Math.min(1, dt * 4) + (target > 0 ? Lab.noise(0.08) : 0);
       const ctx = cv.ctx;
       ctx.clearRect(0, 0, cv.w, cv.h);
       scene(ctx, 1);
       lens.draw(scene);
       ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะหลอดไฟเพื่อถอดหรือใส่กลับ', 10, 8);
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะหลอดไฟเพื่อถอดหรือใส่กลับ · ลากหัววัดสีดำเพื่อย้ายไปหลอดอื่น', 10, 8);
     });
   },
 });
