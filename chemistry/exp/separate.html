@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การแยกสารผสม · ห้องปฏิบัติการเคมี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 540px; } @media (max-width: 900px) { .stage canvas { height: 520px; } } @media (max-width: 620px) { .stage canvas { height: 760px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+// ส่วนประกอบของสารผสม (สีใช้วาดกองสาร)
+const PARTS = [
+  { key: 'Fe', name: 'ผงเหล็ก', col: '#4a4e55' },
+  { key: 'W', name: 'ขี้เลื่อย', col: '#a0703a' },
+  { key: 'S', name: 'ทราย', col: '#d8b56a' },
+  { key: 'Na', name: 'เกลือ', col: '#f6f6f6' },
+];
+const STEPS = [
+  { name: 'ใช้แม่เหล็กดูด', hint: 'เอาแม่เหล็กห่อถุงพลาสติก ลากผ่านสารผสม' },
+  { name: 'เทลงน้ำแล้วคน', hint: 'เทสารผสมที่เหลือลงบีกเกอร์น้ำ คนจนเกลือละลาย' },
+  { name: 'ช้อนสิ่งที่ลอยออก', hint: 'ช้อนขี้เลื่อยที่ลอยอยู่ผิวน้ำ แล้วผึ่งให้แห้ง' },
+  { name: 'กรอง', hint: 'เทผ่านกระดาษกรอง ทรายค้างบนกระดาษ (ผึ่งให้แห้ง) น้ำเกลือไหลผ่าน' },
+  { name: 'ระเหยแห้ง', hint: 'ต้มน้ำเกลือในถ้วยกระเบื้องจนน้ำระเหยหมด เหลือเกล็ดเกลือ' },
+];
+
+Lab.init({
+  id: 'separate',
+  kid: true,
+  subject: 'เคมี',
+  short: 'การแยกสารผสม',
+  title: 'การแยกสารผสมของทราย เกลือ ผงเหล็ก และขี้เลื่อย',
+  level: 'ป.6',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ชั่งจานเปล่าและสารผสมก่อนแยก'], [35, 'แยกสารทีละขั้น แล้วชั่งสารแต่ละชนิด'], [15, 'เขียนกราฟแท่ง เทียบผลรวมกับสารผสมเดิม'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'เลือกวิธีแยกสารให้เหมาะกับสมบัติของสารแต่ละชนิด',
+      'แยกผงเหล็ก ขี้เลื่อย ทราย และเกลือ ออกจากสารผสม',
+      'ชั่งมวลของสารแต่ละชนิดที่แยกได้ และเปรียบเทียบกับมวลของสารผสมเดิม',
+    ],
+    theory:
+      '<p><b>สารผสม</b> คือสารหลายชนิดที่มาอยู่รวมกัน แต่ละชนิดยังมีสมบัติเดิม เราจึงแยกออกจากกันได้โดยใช้สมบัติที่ต่างกัน</p>' +
+      '<p><b>ใช้แม่เหล็ก</b>: แยกสารที่แม่เหล็กดูดได้ (เหล็ก) · <b>การทำให้ลอย</b>: สารที่เบากว่าน้ำ (ขี้เลื่อย) ลอยขึ้นมา ช้อนออกได้ · <b>การกรอง</b>: แยกของแข็งที่ไม่ละลายน้ำ (ทราย) ออกจากของเหลว · <b>การระเหยแห้ง</b>: แยกสารที่ละลายน้ำ (เกลือ) โดยทำให้น้ำระเหยไปจนหมด</p>' +
+      '<p><b>ตาชั่งแบบหน้าปัด</b>: อ่านตัวเลขที่เข็มชี้ ขีดเล็กช่องละ 1 กรัม ตัวเลขบอกทุก 10 กรัม จานทุกใบเป็นแบบเดียวกัน มีมวลเท่ากัน</p>' +
+      '<div class="eq">มวลสาร = มวลจานกับสาร − มวลจานเปล่า</div>',
+    equipment: ['สารผสมของทราย เกลือ ผงเหล็ก และขี้เลื่อย ในจาน', 'แม่เหล็กห่อถุงพลาสติก', 'บีกเกอร์ น้ำ แท่งแก้วคน ช้อน', 'กรวย กระดาษกรอง ถ้วยกระเบื้อง ตะเกียง', 'จานแบบเดียวกัน 5 ใบ และตาชั่งแบบหน้าปัด (0–100 g)'],
+    procedure: [
+      'วางจานเปล่าบนตาชั่ง อ่านมวล แล้ววางจานสารผสมบนตาชั่ง อ่านมวล บันทึกลงตาราง (เขียนชื่อสารในช่องแรก)',
+      'กดปุ่มขั้นต่อไปทีละขั้น: ใช้แม่เหล็ก → เทลงน้ำแล้วคน → ช้อนสิ่งที่ลอยออก → กรอง → ระเหยแห้ง',
+      'เมื่อได้สารแต่ละชนิดในจาน ให้วางจานนั้นบนตาชั่ง (กดปุ่มหรือแตะจานในภาพ) อ่านมวล บันทึกลงตาราง',
+      'รวมมวลของสารทั้ง 4 ชนิดที่แยกได้ เทียบกับมวลของสารผสมเดิม',
+    ],
+    tip: 'ใช้แว่นขยายช่วยอ่านหน้าปัดตาชั่ง อ่านละเอียดถึงครึ่งกรัมได้ เช่น 37.5 g',
+  },
+  predict: [
+    { q: 'แม่เหล็กจะดูดสารชนิดใดขึ้นมา', choices: ['ทราย', 'เกลือ', 'ผงเหล็ก', 'ขี้เลื่อย'] },
+    { q: 'เมื่อเทสารผสมลงในน้ำ สารชนิดใดจะละลายหายไปในน้ำ', choices: ['ทราย', 'เกลือ', 'ขี้เลื่อย'] },
+    { q: 'มวลรวมของสารทั้ง 4 ชนิดที่แยกได้ เทียบกับมวลของสารผสมเดิมเป็นอย่างไร', choices: ['มากกว่า', 'เท่ากันพอดี', 'น้อยกว่าเล็กน้อย'] },
+  ],
+  table: {
+    rows: 6,
+    hint: 'พิมพ์ชื่อสารในช่องแรก เช่น สารผสม, ผงเหล็ก, ขี้เลื่อย, ทราย, เกลือ มวลสารคำนวณให้อัตโนมัติ',
+    columns: [
+      { key: 'name', label: 'ชื่อสาร', input: true, text: true },
+      { key: 'a', label: 'มวลจานกับสาร<br>(g)', input: true },
+      { key: 'b', label: 'มวลจานเปล่า<br>(g)', input: true },
+      { key: 'm', label: 'มวลสาร<br>(g)', calc: (r) => r.a - r.b, digits: 1 },
+    ],
+  },
+  graph: {
+    mode: 'bar', title: 'มวลของสารแต่ละชนิด', y: 'm', label: 'name', xlabel: 'ชนิดของสาร', ylabel: 'มวล (g)',
+    explain: 'เทียบความสูงของแท่ง "สารผสม" กับแท่งของสารที่แยกได้ แล้วลองบวกมวลของสารทั้ง 4 ชนิดดูว่าได้เท่ากับสารผสมหรือไม่',
+  },
+  questions: [
+    { q: 'เหตุใดจึงใช้แม่เหล็กเป็นขั้นแรก ก่อนเทลงน้ำ', choices: ['ผงเหล็กเปียกน้ำแล้วจะดูดยาก และเป็นสนิมได้', 'แม่เหล็กใช้ในน้ำไม่ได้เลย', 'ไม่มีเหตุผล ทำขั้นไหนก่อนก็ได้'], why: true },
+    { q: 'ทำไมเกลือไม่ค้างอยู่บนกระดาษกรองเหมือนทราย', choices: ['เกลือละลายน้ำ จึงผ่านกระดาษกรองไปกับน้ำ', 'เกลือเบากว่าทราย', 'กระดาษกรองดูดเกลือไว้'], why: true },
+    { q: 'ขี้เลื่อยแยกออกได้ด้วยวิธีใด', choices: ['การกรอง', 'การช้อนสิ่งที่ลอยบนน้ำ', 'การใช้แม่เหล็ก'] },
+    { q: 'ผลรวมมวลของสารที่แยกได้น้อยกว่าสารผสมเดิมเล็กน้อย เพราะเหตุใด', choices: ['สารบางส่วนติดอุปกรณ์หรือหกหายระหว่างแยก', 'สารหายไปเองตามธรรมชาติ', 'ตาชั่งเสีย'], why: true },
+    { q: 'การทำนาเกลือใช้วิธีแยกสารแบบใด', choices: ['การกรอง', 'การระเหยแห้ง', 'การใช้แม่เหล็ก'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: สารแต่ละชนิดแยกด้วยวิธีใด เพราะมีสมบัติอย่างไร และมวลรวมเทียบกับสารผสมเดิมเป็นอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const DISH = Math.round((20 + 4 * rng()) * 10) / 10;
+    const MIX = { Fe: 4 + 3 * rng(), W: 2 + 2 * rng(), S: 12 + 6 * rng(), Na: 8 + 4 * rng() };
+    const KEEP = { Fe: 0.97 + 0.02 * rng(), W: 0.85 + 0.1 * rng(), S: 0.94 + 0.04 * rng(), Na: 0.88 + 0.07 * rng() };
+    let s;
+    function reset() {
+      s = { stage: 0, busy: 0, on: 'M', needle: 0, off: 0,
+        M: { Fe: MIX.Fe, W: MIX.W, S: MIX.S, Na: MIX.Na }, // สารในจานสารผสม
+        dish: { Fe: 0, W: 0, S: 0, Na: 0 } };
+      place('M');
+    }
+    // ดอกจุดของแต่ละกอง (สุ่มครั้งเดียว)
+    const DOTS = []; for (let i = 0; i < 160; i++) DOTS.push([rng(), rng(), rng()]);
+
+    ctrls.innerHTML =
+      '<h3>ขั้นตอนการแยกสาร</h3><ol id="steps" style="margin:0 0 6px;padding-left:22px;font-size:15px"></ol>' +
+      '<div class="row"><button class="btn primary" id="next"></button></div>' +
+      '<p class="muted" id="hint" style="font-size:14px;margin:4px 0"></p>' +
+      '<h3>วางบนตาชั่ง</h3><div class="seg" id="on" style="flex-wrap:wrap"></div>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่ (สารผสมชุดเดิม)</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const ON = [{ v: 'E', t: 'จานเปล่า' }, { v: 'M', t: 'สารผสม' }].concat(PARTS.map((p) => ({ v: p.key, t: p.name })));
+    function place(v) { s.on = v; s.off = Lab.noise(0.12); }
+    const avail = (v) => v === 'E' || v === 'M' || s.dish[v] > 0;
+    function syncUI() {
+      $('#steps').innerHTML = STEPS.map((st, i) => '<li style="' + (i < s.stage ? 'color:var(--ok)' : i === s.stage ? 'font-weight:600' : 'color:var(--muted)') + '">' + st.name + (i < s.stage ? ' ✓' : '') + '</li>').join('');
+      const nx = $('#next');
+      nx.disabled = s.stage >= STEPS.length || s.busy > 0;
+      nx.textContent = s.busy > 0 ? 'กำลังทำ…' : s.stage >= STEPS.length ? 'แยกสารครบแล้ว' : 'ขั้นต่อไป: ' + STEPS[s.stage].name;
+      $('#hint').textContent = s.stage < STEPS.length ? STEPS[s.stage].hint : 'ชั่งสารแต่ละชนิดให้ครบ แล้วบันทึกลงตาราง';
+      $('#on').innerHTML = ON.map((o) => '<button data-v="' + o.v + '"' + (avail(o.v) ? '' : ' disabled') + ' class="' + (s.on === o.v ? 'on' : '') + '" style="flex:1 0 33%">' + o.t + '</button>').join('');
+    }
+    $('#on').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && !b.disabled) { place(b.dataset.v); syncUI(); } });
+    $('#next').onclick = () => { if (s.stage < STEPS.length && !s.busy) { s.busy = 1.4; syncUI(); } };
+    $('#reset').onclick = () => { if (s.stage > 0 && !confirm('เริ่มแยกสารใหม่? (ข้อมูลในตารางยังอยู่)')) return; reset(); syncUI(); };
+    function doStep() {
+      const k = s.stage;
+      if (k === 0) { s.dish.Fe = s.M.Fe * KEEP.Fe; s.M.Fe = 0; }
+      if (k === 1) { /* เทสารที่เหลือลงน้ำ จานสารผสมว่าง */ s.inWater = { W: s.M.W, S: s.M.S, Na: s.M.Na }; s.M = { Fe: 0, W: 0, S: 0, Na: 0 }; }
+      if (k === 2) { s.dish.W = s.inWater.W * KEEP.W; s.inWater.W = 0; }
+      if (k === 3) { s.dish.S = s.inWater.S * KEEP.S; s.inWater.S = 0; }
+      if (k === 4) { s.dish.Na = s.inWater.Na * KEEP.Na; s.inWater.Na = 0; }
+      s.stage++;
+    }
+    function content(v) {
+      if (v === 'E') return 0;
+      if (v === 'M') return s.M.Fe + s.M.W + s.M.S + s.M.Na;
+      return s.dish[v];
+    }
+    reset(); syncUI();
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 620;
+      L.dy = h - 70; L.dw = w / 6; L.dr = Math.min(34, L.dw * 0.42); // แถวจาน 6 ช่อง (จานเปล่า + สารผสม + 4 สาร)
+      if (L.narrow) {
+        // จอแคบ: ตาชั่งอยู่บน พื้นที่ทำงานอยู่ใต้ตาชั่ง
+        L.sr = Math.min(w * 0.26, 100); L.sx = w / 2; L.sy = 70 + L.sr + 30;
+        L.wx = w / 2; L.wy = L.sy + L.sr + 150;
+      } else {
+        L.sr = Math.min(130, (L.dy - 190) / 2); L.sx = w * 0.76; L.sy = 70 + L.sr + 30;
+        L.wx = w * 0.34; L.wy = L.sy;                          // จุดกลางพื้นที่ทำงาน
+      }
+    }
+
+    function pile(ctx, cx, cy, mass, parts, z) {
+      // กองสารรูปโดม ขนาดตามมวล จุดสีตามสัดส่วนของแต่ละสาร
+      const tot = parts.reduce((a, p) => a + p[1], 0);
+      if (tot <= 0.01) return;
+      const r = 6 + 5.5 * Math.sqrt(mass);
+      ctx.save(); ctx.beginPath(); ctx.ellipse(cx, cy, r, r * 0.45, 0, Math.PI, 0); ctx.lineTo(cx + r, cy); ctx.closePath();
+      ctx.fillStyle = parts.length === 1 ? parts[0][0] : '#c8b28a'; ctx.fill(); ctx.clip();
+      let acc = 0;
+      const cols = parts.map((p) => { acc += p[1] / tot; return [p[0], acc]; });
+      DOTS.forEach(([u, v, c]) => {
+        const col = cols.find((q) => c <= q[1] + 1e-9) || cols[cols.length - 1];
+        ctx.fillStyle = col[0]; ctx.beginPath(); ctx.arc(cx - r + 2 * r * u, cy - r * 0.45 * v, 1.6, 0, 7); ctx.fill();
+      });
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 0.7 / z;
+      ctx.beginPath(); ctx.ellipse(cx, cy, r, r * 0.45, 0, Math.PI, 0); ctx.stroke();
+    }
+    function dish(ctx, cx, cy, z, label, sel, rx) {
+      rx = rx || 34;
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#d8dbe2' : '#fbfbfb'; ctx.strokeStyle = sel ? Lab.css('--accent') : '#9aa3b0'; ctx.lineWidth = (sel ? 2.5 : 1) / z;
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, rx * 0.27, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = sel ? Lab.css('--accent') : Lab.css('--ink'); ctx.font = (sel ? '600 ' : '') + (rx < 30 ? '11px' : '12.5px') + ' Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(label, cx, cy + 14);
+    }
+    const partsOf = (v) => v === 'M' ? PARTS.filter((p) => s.M[p.key] > 0.01).map((p) => [p.col, s.M[p.key]]) : v === 'E' ? [] : [[PARTS.find((p) => p.key === v).col, s.dish[v]]];
+
+    function workArea(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      const cx = L.wx, cy = L.wy, k = s.busy > 0 ? s.stage : s.stage - 1; // ภาพของขั้นที่กำลังทำหรือเพิ่งทำเสร็จ
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const beaker = (x, y, wB, hB, water, fill) => {
+        ctx.fillStyle = fill || 'rgba(170,215,245,.5)'; ctx.fillRect(x - wB / 2 + 2, y - hB * water, wB - 4, hB * water - 2);
+        ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2 / Math.sqrt(z);
+        ctx.beginPath(); ctx.moveTo(x - wB / 2 - 5, y - hB); ctx.lineTo(x - wB / 2, y - hB + 4); ctx.lineTo(x - wB / 2, y); ctx.lineTo(x + wB / 2, y); ctx.lineTo(x + wB / 2, y - hB + 4); ctx.stroke();
+      };
+      const speck = (x0, x1, y0, y1, col, n, r) => { ctx.fillStyle = col; for (let i = 0; i < n; i++) { const d = DOTS[i % DOTS.length]; ctx.beginPath(); ctx.arc(x0 + (x1 - x0) * d[0], y0 + (y1 - y0) * d[1], r, 0, 7); ctx.fill(); } };
+      if (k < 0) {
+        ctx.fillText('สารผสมก่อนแยก', cx, cy - 110);
+        dish(ctx, cx, cy + 20, z, '', false);
+        pile(ctx, cx, cy + 18, content('M'), partsOf('M'), z);
+        return;
+      }
+      ctx.fillText((k + 1) + '. ' + STEPS[k].name + (s.busy > 0 ? ' …' : ' ✓'), cx, cy - 110);
+      if (k === 0) {
+        dish(ctx, cx, cy + 40, z, '', false); pile(ctx, cx, cy + 38, content('M'), partsOf('M'), z);
+        const my = cy - 30 + (s.busy > 0 ? 40 * Math.sin(Math.min(1, (1.4 - s.busy) / 1.4) * Math.PI) : 0);
+        ctx.fillStyle = '#c8412a'; ctx.fillRect(cx - 50, my - 10, 50, 20); ctx.fillStyle = '#3a6fd8'; ctx.fillRect(cx, my - 10, 50, 20);
+        ctx.fillStyle = '#fff'; ctx.font = '600 12px Sarabun, sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('N', cx - 25, my); ctx.fillText('S', cx + 25, my);
+        speck(cx - 46, cx + 46, my + 11, my + 20, '#4a4e55', 70, 1.5);
+      }
+      if (k === 1 || k === 2) {
+        const bx = cx, by = cy + 60, bw = 120, bh = 140;
+        beaker(bx, by, bw, bh, 0.7, 'rgba(200,215,225,.6)');
+        speck(bx - 54, bx + 54, by - 14, by - 4, '#d8b56a', 90, 2.2);          // ทรายจมก้น
+        if (k === 1) speck(bx - 52, bx + 52, by - bh * 0.7 + 1, by - bh * 0.7 + 7, '#a0703a', 45, 2.2); // ขี้เลื่อยลอย
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+        ctx.fillText(k === 1 ? 'เกลือละลายหายไปในน้ำ' : 'ช้อนขี้เลื่อยออกแล้ว เหลือน้ำเกลือกับทราย', bx, by + 6);
+        if (k === 1 && s.busy > 0) { ctx.strokeStyle = '#8a93a3'; ctx.lineWidth = 3 / z; const a = performance.now() / 150; ctx.beginPath(); ctx.moveTo(bx + 20 * Math.cos(a), by - 20); ctx.lineTo(bx + 30, by - bh - 20); ctx.stroke(); }
+      }
+      if (k === 3) {
+        const fx = cx, fy = cy - 60;
+        ctx.fillStyle = 'rgba(240,240,235,.9)'; ctx.strokeStyle = '#8a93a3'; ctx.lineWidth = 1.5 / z;
+        ctx.beginPath(); ctx.moveTo(fx - 50, fy); ctx.lineTo(fx + 50, fy); ctx.lineTo(fx + 6, fy + 60); ctx.lineTo(fx + 6, fy + 100); ctx.lineTo(fx - 6, fy + 100); ctx.lineTo(fx - 6, fy + 60); ctx.closePath(); ctx.fill(); ctx.stroke();
+        speck(fx - 26, fx + 26, fy + 18, fy + 38, '#d8b56a', 60, 2);
+        beaker(fx, cy + 110, 90, 70, 0.55, 'rgba(190,220,240,.6)');
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+        ctx.fillText('ทรายค้างบนกระดาษกรอง · น้ำเกลือไหลลงด้านล่าง', fx, cy + 116);
+      }
+      if (k === 4) {
+        const ex = cx, ey = cy + 20;
+        ctx.strokeStyle = dark ? '#8a93a3' : '#4a505b'; ctx.lineWidth = 3 / Math.sqrt(z);
+        ctx.beginPath(); ctx.moveTo(ex - 60, ey); ctx.lineTo(ex + 60, ey); ctx.moveTo(ex - 50, ey); ctx.lineTo(ex - 60, ey + 80); ctx.moveTo(ex + 50, ey); ctx.lineTo(ex + 60, ey + 80); ctx.stroke();
+        ctx.fillStyle = '#f2f0ea'; ctx.strokeStyle = '#9aa3b0'; ctx.lineWidth = 1.2 / z;
+        ctx.beginPath(); ctx.ellipse(ex, ey - 6, 46, 16, 0, 0, Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
+        const wet = s.busy > 0 ? s.busy / 1.4 : 0;
+        if (wet > 0) { ctx.fillStyle = 'rgba(170,215,245,' + 0.7 * wet + ')'; ctx.beginPath(); ctx.ellipse(ex, ey - 6, 40, 8 * wet + 2, 0, 0, 7); ctx.fill(); }
+        speck(ex - 30, ex + 30, ey - 8, ey + 2, '#ffffff', Math.round(60 * (1 - wet)), 1.8);
+        speck(ex - 30, ex + 30, ey - 8, ey + 2, 'rgba(120,120,130,.5)', Math.round(20 * (1 - wet)), 0.8);
+        const fl = 1 + 0.08 * Math.sin(performance.now() / 70);
+        const g = ctx.createRadialGradient(ex, ey + 40, 2, ex, ey + 40, 26 * fl);
+        g.addColorStop(0, 'rgba(255,255,230,.95)'); g.addColorStop(0.4, 'rgba(120,170,255,.7)'); g.addColorStop(1, 'rgba(255,150,40,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(ex, ey + 44, 10 * fl, 22 * fl, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+        ctx.fillText(wet > 0 ? 'น้ำกำลังระเหย…' : 'น้ำระเหยหมด เหลือเกล็ดเกลือ', ex, ey + 86);
+      }
+    }
+
+    function scale(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const x = L.sx, y = L.sy, r = L.sr;
+      // จานบนตาชั่ง
+      const v = s.on;
+      ctx.fillStyle = dark ? '#5d6575' : '#8a93a3'; ctx.fillRect(x - 6, y - r - 22, 12, 14);
+      ctx.fillStyle = dark ? '#c9ced8' : '#dfe3ea'; ctx.beginPath(); ctx.ellipse(x, y - r - 22, r * 0.75, 7, 0, 0, 7); ctx.fill();
+      dish(ctx, x, y - r - 30, z, '', false);
+      pile(ctx, x, y - r - 32, content(v), partsOf(v), z);
+      // ตัวเครื่อง + หน้าปัด 0–100 g (เข็มหมุน 300°)
+      ctx.fillStyle = dark ? '#3a404b' : '#e8ebf0'; ctx.strokeStyle = muted; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - r - 12, y - r - 10, 2 * r + 24, 2 * r + 30, 14) : ctx.rect(x - r - 12, y - r - 10, 2 * r + 24, 2 * r + 30); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#f2ecd8' : '#fffdf4'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
+      const A0 = -Math.PI / 2 - (150 * Math.PI) / 180, SPAN = (300 * Math.PI) / 180;
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let g = 0; g <= 100; g++) {
+        const a = A0 + (g / 100) * SPAN, l = g % 10 === 0 ? 12 : g % 5 === 0 ? 8 : 5;
+        ctx.lineWidth = (g % 10 === 0 ? 1.2 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3)); ctx.lineTo(x + Math.cos(a) * (r - 3 - l), y + Math.sin(a) * (r - 3 - l)); ctx.stroke();
+        if (g % 10 === 0) { ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g, x + Math.cos(a) * (r - 24), y + Math.sin(a) * (r - 24)); }
+      }
+      const a = A0 + (Math.max(0, Math.min(102, s.needle)) / 100) * SPAN;
+      ctx.strokeStyle = '#c8412a'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 10, y - Math.sin(a) * 10); ctx.lineTo(x + Math.cos(a) * (r - 5), y + Math.sin(a) * (r - 5)); ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('g', x, y + r * 0.45); ctx.fillText('ตาชั่ง', x, y + r + 4);
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#3a3226' : '#e6d6b8'; ctx.fillRect(0, L.dy - 20, cv.w, cv.h - L.dy + 20);
+      workArea(ctx, z);
+      scale(ctx, z);
+      // แถวจาน
+      ON.forEach((o, i) => {
+        const cx = L.dw * (i + 0.5);
+        const here = s.on === o.v;
+        dish(ctx, cx, L.dy, z, o.t, here, L.dr);
+        if (!here) pile(ctx, cx, L.dy - 2, content(o.v), partsOf(o.v), z);
+        else { ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(L.narrow ? '(บนตาชั่ง)' : '(อยู่บนตาชั่ง)', cx, L.dy - 10); }
+      });
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && y > L.dy - 50) {
+        const o = ON[Math.min(ON.length - 1, Math.floor(x / L.dw))];
+        if (avail(o.v)) { place(o.v); syncUI(); }
+      }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (s.busy > 0) { s.busy -= dt; if (s.busy <= 0) { s.busy = 0; doStep(); syncUI(); } }
+      const target = DISH + content(s.on) + s.off;
+      s.needle += (target - s.needle) * Math.min(1, dt * 5);
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะจานด้านล่างเพื่อวางบนตาชั่ง', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

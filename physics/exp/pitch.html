@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เสียงสูง-ต่ำจากขวดน้ำ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 500px; } @media (max-width: 900px) { .stage canvas { height: 460px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+Lab.init({
+  id: 'pitch',
+  kid: true,
+  short: 'เสียงสูง-ต่ำจากขวดน้ำ',
+  title: 'เสียงสูง-ต่ำจากขวดแก้วที่มีน้ำต่างกัน',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ลองเคาะและเป่าขวด ฟังเสียง'], [35, 'วัดระดับน้ำและความถี่ ทั้งเคาะและเป่า'], [15, 'เขียนกราฟและเปรียบเทียบ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'ฟังเสียงจากการเคาะขวดและการเป่าปากขวดที่มีน้ำสูงต่างกัน',
+      'วัดระดับน้ำด้วยไม้บรรทัด และวัดความถี่ของเสียงด้วยแอปวัดความถี่',
+      'บอกได้ว่าระดับน้ำมีผลต่อเสียงสูง-ต่ำอย่างไร เมื่อเคาะและเมื่อเป่า',
+    ],
+    theory:
+      '<p>เสียงเกิดจาก<b>การสั่น</b>ของวัตถุ ถ้าวัตถุสั่นเร็ว เสียงจะ<b>สูง</b> ถ้าสั่นช้า เสียงจะ<b>ต่ำ</b></p>' +
+      '<p>จำนวนครั้งที่สั่นใน 1 วินาทีเรียกว่า <b>ความถี่</b> มีหน่วยเป็น <b>เฮิรตซ์ (Hz)</b> ความถี่มาก = เสียงสูง</p>' +
+      '<p><b>เมื่อเคาะขวด</b> ตัวขวดแก้วและน้ำข้างในสั่น · <b>เมื่อเป่าปากขวด</b> อากาศที่อยู่เหนือน้ำในขวดสั่น</p>' +
+      '<p>แอปวัดความถี่แสดงตัวเลขเป็น Hz ขณะมีเสียง และค้างค่าล่าสุดไว้ให้อ่าน ตัวเลขอาจแกว่งเล็กน้อย ให้อ่านค่าที่เห็นบ่อยที่สุด</p>',
+    equipment: ['ขวดแก้วเหมือนกัน 1 ใบ', 'น้ำและเหยือกสำหรับเทน้ำ', 'ไม้บรรทัดติดข้างขวด (ขีดละเอียด 1 mm)', 'ช้อนสำหรับเคาะ', 'โทรศัพท์พร้อมแอปวัดความถี่เสียง'],
+    procedure: [
+      'เลือก "เคาะขวด" เทน้ำออกหมด แล้วอ่านระดับน้ำ (0 cm) แตะที่ขวดเพื่อเคาะ อ่านความถี่จากแอป บันทึกลงตาราง "เคาะขวด"',
+      'กด "เทน้ำเพิ่ม" อ่านระดับน้ำจากไม้บรรทัดด้วยแว่นขยาย (ใช้ขอบผิวน้ำ) แล้วเคาะและบันทึกอีกครั้ง ทำจนน้ำเกือบเต็ม',
+      'เลือก "เป่าปากขวด" (ตารางจะสลับเป็นชุด "เป่าปากขวด") เทน้ำออกหมด แล้วทำซ้ำแบบเดียวกัน',
+      'เปิดเสียงของอุปกรณ์เพื่อฟังเสียงจริง',
+    ],
+    tip: 'แต่ละครั้งที่กด "เทน้ำเพิ่ม" น้ำจะเพิ่มไม่เท่ากัน ต้องอ่านระดับน้ำจากไม้บรรทัดเองทุกครั้ง',
+  },
+  predict: [
+    { q: 'ถ้าเคาะขวด ขวดที่มีน้ำมากจะให้เสียงอย่างไรเมื่อเทียบกับขวดเปล่า', choices: ['สูงกว่า', 'เท่ากัน', 'ต่ำกว่า'] },
+    { q: 'ถ้าเป่าปากขวด ขวดที่มีน้ำมากจะให้เสียงอย่างไรเมื่อเทียบกับขวดเปล่า', choices: ['สูงกว่า', 'เท่ากัน', 'ต่ำกว่า'] },
+  ],
+  table: {
+    rows: 7,
+    sets: [{ key: 'T', label: 'เคาะขวด' }, { key: 'B', label: 'เป่าปากขวด' }],
+    hint: 'ตาราง "เคาะขวด" และ "เป่าปากขวด" แยกกัน จะสลับเองตามวิธีทำให้เกิดเสียงที่เลือก',
+    columns: [
+      { key: 'h', label: 'ระดับน้ำ<br>(cm)', input: true },
+      { key: 'f', label: 'ความถี่ของเสียง<br>(Hz)', input: true },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'ความถี่ของเสียงกับระดับน้ำ', x: 'h', y: 'f', xlabel: 'ระดับน้ำ (cm)', ylabel: 'ความถี่ (Hz)',
+    explain: 'เส้นสีหนึ่งคือการเคาะขวด อีกสีคือการเป่าปากขวด ดูว่าเส้นไหนขึ้น เส้นไหนลง เมื่อน้ำมากขึ้น',
+  },
+  questions: [
+    { q: 'เมื่อเคาะขวด ระดับน้ำมากขึ้นทำให้ความถี่เป็นอย่างไร', choices: ['มากขึ้น (เสียงสูงขึ้น)', 'เท่าเดิม', 'น้อยลง (เสียงต่ำลง)'], why: true },
+    { q: 'เมื่อเป่าปากขวด ระดับน้ำมากขึ้นทำให้ความถี่เป็นอย่างไร', choices: ['มากขึ้น (เสียงสูงขึ้น)', 'เท่าเดิม', 'น้อยลง (เสียงต่ำลง)'], why: true },
+    { q: 'เมื่อเป่าปากขวด สิ่งใดเป็นตัวสั่นที่ทำให้เกิดเสียง', choices: ['อากาศในขวดเหนือผิวน้ำ', 'น้ำที่ก้นขวด', 'ฝาขวด'] },
+    { q: 'ความถี่ 800 Hz กับ 400 Hz เสียงใดสูงกว่า', choices: ['800 Hz', '400 Hz', 'สูงเท่ากัน'] },
+    { q: 'ถ้าต้องการทำระนาดขวดให้เล่นเพลงได้ด้วยการเคาะ ขวดที่ให้เสียงต่ำที่สุดควรมีน้ำอย่างไร', choices: ['น้ำน้อยที่สุด', 'น้ำมากที่สุด', 'ไม่มีผล'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: ระดับน้ำในขวดมีผลต่อเสียงสูง-ต่ำอย่างไร เมื่อเคาะและเมื่อเป่า เพราะเหตุใดจึงต่างกัน',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3.5, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const HB = 24;                                         // ความสูงขวดถึงคอขวด (cm)
+    const DEV = { f0: 1180 + 140 * rng(), v: 343 + 4 * (rng() - 0.5), ec: 1.6 + 0.6 * rng(), tilt: (rng() - 0.5) * 0.2 };
+    const s = { mode: api.currentSet() === 'B' ? 'B' : 'T', h: 0, hShow: 0, ring: 0, shake: 0, f: 0, read: '– – –' };
+
+    // ความถี่จริงของขวด (Hz)
+    function freq() {
+      if (s.mode === 'T') return DEV.f0 / Math.sqrt(1 + 2.2 * Math.pow(s.h / HB, 1.6)); // น้ำทำให้ผนังขวดสั่นช้าลง
+      return DEV.v / (4 * ((HB - s.h + DEV.ec) / 100));                               // อากาศเหนือน้ำสั้นลง ความถี่สูงขึ้น
+    }
+
+    ctrls.innerHTML =
+      '<div class="watch"><span class="readout" id="hz">– – –</span><small>แอปวัดความถี่ (Hz)</small></div>' +
+      '<h3>ทำให้เกิดเสียงโดย</h3><div class="seg" id="mode"><button data-v="T">เคาะขวด</button><button data-v="B">เป่าปากขวด</button></div>' +
+      '<div class="row"><button class="btn primary" id="play">เคาะขวด</button></div>' +
+      '<h3>น้ำในขวด</h3><div class="row"><button class="btn" id="add">เทน้ำเพิ่ม</button><button class="btn" id="sub">เทน้ำออก</button></div>' +
+      '<div class="row"><button class="btn" id="empty">เทน้ำออกหมด</button></div>' +
+      '<p class="muted" style="font-size:14px">แตะที่ขวดในภาพเพื่อเคาะหรือเป่าได้ อ่านระดับน้ำจากไม้บรรทัดข้างขวด</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const hz = $('#hz'), play = $('#play');
+    const modeSeg = $('#mode');
+    const syncMode = () => { modeSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.mode)); play.textContent = s.mode === 'T' ? 'เคาะขวด' : 'เป่าปากขวด'; };
+    modeSeg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.mode = b.dataset.v; api.useSet(s.mode); syncMode(); } });
+    api.onSetChange = (k) => { s.mode = k; syncMode(); };
+    syncMode();
+    // เทน้ำแต่ละครั้งได้ไม่เท่ากัน (1.5–3 cm) นักเรียนต้องอ่านไม้บรรทัดเอง
+    $('#add').onclick = () => { s.h = Math.min(HB - 3, s.h + 1.5 + 1.5 * Math.random()); };
+    $('#sub').onclick = () => { s.h = Math.max(0, s.h - 1.5 - 1.5 * Math.random()); };
+    $('#empty').onclick = () => { s.h = 0; };
+
+    // ---------- เสียงจริงด้วย Web Audio ----------
+    let actx = null;
+    function sound(f) {
+      try {
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        if (actx.state === 'suspended') actx.resume();
+        const t = actx.currentTime, out = actx.createGain();
+        out.connect(actx.destination);
+        if (s.mode === 'T') {
+          // เคาะแก้ว: เสียงใสดังทันทีแล้วค่อย ๆ จางลง มีเสียงแทรกความถี่สูงเล็กน้อย
+          [[1, 0.5, 1.4], [2.76, 0.12, 0.35], [5.4, 0.05, 0.15]].forEach(([k, a, dur]) => {
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.type = 'sine'; o.frequency.value = f * k;
+            g.gain.setValueAtTime(a, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+            o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.05);
+          });
+        } else {
+          // เป่า: โทนนุ่มพร้อมเสียงลมเบา ๆ
+          const o = actx.createOscillator(), g = actx.createGain();
+          o.type = 'sine'; o.frequency.value = f;
+          g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t + 0.12); g.gain.setValueAtTime(0.35, t + 0.9); g.gain.linearRampToValueAtTime(0, t + 1.2);
+          o.connect(g).connect(out); o.start(t); o.stop(t + 1.25);
+          const n = actx.createBuffer(1, actx.sampleRate * 1.2, actx.sampleRate), d = n.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+          const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), gn = actx.createGain();
+          src.buffer = n; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 3;
+          gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(0.12, t + 0.1); gn.gain.linearRampToValueAtTime(0, t + 1.2);
+          src.connect(bp).connect(gn).connect(out); src.start(t);
+        }
+      } catch (e) { /* อุปกรณ์ไม่มีเสียง ยังอ่านแอปวัดความถี่ได้ */ }
+    }
+    function hit() {
+      s.f = freq();
+      s.ring = s.mode === 'T' ? 1.4 : 1.2;
+      s.shake = 1;
+      sound(s.f);
+    }
+    play.onclick = hit;
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.k = Math.min((h - 110) / (HB + 6), 15);            // px ต่อ cm
+      L.bx = w * 0.42; L.base = h - 40;
+      L.bw = 6.5 * L.k;                                     // ความกว้างขวด
+      L.rx = L.bx + L.bw / 2 + 14;                          // ไม้บรรทัดข้างขวด
+    }
+    const Y = (cm) => L.base - cm * L.k;
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      const { bx, bw, base, k } = L;
+      // โต๊ะ
+      ctx.fillStyle = dark ? '#3a3226' : '#d9c3a0'; ctx.fillRect(0, base, cv.w, 40);
+      const jig = s.shake > 0 && s.mode === 'T' ? Math.sin(performance.now() / 12) * 1.2 * s.shake : 0;
+      ctx.save(); ctx.translate(jig, 0);
+      // น้ำ (ผิวน้ำเป็นแนวราบ)
+      const wy = Y(s.hShow);
+      if (s.hShow > 0.05) {
+        ctx.fillStyle = 'rgba(80,160,230,.55)'; ctx.fillRect(bx - bw / 2 + 3, wy, bw - 6, base - 3 - wy);
+        ctx.strokeStyle = 'rgba(30,100,180,.9)'; ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.moveTo(bx - bw / 2 + 3, wy); ctx.lineTo(bx + bw / 2 - 3, wy); ctx.stroke();
+      }
+      // ขวดแก้ว: ตัวขวดถึง HB แล้วไหล่และคอขวด
+      const top = Y(HB), neckW = bw * 0.32, neckTop = Y(HB + 5);
+      ctx.strokeStyle = dark ? '#a9d4c4' : '#4f8f7a'; ctx.lineWidth = 2.4 / Math.sqrt(z);
+      ctx.fillStyle = 'rgba(160,220,200,.16)';
+      ctx.beginPath();
+      ctx.moveTo(bx - neckW / 2, neckTop); ctx.lineTo(bx - neckW / 2, Y(HB + 2.2));
+      ctx.quadraticCurveTo(bx - bw / 2, Y(HB + 1.2), bx - bw / 2, top);
+      ctx.lineTo(bx - bw / 2, base - 2); ctx.quadraticCurveTo(bx - bw / 2, base, bx - bw / 2 + 4, base);
+      ctx.lineTo(bx + bw / 2 - 4, base); ctx.quadraticCurveTo(bx + bw / 2, base, bx + bw / 2, base - 2);
+      ctx.lineTo(bx + bw / 2, top); ctx.quadraticCurveTo(bx + bw / 2, Y(HB + 1.2), bx + neckW / 2, Y(HB + 2.2));
+      ctx.lineTo(bx + neckW / 2, neckTop);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+      // ไม้บรรทัดติดข้างขวด 0 ที่ก้นขวดด้านใน
+      const rx = L.rx;
+      ctx.fillStyle = dark ? '#e9dfba' : '#f6ecc8'; ctx.fillRect(rx, Y(HB + 1), 30, base - Y(HB + 1));
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const showMm = k * z >= 3.5;
+      for (let mm = 0; mm <= (HB + 1) * 10; mm += showMm ? 1 : 5) {
+        const y = Y(mm / 10), l = mm % 10 === 0 ? 11 : mm % 5 === 0 ? 7 : 4;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.55) / z;
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx + l, y); ctx.stroke();
+        if (mm % 50 === 0 || (z > 2 && mm % 10 === 0)) {
+          ctx.font = (mm % 50 ? 8 : 10.5) / Math.min(z, 2.5) + 'px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, rx + 28, y);
+        }
+      }
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('cm', rx + 4, Y(HB + 1) - 3);
+      // คลื่นเสียง
+      if (s.ring > 0) {
+        const a = Math.min(1, s.ring);
+        for (let i = 0; i < 3; i++) {
+          const ph = ((performance.now() / 400 + i / 3) % 1);
+          ctx.strokeStyle = 'rgba(47,111,222,' + a * (1 - ph) * 0.8 + ')'; ctx.lineWidth = 2 / Math.sqrt(z);
+          const cy = s.mode === 'T' ? Y(HB * 0.5) : Y(HB + 5);
+          ctx.beginPath(); ctx.arc(bx, cy, bw * 0.6 + ph * 90, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+        }
+      }
+      // ช้อนหรือลมเป่า
+      if (s.mode === 'T') {
+        const sy = Y(HB * 0.5), sx = bx - bw / 2 - 26 + (s.shake > 0.8 ? 10 : 0);
+        ctx.strokeStyle = dark ? '#c9ced8' : '#7d8693'; ctx.lineWidth = 4 / Math.sqrt(z); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(sx - 70, sy - 30); ctx.lineTo(sx, sy); ctx.stroke(); ctx.lineCap = 'butt';
+        ctx.fillStyle = dark ? '#c9ced8' : '#7d8693'; ctx.beginPath(); ctx.ellipse(sx + 2, sy + 1, 7, 5, 0.4, 0, 7); ctx.fill();
+      } else {
+        const ny = Y(HB + 5);
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText('เป่าผ่านปากขวด →', bx - bw * 0.2, ny - 10);
+      }
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('ขวดแก้ว', bx, base + 6);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && Math.abs(x - L.bx) < L.bw / 2 + 10 && y > Y(HB + 6) && y < L.base) hit();
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    let tRead = 0;
+    Lab.loop((dt) => {
+      // ผิวน้ำค่อย ๆ ขึ้นลงเมื่อเท
+      s.hShow += (s.h - s.hShow) * Math.min(1, dt * 5);
+      s.ring = Math.max(0, s.ring - dt); s.shake = Math.max(0, s.shake - dt * 2.5);
+      tRead += dt;
+      if (tRead > 0.25) {
+        tRead = 0;
+        if (s.ring > 0.15) { s.read = Math.round(s.f * (1 + Lab.noise(0.0015))).toString(); }
+        hz.textContent = s.read; // หลังเสียงหยุด แอปค้างค่าล่าสุดไว้
+      }
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะที่ขวดเพื่อ' + (s.mode === 'T' ? 'เคาะ' : 'เป่า'), 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

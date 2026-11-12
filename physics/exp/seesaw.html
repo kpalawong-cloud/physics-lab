@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คานและไม้กระดก · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 440px; } @media (max-width: 900px) { .stage canvas { height: 400px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+Lab.init({
+  id: 'seesaw',
+  kid: true,
+  short: 'คานและไม้กระดก',
+  title: 'คานสมดุลและไม้กระดก',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ลองแขวนแหวนเหล็กแล้วดูว่าคานเอียงไปทางไหน'], [35, 'หาตำแหน่งที่ทำให้คานสมดุล แล้วบันทึกตาราง'], [15, 'เขียนกราฟและหาความสัมพันธ์'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'สังเกตว่าคานเอียงไปทางที่มีแรงหมุนมากกว่า',
+      'หาตำแหน่งแขวนแหวนเหล็กทางขวาที่ทำให้คานสมดุล เมื่อเปลี่ยนจำนวนแหวน',
+      'ค้นพบว่า จำนวนแหวน × ระยะ ของสองข้างเท่ากันเมื่อคานสมดุล',
+    ],
+    theory:
+      '<p><b>คาน</b> คือแท่งยาวที่หมุนได้รอบจุดหมุน (จุดฟัลครัม) เช่น ไม้กระดกในสนามเด็กเล่น</p>' +
+      '<p>น้ำหนักที่แขวนไกลจุดหมุนทำให้คานหมุนได้มากกว่าน้ำหนักเท่ากันที่แขวนใกล้จุดหมุน ผลของการหมุนเรียกว่า <b>โมเมนต์</b> คิดได้จาก</p>' +
+      '<div class="eq">โมเมนต์ = น้ำหนัก × ระยะจากจุดหมุน</div>' +
+      '<p>คานจะ<b>สมดุล</b> (วางตัวในแนวระดับ) เมื่อโมเมนต์ทางซ้ายเท่ากับโมเมนต์ทางขวา ในการทดลองนี้ใช้แหวนเหล็กที่หนักเท่ากันทุกตัว นับน้ำหนักเป็น "จำนวนแหวน" และนับระยะเป็น "ช่อง" ที่มีตัวเลขกำกับบนคาน</p>' +
+      '<p>ดูว่าคานสมดุลหรือไม่จาก<b>เข็มชี้ระดับ</b>ใต้จุดหมุน เข็มต้องชี้ที่ขีดกลางพอดี</p>',
+    equipment: ['คานไม้มีตะขอ 6 ช่องทั้งสองข้าง ห่างกันช่องละ 5 cm', 'แหวนเหล็กหนักเท่ากัน 10 ตัว', 'ขาตั้งพร้อมจุดหมุนและเข็มชี้ระดับ'],
+    procedure: [
+      'แขวนแหวน 2 ตัวทางซ้ายที่ช่อง 3 ลองแขวนแหวนทางขวาที่ตำแหน่งต่าง ๆ สังเกตว่าคานเอียงไปทางไหน',
+      'แขวนแหวนทางขวา 1 ตัว เลื่อนตำแหน่งจนเข็มชี้ระดับชี้ขีดกลาง บันทึกจำนวนแหวนและช่องของทั้งสองข้าง',
+      'เปลี่ยนแหวนทางขวาเป็น 2, 3, 4, 5, 6 ตัว แล้วหาตำแหน่งที่สมดุลทุกครั้ง ถ้าหาไม่ได้ให้จดไว้ในคำตอบท้ายการทดลอง',
+      'ลองเปลี่ยนแหวนทางซ้ายเป็นแบบอื่น (เช่น 3 ตัวที่ช่อง 4) แล้วหาสมดุลอีก 2–3 ครั้ง',
+    ],
+    tip: 'บันทึกเฉพาะครั้งที่คานสมดุล ตารางจะคำนวณ "จำนวนแหวน × ช่อง" ของทั้งสองข้างให้เปรียบเทียบ',
+  },
+  predict: [
+    { q: 'ถ้าแขวนแหวนทางขวาเพิ่มเป็น 2 เท่า ต้องแขวนที่ตำแหน่งใดคานจึงสมดุลเหมือนเดิม', choices: ['ไกลจุดหมุนขึ้น 2 เท่า', 'ใกล้จุดหมุนเข้ามาครึ่งหนึ่ง', 'ตำแหน่งเดิม'] },
+    { q: 'เด็กตัวเล็กกับผู้ใหญ่เล่นไม้กระดก ผู้ใหญ่ควรนั่งตรงไหนไม้กระดกจึงสมดุล', choices: ['นั่งใกล้จุดหมุนมากกว่าเด็ก', 'นั่งไกลจุดหมุนเท่ากับเด็ก', 'นั่งไกลจุดหมุนมากกว่าเด็ก'] },
+  ],
+  table: {
+    rows: 8,
+    hint: 'บันทึกเฉพาะครั้งที่เข็มชี้ระดับชี้ขีดกลาง (คานสมดุล)',
+    columns: [
+      { key: 'nL', label: 'แหวนทางซ้าย<br>(ตัว)', input: true },
+      { key: 'dL', label: 'ช่องทางซ้าย', input: true },
+      { key: 'nR', label: 'แหวนทางขวา<br>(ตัว)', input: true },
+      { key: 'dR', label: 'ช่องทางขวา', input: true },
+      { key: 'mL', label: 'ซ้าย: แหวน × ช่อง', calc: (r) => r.nL * r.dL, digits: 0 },
+      { key: 'mR', label: 'ขวา: แหวน × ช่อง', calc: (r) => r.nR * r.dR, digits: 0 },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'ช่องทางขวากับจำนวนแหวนทางขวา', x: 'nR', y: 'dR', xlabel: 'จำนวนแหวนทางขวา (ตัว)', ylabel: 'ช่องทางขวาที่ทำให้สมดุล',
+    explain: 'ใช้เฉพาะแถวที่ทางซ้ายเป็นแหวน 2 ตัวที่ช่อง 3 ดูว่าเมื่อแหวนมากขึ้น ต้องแขวนใกล้หรือไกลจุดหมุน',
+  },
+  questions: [
+    { q: 'เมื่อคานสมดุล ค่า "แหวน × ช่อง" ของทางซ้ายกับทางขวาเป็นอย่างไร', choices: ['ทางซ้ายมากกว่าเสมอ', 'เท่ากัน', 'ทางขวามากกว่าเสมอ'], why: true },
+    { q: 'เมื่อแขวนแหวนทางขวามากขึ้น ต้องแขวนใกล้หรือไกลจุดหมุน', choices: ['ใกล้จุดหมุนขึ้น', 'ไกลจุดหมุนขึ้น', 'ที่เดิม'], why: true },
+    { q: 'ทางซ้ายแขวน 2 ตัวที่ช่อง 3 ถ้าทางขวาแขวน 4 ตัว จะหาตำแหน่งที่สมดุลบนคานนี้ได้หรือไม่', choices: ['ได้ ที่ช่อง 2', 'ไม่ได้ เพราะต้องแขวนที่ช่อง 1.5 ซึ่งไม่มีตะขอ', 'ได้ ที่ช่อง 6'], why: true },
+    { q: 'ข้อใดใช้หลักการของคาน', choices: ['กรรไกร ไม้กระดก ที่เปิดขวด', 'ลูกโป่ง', 'แม่เหล็ก'] },
+    { q: 'พ่อหนักเป็น 3 เท่าของลูก ถ้าลูกนั่งห่างจุดหมุน 3 เมตร พ่อต้องนั่งห่างจุดหมุนเท่าใดไม้กระดกจึงสมดุล', choices: ['1 เมตร', '3 เมตร', '9 เมตร'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: คานจะสมดุลเมื่อใด และน้ำหนักกับระยะจากจุดหมุนเกี่ยวข้องกันอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 2.5, r: 80 });
+    lens.button(stage);
+    const s = { nL: 2, dL: 3, nR: 0, dR: 6, th: 0, w: 0 };
+
+    const segHtml = (id, vals, fmt) => '<div class="seg" id="' + id + '">' + vals.map((v) => '<button data-v="' + v + '">' + fmt(v) + '</button>').join('') + '</div>';
+    ctrls.innerHTML =
+      '<h3>ทางซ้าย: จำนวนแหวน</h3>' + segHtml('nL', [1, 2, 3, 4], (v) => v) +
+      '<h3>ทางซ้าย: แขวนที่ช่อง</h3>' + segHtml('dL', [1, 2, 3, 4, 5, 6], (v) => v) +
+      '<h3>ทางขวา: จำนวนแหวน</h3>' + segHtml('nR', [0, 1, 2, 3, 4, 5, 6], (v) => v) +
+      '<h3>ทางขวา: แขวนที่ช่อง</h3>' + segHtml('dR', [1, 2, 3, 4, 5, 6], (v) => v) +
+      '<p class="muted" style="font-size:14px">แตะที่ตะขอบนคานเพื่อย้ายแหวนไปช่องนั้นได้</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const syncs = {};
+    ['nL', 'dL', 'nR', 'dR'].forEach((id) => {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s[id]));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s[id] = +b.dataset.v; sync(); } });
+      sync(); syncs[id] = sync;
+    });
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.cx = w / 2; L.py = 150;
+      L.sp = Math.min(52, (w - 70) / 13.5);   // px ต่อช่อง
+      L.half = L.sp * 6.6;
+      L.baseY = h - 30;
+    }
+    // ตำแหน่งตะขอช่อง d (ซ้ายเป็นลบ) หลังคานเอียงมุม th
+    const hook = (d) => [L.cx + d * L.sp * Math.cos(s.th), L.py + d * L.sp * Math.sin(s.th)];
+
+    function washers(ctx, z, x, y, n) {
+      if (!n) return;
+      const len = 34;
+      ctx.strokeStyle = '#666'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.moveTo(x, y + 6); ctx.lineTo(x, y + len); ctx.stroke();
+      for (let i = 0; i < n; i++) {
+        const yy = y + len + 4 + i * 11;
+        ctx.fillStyle = '#9aa3b0'; ctx.strokeStyle = '#5b6372'; ctx.lineWidth = 1 / z;
+        ctx.beginPath(); ctx.ellipse(x, yy, 13, 5, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = Lab.dark() ? '#232934' : '#eef1f5';
+        ctx.beginPath(); ctx.ellipse(x, yy, 4, 1.6, 0, 0, 7); ctx.fill();
+      }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { cx, py } = L;
+      // ขาตั้ง
+      ctx.fillStyle = dark ? '#6c7380' : '#5b6372';
+      ctx.beginPath(); ctx.moveTo(cx, py + 4); ctx.lineTo(cx - 60, L.baseY); ctx.lineTo(cx + 60, L.baseY); ctx.closePath(); ctx.globalAlpha = 0.35; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillRect(cx - 4, py, 8, L.baseY - py);
+      ctx.fillRect(cx - 90, L.baseY, 180, 10);
+      // สเกลเข็มชี้ระดับ (อยู่กับที่) ใต้จุดหมุน
+      const nr = 80, ny = py;
+      // แผ่นหน้าปัดเข็มชี้ระดับ (บังเสาขาตั้ง ให้เห็นเข็มและขีดชัด)
+      ctx.fillStyle = dark ? '#2a2f38' : '#ffffff'; ctx.strokeStyle = muted; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - 36, ny + nr - 12, 72, 52, 8) : ctx.rect(cx - 36, ny + nr - 12, 72, 52); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = ink; ctx.fillStyle = ink;
+      for (let a = -15; a <= 15; a += 3) {
+        const r = (a * Math.PI) / 180, l = a === 0 ? 14 : 7;
+        ctx.lineWidth = (a === 0 ? 2 : 1) / z;
+        ctx.beginPath(); ctx.moveTo(cx + Math.sin(r) * nr, ny + Math.cos(r) * nr); ctx.lineTo(cx + Math.sin(r) * (nr + l), ny + Math.cos(r) * (nr + l)); ctx.stroke();
+      }
+      ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = Lab.css('--ok');
+      ctx.fillText('สมดุล', cx, ny + nr + 20);
+      // คาน
+      ctx.save(); ctx.translate(cx, py); ctx.rotate(s.th);
+      ctx.fillStyle = dark ? '#a87e48' : '#c99a5b'; ctx.strokeStyle = dark ? '#6e5230' : '#8a6a3c'; ctx.lineWidth = 1 / z;
+      ctx.fillRect(-L.half, -9, 2 * L.half, 18); ctx.strokeRect(-L.half, -9, 2 * L.half, 18);
+      // เข็มชี้ระดับติดกับคาน ชี้ลงตั้งฉากกับคาน
+      ctx.strokeStyle = '#c8412a'; ctx.lineWidth = 2 / z;
+      ctx.beginPath(); ctx.moveTo(0, 9); ctx.lineTo(0, nr + 6); ctx.stroke();
+      // ตะขอและตัวเลข
+      for (let d = 1; d <= 6; d++) {
+        [-1, 1].forEach((sg) => {
+          const x = sg * d * L.sp;
+          ctx.strokeStyle = dark ? '#ddd' : '#333'; ctx.lineWidth = 1.4 / z;
+          ctx.beginPath(); ctx.moveTo(x, 9); ctx.lineTo(x, 14); ctx.arc(x + 3, 14, 3, Math.PI, 0, true); ctx.stroke();
+          ctx.fillStyle = dark ? '#1b1f27' : '#3a2a14'; ctx.font = '600 12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(d, x, -1);
+        });
+      }
+      ctx.restore();
+      // จุดหมุน
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(cx, py, 5, 0, 7); ctx.fill();
+      // แหวน (ห้อยตั้งฉากกับพื้นเสมอ)
+      const hl = hook(-s.dL), hr = hook(s.dR);
+      washers(ctx, z, hl[0], hl[1] + 8, s.nL);
+      washers(ctx, z, hr[0], hr[1] + 8, s.nR);
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+      ctx.textAlign = 'left'; ctx.fillText('ซ้าย', 12, py + 40);
+      ctx.textAlign = 'right'; ctx.fillText('ขวา', cv.w - 12, py + 40);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown') {
+        for (let d = 1; d <= 6; d++) {
+          const l = hook(-d), r = hook(d);
+          if (Math.hypot(x - l[0], y - l[1]) < L.sp * 0.45) { s.dL = d; syncs.dL(); }
+          if (Math.hypot(x - r[0], y - r[1]) < L.sp * 0.45) { s.dR = d; syncs.dR(); }
+        }
+      }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      // ทอร์กสุทธิ (ขวาลงเป็นบวก) แรงเสียดทานที่จุดหมุนทำให้คานนิ่งเมื่อต่างกันน้อยมาก
+      const tq = s.nR * s.dR - s.nL * s.dL;
+      const maxA = (12 * Math.PI) / 180;
+      const target = Math.abs(tq) < 0.2 ? 0 : Math.max(-maxA, Math.min(maxA, tq * 0.05 + Math.sign(tq) * 0.06));
+      s.w += ((target - s.th) * 18 - s.w * 5) * dt;
+      s.th += s.w * dt;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะตะขอบนคานเพื่อย้ายแหวน', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

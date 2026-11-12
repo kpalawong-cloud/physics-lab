@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การสะท้อนของแสงบนกระจกเงา · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 520px; } @media (max-width: 900px) { .stage canvas { height: 460px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const HINGE = [120, 90, 72, 60, 45, 40];   // มุมระหว่างกระจกสองบานที่เลือกได้ (องศา)
+
+Lab.init({
+  id: 'mirror',
+  kid: true,
+  short: 'การสะท้อนของแสง',
+  title: 'การสะท้อนของแสงบนกระจกเงาราบ',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [5, 'ฝึกอ่านไม้โปรแทรกเตอร์'], [30, 'ตอนที่ 1: วัดมุมตกกระทบและมุมสะท้อน'], [15, 'ตอนที่ 2: นับภาพในกระจกสองบาน'], [10, 'เขียนกราฟ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'วัดมุมตกกระทบและมุมสะท้อนของแสงบนกระจกเงาราบด้วยไม้โปรแทรกเตอร์',
+      'เปรียบเทียบมุมตกกระทบกับมุมสะท้อน',
+      'นับจำนวนภาพที่เกิดในกระจกเงาสองบานที่วางทำมุมกัน',
+    ],
+    theory:
+      '<p>เมื่อแสงตกกระทบผิวที่เรียบและมันวาวอย่างกระจกเงา แสงจะ<b>สะท้อน</b>กลับออกมา</p>' +
+      '<p><b>เส้นปกติ</b> คือเส้นที่ตั้งฉากกับกระจก ณ จุดที่แสงตกกระทบ (เส้นประในภาพ)</p>' +
+      '<p><b>มุมตกกระทบ</b> คือมุมระหว่างรังสีที่ตกกระทบกับเส้นปกติ · <b>มุมสะท้อน</b> คือมุมระหว่างรังสีสะท้อนกับเส้นปกติ</p>' +
+      '<p>ไม้โปรแทรกเตอร์ในการทดลองนี้มีเลข 0 อยู่ที่เส้นปกติ และนับเพิ่มออกไปทั้งสองข้างจนถึง 90 ที่ผิวกระจก ช่องเล็กที่สุดคือ 1 องศา อ่านตรงที่กึ่งกลางของลำแสงตัดกับขอบไม้โปรแทรกเตอร์</p>' +
+      '<p>เมื่อวางกระจกเงาสองบานทำมุมกัน ภาพจะสะท้อนกลับไปกลับมา ทำให้เห็นภาพหลายภาพ</p>',
+    equipment: ['กระจกเงาราบ', 'กล่องแสง (ให้ลำแสงเส้นเล็ก)', 'ไม้โปรแทรกเตอร์และกระดาษขาว', 'กระจกเงา 2 บานที่ต่อกันด้วยบานพับ และตุ๊กตาตัวเล็ก'],
+    procedure: [
+      'ตอนที่ 1: ลากกล่องแสง (หรือใช้ปุ่ม) ให้ลำแสงส่องไปที่จุดกลางของกระจก',
+      'ใช้แว่นขยายอ่านมุมตกกระทบ (ลำแสงด้านซ้าย) และมุมสะท้อน (ลำแสงด้านขวา) จากไม้โปรแทรกเตอร์ บันทึกลงตาราง',
+      'เปลี่ยนมุมของกล่องแสงประมาณ 10°, 20°, 30°, … จนถึง 70° แล้วบันทึกทุกครั้ง',
+      'ตอนที่ 2: เลือก "กระจกสองบาน" แล้วเปลี่ยนมุมระหว่างกระจกตามปุ่ม นับจำนวนภาพของตุ๊กตา (ไม่นับตัวจริง) บันทึกลงตารางคอลัมน์ทางขวา',
+    ],
+    tip: 'ตารางมีสองตอนอยู่ในตารางเดียว: คอลัมน์ซ้ายเป็นตอนที่ 1 คอลัมน์ขวาเป็นตอนที่ 2 กราฟใช้ข้อมูลตอนที่ 1',
+  },
+  predict: [
+    { q: 'ถ้ามุมตกกระทบเป็น 30° มุมสะท้อนจะเป็นเท่าใด', choices: ['น้อยกว่า 30°', 'ประมาณ 30°', 'มากกว่า 30°'] },
+    { q: 'ถ้าลดมุมระหว่างกระจกสองบานให้แคบลง จำนวนภาพของตุ๊กตาจะเป็นอย่างไร', choices: ['มากขึ้น', 'เท่าเดิม', 'น้อยลง'] },
+  ],
+  table: {
+    rows: 7,
+    hint: 'คอลัมน์ซ้าย (ตอนที่ 1) ใช้เขียนกราฟ คอลัมน์ขวา (ตอนที่ 2) บันทึกมุมระหว่างกระจกและจำนวนภาพ ตาราง 360 ÷ มุม คำนวณให้เพื่อเปรียบเทียบ',
+    columns: [
+      { key: 'i', label: 'ตอนที่ 1<br>มุมตกกระทบ (องศา)', input: true },
+      { key: 'r', label: 'ตอนที่ 1<br>มุมสะท้อน (องศา)', input: true },
+      { key: 'th', label: 'ตอนที่ 2<br>มุมระหว่างกระจก (องศา)', input: true },
+      { key: 'n', label: 'ตอนที่ 2<br>จำนวนภาพที่นับได้', input: true },
+      { key: 'q', label: '360 ÷ มุมระหว่างกระจก', calc: (r) => 360 / r.th, digits: 1 },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'มุมสะท้อนกับมุมตกกระทบ', x: 'i', y: 'r', xlabel: 'มุมตกกระทบ (องศา)', ylabel: 'มุมสะท้อน (องศา)',
+    explain: 'ถ้ามุมสะท้อนเท่ากับมุมตกกระทบทุกครั้ง จุดจะเรียงเป็นเส้นตรงทแยงจากมุมล่างซ้ายขึ้นไปมุมบนขวา',
+  },
+  questions: [
+    { q: 'จากผลการทดลอง มุมสะท้อนกับมุมตกกระทบสัมพันธ์กันอย่างไร', choices: ['มุมสะท้อนมากกว่าเสมอ', 'เท่ากันหรือเกือบเท่ากัน', 'มุมสะท้อนน้อยกว่าเสมอ'], why: true },
+    { q: 'รังสีตกกระทบ รังสีสะท้อน และเส้นปกติ อยู่อย่างไรเมื่อเทียบกัน', choices: ['รังสีตกกระทบกับรังสีสะท้อนอยู่คนละข้างของเส้นปกติ', 'อยู่ข้างเดียวกันของเส้นปกติ', 'ซ้อนทับกันเป็นเส้นเดียว'] },
+    { q: 'ถ้าส่องแสงตั้งฉากกับกระจก (มุมตกกระทบ 0°) แสงจะสะท้อนไปทางใด', choices: ['สะท้อนกลับทางเดิม', 'สะท้อนไปทางขวา', 'ทะลุกระจกไป'], why: true },
+    { q: 'กระจกสองบานทำมุม 60° เห็นภาพตุ๊กตากี่ภาพ', choices: ['3 ภาพ', '5 ภาพ', '6 ภาพ'] },
+    { q: 'ข้อใดใช้ประโยชน์จากกระจกเงาหลายบาน', choices: ['กล้องคาไลโดสโคป (กล้องสลับลาย)', 'แว่นขยาย', 'หลอดไฟ'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: มุมตกกระทบกับมุมสะท้อนสัมพันธ์กันอย่างไร และจำนวนภาพในกระจกสองบานขึ้นกับมุมระหว่างกระจกอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const TILT = (rng() - 0.5) * 1.0;      // กระจกเอียงจากแนววางเล็กน้อย (องศา) มุมสะท้อนจึงคลาดจากมุมตกกระทบเล็กน้อย
+    const s = { part: 1, i: 25 + Math.round(rng() * 100) / 10, hinge: 90, drag: false };
+    const deg = Math.PI / 180;
+
+    ctrls.innerHTML =
+      '<h3>ตอนที่</h3><div class="seg" id="part"><button data-v="1">1: บานเดียว</button><button data-v="2">2: สองบาน</button></div>' +
+      '<div id="p1"><h3>หมุนกล่องแสง</h3><input type="range" id="ang" min="0" max="85" step="0.1">' +
+      '<div class="row"><button class="btn" data-d="-5">◀◀</button><button class="btn" data-d="-1">◀</button><button class="btn" data-d="1">▶</button><button class="btn" data-d="5">▶▶</button></div>' +
+      '<p class="muted" style="font-size:14px">ลากกล่องแสงในภาพก็ได้ ปุ่ม ◀ ▶ หมุนทีละน้อย ◀◀ ▶▶ หมุนทีละมาก ต้องอ่านมุมจากไม้โปรแทรกเตอร์เอง</p></div>' +
+      '<div id="p2" style="display:none"><h3>มุมระหว่างกระจกสองบาน</h3><div class="seg" id="hinge">' + HINGE.map((a) => '<button data-v="' + a + '">' + a + '°</button>').join('') + '</div>' +
+      '<p class="muted" style="font-size:14px">นับภาพของตุ๊กตาที่เห็นในกระจก (ภาพสีจาง) ไม่นับตุ๊กตาตัวจริง</p></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const ang = $('#ang');
+    const setI = (v) => { s.i = Math.max(0, Math.min(85, v)); ang.value = s.i; };
+    setI(s.i);
+    ang.oninput = () => setI(+ang.value);
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) setI(s.i + +b.dataset.d); });
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync();
+    }
+    seg('part', () => s.part, (v) => { s.part = +v; $('#p1').style.display = s.part === 1 ? '' : 'none'; $('#p2').style.display = s.part === 2 ? '' : 'none'; });
+    seg('hinge', () => s.hinge, (v) => (s.hinge = +v));
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.ox = w / 2; L.oy = h - 70;
+      L.R = Math.min(w / 2 - 50, h - 150);
+    }
+
+    // ---------- ตอนที่ 1 ----------
+    function part1(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { ox, oy, R } = L;
+      // กระดาษ
+      ctx.fillStyle = dark ? '#e9e6dc' : '#ffffff'; ctx.fillRect(ox - R - 60, oy - R - 60, 2 * R + 120, R + 60);
+      // ไม้โปรแทรกเตอร์ (พลาสติกใส) 0 อยู่ที่เส้นปกติ
+      ctx.fillStyle = 'rgba(190,220,245,.35)'; ctx.strokeStyle = 'rgba(60,110,160,.8)'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.arc(ox, oy, R, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ox, oy, R - 34, Math.PI, 0); ctx.stroke();
+      ctx.strokeStyle = '#1b2d44'; ctx.fillStyle = '#1b2d44';
+      for (let a = -90; a <= 90; a++) {
+        const t = a * deg, l = a % 10 === 0 ? 14 : a % 5 === 0 ? 10 : 6;
+        const sx = Math.sin(t), cy = -Math.cos(t);
+        ctx.lineWidth = (a % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(ox + sx * R, oy + cy * R); ctx.lineTo(ox + sx * (R - l), oy + cy * (R - l)); ctx.stroke();
+        if (a % 10 === 0) {
+          ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(Math.abs(a), ox + sx * (R - 24), oy + cy * (R - 24));
+        }
+      }
+      // เส้นปกติ
+      ctx.strokeStyle = muted; ctx.setLineDash([5 / z, 4 / z]); ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy - R - 40); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('เส้นปกติ', ox + 4, oy - R - 42);
+      // กระจก (เอียงเล็กน้อย) ด้านหลังมีลายขีด
+      ctx.save(); ctx.translate(ox, oy); ctx.rotate(TILT * deg);
+      ctx.fillStyle = dark ? '#b9c6d3' : '#cfd9e3'; ctx.fillRect(-R - 50, 0, 2 * R + 100, 7);
+      ctx.strokeStyle = '#5b6372'; ctx.lineWidth = 1 / z;
+      for (let x = -R - 50; x < R + 50; x += 8) { ctx.beginPath(); ctx.moveTo(x, 7); ctx.lineTo(x + 6, 15); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = muted; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('กระจกเงา', ox + R + 50, oy + 16);
+      // ลำแสง: ตกกระทบจากซ้าย สะท้อนไปทางขวา (กระจกเอียง ε ทำให้มุมสะท้อน = i − 2ε เทียบกับเส้นปกติที่วาด)
+      const ti = s.i * deg, tr = (s.i - 2 * TILT) * deg, far = R + 40;
+      const bx = ox - Math.sin(ti) * far, by = oy - Math.cos(ti) * far;
+      const rx = ox + Math.sin(tr) * far, ry = oy - Math.cos(tr) * far;
+      ctx.lineCap = 'round';
+      [[9, 'rgba(255,60,40,.18)'], [3.2, 'rgba(235,40,30,.95)']].forEach(([lw, c]) => {
+        ctx.strokeStyle = c; ctx.lineWidth = lw / Math.sqrt(z);
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ox, oy); ctx.lineTo(rx, ry); ctx.stroke();
+      });
+      ctx.lineCap = 'butt';
+      const arrow = (x0, y0, x1, y1) => {
+        const a = Math.atan2(y1 - y0, x1 - x0), mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        ctx.fillStyle = 'rgb(235,40,30)'; ctx.beginPath(); ctx.moveTo(mx + 7 * Math.cos(a), my + 7 * Math.sin(a));
+        ctx.lineTo(mx - 6 * Math.cos(a) + 5 * Math.sin(a), my - 6 * Math.sin(a) - 5 * Math.cos(a));
+        ctx.lineTo(mx - 6 * Math.cos(a) - 5 * Math.sin(a), my - 6 * Math.sin(a) + 5 * Math.cos(a)); ctx.closePath(); ctx.fill();
+      };
+      arrow(bx, by, ox, oy); arrow(ox, oy, rx, ry);
+      // กล่องแสง
+      ctx.save(); ctx.translate(bx, by); ctx.rotate(Math.atan2(oy - by, ox - bx));
+      ctx.fillStyle = dark ? '#5d6575' : '#3b4049'; ctx.fillRect(-46, -13, 46, 26);
+      ctx.fillStyle = '#ffe9a8'; ctx.fillRect(-3, -3, 3, 6);
+      ctx.restore();
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.textBaseline = 'middle'; ctx.fillText('กล่องแสง', ox - Math.sin(ti) * (far + 50), oy - Math.cos(ti) * (far + 50) - 8);
+    }
+
+    // ---------- ตอนที่ 2: กระจกสองบานมองจากด้านบน ----------
+    function toy(ctx, x, y, sc, flip, ghost) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(flip ? -sc : sc, sc);
+      ctx.globalAlpha = ghost ? 0.38 : 1;
+      ctx.fillStyle = '#e0812a'; ctx.beginPath(); ctx.arc(0, -10, 8, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(-6, -17, 3.5, 0, 7); ctx.arc(6, -17, 3.5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#c4621a'; ctx.beginPath(); ctx.ellipse(0, 5, 9, 11, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#2f6fde'; ctx.beginPath(); ctx.moveTo(9, -2); ctx.lineTo(20, -6); ctx.lineTo(20, 4); ctx.closePath(); ctx.fill(); // ธงถือมือขวา บอกว่าภาพกลับซ้าย-ขวา
+      ctx.restore();
+    }
+    function part2(ctx, z) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      const w = cv.w, h = cv.h;
+      const hx = w / 2, hy = h * 0.55, len = Math.min(w * 0.42, h * 0.42);
+      const th = s.hinge, N = Math.round(360 / th);
+      ctx.fillStyle = dark ? '#e9e6dc' : '#ffffff'; ctx.fillRect(16, 30, w - 32, h - 46);
+      // ภาพของตุ๊กตา: เมื่อตุ๊กตาอยู่บนเส้นแบ่งครึ่งมุม ภาพอยู่ที่มุม m·θ รอบบานพับ (m = 1 … N−1)
+      const dist = len * 0.55;
+      for (let m = 0; m < N; m++) {
+        const a = -Math.PI / 2 + m * th * deg; // 0 = ตัวจริงชี้ขึ้นบน
+        toy(ctx, hx + Math.cos(a) * dist, hy + Math.sin(a) * dist, 1.1, m % 2 === 1, m !== 0);
+      }
+      // กระจกสองบาน ทำมุม θ เปิดขึ้นด้านบน
+      [-1, 1].forEach((sgn) => {
+        const a = -Math.PI / 2 + (sgn * th * deg) / 2;
+        ctx.strokeStyle = dark ? '#c9d6e3' : '#7a8ea3'; ctx.lineWidth = 6 / Math.sqrt(z); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(a) * len, hy + Math.sin(a) * len); ctx.stroke();
+        ctx.lineCap = 'butt';
+      });
+      ctx.fillStyle = '#4a505b'; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('บานพับ ' + th + '°', hx, hy + 10);
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.fillText('มองจากด้านบน · ตุ๊กตาตัวจริงสีเข้ม ภาพในกระจกสีจาง', 24, 38);
+    }
+
+    function scene(ctx, z) { if (s.part === 1) part1(ctx, z); else part2(ctx, z); }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (s.part === 1) {
+        const a = Math.atan2(L.ox - x, L.oy - y) / deg; // มุมจากเส้นปกติไปทางซ้าย
+        if (e.type === 'pointerdown' && x < L.ox && Math.hypot(x - L.ox, y - L.oy) > L.R * 0.6) { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+        if (s.drag && (e.type === 'pointermove' || e.type === 'pointerdown')) setI(Math.round(a * 10) / 10);
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : s.part === 1 ? 'ลากกล่องแสงเพื่อเปลี่ยนมุม' : 'นับภาพของตุ๊กตาในกระจก', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

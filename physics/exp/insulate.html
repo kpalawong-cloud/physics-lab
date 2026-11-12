@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วัสดุไหนเก็บความร้อนได้ดี · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 520px; } @media (max-width: 900px) { .stage canvas { height: 480px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const CUPS = [
+  { key: 'N', label: 'ไม่ห่อ', short: 'ไม่ห่อ' },
+  { key: 'F', label: 'ห่อฟอยล์', short: 'ฟอยล์' },
+  { key: 'C', label: 'ห่อผ้าขนหนู', short: 'ผ้า' },
+  { key: 'P', label: 'แก้วโฟม', short: 'โฟม' },
+];
+
+Lab.init({
+  id: 'insulate',
+  kid: true,
+  short: 'วัสดุไหนเก็บความร้อนได้ดี',
+  title: 'วัสดุไหนช่วยให้น้ำร้อนเย็นช้าที่สุด',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [5, 'ฝึกอ่านเทอร์โมมิเตอร์ทั้ง 4 อัน'], [35, 'บันทึกอุณหภูมิทุก 2 นาที จนครบ 20 นาที'], [20, 'เขียนกราฟ เปรียบเทียบเส้นของแต่ละแก้ว'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'วัดอุณหภูมิของน้ำร้อนในแก้วที่ห่อด้วยวัสดุต่างกัน ทุก 2 นาที',
+      'เขียนกราฟอุณหภูมิกับเวลาของทั้ง 4 แก้วบนกราฟเดียวกัน',
+      'บอกได้ว่าวัสดุใดเป็นฉนวนความร้อนที่ดีที่สุด',
+    ],
+    theory:
+      '<p>ความร้อนถ่ายโอนจาก<b>ที่ร้อนกว่าไปที่เย็นกว่า</b>เสมอ น้ำร้อนในแก้วจึงเสียความร้อนให้อากาศรอบ ๆ จนอุณหภูมิลดลงเข้าใกล้อุณหภูมิห้อง</p>' +
+      '<p>วัสดุที่ความร้อนผ่านได้ยาก เรียกว่า <b>ฉนวนความร้อน</b> เช่น โฟม ผ้า ไม้ วัสดุที่มีอากาศแทรกอยู่มักเป็นฉนวนที่ดี ส่วนวัสดุที่ความร้อนผ่านได้ง่าย เรียกว่า <b>ตัวนำความร้อน</b> เช่น โลหะ</p>' +
+      '<p>การทดลองที่ยุติธรรมต้องควบคุมตัวแปร: น้ำปริมาณเท่ากัน อุณหภูมิเริ่มต้นใกล้กัน แก้วขนาดเดียวกัน วางในห้องเดียวกัน เปลี่ยนเฉพาะ<b>วัสดุที่ห่อ</b></p>' +
+      '<p><b>เทอร์โมมิเตอร์</b>: อ่านค่าที่ปลายของเหลวสีแดง สเกลละเอียดช่องละ 1 °C ตัวเลขบอกทุก 10 °C นาฬิกาเดินเร็วกว่าจริงได้ และหยุดเองทุก 2 นาที</p>',
+    equipment: ['แก้วขนาดเท่ากัน 4 ใบ ใส่น้ำร้อนใบละ 200 mL', 'ฟอยล์อะลูมิเนียม ผ้าขนหนู และแก้วโฟม', 'เทอร์โมมิเตอร์ 4 อัน (0–100 °C)', 'นาฬิกาจับเวลา'],
+    procedure: [
+      'อ่านอุณหภูมิเริ่มต้นของน้ำในแก้วทั้ง 4 ใบ บันทึกที่เวลา 0 นาที',
+      'กด "เริ่มจับเวลา" นาฬิกาจะหยุดเองทุก 2 นาที',
+      'เมื่อนาฬิกาหยุด ใช้แว่นขยายอ่านเทอร์โมมิเตอร์ทีละแก้ว แตะที่แก้วเพื่อสลับไปตารางของแก้วนั้น แล้วบันทึก',
+      'กด "เริ่มจับเวลา" ต่อ ทำซ้ำจนครบ 20 นาที',
+    ],
+    tip: 'ตารางมี 4 ชุดตามแก้ว 4 ใบ ดูชื่อชุดเหนือตารางให้ตรงกับแก้วที่อ่านทุกครั้ง ในการทดลองจริงระวังน้ำร้อนลวกมือ',
+  },
+  predict: [
+    { q: 'หลังผ่านไป 20 นาที แก้วใบไหนน่าจะยังร้อนที่สุด', choices: ['แก้วไม่ห่อ', 'แก้วห่อฟอยล์', 'แก้วห่อผ้าขนหนู', 'แก้วโฟม'] },
+    { q: 'แก้วไม่ห่อ อุณหภูมิลดลงเร็วตอนไหน', choices: ['ช่วงแรกตอนน้ำยังร้อนมาก', 'ช่วงท้าย', 'ลดลงเท่า ๆ กันตลอด'] },
+  ],
+  table: {
+    rows: 11,
+    sets: CUPS.map((c) => ({ key: c.key, label: c.label })),
+    hint: 'แต่ละแก้วมีตารางของตัวเอง กดชื่อแก้วด้านล่าง หรือแตะที่แก้วในภาพ เพื่อสลับตาราง',
+    columns: [
+      { key: 't', label: 'เวลา<br>(นาที)', input: true },
+      { key: 'T', label: 'อุณหภูมิ<br>(°C)', input: true },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'อุณหภูมิกับเวลา', x: 't', y: 'T', xlabel: 'เวลา (นาที)', ylabel: 'อุณหภูมิ (°C)',
+    explain: 'เส้นของแต่ละแก้วมีสีต่างกัน เส้นที่ลดลงช้าที่สุด (ชันน้อยที่สุด) คือแก้วที่เก็บความร้อนได้ดีที่สุด',
+  },
+  questions: [
+    { q: 'เรียงลำดับ: แก้วใบใดเย็นลงช้าที่สุด', choices: ['แก้วไม่ห่อ', 'แก้วห่อฟอยล์', 'แก้วห่อผ้าขนหนู', 'แก้วโฟม'], why: true },
+    { q: 'วัสดุที่ทำให้น้ำร้อนเย็นลงช้า เรียกว่าอะไร', choices: ['ตัวนำความร้อน', 'ฉนวนความร้อน', 'แหล่งกำเนิดความร้อน'] },
+    { q: 'ทุกเส้นลดลงเร็วช่วงแรก แล้วลดช้าลงในช่วงท้าย เพราะเหตุใด', choices: ['ตอนแรกน้ำร้อนกว่าอากาศมาก จึงเสียความร้อนเร็ว', 'เทอร์โมมิเตอร์เสีย', 'อากาศร้อนขึ้นเรื่อย ๆ'], why: true },
+    { q: 'กระติกน้ำแข็งควรทำจากวัสดุแบบใด', choices: ['โลหะบาง ๆ', 'โฟมหรือวัสดุที่มีอากาศแทรก', 'แก้วใส'], why: true },
+    { q: 'ถ้าเริ่มด้วยน้ำร้อนในแก้วแต่ละใบไม่เท่ากัน การทดลองนี้จะยุติธรรมหรือไม่', choices: ['ยุติธรรม', 'ไม่ยุติธรรม เพราะต้องควบคุมปริมาณน้ำให้เท่ากัน'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: วัสดุใดเก็บความร้อนได้ดีที่สุดและแย่ที่สุด ดูจากกราฟอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const ROOM = 27 + 3 * rng();
+    // ค่าคงตัวการเย็นตัว (ต่อนาที) ของแต่ละแก้ว: ไม่ห่อ > ฟอยล์ > ผ้า > โฟม
+    const KB = [0.050, 0.040, 0.026, 0.014];
+    const HW = CUPS.map((c, i) => ({ k: KB[i] * (1 + 0.16 * (rng() - 0.5)), T0: 78 + 5 * rng() }));
+    let s;
+    function reset() { s = { t: 0, run: false, speed: 30, auto: true, nextStop: 120 }; }
+    reset();
+    const temp = (i) => ROOM + (HW[i].T0 - ROOM) * Math.exp((-HW[i].k * s.t) / 60);
+    let cur = Math.max(0, CUPS.findIndex((c) => c.key === api.currentSet()));
+
+    ctrls.innerHTML =
+      '<div class="watch"><span class="readout" id="clk">00:00</span><small>นาฬิกา (นาที : วินาที)</small></div>' +
+      '<div class="row"><button class="btn primary" id="go">เริ่มจับเวลา</button></div>' +
+      '<h3>ความเร็วนาฬิกา</h3><div class="seg" id="spd"><button data-v="10">×10</button><button data-v="30">×30</button><button data-v="60">×60</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px"><input type="checkbox" id="auto" checked> หยุดเองทุก 2 นาที</label>' +
+      '<h3>ตารางที่กำลังบันทึก</h3><div class="seg" id="cup">' + CUPS.map((c, i) => '<button data-v="' + i + '">' + c.short + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่ (เทน้ำร้อนใหม่)</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const clk = $('#clk'), go = $('#go');
+    const showGo = () => { go.textContent = s.run ? 'หยุดชั่วคราว' : 'เริ่มจับเวลา'; go.classList.toggle('primary', !s.run); };
+    go.onclick = () => { s.run = !s.run; if (s.run && s.auto && s.t >= s.nextStop - 1e-6) s.nextStop += 120; showGo(); };
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); return sync;
+    }
+    const syncSpd = seg('spd', () => s.speed, (v) => (s.speed = +v));
+    const pickCup = (i) => { cur = i; api.useSet(CUPS[i].key); };
+    const syncCup = seg('cup', () => cur, (v) => pickCup(+v));
+    api.onSetChange = (k) => { cur = CUPS.findIndex((c) => c.key === k); syncCup(); };
+    $('#auto').onchange = (e) => { s.auto = e.target.checked; if (s.auto) s.nextStop = Math.floor(s.t / 120 + 1e-9) * 120 + 120; };
+    $('#reset').onclick = () => { if (s.t > 0 && !confirm('เริ่มใหม่ด้วยน้ำร้อนใหม่? (ข้อมูลในตารางยังอยู่)')) return; reset(); syncSpd(); $('#auto').checked = true; showGo(); };
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.cw = w / 4; L.cupTop = h - 150; L.cupBot = h - 40; L.cupW = Math.min(90, L.cw * 0.62);
+      L.tTop = 46; L.tBot = L.cupBot - 20;               // เทอร์โมมิเตอร์จุ่มลงในแก้ว
+      L.ppd = (L.tBot - 20 - L.tTop - 8) / 100;          // px ต่อ °C (0–100)
+    }
+    const TY = (T) => L.tBot - 20 - T * L.ppd;
+
+    function drawCup(ctx, z, i) {
+      const dark = Lab.dark(), muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      const cx = L.cw * (i + 0.5), w = L.cupW, top = L.cupTop, bot = L.cupBot;
+      const wT = w, wB = w * 0.78;
+      const T = temp(i);
+      // ไอน้ำ
+      const a = Math.max(0, Math.min(0.3, (T - 45) / 100));
+      if (a > 0) for (let j = 0; j < 3; j++) {
+        const tt = performance.now() / 1000 + j * 1.3 + i, yy = (tt * 22) % 50;
+        ctx.fillStyle = 'rgba(200,205,215,' + a * (1 - yy / 50) + ')';
+        ctx.beginPath(); ctx.arc(cx - 18 + j * 18 + 5 * Math.sin(tt * 2), top - 8 - yy, 8, 0, 7); ctx.fill();
+      }
+      const cup = () => { ctx.beginPath(); ctx.moveTo(cx - wT / 2, top); ctx.lineTo(cx - wB / 2, bot); ctx.lineTo(cx + wB / 2, bot); ctx.lineTo(cx + wT / 2, top); };
+      // น้ำ
+      ctx.fillStyle = 'rgba(150,200,240,.55)';
+      ctx.beginPath(); ctx.moveTo(cx - wT / 2 + 4, top + 16); ctx.lineTo(cx - wB / 2 + 3, bot - 3); ctx.lineTo(cx + wB / 2 - 3, bot - 3); ctx.lineTo(cx + wT / 2 - 4, top + 16); ctx.closePath(); ctx.fill();
+      // เทอร์โมมิเตอร์
+      const tx = cx + 6, bulbY = L.tBot - 6;
+      ctx.fillStyle = dark ? 'rgba(242,238,226,.9)' : 'rgba(251,250,245,.95)'; ctx.strokeStyle = dark ? '#c9ced8' : '#8a93a3'; ctx.lineWidth = 1 / z;
+      ctx.fillRect(tx - 7, L.tTop - 8, 34, bulbY - L.tTop + 8); ctx.strokeRect(tx - 7, L.tTop - 8, 34, bulbY - L.tTop + 8);
+      ctx.fillStyle = '#e8eef3'; ctx.fillRect(tx - 2, L.tTop, 4, bulbY - L.tTop);
+      ctx.fillStyle = '#d0282a'; const ty = TY(T); ctx.fillRect(tx - 1.5, ty, 3, bulbY - ty);
+      ctx.beginPath(); ctx.arc(tx, bulbY, 5, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let d = 0; d <= 100; d++) {
+        const y = TY(d), l = d % 10 === 0 ? 9 : d % 5 === 0 ? 6 : 3.5;
+        ctx.lineWidth = (d % 10 === 0 ? 1 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(tx + 3, y); ctx.lineTo(tx + 3 + l, y); ctx.stroke();
+        if (d % 10 === 0) { ctx.font = '9px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(d, tx + 14, y); }
+      }
+      // วัสดุห่อแก้ว (วาดทับส่วนล่างของเทอร์โมมิเตอร์ที่จุ่มอยู่)
+      if (i === 0) { ctx.fillStyle = 'rgba(200,225,240,.25)'; cup(); ctx.closePath(); ctx.fill(); ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 1.6 / z; cup(); ctx.stroke(); }
+      if (i === 1) {
+        const g = ctx.createLinearGradient(cx - wT / 2, 0, cx + wT / 2, 0);
+        g.addColorStop(0, '#8d949c'); g.addColorStop(0.3, '#e9edf1'); g.addColorStop(0.55, '#a5acb4'); g.addColorStop(0.8, '#dfe4e9'); g.addColorStop(1, '#8d949c');
+        ctx.fillStyle = g; cup(); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(90,95,105,.5)'; ctx.lineWidth = 0.7 / z;
+        for (let j = 1; j < 6; j++) { const y = top + ((bot - top) * j) / 6; ctx.beginPath(); ctx.moveTo(cx - w * 0.42, y); ctx.lineTo(cx - w * 0.1, y + 4); ctx.lineTo(cx + w * 0.2, y - 3); ctx.lineTo(cx + w * 0.4, y + 2); ctx.stroke(); }
+      }
+      if (i === 2) {
+        ctx.fillStyle = '#d9845a'; cup(); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,240,220,.6)'; ctx.lineWidth = 3 / z;
+        for (let j = 1; j < 5; j++) { const y = top + ((bot - top) * j) / 5; ctx.beginPath(); ctx.moveTo(cx - w * 0.46, y); ctx.lineTo(cx + w * 0.46, y); ctx.stroke(); }
+      }
+      if (i === 3) {
+        ctx.fillStyle = dark ? '#e7e9ee' : '#ffffff'; ctx.strokeStyle = '#b8bec8'; ctx.lineWidth = 1.2 / z;
+        ctx.beginPath(); ctx.moveTo(cx - wT / 2 - 5, top - 3); ctx.lineTo(cx - wB / 2 - 3, bot); ctx.lineTo(cx + wB / 2 + 3, bot); ctx.lineTo(cx + wT / 2 + 5, top - 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(180,186,196,.35)';
+        for (let j = 0; j < 30; j++) { const u = ((j * 37) % 100) / 100, v = ((j * 61) % 100) / 100; ctx.beginPath(); ctx.arc(cx - w * 0.38 + u * w * 0.76, top + 6 + v * (bot - top - 12), 1.3, 0, 7); ctx.fill(); }
+      }
+      ctx.fillStyle = cur === i ? Lab.css('--accent') : ink; ctx.font = (cur === i ? '600 ' : '') + '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(CUPS[i].label, cx, bot + 8);
+      if (cur === i) { ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 2 / z; ctx.strokeRect(cx - L.cw / 2 + 6, L.tTop - 16, L.cw - 12, bot - L.tTop + 46); }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#3a3226' : '#d9c4a0'; ctx.fillRect(0, L.cupBot, cv.w, cv.h - L.cupBot);
+      for (let i = 0; i < 4; i++) drawCup(ctx, z, i);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      if (e.type === 'pointerdown' && y > 30) { const i = Math.min(3, Math.max(0, Math.floor(x / L.cw))); pickCup(i); syncCup(); }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (s.run) {
+        let simDt = dt * s.speed;
+        if (s.auto && s.t + simDt >= s.nextStop) { simDt = s.nextStop - s.t; s.run = false; showGo(); }
+        s.t += simDt;
+        if (!s.run && s.auto) s.t = s.nextStop;
+      }
+      const mm = Math.floor(s.t / 60 + 1e-9), ss = Math.floor((s.t + 1e-9) % 60);
+      clk.textContent = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'แตะที่แก้วเพื่อสลับตาราง · เมื่อนาฬิกาหยุด ให้อ่านเทอร์โมมิเตอร์', 10, 8);
+    }, 0.1);
+  },
+});
+</script>
+</body>
+</html>

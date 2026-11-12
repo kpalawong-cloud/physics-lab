@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ข้างขึ้นข้างแรม · ห้องปฏิบัติการโลกและอวกาศ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 500px; } @media (max-width: 900px) { .stage canvas { height: 640px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const MONTH = 29.53; // วันต่อรอบข้างขึ้นข้างแรม
+
+Lab.init({
+  id: 'moon',
+  kid: true,
+  subject: 'โลกและอวกาศ',
+  short: 'ข้างขึ้นข้างแรม',
+  title: 'ข้างขึ้นข้างแรม: รูปร่างของดวงจันทร์ในหนึ่งเดือน',
+  level: 'ป.6',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'สำรวจตำแหน่งดวงจันทร์รอบโลก'], [35, 'วัดส่วนสว่างของดวงจันทร์ทุก 2–4 วัน'], [15, 'เขียนกราฟและเรียกชื่อรูปร่าง'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'สังเกตตำแหน่งของดวงจันทร์รอบโลก และรูปร่างของดวงจันทร์ที่คนบนโลกมองเห็น',
+      'วัดความกว้างส่วนสว่างของดวงจันทร์ แล้วคิดเป็นร้อยละของเส้นผ่านศูนย์กลาง',
+      'เขียนกราฟส่วนสว่างกับวัน และอธิบายการเกิดข้างขึ้นข้างแรม',
+    ],
+    theory:
+      '<p>ดวงจันทร์<b>ไม่มีแสงในตัวเอง</b> เราเห็นดวงจันทร์เพราะแสงอาทิตย์ตกกระทบแล้วสะท้อนมายังโลก ดวงจันทร์จึงสว่างครึ่งดวงเสมอ (ด้านที่หันเข้าหาดวงอาทิตย์)</p>' +
+      '<p>ดวงจันทร์โคจรรอบโลกประมาณ <b>29.5 วัน</b> เมื่อตำแหน่งเปลี่ยน เราจึงเห็นส่วนสว่างมากบ้างน้อยบ้าง เรียกว่า<b>ข้างขึ้นข้างแรม</b></p>' +
+      '<p>ชื่อรูปร่าง: <b>จันทร์ดับ</b> (มองไม่เห็น) → <b>จันทร์เสี้ยว</b> → <b>ครึ่งดวง</b> → <b>ค่อนดวง</b> → <b>จันทร์เต็มดวง</b> แล้วย้อนกลับ ช่วงที่ส่วนสว่างเพิ่มขึ้นคือ <b>ข้างขึ้น</b> ช่วงที่ลดลงคือ <b>ข้างแรม</b></p>' +
+      '<p><b>วิธีวัด</b>: ไม้บรรทัดพาดผ่านกลางดวงจันทร์ แบ่งเส้นผ่านศูนย์กลางเป็น 10 ช่อง (ช่องย่อย 0.5) อ่านตำแหน่งขอบซ้ายและขอบขวาของส่วนสว่าง ความกว้างส่วนสว่าง = ขวา − ซ้าย</p>',
+    equipment: ['แบบจำลองดวงอาทิตย์ โลก และดวงจันทร์ (มองจากด้านบน)', 'ภาพดวงจันทร์ที่มองจากประเทศไทยพร้อมไม้บรรทัด 10 ช่อง', 'ปฏิทินวันของเดือนจันทรคติ'],
+    procedure: [
+      'เริ่มที่วันที่ 0 (จันทร์ดับ) ดูตำแหน่งดวงจันทร์ในภาพมุมบน และรูปร่างที่มองเห็นจากโลก',
+      'กดปุ่มเลื่อนวัน ไปทีละ 2–4 วัน จนครบ 29 วัน',
+      'ทุกครั้งให้อ่านขอบซ้ายและขอบขวาของส่วนสว่างบนไม้บรรทัด (ใช้แว่นขยายช่วย) และเขียนชื่อรูปร่างของดวงจันทร์',
+      'ถ้าไม่เห็นส่วนสว่างเลย ให้บันทึกขอบซ้ายและขอบขวาเป็นค่าเดียวกัน (ความกว้าง 0)',
+    ],
+    tip: 'ภาพดวงจันทร์เป็นภาพที่มองจากประเทศไทยตอนหัวค่ำหรือเช้ามืด ข้างขึ้นจะสว่างด้านขวา ข้างแรมสว่างด้านซ้าย',
+  },
+  predict: [
+    { q: 'เพราะเหตุใดเราจึงเห็นดวงจันทร์มีรูปร่างเปลี่ยนไปในแต่ละวัน', choices: ['เงาของโลกบังดวงจันทร์ทุกวัน', 'เราเห็นส่วนที่ได้รับแสงอาทิตย์ไม่เท่ากันในแต่ละวัน', 'ดวงจันทร์เปลี่ยนรูปร่างจริง'] },
+    { q: 'จันทร์เต็มดวงเกิดเมื่อดวงจันทร์อยู่ที่ตำแหน่งใด', choices: ['อยู่ระหว่างโลกกับดวงอาทิตย์', 'อยู่ด้านตรงข้ามกับดวงอาทิตย์ (โลกอยู่ตรงกลาง)', 'อยู่ด้านข้างของโลก'] },
+  ],
+  table: {
+    rows: 10,
+    hint: 'ความกว้างส่วนสว่าง = ขอบขวา − ขอบซ้าย คิดเป็นร้อยละของเส้นผ่านศูนย์กลาง (10 ช่อง) ช่องชื่อรูปร่างพิมพ์เป็นข้อความได้',
+    columns: [
+      { key: 'day', label: 'วันที่<br>(วัน)', input: true },
+      { key: 'L', label: 'ขอบซ้ายของ<br>ส่วนสว่าง (ช่อง)', input: true },
+      { key: 'R', label: 'ขอบขวาของ<br>ส่วนสว่าง (ช่อง)', input: true },
+      { key: 'w', label: 'ความกว้าง<br>(ช่อง)', calc: (r) => r.R - r.L, digits: 1 },
+      { key: 'pct', label: 'ส่วนสว่าง<br>(ร้อยละ)', calc: (r) => ((r.R - r.L) / 10) * 100, digits: 0 },
+      { key: 'name', label: 'ชื่อรูปร่าง', input: true, text: true },
+    ],
+  },
+  graph: {
+    mode: 'line', title: 'ส่วนสว่างของดวงจันทร์กับวัน', x: 'day', y: 'pct', xlabel: 'วันที่ (นับจากจันทร์ดับ)', ylabel: 'ส่วนสว่าง (ร้อยละ)',
+    explain: 'ดูว่าส่วนสว่างเพิ่มขึ้นถึงวันที่เท่าใด แล้วเริ่มลดลง จุดสูงสุดคือจันทร์เต็มดวง',
+  },
+  questions: [
+    { q: 'จากกราฟ จันทร์ดับไปถึงจันทร์เต็มดวงใช้เวลาประมาณกี่วัน', choices: ['ประมาณ 7 วัน', 'ประมาณ 15 วัน', 'ประมาณ 30 วัน'] },
+    { q: 'วันขึ้น 8 ค่ำ (ประมาณวันที่ 7) ดวงจันทร์มีรูปร่างอย่างไร', choices: ['จันทร์เสี้ยว', 'ครึ่งดวง สว่างด้านขวา', 'เต็มดวง'], why: true },
+    { q: 'จุดสีแดงบนดวงจันทร์ในภาพมุมบนหันเข้าหาโลกตลอดเวลา ข้อนี้บอกอะไร', choices: ['คนบนโลกเห็นดวงจันทร์ด้านเดียวเสมอ', 'ดวงจันทร์ไม่หมุนรอบตัวเอง', 'ดวงจันทร์หยุดนิ่ง'], why: true },
+    { q: 'สุริยุปราคา (ดวงจันทร์บังดวงอาทิตย์) เกิดได้ในวันใด', choices: ['วันจันทร์ดับ', 'วันครึ่งดวง', 'วันจันทร์เต็มดวง'], why: true },
+    { q: 'จันทรุปราคา (เงาโลกบังดวงจันทร์) เกิดได้ในวันใด', choices: ['วันจันทร์ดับ', 'วันครึ่งดวง', 'วันจันทร์เต็มดวง'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: ข้างขึ้นข้างแรมเกิดขึ้นได้อย่างไร และส่วนสว่างของดวงจันทร์เปลี่ยนไปอย่างไรในหนึ่งเดือน',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    // หลุมบนดวงจันทร์ด้านที่หันหาโลก (ตำแหน่งคงเดิมทุกวัน)
+    const craters = []; for (let i = 0; i < 9; i++) { const a = rng() * 6.28, r = Math.sqrt(rng()) * 0.8; craters.push({ x: r * Math.cos(a), y: r * Math.sin(a), s: 0.05 + rng() * 0.1 }); }
+    const s = { day: 0 };
+
+    ctrls.innerHTML =
+      '<div class="watch"><span class="readout" id="dayOut">0</span><small>วันที่ (นับจากจันทร์ดับ)</small></div>' +
+      '<h3>เลื่อนวัน</h3>' +
+      '<div class="row"><button class="btn" data-d="-1">◀ 1 วัน</button><button class="btn" data-d="1">1 วัน ▶</button></div>' +
+      '<div class="row"><button class="btn" data-d="-7">◀◀ 7 วัน</button><button class="btn" data-d="7">7 วัน ▶▶</button></div>' +
+      '<div class="row"><button class="btn" id="d0">กลับไปวันที่ 0</button></div>' +
+      '<p class="muted" style="font-size:14px">ลากดวงจันทร์ในภาพมุมบนไปรอบโลกก็ได้ ภาพขวาคือดวงจันทร์ที่คนบนโลกมองเห็นในวันนั้น</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const dayOut = $('#dayOut');
+    const setDay = (d) => { s.day = Math.max(0, Math.min(29, Math.round(d))); dayOut.textContent = s.day; };
+    setDay(0);
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (b) setDay(s.day + +b.dataset.d); });
+    $('#d0').onclick = () => setDay(0);
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 640;
+      if (L.narrow) {
+        L.ox = w / 2 + 14; L.or = Math.min(120, w * 0.28); L.oy = 62 + L.or;
+        L.mx = w / 2; L.mR = Math.min(105, w * 0.28); L.my = L.oy + L.or + 92 + L.mR;
+      } else {
+        L.or = Math.min(135, h * 0.3, w * 0.17); L.ox = 70 + L.or + 26; L.oy = h / 2 + 6;
+        L.mR = Math.min(120, w * 0.15, h * 0.3); L.mx = w - L.mR * 1.35 - 14; L.my = h / 2 - 20;
+      }
+    }
+
+    // มุมของดวงจันทร์: วันที่ 0 อยู่ทางดวงอาทิตย์ (ซ้าย) หมุนทวนเข็มนาฬิกาเมื่อมองจากด้านบน (ขั้วเหนือ)
+    const ang = () => (s.day / MONTH) * Math.PI * 2;
+
+    function moonDisk(ctx, z, cx, cy, R) {
+      const th = ang() % (Math.PI * 2), waxing = th <= Math.PI;
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#0a0c12' : '#141824'; ctx.fillRect(cx - R * 1.35, cy - R * 1.35, R * 2.7, R * 2.7);
+      ctx.fillStyle = '#2b2e36'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+      // ส่วนสว่าง: ข้างขึ้นสว่างด้านขวา ข้างแรมกลับด้าน
+      const t = waxing ? th : 2 * Math.PI - th, c = Math.cos(t);
+      ctx.save(); ctx.translate(cx, cy); if (!waxing) ctx.scale(-1, 1);
+      ctx.beginPath();
+      ctx.arc(0, 0, R, -Math.PI / 2, Math.PI / 2, false);
+      if (c >= 0) ctx.ellipse(0, 0, Math.max(0.01, R * c), R, 0, Math.PI / 2, -Math.PI / 2, true);
+      else ctx.ellipse(0, 0, Math.max(0.01, -R * c), R, 0, Math.PI / 2, (3 * Math.PI) / 2, false);
+      ctx.closePath();
+      ctx.fillStyle = '#f1ead2'; ctx.fill();
+      ctx.restore();
+      // หลุมอุกกาบาต (ด้านเดิมเสมอ)
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+      craters.forEach((k) => { ctx.fillStyle = 'rgba(120,110,90,.28)'; ctx.beginPath(); ctx.arc(cx + k.x * R, cy + k.y * R, k.s * R, 0, 7); ctx.fill(); });
+      ctx.restore();
+      // ไม้บรรทัด 10 ช่อง พาดผ่านกลาง
+      const y = cy + R + 10;
+      ctx.fillStyle = 'rgba(246,238,206,.95)'; ctx.fillRect(cx - R - 6, y - 2, 2 * R + 12, 26);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let i = 0; i <= 20; i++) {
+        const x = cx - R + (i / 20) * 2 * R, l = i % 2 === 0 ? 9 : 5;
+        ctx.lineWidth = (i % 2 === 0 ? 1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, y - 2); ctx.lineTo(x, y - 2 + l); ctx.stroke();
+        if (i % 2 === 0) { ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(i / 2, x, y + 9); }
+      }
+      // เส้นช่วยอ่านแนวตั้งจางๆ ทุกช่องบนดวงจันทร์
+      ctx.strokeStyle = 'rgba(120,170,255,.35)'; ctx.lineWidth = 0.6 / z;
+      for (let i = 0; i <= 10; i++) { const x = cx - R + (i / 10) * 2 * R; ctx.beginPath(); ctx.moveTo(x, cy - R - 6); ctx.lineTo(x, y - 2); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(255,90,70,.6)'; ctx.beginPath(); ctx.moveTo(cx - R - 6, cy); ctx.lineTo(cx + R + 6, cy); ctx.stroke();
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { ox, oy, or } = L;
+      // แสงอาทิตย์จากด้านซ้าย
+      ctx.fillStyle = 'rgba(255,200,60,.9)';
+      ctx.beginPath(); ctx.arc(8, oy, 26, -Math.PI / 2, Math.PI / 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(240,170,30,.55)'; ctx.lineWidth = 1.5 / z;
+      for (let i = -3; i <= 3; i++) { const yy = oy + i * (or / 3); ctx.beginPath(); ctx.moveTo(40, yy); ctx.lineTo(70, yy); ctx.lineTo(64, yy - 4); ctx.moveTo(70, yy); ctx.lineTo(64, yy + 4); ctx.stroke(); }
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('แสงอาทิตย์', 6, oy - or - 22);
+      // วงโคจร
+      ctx.strokeStyle = muted; ctx.setLineDash([4 / z, 5 / z]); ctx.lineWidth = 1 / z; ctx.beginPath(); ctx.arc(ox, oy, or, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+      // โลก: ครึ่งซ้ายกลางวัน ครึ่งขวากลางคืน
+      ctx.fillStyle = '#2f7fd0'; ctx.beginPath(); ctx.arc(ox, oy, 22, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,20,.55)'; ctx.beginPath(); ctx.arc(ox, oy, 22, -Math.PI / 2, Math.PI / 2); ctx.fill();
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('โลก', ox, oy + 26);
+      // ดวงจันทร์บนวงโคจร (ครึ่งที่หันหาดวงอาทิตย์สว่าง) + จุดแดงที่หันหาโลกเสมอ
+      const a = ang(), mx = ox - or * Math.cos(a), my = oy + or * Math.sin(a), r = 13;
+      ctx.fillStyle = '#3a3d45'; ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.fill();
+      ctx.fillStyle = '#f1ead2'; ctx.beginPath(); ctx.arc(mx, my, r, Math.PI / 2, (3 * Math.PI) / 2); ctx.fill();
+      const ex = ox - mx, ey = oy - my, el = Math.hypot(ex, ey);
+      ctx.fillStyle = '#d0282a'; ctx.beginPath(); ctx.arc(mx + (ex / el) * (r - 4), my + (ey / el) * (r - 4), 3, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(208,40,42,.35)'; ctx.setLineDash([3 / z, 3 / z]); ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(mx, my); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = ink; ctx.fillText('ดวงจันทร์', mx, my + r + 3);
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.fillText('มองจากด้านบน (ขั้วโลกเหนือ)', Math.max(4, ox - or), Math.max(26, oy - or - 26));
+      // ดวงจันทร์ที่มองเห็นจากโลก
+      moonDisk(ctx, z, L.mx, L.my, L.mR);
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.font = '13px Sarabun, sans-serif';
+      ctx.fillText('ดวงจันทร์ที่มองเห็นจากโลก', L.mx, L.my - L.mR * 1.35 - 4);
+    }
+
+    let drag = false;
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      const near = Math.abs(Math.hypot(x - L.ox, y - L.oy) - L.or) < 30;
+      if (e.type === 'pointerdown' && near) { drag = true; canvas.setPointerCapture(e.pointerId); }
+      if (drag && (e.type === 'pointermove' || e.type === 'pointerdown')) {
+        let a = Math.atan2(y - L.oy, -(x - L.ox)); if (a < 0) a += Math.PI * 2;
+        setDay((a / (Math.PI * 2)) * MONTH);
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ลากดวงจันทร์รอบโลก หรือกดปุ่มเลื่อนวัน', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

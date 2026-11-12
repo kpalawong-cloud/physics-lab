@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>จมหรือลอย · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+.stage canvas { height: 520px; } @media (max-width: 900px) { .stage canvas { height: 480px; } }
+.objs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+.objs .btn { padding: 6px 4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const TANK_H = 30, WATER = 20; // ความสูงตู้และระดับน้ำ (cm)
+// วัตถุ: h = ความสูงขณะวางในน้ำ (cm), w = ความกว้าง (cm), rho = ความหนาแน่นเฉลี่ยเทียบน้ำ
+const OBJS = {
+  wood: { name: 'ก้อนไม้', h: 4.0, w: 8, rho: 0.62 },
+  key: { name: 'กุญแจเหล็ก', h: 0.4, w: 6, rho: 7.8 },
+  cap: { name: 'ฝาขวดพลาสติก', h: 1.4, w: 3.2, rho: 0.36 },
+  egg: { name: 'ไข่ไก่', h: 5.6, w: 4.4, rho: 1.045 },
+  apple: { name: 'แอปเปิล', h: 7.0, w: 7.4, rho: 0.84 },
+  candle: { name: 'เทียนไข (วางนอน)', h: 2.2, w: 10, rho: 0.9 },
+  ball: { name: 'ดินน้ำมันปั้นกลม', h: 3.2, w: 3.2, rho: 1.75 },
+  boat: { name: 'เรือดินน้ำมัน', h: 3.0, w: 9, rho: 0.3 },
+};
+
+Lab.init({
+  id: 'float',
+  kid: true,
+  short: 'จมหรือลอย',
+  title: 'วัตถุจมหรือลอยในน้ำจืดและน้ำเกลือ',
+  level: 'ป.6–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [30, 'ปล่อยวัตถุลงน้ำจืดและน้ำเกลือ อ่านไม้บรรทัด'], [15, 'ภารกิจเรือดินน้ำมันบรรทุกลูกแก้ว'], [15, 'เขียนกราฟแท่งและเปรียบเทียบ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'ทดสอบว่าวัตถุแต่ละชนิดจมหรือลอยในน้ำจืดและในน้ำเกลือ',
+      'วัดว่าวัตถุที่ลอยจมลงไปในน้ำกี่เปอร์เซ็นต์ของความสูง',
+      'ปั้นดินน้ำมันเป็นเรือให้ลอยได้ และนับว่าบรรทุกลูกแก้วได้กี่ลูก',
+    ],
+    theory:
+      '<p>น้ำดันวัตถุที่อยู่ในน้ำขึ้นด้วย<b>แรงลอยตัว</b> ถ้าแรงลอยตัวมากพอที่จะรับน้ำหนักของวัตถุ วัตถุจะ<b>ลอย</b> ถ้าไม่พอ วัตถุจะ<b>จม</b></p>' +
+      '<p>วัตถุที่ "เนื้อแน่น" กว่าน้ำ (ความหนาแน่นมากกว่าน้ำ) เช่น เหล็ก จะจม ส่วนวัตถุที่ "เนื้อโปร่ง" กว่าน้ำ เช่น ไม้ จะลอย</p>' +
+      '<p><b>น้ำเกลือ</b> หนาแน่นกว่าน้ำจืด จึงดันวัตถุขึ้นได้มากกว่า วัตถุจึงลอยสูงขึ้น และบางอย่างที่จมในน้ำจืดอาจลอยในน้ำเกลือได้</p>' +
+      '<p><b>วิธีวัด</b>: ไม้บรรทัดติดข้างตู้ เลข 0 อยู่ที่ก้นตู้ อ่านระดับผิวน้ำ และระดับก้นของวัตถุ แล้วตารางคำนวณ</p>' +
+      '<div class="eq">ส่วนที่จม (%) = (ผิวน้ำ − ก้นวัตถุ) ÷ ความสูงวัตถุ × 100</div>' +
+      '<p>ถ้าวัตถุจมถึงก้นตู้ ให้ใส่ก้นวัตถุ = 0 จะได้ 100%</p>',
+    equipment: ['ตู้ใสสูง 30 cm ใส่น้ำสูง 20 cm พร้อมไม้บรรทัดติดข้างตู้', 'น้ำจืด และน้ำเกลือ (ละลายเกลือจนเข้มข้น)', 'ก้อนไม้ กุญแจ ฝาขวด ไข่ไก่ แอปเปิล เทียนไข ดินน้ำมัน', 'ลูกแก้วขนาดเท่ากันหลายลูก'],
+    procedure: [
+      'เลือก "น้ำจืด" เลือกวัตถุ แล้วกด "ปล่อยลงน้ำ" สังเกตว่าจมหรือลอย',
+      'ใช้แว่นขยายอ่านระดับผิวน้ำและระดับก้นวัตถุบนไม้บรรทัด บันทึกพร้อมความสูงของวัตถุ (บอกไว้มุมบนของภาพ)',
+      'ทำซ้ำจนครบทุกวัตถุ แล้วเปลี่ยนเป็น "น้ำเกลือ" ทำซ้ำทั้งหมด (ตารางจะสลับเป็นชุดน้ำเกลือเอง)',
+      'ภารกิจเรือ: ปล่อยเรือดินน้ำมันลงน้ำ กด "ใส่ลูกแก้ว" ทีละลูก นับว่าใส่ได้กี่ลูกก่อนเรือจม ทำทั้งในน้ำจืดและน้ำเกลือ',
+    ],
+    tip: 'ดินน้ำมันปั้นกลมกับเรือดินน้ำมันเป็นดินน้ำมันก้อนเดียวกัน ต่างกันแค่รูปร่าง',
+  },
+  predict: [
+    { q: 'ไข่ไก่จะจมหรือลอยในน้ำจืดและน้ำเกลือ', choices: ['ลอยทั้งสองแบบ', 'จมในน้ำจืด แต่ลอยในน้ำเกลือ', 'จมทั้งสองแบบ'] },
+    { q: 'ดินน้ำมันปั้นกลมกับดินน้ำมันปั้นเป็นเรือ (ก้อนเดียวกัน) จะเป็นอย่างไร', choices: ['จมทั้งคู่', 'ลอยทั้งคู่', 'แบบกลมจม แบบเรือลอย'] },
+    { q: 'ก้อนไม้ลอยในน้ำเกลือ เทียบกับในน้ำจืด จะเป็นอย่างไร', choices: ['จมลงไปมากกว่า', 'ลอยสูงขึ้น (จมน้อยกว่า)', 'เท่ากัน'] },
+  ],
+  table: {
+    rows: 8,
+    sets: [{ key: 'F', label: 'น้ำจืด' }, { key: 'S', label: 'น้ำเกลือ' }],
+    hint: 'ตาราง "น้ำจืด" และ "น้ำเกลือ" แยกกัน จะสลับเองตามน้ำที่เลือก ช่องชื่อวัตถุและผลพิมพ์เป็นข้อความได้',
+    columns: [
+      { key: 'obj', label: 'วัตถุ', input: true, text: true },
+      { key: 'res', label: 'จม / ลอย', input: true, text: true },
+      { key: 'H', label: 'ความสูงวัตถุ<br>(cm)', input: true },
+      { key: 'Lw', label: 'ระดับผิวน้ำ<br>(cm)', input: true },
+      { key: 'Lb', label: 'ระดับก้นวัตถุ<br>(cm)', input: true },
+      { key: 'pct', label: 'ส่วนที่จม<br>(%)', calc: (r) => Math.max(0, Math.min(100, ((r.Lw - r.Lb) / r.H) * 100)), digits: 0 },
+    ],
+  },
+  graph: {
+    mode: 'bar', title: 'ส่วนที่จมน้ำของวัตถุแต่ละชนิด', y: 'pct', label: 'obj', xlabel: 'วัตถุ', ylabel: 'ส่วนที่จม (%)',
+    explain: 'แท่งสูง 100% คือจม แท่งเตี้ยคือลอยสูง เปรียบเทียบแท่งน้ำจืดกับน้ำเกลือของวัตถุเดียวกัน',
+  },
+  questions: [
+    { q: 'ไข่ไก่จมในน้ำจืด แต่ลอยในน้ำเกลือ เพราะเหตุใด', choices: ['น้ำเกลือหนาแน่นกว่า ดันไข่ขึ้นได้มากกว่า', 'เกลือทำให้ไข่เบาลง', 'น้ำเกลือเย็นกว่า'], why: true },
+    { q: 'วัตถุที่ลอยทั้งในน้ำจืดและน้ำเกลือ ในน้ำเกลือจมลงไปมากหรือน้อยกว่า', choices: ['มากกว่า', 'น้อยกว่า', 'เท่ากัน'], why: true },
+    { q: 'ดินน้ำมันปั้นกลมจม แต่พอปั้นเป็นเรือกลับลอยได้ เพราะเหตุใด', choices: ['เรือเบากว่าเพราะดินน้ำมันหายไป', 'เรือแทนที่น้ำได้มากขึ้น จึงได้แรงลอยตัวมากขึ้น', 'เรือมีสีต่างกัน'], why: true },
+    'เรือดินน้ำมันบรรทุกลูกแก้วได้กี่ลูกก่อนจม ในน้ำจืดและในน้ำเกลือ ต่างกันเพราะอะไร',
+    { q: 'เรือเหล็กลำใหญ่ลอยในทะเลได้ เพราะเหตุใด', choices: ['เหล็กเบากว่าน้ำ', 'เรือมีรูปร่างกลวง แทนที่น้ำได้มาก', 'ทะเลไม่มีแรงโน้มถ่วง'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: อะไรทำให้วัตถุจมหรือลอย และน้ำเกลือต่างจากน้ำจืดอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 4, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const RHO_SALT = 1.08 + 0.04 * rng();          // ความหนาแน่นน้ำเกลือ (เทียบน้ำจืด)
+    const MARBLE = 0.065 + 0.015 * rng();           // ลูกแก้วหนึ่งลูกเพิ่ม "ความหนาแน่นเฉลี่ย" ของเรือเท่านี้
+    OBJS.egg.rho = 1.035 + 0.02 * rng();
+    const s = { water: api.currentSet() === 'S' ? 'S' : 'F', obj: 'wood', yb: null, v: 0, state: 'none', marbles: 0, flood: false };
+    const rhoW = () => (s.water === 'S' ? RHO_SALT : 1);
+    const rhoObj = () => (s.obj === 'boat' ? (s.flood ? 1.75 : OBJS.boat.rho + s.marbles * MARBLE) : OBJS[s.obj].rho);
+
+    ctrls.innerHTML =
+      '<h3>น้ำในตู้</h3><div class="seg" id="water"><button data-v="F">น้ำจืด</button><button data-v="S">น้ำเกลือ</button></div>' +
+      '<h3>เลือกวัตถุ</h3><div class="objs" id="objs">' + Object.keys(OBJS).map((k) => '<button class="btn" data-o="' + k + '">' + OBJS[k].name + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn primary" id="drop">ปล่อยลงน้ำ</button><button class="btn" id="take">หยิบออก</button></div>' +
+      '<h3>ภารกิจเรือดินน้ำมัน</h3><div class="row"><button class="btn" id="marble">ใส่ลูกแก้ว 1 ลูก</button></div>' +
+      '<p class="muted" style="font-size:14px">ใส่ลูกแก้วได้เมื่อเรือลอยอยู่ในน้ำ นับเองว่าใส่ไปกี่ลูกก่อนเรือจม</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    const wSeg = $('#water');
+    const syncW = () => wSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.water));
+    const syncO = () => $('#objs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.o === s.obj));
+    const take = () => { s.state = 'none'; s.yb = null; s.marbles = 0; s.flood = false; syncM(); };
+    const syncM = () => ($('#marble').disabled = !(s.obj === 'boat' && s.state === 'float' && !s.flood));
+    wSeg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.v !== s.water) { s.water = b.dataset.v; take(); syncW(); api.useSet(s.water); } });
+    api.onSetChange = (k) => { s.water = k; take(); syncW(); };
+    $('#objs').addEventListener('click', (e) => { const b = e.target.closest('[data-o]'); if (b) { s.obj = b.dataset.o; take(); syncO(); } });
+    $('#drop').onclick = () => { take(); s.state = 'fall'; s.yb = TANK_H + 3; s.v = 0; };
+    $('#take').onclick = take;
+    $('#marble').onclick = () => { if (s.obj === 'boat' && s.state === 'float') { s.marbles++; if (rhoObj() >= rhoW()) { s.flood = true; s.state = 'sink'; } syncM(); } };
+    syncW(); syncO(); syncM();
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.top = 70; L.bot = h - 24; L.ppc = (L.bot - L.top) / (TANK_H + 2.5);
+      L.y0 = L.bot; // ก้นตู้
+      L.tw = Math.min(w - 40, 34 * L.ppc); L.tx = (w - L.tw) / 2;
+      L.rx = L.tx + 34; // ขอบขวาของไม้บรรทัด
+    }
+    const Y = (cm) => L.y0 - cm * L.ppc;
+
+    function drawObj(ctx, z, k, cx, yb) {
+      const o = OBJS[k], p = L.ppc, w = o.w * p, h = o.h * p, top = Y(yb) - h, by = Y(yb);
+      ctx.lineWidth = 1 / z; ctx.strokeStyle = 'rgba(0,0,0,.45)';
+      if (k === 'wood') { ctx.fillStyle = '#c99a5b'; ctx.fillRect(cx - w / 2, top, w, h); ctx.strokeRect(cx - w / 2, top, w, h); ctx.strokeStyle = 'rgba(110,70,30,.5)'; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(cx - w / 2, top + (h * i) / 4); ctx.lineTo(cx + w / 2, top + (h * i) / 4 + 2); ctx.stroke(); } }
+      else if (k === 'key') { ctx.fillStyle = '#9aa3b0'; ctx.beginPath(); ctx.arc(cx - w / 2 + h * 2, by - h / 2, h * 1.6, 0, 7); ctx.fill(); ctx.fillRect(cx - w / 2 + h * 3, top, w - h * 3, h); ctx.stroke(); }
+      else if (k === 'cap') { ctx.fillStyle = '#2f8fde'; ctx.fillRect(cx - w / 2, top, w, h); ctx.strokeRect(cx - w / 2, top, w, h); }
+      else if (k === 'egg') { ctx.fillStyle = '#f2e3c6'; ctx.beginPath(); ctx.ellipse(cx, top + h / 2, w / 2, h / 2, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (k === 'apple') { ctx.fillStyle = '#d3392f'; ctx.beginPath(); ctx.ellipse(cx, top + h / 2 + 2, w / 2, h / 2 - 2, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 2 / z; ctx.beginPath(); ctx.moveTo(cx, top + 4); ctx.lineTo(cx + 3, top); ctx.stroke(); }
+      else if (k === 'candle') { ctx.fillStyle = '#f7f3e8'; ctx.fillRect(cx - w / 2, top, w, h); ctx.strokeRect(cx - w / 2, top, w, h); ctx.strokeStyle = '#333'; ctx.beginPath(); ctx.moveTo(cx + w / 2, top + h / 2); ctx.lineTo(cx + w / 2 + 5, top + h / 2 - 2); ctx.stroke(); }
+      else if (k === 'ball') { ctx.fillStyle = '#3aa66a'; ctx.beginPath(); ctx.arc(cx, top + h / 2, h / 2, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (k === 'boat') {
+        ctx.fillStyle = '#3aa66a'; ctx.beginPath(); ctx.moveTo(cx - w / 2, top); ctx.lineTo(cx + w / 2, top); ctx.lineTo(cx + w / 2 - h * 0.7, by); ctx.lineTo(cx - w / 2 + h * 0.7, by); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(cx - w / 2 + 4, top + 2, w - 8, h * 0.3);
+        // ลูกแก้วในเรือ
+        for (let i = 0; i < s.marbles; i++) {
+          const col = i % 6, row = Math.floor(i / 6), r = Math.max(3, p * 0.42);
+          ctx.fillStyle = 'rgba(120,190,255,.85)'; ctx.strokeStyle = 'rgba(30,70,120,.7)';
+          ctx.beginPath(); ctx.arc(cx - w / 2 + h * 0.7 + r + col * (2.1 * r), top - r + 2 - row * 2 * r, r, 0, 7); ctx.fill(); ctx.stroke();
+        }
+      }
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { tx, tw } = L;
+      // น้ำ
+      const salt = s.water === 'S';
+      ctx.fillStyle = salt ? 'rgba(120,200,200,.45)' : 'rgba(140,195,240,.45)';
+      ctx.fillRect(tx, Y(WATER), tw, Y(0) - Y(WATER));
+      // วัตถุ (วาดก่อนผิวน้ำ ให้ส่วนที่จมดูอยู่ในน้ำ)
+      const cx = L.rx + 16 + (OBJS[s.obj].w * L.ppc) / 2;
+      if (s.yb != null) drawObj(ctx, z, s.obj, cx, s.yb);
+      ctx.fillStyle = salt ? 'rgba(120,200,200,.28)' : 'rgba(140,195,240,.28)';
+      ctx.fillRect(tx, Y(WATER), tw, Y(0) - Y(WATER));
+      ctx.strokeStyle = salt ? '#2a8a8a' : '#2d6fb0'; ctx.lineWidth = 1.4 / z;
+      ctx.beginPath(); ctx.moveTo(tx, Y(WATER)); ctx.lineTo(tx + tw, Y(WATER)); ctx.stroke();
+      // ตู้
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 3 / Math.sqrt(z);
+      ctx.beginPath(); ctx.moveTo(tx, Y(TANK_H)); ctx.lineTo(tx, Y(0)); ctx.lineTo(tx + tw, Y(0)); ctx.lineTo(tx + tw, Y(TANK_H)); ctx.stroke();
+      // ไม้บรรทัด 0 ที่ก้นตู้
+      ctx.fillStyle = 'rgba(246,236,200,.95)'; ctx.fillRect(tx + 2, Y(TANK_H), L.rx - tx - 2, Y(0) - Y(TANK_H));
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      const showMm = L.ppc * z >= 14;
+      for (let mm = 0; mm <= TANK_H * 10; mm += showMm ? 1 : 5) {
+        const y = Y(mm / 10), l = mm % 10 === 0 ? 11 : mm % 5 === 0 ? 7 : 4;
+        ctx.lineWidth = (mm % 10 === 0 ? 1 : 0.5) / z;
+        ctx.beginPath(); ctx.moveTo(L.rx - l, y); ctx.lineTo(L.rx, y); ctx.stroke();
+        if (mm % 10 === 0 && (mm % 50 === 0 || L.ppc * z > 16)) {
+          ctx.font = (mm % 50 ? 8 : 11) / Math.min(z, 3) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(mm / 10, tx + 4, y);
+        }
+      }
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText((salt ? 'น้ำเกลือ' : 'น้ำจืด') + ' · ' + OBJS[s.obj].name + ' สูง ' + OBJS[s.obj].h.toFixed(1) + ' cm', tx, 30);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif';
+      ctx.fillText('ไม้บรรทัด (cm) เลข 0 อยู่ที่ก้นตู้', tx, 48);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      const o = OBJS[s.obj], f = rhoObj() / rhoW();
+      if (s.state === 'fall' || s.state === 'float' || s.state === 'sink') {
+        if (s.state === 'fall' && s.yb <= WATER) s.state = f < 1 ? 'float' : 'sink';
+        if (s.state === 'fall') { s.v -= 980 * dt / 10; s.yb += s.v * dt; }
+        else if (s.state === 'float') {
+          const eq = WATER - f * o.h;
+          s.v += (-(s.yb - eq) * 60 - s.v * 7) * dt; s.yb += s.v * dt;
+          syncM();
+        } else {
+          s.v += (-6 - s.v) * dt * 3; s.yb = Math.max(0, s.yb + s.v * dt);
+          if (s.yb === 0) s.v = 0;
+          syncM();
+        }
+      }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ใช้แว่นขยายอ่านไม้บรรทัดข้างตู้', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

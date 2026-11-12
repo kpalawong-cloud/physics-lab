@@ -11,13 +11,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/lab.css">
+<style>.grid-cards.junior { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; } .grid-cards.junior .tile { padding: 12px 14px; } .grid-cards.junior h3 { font-size: 16px; }</style>
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
     <h1>ห้องปฏิบัติการเสมือน</h1>
     <p>ทำการทดลองวิทยาศาสตร์ได้ทุกที่ ตั้งแต่เตรียมอุปกรณ์ อ่านค่าเครื่องมือวัด บันทึกผล เขียนกราฟ จนถึงสรุปและส่งรายงาน
-      สำหรับนักเรียนชั้น ป.6–ม.6</p>
+      สำหรับนักเรียนชั้นประถมถึง ม.6</p>
   </div>
 
   <h2 class="section-title">เลือกวิชา</h2>
@@ -25,27 +26,46 @@
     <a class="tile" href="physics/">
       <div class="icon" style="background:var(--phy)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></div>
       <h3>ฟิสิกส์</h3>
-      <p>ปฏิบัติการเต็มรูปแบบ 32 เรื่อง แบ่งตามหน่วย (มีชุดสำหรับ ป.6–ม.1) และห้องจำลองอีกกว่า 60 เรื่อง</p>
+      <p>ปฏิบัติการเต็มรูปแบบ 39 เรื่อง แบ่งตามหน่วย ตั้งแต่ประถมถึง ม.6 และห้องจำลองอีกกว่า 60 เรื่อง</p>
       <div class="meta"><span class="chip">พร้อมใช้งาน</span></div>
     </a>
-    <div class="tile soon">
-      <span class="tag">เร็ว ๆ นี้</span>
+    <a class="tile" href="chemistry/">
       <div class="icon" style="background:var(--chem)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg></div>
       <h3>เคมี</h3>
-      <p>การไทเทรต อัตราการเกิดปฏิกิริยา สมดุลเคมี</p>
-    </div>
-    <div class="tile soon">
-      <span class="tag">เร็ว ๆ นี้</span>
+      <p>การแยกสารผสม (ป.6) · เรื่องอื่นจะตามมา</p>
+      <div class="meta"><span class="chip">1 เรื่อง</span></div>
+    </a>
+    <a class="tile" href="biology/">
       <div class="icon" style="background:var(--bio)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20c8 0 13-5 13-15-6 0-13 2-13 10 0 2 .5 3.5 1 5"/><path d="M6 20c2-5 5-8 9-10"/></svg></div>
       <h3>ชีววิทยา</h3>
-      <p>กล้องจุลทรรศน์ การแพร่และออสโมซิส การสังเคราะห์ด้วยแสง</p>
-    </div>
-    <div class="tile soon">
-      <span class="tag">เร็ว ๆ นี้</span>
+      <p>กล้องจุลทรรศน์และเซลล์ (ม.1) · เรื่องอื่นจะตามมา</p>
+      <div class="meta"><span class="chip">1 เรื่อง</span></div>
+    </a>
+    <a class="tile" href="earth/">
       <div class="icon" style="background:var(--earth)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
       <h3>โลกและอวกาศ</h3>
-      <p>ชั้นหิน แผ่นดินไหว การสังเกตท้องฟ้า</p>
-    </div>
+      <p>ข้างขึ้นข้างแรม (ป.6) · เรื่องอื่นจะตามมา</p>
+      <div class="meta"><span class="chip">1 เรื่อง</span></div>
+    </a>
+  </div>
+
+  <h2 class="section-title">ชุดสำหรับประถม–ม.1 (14 เรื่อง)</h2>
+  <p class="muted" style="margin:4px 0 0;font-size:14px">ทายผลก่อนทดลอง คำถามแบบเลือกตอบ กราฟอ่านง่าย ออกแบบให้จบในคาบละประมาณ 90 นาที</p>
+  <div class="grid-cards junior">
+    <a class="tile" href="physics/exp/conductor.html"><h3>วัสดุนำไฟฟ้าและฉนวน</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/circuit.html"><h3>วงจรอนุกรมและขนาน</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/electromagnet.html"><h3>แม่เหล็กไฟฟ้า</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/surfaces.html"><h3>แรงเสียดทานบนพื้นผิวต่าง ๆ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/seesaw.html"><h3>คานและไม้กระดก</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/float.html"><h3>จมหรือลอย</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/shadow.html"><h3>เงาของวัตถุ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/mirror.html"><h3>การสะท้อนของแสงบนกระจกเงา</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/pitch.html"><h3>เสียงสูง-ต่ำ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/ice.html"><h3>น้ำแข็งละลายจนน้ำเดือด</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="physics/exp/insulate.html"><h3>วัสดุไหนเก็บความร้อนได้ดี</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
+    <a class="tile" href="chemistry/exp/separate.html"><h3>การแยกสารผสม</h3><div class="meta"><span class="chip">เคมี</span></div></a>
+    <a class="tile" href="biology/exp/cells.html"><h3>กล้องจุลทรรศน์และเซลล์</h3><div class="meta"><span class="chip">ชีววิทยา</span></div></a>
+    <a class="tile" href="earth/exp/moon.html"><h3>ข้างขึ้นข้างแรม</h3><div class="meta"><span class="chip">โลกและอวกาศ</span></div></a>
   </div>
 
   <footer class="foot">ข้อมูลการทดลองและคำตอบบันทึกไว้บนอุปกรณ์ของผู้ใช้เท่านั้น ไม่ต้องเข้าสู่ระบบ</footer>

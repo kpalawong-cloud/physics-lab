@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แรงเสียดทานบนพื้นผิวต่าง ๆ · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 330px; } @media (max-width: 900px) { .stage canvas { height: 290px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+const SURF = [
+  { id: 'glass', name: 'กระจก', mu: 0.18 },
+  { id: 'wood', name: 'ไม้', mu: 0.32 },
+  { id: 'carpet', name: 'พรม', mu: 0.55 },
+  { id: 'sand', name: 'กระดาษทราย', mu: 0.7 },
+];
+const W_BLOCK = 2, W_MASS = 1; // น้ำหนักกล่องไม้และตุ้มแต่ละก้อน (N)
+
+Lab.init({
+  id: 'surfaces',
+  kid: true,
+  short: 'แรงเสียดทานบนพื้นผิวต่าง ๆ',
+  title: 'แรงเสียดทานบนพื้นผิวต่าง ๆ',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ฝึกอ่านเครื่องชั่งสปริงขณะลากกล่อง'], [35, 'ลากกล่องบนพื้นผิว 4 แบบ ทั้งไม่มีตุ้มและมีตุ้ม 2 ก้อน'], [15, 'เขียนกราฟแท่งและเปรียบเทียบ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'วัดแรงที่ใช้ลากกล่องไม้ให้เคลื่อนที่อย่างสม่ำเสมอบนพื้นผิวต่าง ๆ ด้วยเครื่องชั่งสปริง',
+      'เปรียบเทียบแรงเสียดทานบนพื้นผิวเรียบและพื้นผิวขรุขระ',
+      'สังเกตว่าเมื่อกล่องหนักขึ้น แรงเสียดทานเปลี่ยนไปอย่างไร',
+    ],
+    theory:
+      '<p><b>แรงเสียดทาน</b>เป็นแรงที่เกิดระหว่างผิวสัมผัสของวัตถุ มีทิศทางต้านการเคลื่อนที่ เมื่อลากกล่องไปข้างหน้า แรงเสียดทานจะดึงกล่องไว้ทางด้านหลัง</p>' +
+      '<p>ถ้าลากกล่องให้เคลื่อนที่<b>ช้า ๆ อย่างสม่ำเสมอ</b> แรงที่อ่านได้จากเครื่องชั่งสปริงจะเท่ากับแรงเสียดทาน</p>' +
+      '<p>พื้นผิวที่<b>ขรุขระ</b>มีแรงเสียดทานมาก พื้นผิวที่<b>เรียบลื่น</b>มีแรงเสียดทานน้อย และวัตถุที่<b>กดพื้นแรง</b> (หนัก) มีแรงเสียดทานมากกว่า</p>' +
+      '<p><b>เครื่องชั่งสปริง</b>วัดแรงเป็นนิวตัน (N) สเกลช่องเล็กละ 0.1 N ตัวเลขบอกทุก 1 N เครื่องชั่งนี้วางแนวนอน ศูนย์อยู่ด้านมือจับ ตัวเลขเพิ่มขึ้นไปทางกล่อง ให้อ่านที่เข็มสีแดง</p>',
+    equipment: ['กล่องไม้หนัก 2 N พร้อมตะขอ', 'ตุ้มน้ำหนัก 2 ก้อน ก้อนละ 1 N', 'เครื่องชั่งสปริง 0–5 N', 'พื้นผิว 4 แบบ: กระจก ไม้ พรม กระดาษทราย'],
+    procedure: [
+      'เลือกพื้นผิว "กระจก" และ "ไม่มีตุ้ม" แล้วกดปุ่ม "ดึงช้า ๆ" ค้างไว้',
+      'สังเกตเข็ม ตอนแรกต้องออกแรงมากกว่าเล็กน้อยกล่องจึงเริ่มขยับ จากนั้นเข็มจะนิ่ง ให้อ่านค่าตอนกล่องเลื่อนสม่ำเสมอ (ใช้แว่นขยาย)',
+      'บันทึกชื่อพื้นผิวและแรงที่อ่านได้ ทำซ้ำอีกครั้งเป็นครั้งที่ 2',
+      'เปลี่ยนพื้นผิวเป็นไม้ พรม และกระดาษทราย แล้วทำซ้ำ',
+      'เลือก "ตุ้ม 2 ก้อน" (ตารางจะสลับชุด) แล้วทำซ้ำทุกพื้นผิว',
+    ],
+    tip: 'เข็มแกว่งเล็กน้อยขณะลาก ให้อ่านค่ากลาง ถ้ากล่องถึงปลายราง กด "เริ่มใหม่" เพื่อวางกล่องที่จุดเริ่ม',
+  },
+  predict: [
+    { q: 'ลากกล่องบนพื้นผิวใด น่าจะต้องใช้แรงมากที่สุด', choices: ['กระจก', 'ไม้', 'พรม', 'กระดาษทราย'] },
+    { q: 'ถ้าวางตุ้มเพิ่มบนกล่อง แรงที่ใช้ลากจะเป็นอย่างไร', choices: ['มากขึ้น', 'เท่าเดิม', 'น้อยลง'] },
+  ],
+  table: {
+    rows: 4,
+    sets: [{ key: 'M0', label: 'ไม่มีตุ้ม' }, { key: 'M2', label: 'ตุ้ม 2 ก้อน' }],
+    hint: 'ตาราง "ไม่มีตุ้ม" และ "ตุ้ม 2 ก้อน" แยกกัน จะสลับเองตามจำนวนตุ้มที่เลือก พิมพ์ชื่อพื้นผิวในช่องแรก',
+    columns: [
+      { key: 'surf', label: 'พื้นผิว', input: true, text: true },
+      { key: 'f1', label: 'แรงที่อ่านได้<br>ครั้งที่ 1 (N)', input: true },
+      { key: 'f2', label: 'แรงที่อ่านได้<br>ครั้งที่ 2 (N)', input: true },
+      { key: 'avg', label: 'ค่าเฉลี่ย<br>(N)', calc: (r) => (isFinite(r.f2) ? (r.f1 + r.f2) / 2 : r.f1), digits: 2 },
+    ],
+  },
+  graph: {
+    mode: 'bar', title: 'แรงเสียดทานบนพื้นผิวต่าง ๆ', y: 'avg', label: 'surf', xlabel: 'พื้นผิว', ylabel: 'แรงเสียดทานเฉลี่ย (N)',
+    explain: 'แท่งสีหนึ่งคือกล่องไม่มีตุ้ม อีกสีคือมีตุ้ม 2 ก้อน เทียบความสูงของแท่งแต่ละพื้นผิว',
+  },
+  questions: [
+    { q: 'พื้นผิวใดมีแรงเสียดทานมากที่สุด', choices: ['กระจก', 'ไม้', 'พรม', 'กระดาษทราย'], why: true },
+    { q: 'เมื่อวางตุ้มเพิ่มบนกล่อง แรงเสียดทานเปลี่ยนไปอย่างไร', choices: ['มากขึ้น', 'เท่าเดิม', 'น้อยลง'], why: true },
+    { q: 'ตอนเริ่มลาก ต้องใช้แรงมากกว่าตอนที่กล่องเลื่อนไปแล้ว หรือน้อยกว่า', choices: ['มากกว่า', 'เท่ากัน', 'น้อยกว่า'] },
+    { q: 'ทำไมพื้นรองเท้ากีฬาจึงทำเป็นร่องและใช้ยาง', choices: ['เพิ่มแรงเสียดทาน ไม่ให้ลื่น', 'ลดแรงเสียดทาน ให้วิ่งเร็ว', 'ทำให้รองเท้าเบา'], why: true },
+    { q: 'ข้อใดเป็นการลดแรงเสียดทาน', choices: ['โรยทรายบนถนนที่มีน้ำแข็ง', 'หยอดน้ำมันที่บานพับประตู', 'ใช้ถุงมือยางจับขวด'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: ลักษณะของพื้นผิวและน้ำหนักของวัตถุมีผลต่อแรงเสียดทานอย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 80 });
+    lens.button(stage);
+    const rng = api.rng;
+    const MU = {}; SURF.forEach((x) => (MU[x.id] = x.mu * (1 + 0.16 * (rng() - 0.5))));
+    const s = { surf: 'glass', m: api.currentSet() === 'M2' ? 2 : 0, pull: false, moving: false, ext: 0, bx: 0, F: 0, Fd: 0, jit: 0 };
+    const TRACK = 900; // ความยาวรางที่ลากได้ (px)
+
+    ctrls.innerHTML =
+      '<h3>พื้นผิว</h3><div class="seg" id="surf">' + SURF.map((x) => '<button data-v="' + x.id + '">' + x.name + '</button>').join('') + '</div>' +
+      '<h3>ตุ้มบนกล่อง</h3><div class="seg" id="mass"><button data-v="0">ไม่มีตุ้ม</button><button data-v="2">ตุ้ม 2 ก้อน</button></div>' +
+      '<h3>ลากกล่อง</h3><div class="row"><button class="btn primary" id="pull">ดึงช้า ๆ (กดค้าง)</button></div>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่</button></div>' +
+      '<p class="muted" style="font-size:14px">กดปุ่ม "ดึงช้า ๆ" ค้างไว้ ปล่อยเมื่อต้องการหยุด อ่านแรงตอนที่กล่องเลื่อนสม่ำเสมอ</p>';
+    const $ = (q) => ctrls.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); return sync;
+    }
+    const resetBlock = () => { s.pull = false; s.moving = false; s.ext = 0; s.bx = 0; };
+    seg('surf', () => s.surf, (v) => { s.surf = v; resetBlock(); });
+    const syncMass = seg('mass', () => s.m, (v) => { s.m = +v; resetBlock(); api.useSet('M' + v); });
+    api.onSetChange = (k) => { s.m = k === 'M2' ? 2 : 0; syncMass(); resetBlock(); };
+    const pullBtn = $('#pull');
+    const start = (e) => { e.preventDefault(); if (s.bx < TRACK) s.pull = true; };
+    const stop = () => (s.pull = false);
+    pullBtn.addEventListener('pointerdown', start);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => pullBtn.addEventListener(t, stop));
+    pullBtn.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') start(e); });
+    pullBtn.addEventListener('keyup', stop);
+    $('#reset').onclick = resetBlock;
+
+    const normal = () => W_BLOCK + W_MASS * s.m;
+    const Fk = () => MU[s.surf] * normal();
+    const Fs = () => 1.3 * Fk();
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.bw = w < 560 ? 64 : 90; L.bh = w < 560 ? 40 : 52;
+      L.x0 = 24; L.gy = h * 0.62;                         // ระดับพื้น
+      L.ls = w < 560 ? 18 : 34;                            // เชือก
+      // ความยาวรวม = ก้านตะขอ (5 N) + ส่วนที่ตัวเครื่องเลื่อนออกตามแรง (สูงสุดราว 4 N) + มือ
+      L.ppN = Math.max(16, Math.min(56, (w - L.x0 - L.bw - L.ls - 90) / 9));
+      L.body = 5 * L.ppN + 40;
+    }
+
+    function surfaceTex(ctx, z, off) {
+      const w = cv.w, gy = L.gy, dark = Lab.dark();
+      const id = s.surf;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, gy, w, 34); ctx.clip();
+      if (id === 'glass') {
+        ctx.fillStyle = dark ? '#3c5866' : '#cfe9f3'; ctx.fillRect(0, gy, w, 34);
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2 / z;
+        for (let x = -((off) % 120) - 120; x < w + 120; x += 120) { ctx.beginPath(); ctx.moveTo(x, gy + 30); ctx.lineTo(x + 40, gy + 4); ctx.stroke(); }
+      } else if (id === 'wood') {
+        ctx.fillStyle = '#c99a5b'; ctx.fillRect(0, gy, w, 34);
+        ctx.strokeStyle = '#9b6f3a'; ctx.lineWidth = 1 / z;
+        for (let x = -(off % 160); x < w + 160; x += 160) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + 34); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + 10, gy + 10); ctx.bezierCurveTo(x + 60, gy + 6, x + 90, gy + 16, x + 150, gy + 12); ctx.stroke(); }
+      } else if (id === 'carpet') {
+        ctx.fillStyle = '#b5413a'; ctx.fillRect(0, gy, w, 34);
+        ctx.strokeStyle = '#7e2620'; ctx.lineWidth = 1 / z;
+        for (let x = -(off % 6); x < w; x += 6) { ctx.beginPath(); ctx.moveTo(x, gy + 6); ctx.lineTo(x + 2, gy); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let x = -(off % 30); x < w; x += 30) ctx.fillRect(x, gy + 8, 15, 26);
+      } else {
+        ctx.fillStyle = '#c8b27a'; ctx.fillRect(0, gy, w, 34);
+        ctx.fillStyle = '#8a7444';
+        for (let i = 0; i < 260; i++) { const x = ((i * 53.7 - off) % w + w) % w, y = gy + 2 + ((i * 17.3) % 30); ctx.fillRect(x, y, 2, 2); }
+      }
+      ctx.restore();
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.fillText('พื้นผิว: ' + SURF.find((x) => x.id === s.surf).name, w - 12, gy + 40);
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const gy = L.gy, bx = L.x0, by = gy - L.bh;
+      // พื้นเลื่อนตามกล่อง (กล้องตามกล่อง) และขีดบอกระยะบนราง
+      surfaceTex(ctx, z, s.bx);
+      ctx.strokeStyle = dark ? '#8a93a3' : '#4a505b'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(0, gy + 34); ctx.lineTo(cv.w, gy + 34); ctx.stroke();
+      // กล่องไม้
+      ctx.fillStyle = '#b07a3e'; ctx.strokeStyle = '#7a5226'; ctx.lineWidth = 1.2 / z;
+      ctx.fillRect(bx, by, L.bw, L.bh); ctx.strokeRect(bx, by, L.bw, L.bh);
+      ctx.strokeStyle = 'rgba(80,50,20,.35)'; ctx.beginPath(); ctx.moveTo(bx + 6, by + L.bh * 0.35); ctx.lineTo(bx + L.bw - 6, by + L.bh * 0.3); ctx.moveTo(bx + 8, by + L.bh * 0.7); ctx.lineTo(bx + L.bw - 10, by + L.bh * 0.72); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('2 N', bx + L.bw / 2, by + L.bh / 2);
+      // ตุ้ม
+      for (let i = 0; i < s.m; i++) {
+        const mx = bx + L.bw / 2 - 14 + i * 28, mw = 22, mh = 22;
+        ctx.fillStyle = dark ? '#9aa3b0' : '#6b7382'; ctx.fillRect(mx - mw / 2, by - mh, mw, mh);
+        ctx.fillStyle = '#fff'; ctx.font = '10px Sarabun, sans-serif'; ctx.fillText('1 N', mx, by - mh / 2);
+      }
+      // เชือก ตะขอ เครื่องชั่งสปริง
+      const cy = by + L.bh / 2, hookX = bx + L.bw + L.ls, ppN = L.ppN;
+      const Fshow = Math.max(0, Math.min(5.3, s.Fd));
+      const rod = 5 * ppN + 30;                    // ก้านจากตะขอถึงเข็ม
+      const ptrX = hookX + rod;                    // เข็ม
+      const zeroX = ptrX + Fshow * ppN;            // ขีดศูนย์บนตัวเครื่องชั่ง
+      const bodyL = zeroX - 5 * ppN - 20, bodyR = zeroX + 20;
+      ctx.strokeStyle = dark ? '#ddd' : '#444'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(bx + L.bw, cy); ctx.lineTo(hookX, cy); ctx.stroke();
+      ctx.strokeStyle = '#8a8f98'; ctx.lineWidth = 2 / z; ctx.beginPath(); ctx.arc(hookX + 4, cy, 4, Math.PI * 0.5, Math.PI * 1.9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hookX + 8, cy); ctx.lineTo(ptrX, cy); ctx.stroke();
+      // ตัวเครื่องชั่ง
+      ctx.fillStyle = dark ? '#d8dbe2' : '#f4f6f9'; ctx.strokeStyle = dark ? '#9aa3b0' : '#7d8693'; ctx.lineWidth = 1.2 / z;
+      ctx.fillRect(bodyL, cy - 17, bodyR - bodyL, 34); ctx.strokeRect(bodyL, cy - 17, bodyR - bodyL, 34);
+      ctx.fillStyle = dark ? '#b9bec8' : '#dfe3ea'; ctx.fillRect(bodyL + 8, cy - 3, bodyR - bodyL - 16, 6);
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let k = 0; k <= 50; k++) {
+        const x = zeroX - (k / 10) * ppN, l = k % 10 === 0 ? 11 : k % 5 === 0 ? 8 : 5;
+        ctx.lineWidth = (k % 10 === 0 ? 1.1 : 0.6) / z;
+        ctx.beginPath(); ctx.moveTo(x, cy - 17); ctx.lineTo(x, cy - 17 + l); ctx.stroke();
+        if (k % 10 === 0) { ctx.font = 10 / Math.min(z, 2) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(k / 10, x, cy + 5); }
+      }
+      ctx.fillStyle = '#d0282a'; ctx.beginPath(); ctx.moveTo(ptrX, cy - 17); ctx.lineTo(ptrX - 3, cy - 4); ctx.lineTo(ptrX + 3, cy - 4); ctx.closePath(); ctx.fill();
+      ctx.fillRect(ptrX - 1, cy - 4, 2, 8);
+      ctx.fillStyle = muted; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('N', bodyR - 8, cy - 18);
+      // มือจับ
+      ctx.fillStyle = dark ? '#e0b48a' : '#e8b98e'; ctx.strokeStyle = '#a5754c'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.ellipse(bodyR + 14, cy, 14, 18, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('เครื่องชั่งสปริง', (bodyL + bodyR) / 2, cy - 20);
+      // สถานะ
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.font = '13px Sarabun, sans-serif';
+      ctx.fillText(s.bx >= TRACK ? 'ถึงปลายรางแล้ว กด "เริ่มใหม่"' : s.moving ? 'กล่องกำลังเลื่อน' : s.pull ? 'กำลังดึง… กล่องยังไม่ขยับ' : 'กล่องอยู่นิ่ง', 12, gy + 40);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      // ฟิสิกส์: มือดึงด้วยความเร็วคงที่ สปริงยืดจนแรงเกินแรงเสียดทานสถิต กล่องจึงเลื่อน และแรงลดเหลือแรงเสียดทานจลน์
+      const v = 2.2; // N ต่อวินาทีที่แรงเพิ่มขณะสปริงยืด
+      if (s.pull) {
+        if (!s.moving) { s.F += v * dt; if (s.F >= Fs()) s.moving = true; }
+        else {
+          s.jit += (Lab.noise(1) * 0.05 - s.jit) * Math.min(1, dt * 6);
+          s.F += (Fk() * (1 + s.jit) - s.F) * Math.min(1, dt * 5);
+          s.bx += 60 * dt;
+          if (s.bx >= TRACK) { s.bx = TRACK; s.pull = false; }
+        }
+      } else {
+        s.moving = false;
+        s.F = Math.max(0, s.F - 3 * dt); // ปล่อยมือ สปริงคืนตัว
+      }
+      s.Fd += (s.F - s.Fd) * Math.min(1, dt * 12);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'กด "ดึงช้า ๆ" ค้างไว้ แล้วอ่านเข็มของเครื่องชั่งสปริง', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

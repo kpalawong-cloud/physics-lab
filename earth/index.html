@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ห้องปฏิบัติการโลกและอวกาศ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/lab.css">
+<style>
+  .groupnav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 4px; position: sticky; top: 0; z-index: 2;
+    background: var(--bg); padding: 8px 0; }
+  .groupnav a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel);
+    border-radius: 999px; padding: 4px 12px; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .groupnav a:hover { border-color: var(--accent); }
+  .groupnav b { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .group { scroll-margin-top: 64px; }
+  .group h2 { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .group h2 .muted { font-size: 14px; font-weight: 400; }
+  .tile { border-top: 3px solid var(--gc, var(--line)); }
+  .chip.uni { background: color-mix(in srgb, var(--earth) 16%, transparent); color: var(--earth); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../">ห้องปฏิบัติการเสมือน</a><span>›</span>โลกและอวกาศ</div>
+  <div class="hero">
+    <h1>ห้องปฏิบัติการโลกและอวกาศ</h1>
+    <p>การทดลองแต่ละเรื่องมี 4 ขั้น: เตรียมการ → ทดลองและบันทึกผล → วิเคราะห์ด้วยกราฟ → สรุปและส่งรายงาน ตอนนี้มีชุดสำหรับนักเรียนประถมถึง ม.1 และจะเพิ่มเรื่องอื่นต่อไป</p>
+  </div>
+
+  <nav class="groupnav" id="nav"></nav>
+  <div id="groups"></div>
+  <footer class="foot">ความคืบหน้าของแต่ละการทดลองบันทึกไว้บนเครื่องนี้ กลับมาทำต่อได้ภายหลัง</footer>
+</div>
+<script>
+const GROUPS = [
+  { key: 'junior', name: 'วิทยาศาสตร์พื้นฐาน ประถม–ม.1', color: 'var(--earth)', labs: [
+    { id: 'moon', title: 'ข้างขึ้นข้างแรม', level: 'ป.6',
+      desc: 'เลื่อนวันตามวงโคจรของดวงจันทร์ วัดส่วนสว่างของดวงจันทร์ เขียนกราฟและตั้งชื่อปรากฏการณ์' },
+  ] },
+];
+
+// ความคืบหน้าจาก localStorage (ข้อมูลแบบใหม่เก็บเป็น sets, แบบเก่าเก็บเป็น rows)
+function status(id) {
+  try {
+    const s = JSON.parse(localStorage.getItem('vl-' + id) || 'null');
+    if (!s) return '';
+    if (s.answers && s.answers.concl) return '<span class="chip" style="background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)">ทำเสร็จแล้ว</span>';
+    const rows = s.sets ? [].concat(...Object.values(s.sets)) : s.rows || [];
+    const filled = rows.filter((r) => Object.values(r).some((v) => String(v).trim() !== '')).length;
+    return filled ? '<span class="chip">บันทึกแล้ว ' + filled + ' แถว</span>' : '';
+  } catch (e) { return ''; }
+}
+const tile = (e, g) =>
+  '<a class="tile" style="--gc:' + g.color + '" href="exp/' + e.id + '.html"><h3>' + e.title + '</h3><p>' + e.desc + '</p>' +
+  '<div class="meta"><span class="chip">' + e.level + '</span>' + (e.uni ? '<span class="chip uni">ปฏิบัติการมหาวิทยาลัย</span>' : '') + status(e.id) + '</div></a>';
+document.getElementById('nav').innerHTML = GROUPS.map((g) =>
+  '<a href="#g-' + g.key + '"><span class="dot" style="background:' + g.color + '"></span>' + g.name + ' <b>' + g.labs.length + '</b></a>').join('');
+document.getElementById('groups').innerHTML = GROUPS.map((g) =>
+  '<section class="group" id="g-' + g.key + '"><h2 class="section-title"><span class="dot" style="background:' + g.color + ';width:12px;height:12px"></span>' +
+  g.name + ' <span class="muted">' + g.labs.length + ' เรื่อง</span></h2>' +
+  '<div class="grid-cards">' + g.labs.map((e) => tile(e, g)).join('') + '</div></section>').join('');
+</script>
+</body>
+</html>

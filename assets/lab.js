@@ -214,7 +214,9 @@
     const KEY = 'vl-' + cfg.id;
     // โหมดเด็ก (ป.6–ม.1): ตัวอักษรใหญ่ ทายผลก่อนทดลอง คำถามแบบเลือกตอบ กราฟลากเส้นเชื่อมจุดแทนการหาเส้นตรง
     if (cfg.kid) document.body.classList.add('kid');
-    const LINE = cfg.graph.mode === 'line';
+    // graph.mode: 'line' ลากเส้นเชื่อมจุด, 'bar' กราฟแท่ง (ป้ายจากคอลัมน์ข้อความ graph.label) ทั้งสองแบบไม่หาเส้นตรง
+    const BAR = cfg.graph.mode === 'bar';
+    const LINE = cfg.graph.mode === 'line' || BAR;
     const PRED = cfg.predict || [];
     const saved = store.get(KEY, {});
     const qStep = +new URLSearchParams(location.search).get('step'); // ลิงก์ตรงไปยังขั้น เช่น ?step=2
@@ -249,7 +251,7 @@
     const list = (a, tag) => '<' + tag + '>' + a.map((x) => '<li>' + x + '</li>').join('') + '</' + tag + '>';
     app.innerHTML =
       '<div class="wrap">' +
-      '<div class="crumbs no-print"><a href="../../">ห้องปฏิบัติการเสมือน</a><span>›</span><a href="../">ฟิสิกส์</a><span>›</span>' + cfg.short + '</div>' +
+      '<div class="crumbs no-print"><a href="../../">ห้องปฏิบัติการเสมือน</a><span>›</span><a href="../">' + (cfg.subject || 'ฟิสิกส์') + '</a><span>›</span>' + cfg.short + '</div>' +
       '<div class="exp-head"><h1>' + cfg.title + '</h1><span class="chip">' + cfg.level + '</span></div>' +
       '<div class="print-only" id="pStudent"></div>' +
       '<div class="steps no-print">' +
@@ -347,7 +349,7 @@
       state.rows.forEach((r, i) => {
         h += '<tr><td class="n">' + (i + 1) + '</td>' + cols.map((c) =>
           c.input
-            ? '<td><input data-r="' + i + '" data-k="' + c.key + '" inputmode="decimal" autocomplete="off" value="' + (r[c.key] != null ? String(r[c.key]).replace(/"/g, '') : '') + '"></td>'
+            ? '<td><input data-r="' + i + '" data-k="' + c.key + '"' + (c.text ? ' class="txt"' : ' inputmode="decimal"') + ' autocomplete="off" value="' + (r[c.key] != null ? String(r[c.key]).replace(/"/g, '') : '') + '"></td>'
             : '<td class="calc" data-r="' + i + '" data-c="' + c.key + '"></td>').join('') + '</tr>';
       });
       tbl.innerHTML = h + '</tbody>';
@@ -365,7 +367,8 @@
       const el = e.target;
       if (!el.dataset.k) return;
       state.rows[+el.dataset.r][el.dataset.k] = el.value;
-      el.classList.toggle('bad', el.value.trim() !== '' && !isFinite(Lab.parse(el.value)));
+      const col = cfg.table.columns.find((c) => c.key === el.dataset.k);
+      el.classList.toggle('bad', !(col && col.text) && el.value.trim() !== '' && !isFinite(Lab.parse(el.value)));
       save(); updateCalc();
     });
     // Enter เลื่อนไปช่องถัดไปในคอลัมน์เดียวกัน
@@ -427,8 +430,58 @@
       const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
       return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
     }
+    // ข้อมูลกราฟแท่ง: [{lab, y}] ของชุดข้อมูลหนึ่ง (ป้ายเป็นข้อความดิบจากตาราง)
+    function barRows(key) {
+      const g = cfg.graph, raw = state.sets[key], cv = computed(raw);
+      return cv.map((r, i) => ({ lab: String(raw[i][g.label] || '').trim(), y: r[g.y] })).filter((p) => p.lab && isFinite(p.y));
+    }
+    function drawBar() {
+      const { ctx, w, h } = gcv;
+      ctx.clearRect(0, 0, w, h);
+      const g = cfg.graph, ink = Lab.css('--ink'), muted = Lab.css('--muted'), line = Lab.css('--line');
+      const series = SETS.map((st, k) => ({ st, rows: barRows(st.key), col: Lab.css(multi ? SET_COLORS[k % 4] : '--accent') })).filter((d) => d.rows.length);
+      const labels = [];
+      series.forEach((d) => d.rows.forEach((p) => { if (!labels.includes(p.lab)) labels.push(p.lab); }));
+      const ys = [].concat(...series.map((d) => d.rows.map((p) => p.y)));
+      const ml = 62, mr = 16, mt = multi && series.length ? 36 : 14, mb = 64; // คำอธิบายสีอยู่เหนือพื้นที่กราฟ ไม่ทับแท่ง
+      let y0 = Math.min(0, ...ys), y1 = Math.max(0, ...ys); if (!ys.length) y1 = g.ymax || 1; y1 = y1 || 1;
+      const sy = niceStep(y1 - y0, 6); y1 = Math.ceil((y1 * 1.06) / sy) * sy; y0 = Math.floor(y0 / sy) * sy;
+      const Y = (v) => h - mb - ((v - y0) / (y1 - y0)) * (h - mt - mb);
+      ctx.font = '12px Sarabun, sans-serif'; ctx.lineWidth = 1;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = muted;
+      const dec = Math.max(0, -Math.floor(Math.log10(sy) + 1e-9));
+      for (let v = y0; v <= y1 + 1e-9; v += sy) {
+        ctx.strokeStyle = line; ctx.beginPath(); ctx.moveTo(ml, Y(v)); ctx.lineTo(w - mr, Y(v)); ctx.stroke();
+        ctx.fillText(v.toFixed(dec), ml - 6, Y(v));
+      }
+      ctx.strokeStyle = ink; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(ml, Y(Math.max(y0, 0))); ctx.lineTo(w - mr, Y(Math.max(y0, 0))); ctx.stroke();
+      const gw = (w - ml - mr) / Math.max(1, labels.length);
+      labels.forEach((lab, j) => {
+        const n = series.length, bw = Math.min(46, (gw * 0.72) / Math.max(1, n));
+        series.forEach((d, k) => {
+          const p = d.rows.find((q) => q.lab === lab); if (!p) return;
+          const x = ml + gw * (j + 0.5) - (n * bw) / 2 + k * bw;
+          ctx.fillStyle = d.col; ctx.globalAlpha = d.st.key === state.cur || !multi ? 0.9 : 0.55;
+          ctx.fillRect(x + 1, Math.min(Y(p.y), Y(0)), bw - 2, Math.abs(Y(p.y) - Y(0)));
+          ctx.globalAlpha = 1;
+        });
+        ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '12.5px Sarabun, sans-serif';
+        let s = lab; while (s.length > 2 && ctx.measureText(s).width > gw - 6) s = s.slice(0, -1);
+        ctx.fillText(s === lab ? s : s + '…', ml + gw * (j + 0.5), Y(Math.max(y0, 0)) + 6);
+      });
+      ctx.fillStyle = ink; ctx.font = '13.5px Sarabun, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(g.xlabel, (ml + w - mr) / 2, h - 4);
+      ctx.save(); ctx.translate(14, (mt + h - mb) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle'; ctx.fillText(g.ylabel, 0, 0); ctx.restore();
+      if (multi && series.length) {
+        ctx.font = '12.5px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        let lx = ml;
+        series.forEach((d) => { ctx.fillStyle = d.col; ctx.fillRect(lx, 9, 10, 10); ctx.fillStyle = ink; ctx.fillText(d.st.label, lx + 15, 14); lx += 30 + ctx.measureText(d.st.label).width; });
+      }
+      if (!labels.length) { ctx.fillStyle = muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('ยังไม่มีข้อมูล กลับไปขั้นที่ 2 เพื่อทดลองและบันทึกผล', (ml + w) / 2, (mt + h - mb) / 2); }
+    }
     function drawGraph() {
       if (!gcv) { gcv = Lab.canvas(gEl); gcv.onResize = drawGraph; } // กำหนดหลังสร้าง กันการเรียกซ้อนไม่รู้จบ
+      if (BAR) { if (gcv.w) drawBar(); return; }
       const { ctx, w, h } = gcv;
       if (!w) return;
       ctx.clearRect(0, 0, w, h);
@@ -487,11 +540,16 @@
         d.pts.forEach((p) => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 4.2, 0, Math.PI * 2); ctx.fill(); });
       });
       if (multi && all.length) {
+        // คำอธิบายสี: วางที่มุมบนที่มีจุดข้อมูลน้อยกว่า พร้อมพื้นหลังทึบเล็กน้อย
         ctx.font = '12.5px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const lw = 34 + Math.max(...all.map((d) => ctx.measureText(d.st.label).width)), lh = 8 + all.length * 18;
+        const inBox = (x0) => pts.filter((p) => X(p[0]) > x0 - 6 && X(p[0]) < x0 + lw + 6 && Y(p[1]) < mt + lh + 6).length;
+        const lx = inBox(ml + 4) <= inBox(w - mr - lw - 4) ? ml + 4 : w - mr - lw - 4;
+        ctx.fillStyle = Lab.css('--panel'); ctx.globalAlpha = 0.85; ctx.fillRect(lx, mt + 1, lw, lh); ctx.globalAlpha = 1;
         all.forEach((d, k) => {
           const yy = mt + 10 + k * 18;
-          ctx.fillStyle = d.col; ctx.beginPath(); ctx.arc(ml + 14, yy, 4.2, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = ink; ctx.fillText(d.st.label, ml + 24, yy);
+          ctx.fillStyle = d.col; ctx.beginPath(); ctx.arc(lx + 10, yy, 4.2, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = ink; ctx.fillText(d.st.label, lx + 20, yy);
         });
       }
       if (!pts.length) {
@@ -512,8 +570,8 @@
       const fl = document.getElementById('fitLine'), res = document.getElementById('results');
       let rows;
       if (LINE) {
-        const np = points(state.rows).length;
-        fl.innerHTML = '<span style="font-family:Sarabun,sans-serif;font-size:15px">' + (np ? (multi ? setLabel(state.cur) + ' · ' : '') + 'จุดข้อมูล ' + np + ' จุด ลากเส้นเชื่อมตามลำดับ' : 'ยังไม่มีข้อมูล') + '</span>';
+        const np = BAR ? barRows(state.cur).length : points(state.rows).length;
+        fl.innerHTML = '<span style="font-family:Sarabun,sans-serif;font-size:15px">' + (np ? (multi ? setLabel(state.cur) + ' · ' : '') + (BAR ? 'ข้อมูล ' + np + ' แท่ง' : 'จุดข้อมูล ' + np + ' จุด ลากเส้นเชื่อมตามลำดับ') : 'ยังไม่มีข้อมูล') + '</span>';
         rows = cfg.results ? cfg.results(null, computed(), api.truth || {}, state.cur) || [] : [];
       } else if (!lastFit) {
         fl.textContent = 'ต้องมีข้อมูลอย่างน้อย 2 จุด (แนะนำ 5 จุดขึ้นไป)';

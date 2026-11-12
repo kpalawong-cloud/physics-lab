@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วัสดุนำไฟฟ้าและฉนวน · ห้องปฏิบัติการฟิสิกส์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+.stage canvas { height: 460px; } @media (max-width: 900px) { .stage canvas { height: 440px; } }
+.tray { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 6px 0; }
+.tray .btn { padding: 6px 4px; font-size: 14.5px; min-height: 40px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+// วัสดุในถาด: R = ความต้านทานโดยประมาณ (Ω) ระหว่างปากคีบ, Infinity = ฉนวน
+const MATS = [
+  { id: 'cu', name: 'ลวดทองแดง', R: 0.02 },
+  { id: 'al', name: 'กระดาษฟอยล์', R: 0.06 },
+  { id: 'fe', name: 'ตะปูเหล็ก', R: 0.05 },
+  { id: 'coin', name: 'เหรียญ', R: 0.02 },
+  { id: 'pen', name: 'ไส้ดินสอ', R: 14 },
+  { id: 'salt', name: 'น้ำเกลือ', R: 125 },
+  { id: 'tap', name: 'น้ำประปา', R: 4500 },
+  { id: 'wood', name: 'ไม้', R: Infinity },
+  { id: 'ruler', name: 'ไม้บรรทัดพลาสติก', R: Infinity },
+  { id: 'rub', name: 'ยางรัดของ', R: Infinity },
+  { id: 'glass', name: 'แท่งแก้ว', R: Infinity },
+  { id: 'paper', name: 'กระดาษ', R: Infinity },
+];
+
+Lab.init({
+  id: 'conductor',
+  kid: true,
+  short: 'วัสดุนำไฟฟ้าและฉนวน',
+  title: 'วัสดุใดนำไฟฟ้า วัสดุใดเป็นฉนวน',
+  level: 'ป.5–ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [10, 'ฝึกอ่านแอมมิเตอร์ ลองกับลวดทองแดง'], [35, 'ทดสอบวัสดุทุกชนิดและบันทึกตาราง'], [15, 'เขียนกราฟแท่งและจัดกลุ่มวัสดุ'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'ทดสอบว่าวัสดุชนิดใดให้ไฟฟ้าไหลผ่านได้ (ตัวนำไฟฟ้า) และชนิดใดไม่ให้ไฟฟ้าไหลผ่าน (ฉนวนไฟฟ้า)',
+      'อ่านค่ากระแสไฟฟ้าจากแอมมิเตอร์แบบเข็ม',
+      'จัดกลุ่มวัสดุตามความสามารถในการนำไฟฟ้า',
+    ],
+    theory:
+      '<p>ไฟฟ้าไหลได้เมื่อวงจรครบรอบ ถ้านำวัสดุมาต่อคั่นระหว่าง<b>ปากคีบ</b>ทั้งสอง แล้วไฟฟ้าไหลผ่านได้ หลอดไฟจะติด วัสดุนั้นเป็น<b>ตัวนำไฟฟ้า</b> ถ้าไฟฟ้าไหลผ่านไม่ได้ วัสดุนั้นเป็น<b>ฉนวนไฟฟ้า</b></p>' +
+      '<p><b>แอมมิเตอร์</b>วัดปริมาณไฟฟ้าที่ไหลในวงจร (กระแสไฟฟ้า) หน่วยมิลลิแอมแปร์ (mA) เข็มยิ่งชี้ไปทางขวา แปลว่าไฟฟ้าไหลมาก</p>' +
+      '<p>แอมมิเตอร์นี้มี 2 ช่วงวัด: <b>0–300 mA</b> (ช่องละ 5 mA) สำหรับกระแสมาก และ <b>0–30 mA</b> (ช่องละ 0.5 mA) สำหรับกระแสน้อย ถ้าเข็มขยับนิดเดียว ให้เปลี่ยนเป็นช่วง 0–30 mA เพื่ออ่านได้ละเอียดขึ้น ถ้าเข็มชนขอบขวา ให้เปลี่ยนกลับเป็น 0–300 mA</p>' +
+      '<p>บางวัสดุนำไฟฟ้าได้ แต่ไม่ดีพอที่จะทำให้หลอดไฟติด ต้องดูที่เข็มของแอมมิเตอร์ด้วย ไม่ใช่ดูแค่หลอดไฟ</p>',
+    equipment: ['ถ่านไฟฉาย 2 ก้อน (3 V)', 'หลอดไฟพร้อมขั้ว', 'แอมมิเตอร์ (ช่วงวัด 0–300 mA และ 0–30 mA)', 'สายไฟพร้อมปากคีบ 2 อัน', 'วัสดุทดสอบ 12 ชนิดในถาด'],
+    procedure: [
+      'เลือกวัสดุจากถาด วัสดุจะถูกหนีบระหว่างปากคีบทั้งสอง',
+      'สังเกตหลอดไฟว่าติดสว่าง ติดสลัว หรือไม่ติด',
+      'อ่านค่ากระแสไฟฟ้าบนแอมมิเตอร์ (ใช้แว่นขยายช่วย) ถ้าเข็มขยับน้อยมาก ให้เปลี่ยนช่วงวัดเป็น 0–30 mA',
+      'บันทึกชื่อวัสดุ ค่ากระแส และหลอดไฟ (ติด/สลัว/ไม่ติด) ลงตาราง',
+      'ทดสอบวัสดุให้ครบทุกชนิดในถาด',
+    ],
+    tip: 'ฉนวนไฟฟ้าให้บันทึกกระแสเป็น 0 ในชีวิตจริง ห้ามทดลองกับไฟบ้าน (220 V) เด็ดขาด เพราะเป็นอันตรายถึงชีวิต',
+  },
+  predict: [
+    { q: 'ไส้ดินสอ (แกรไฟต์) นำไฟฟ้าได้หรือไม่', choices: ['นำไฟฟ้าได้', 'ไม่นำไฟฟ้า'] },
+    { q: 'น้ำเกลือกับน้ำประปา แบบใดน่าจะนำไฟฟ้าได้ดีกว่า', choices: ['น้ำเกลือ', 'น้ำประปา', 'เท่ากัน', 'ไม่นำไฟฟ้าทั้งคู่'] },
+    { q: 'วัสดุกลุ่มใดน่าจะนำไฟฟ้าได้ดีที่สุด', choices: ['โลหะ เช่น ทองแดง เหล็ก', 'พลาสติกและยาง', 'ไม้และกระดาษ'] },
+  ],
+  table: {
+    rows: 12,
+    hint: 'พิมพ์ชื่อวัสดุในช่องแรก ช่องหลอดไฟพิมพ์ ติด / สลัว / ไม่ติด',
+    columns: [
+      { key: 'name', label: 'วัสดุ', input: true, text: true },
+      { key: 'I', label: 'กระแสไฟฟ้า<br>(mA)', input: true },
+      { key: 'lamp', label: 'หลอดไฟ<br>(ติด / สลัว / ไม่ติด)', input: true, text: true },
+    ],
+  },
+  graph: {
+    mode: 'bar', title: 'กระแสไฟฟ้าของวัสดุแต่ละชนิด', y: 'I', label: 'name', xlabel: 'วัสดุ', ylabel: 'กระแสไฟฟ้า (mA)',
+    explain: 'แท่งสูงคือวัสดุที่นำไฟฟ้าได้ดี วัสดุที่ไม่มีแท่ง (กระแสเป็น 0) คือฉนวนไฟฟ้า',
+  },
+  questions: [
+    { q: 'วัสดุที่นำไฟฟ้าได้ดี (หลอดไฟติดสว่าง) ส่วนใหญ่เป็นวัสดุกลุ่มใด', choices: ['โลหะ', 'พลาสติก', 'ไม้'], why: true },
+    { q: 'น้ำเกลือทำให้เข็มแอมมิเตอร์ขยับ แต่หลอดไฟไม่ติด แปลว่าอะไร', choices: ['น้ำเกลือเป็นฉนวน', 'น้ำเกลือนำไฟฟ้าได้ แต่ไหลผ่านได้น้อย', 'แอมมิเตอร์เสีย'], why: true },
+    { q: 'ทำไมสายไฟในบ้านจึงหุ้มด้วยพลาสติกหรือยาง', choices: ['ให้สวยงาม', 'พลาสติกและยางเป็นฉนวน ป้องกันไฟดูด', 'ให้ไฟฟ้าไหลเร็วขึ้น'], why: true },
+    { q: 'ไส้ดินสอเป็นวัสดุที่ไม่ใช่โลหะ แต่นำไฟฟ้าได้หรือไม่', choices: ['นำได้', 'ไม่นำ'] },
+    { q: 'ทำไมจึงไม่ควรจับปลั๊กไฟหรือสวิตช์ขณะมือเปียก', choices: ['น้ำที่มีสิ่งเจือปนนำไฟฟ้าได้ อาจถูกไฟดูด', 'มือเปียกทำให้ปลั๊กลื่น', 'น้ำทำให้ไฟฟ้าหยุดไหล'], why: true },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: วัสดุใดเป็นตัวนำไฟฟ้า วัสดุใดเป็นฉนวนไฟฟ้า และนำความรู้นี้ไปใช้ให้ปลอดภัยได้อย่างไร',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 3, r: 85 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ค่าของอุปกรณ์ชุดนี้ต่างกันเล็กน้อย
+    const EMF = 2.9 + 0.2 * rng(), RIN = 0.6 + 0.4 * rng(), RB = 10 + rng();
+    const Rdev = {}; MATS.forEach((m) => (Rdev[m.id] = m.R * Math.exp(0.15 * Lab.gauss(rng))));
+    const s = { mat: null, range: 300, needle: 0 };
+
+    ctrls.innerHTML =
+      '<h3>ถาดวัสดุ (แตะเพื่อหนีบ)</h3><div class="tray" id="tray">' +
+      MATS.map((m) => '<button class="btn" data-m="' + m.id + '">' + m.name + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn" id="off">ถอดวัสดุออก</button></div>' +
+      '<h3>ช่วงวัดของแอมมิเตอร์</h3><div class="seg" id="rng"><button data-v="300">0–300 mA</button><button data-v="30">0–30 mA</button></div>';
+    const $ = (q) => ctrls.querySelector(q);
+    const tray = $('#tray');
+    const syncTray = () => tray.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === s.mat));
+    tray.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.mat = b.dataset.m; syncTray(); } });
+    $('#off').onclick = () => { s.mat = null; syncTray(); };
+    const rseg = $('#rng');
+    const syncR = () => rseg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s.range));
+    rseg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.range = +b.dataset.v; syncR(); } });
+    syncR();
+
+    function current() { // A
+      if (!s.mat) return 0;
+      const R = Rdev[s.mat];
+      return isFinite(R) ? EMF / (RB + RIN + R) : 0;
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 560;
+      L.bx = 54; L.top = 66; L.bot = h - 70;
+      L.lx = L.narrow ? w * 0.42 : w * 0.34;
+      L.mr = L.narrow ? Math.min(78, w * 0.24) : Math.min(105, w * 0.15);
+      L.mx = w - L.mr - 26; L.my = L.narrow ? h * 0.5 : h * 0.48;
+      L.cA = L.narrow ? w * 0.26 : w * 0.3; L.cB = L.narrow ? w * 0.6 : w * 0.54; L.cy = L.bot;
+    }
+
+    function drawSample(ctx, z, m, x0, x1, y) {
+      const xc = (x0 + x1) / 2, len = x1 - x0;
+      ctx.save(); ctx.lineWidth = 1 / z;
+      switch (m) {
+        case 'cu': ctx.strokeStyle = '#c8742a'; ctx.lineWidth = 3 / z; ctx.beginPath(); ctx.moveTo(x0, y); ctx.bezierCurveTo(xc - 20, y - 14, xc + 20, y + 14, x1, y); ctx.stroke(); break;
+        case 'al': ctx.fillStyle = '#d6dbe2'; ctx.strokeStyle = '#9aa3b0'; ctx.beginPath(); ctx.moveTo(x0, y - 7); for (let i = 1; i <= 8; i++) ctx.lineTo(x0 + (len * i) / 8, y - 7 + (i % 2 ? 3 : -2)); ctx.lineTo(x1, y + 7); ctx.lineTo(x0, y + 7); ctx.closePath(); ctx.fill(); ctx.stroke(); break;
+        case 'fe': ctx.fillStyle = '#7d8693'; ctx.fillRect(x0 - 4, y - 7, 6, 14); ctx.beginPath(); ctx.moveTo(x0, y - 3); ctx.lineTo(x1 - 8, y - 3); ctx.lineTo(x1 + 2, y); ctx.lineTo(x1 - 8, y + 3); ctx.lineTo(x0, y + 3); ctx.closePath(); ctx.fill(); break;
+        case 'coin': ctx.fillStyle = '#d9b44a'; ctx.strokeStyle = '#9c7a1c'; ctx.beginPath(); ctx.arc(xc, y, Math.min(22, len / 2), 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#9c7a1c'; ctx.font = '10px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('10', xc, y); break;
+        case 'pen': ctx.fillStyle = '#f0c437'; ctx.fillRect(x0 + 10, y - 6, len - 20, 12); ctx.fillStyle = '#3a3a3a'; ctx.fillRect(x0 - 2, y - 2, len + 4, 4); ctx.fillStyle = '#e9c9a0'; ctx.fillRect(x1 - 12, y - 6, 4, 12); break;
+        case 'salt': case 'tap': {
+          ctx.fillStyle = 'rgba(170,215,245,.6)'; ctx.strokeStyle = '#7f9ab0';
+          ctx.fillRect(x0 + 4, y - 4, len - 8, 26); ctx.strokeRect(x0 + 2, y - 14, len - 4, 38);
+          if (m === 'salt') { ctx.fillStyle = '#fff'; for (let i = 0; i < 9; i++) ctx.fillRect(x0 + 10 + ((i * 37) % (len - 20)), y + 14 + (i % 3) * 2, 2, 2); }
+          ctx.fillStyle = '#9aa3b0'; ctx.fillRect(x0 + 8, y - 20, 4, 36); ctx.fillRect(x1 - 12, y - 20, 4, 36); break;
+        }
+        case 'wood': ctx.fillStyle = '#c99a5b'; ctx.fillRect(x0, y - 6, len, 12); ctx.strokeStyle = '#9b6f3a'; ctx.beginPath(); ctx.moveTo(x0 + 6, y - 2); ctx.lineTo(x1 - 10, y - 1); ctx.moveTo(x0 + 16, y + 3); ctx.lineTo(x1 - 4, y + 2); ctx.stroke(); break;
+        case 'ruler': ctx.fillStyle = 'rgba(120,180,255,.45)'; ctx.strokeStyle = '#5b8fd0'; ctx.fillRect(x0, y - 9, len, 18); ctx.strokeRect(x0, y - 9, len, 18); for (let i = 0; i < len; i += 5) { ctx.beginPath(); ctx.moveTo(x0 + i, y - 9); ctx.lineTo(x0 + i, y - (i % 25 ? 5 : 1)); ctx.stroke(); } break;
+        case 'rub': ctx.strokeStyle = '#d0452a'; ctx.lineWidth = 3 / z; ctx.beginPath(); ctx.ellipse(xc, y, len / 2, 7, 0, 0, 7); ctx.stroke(); break;
+        case 'glass': ctx.fillStyle = 'rgba(200,235,240,.6)'; ctx.strokeStyle = '#8fb8c2'; ctx.fillRect(x0, y - 5, len, 10); ctx.strokeRect(x0, y - 5, len, 10); ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(x0 + 4, y - 3, len - 8, 2); break;
+        case 'paper': ctx.fillStyle = '#fbfbf5'; ctx.strokeStyle = '#b9bcc4'; ctx.fillRect(x0, y - 10, len, 20); ctx.strokeRect(x0, y - 10, len, 20); break;
+      }
+      ctx.restore();
+    }
+
+    function clip(ctx, z, x, y, dir) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+      ctx.fillStyle = '#c0392b'; ctx.strokeStyle = '#7a2016'; ctx.lineWidth = 1 / z;
+      ctx.beginPath(); ctx.moveTo(-30, -9); ctx.lineTo(2, -4); ctx.lineTo(2, -1); ctx.lineTo(-30, -2); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-30, 9); ctx.lineTo(2, 4); ctx.lineTo(2, 1); ctx.lineTo(-30, 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+
+    function scene(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const I = current(), lit = I > 0.06;
+      const wire = I > 0.0005 ? '#b8641c' : (dark ? '#8a93a3' : '#4a505b');
+      const { bx, top, bot, lx, mx, my, mr, cA, cB, cy } = L;
+      const by = (top + bot) / 2;
+      ctx.strokeStyle = wire; ctx.lineWidth = 3 / Math.sqrt(z); ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(bx, by - 50); ctx.lineTo(bx, top); ctx.lineTo(lx - 16, top);
+      ctx.moveTo(lx + 16, top); ctx.lineTo(mx - mr * 0.5, top); ctx.lineTo(mx - mr * 0.5, my + 10);
+      ctx.moveTo(mx + mr * 0.5, my + 10); ctx.lineTo(mx + mr * 0.5, bot + 30); ctx.lineTo(cB + 30, bot + 30); ctx.lineTo(cB + 30, cy);
+      ctx.moveTo(cA - 30, cy); ctx.lineTo(cA - 30, bot + 30); ctx.lineTo(bx, bot + 30); ctx.lineTo(bx, by + 50);
+      ctx.stroke();
+      // ถ่าน 2 ก้อน
+      for (let i = 0; i < 2; i++) {
+        const y0 = by - 50 + i * 50;
+        ctx.fillStyle = '#2a2d33'; ctx.fillRect(bx - 14, y0 + 2, 28, 46);
+        ctx.fillStyle = '#d24a2a'; ctx.fillRect(bx - 14, y0 + 2, 28, 12);
+        ctx.fillStyle = '#fff'; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('1.5 V', bx, y0 + 32); ctx.fillText('+', bx, y0 + 8);
+      }
+      // หลอดไฟ
+      const br = Math.min(1.2, (I * I * RB) / 0.7);
+      if (lit) {
+        const rr = 16 + 60 * Math.sqrt(br);
+        const g = ctx.createRadialGradient(lx, top - 12, 2, lx, top - 12, rr);
+        g.addColorStop(0, 'rgba(255,235,150,' + Math.min(1, 0.3 + br) + ')'); g.addColorStop(1, 'rgba(255,220,120,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, top - 12, rr, 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = dark ? '#6c7380' : '#7d8492'; ctx.fillRect(lx - 16, top - 4, 32, 14);
+      ctx.fillStyle = lit ? 'rgba(255,248,215,' + (0.55 + 0.45 * Math.min(1, br)) + ')' : (dark ? 'rgba(200,210,225,.25)' : 'rgba(220,230,240,.8)');
+      ctx.strokeStyle = dark ? '#aab3c2' : '#8a93a3'; ctx.lineWidth = 1.2 / z;
+      ctx.beginPath(); ctx.arc(lx, top - 20, 15, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = lit ? '#ff9a2a' : '#777';
+      ctx.beginPath(); ctx.moveTo(lx - 6, top - 6); ctx.lineTo(lx - 4, top - 22); ctx.lineTo(lx, top - 18); ctx.lineTo(lx + 4, top - 22); ctx.lineTo(lx + 6, top - 6); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('หลอดไฟ', lx, top + 14);
+      // ปากคีบและวัสดุ
+      clip(ctx, z, cA, cy, 1); clip(ctx, z, cB, cy, -1);
+      if (s.mat) drawSample(ctx, z, s.mat, cA - 4, cB + 4, cy);
+      ctx.fillStyle = muted; ctx.textBaseline = 'top';
+      ctx.fillText(s.mat ? MATS.find((m) => m.id === s.mat).name : 'ยังไม่ได้หนีบวัสดุ', (cA + cB) / 2, cy + 24);
+      // แอมมิเตอร์
+      ctx.fillStyle = dark ? '#2a2f38' : '#ffffff'; ctx.strokeStyle = muted; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(mx - mr - 14, my - mr - 18, 2 * mr + 28, mr + 64, 12) : ctx.rect(mx - mr - 14, my - mr - 18, 2 * mr + 28, mr + 64); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#f2ecd8' : '#fbf6e6'; ctx.beginPath(); ctx.arc(mx, my, mr, Math.PI, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.fillStyle = '#111';
+      for (let k = 0; k <= 60; k++) {
+        const a = Math.PI + (k / 60) * Math.PI, l = k % 10 === 0 ? 13 : k % 5 === 0 ? 9 : 6;
+        ctx.lineWidth = (k % 10 === 0 ? 1.4 : 0.7) / z;
+        ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 4), my + Math.sin(a) * (mr - 4)); ctx.lineTo(mx + Math.cos(a) * (mr - 4 - l), my + Math.sin(a) * (mr - 4 - l)); ctx.stroke();
+        if (k % 10 === 0) {
+          ctx.font = (mr < 80 ? 9 : 11) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText((k / 60) * s.range, mx + Math.cos(a) * (mr - 26), my + Math.sin(a) * (mr - 26));
+        }
+      }
+      const a = Math.PI + Math.max(0, Math.min(1.03, s.needle)) * Math.PI;
+      ctx.strokeStyle = '#c8412a'; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(a) * (mr - 6), my + Math.sin(a) * (mr - 6)); ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('mA · ช่วง 0–' + s.range, mx, my + 8);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.fillText('แอมมิเตอร์', mx, my + 26);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      const target = (current() * 1000) / s.range;
+      s.needle += (target - s.needle) * Math.min(1, dt * 5) + (target > 0.001 ? Lab.noise(0.0006) : 0);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'เลือกวัสดุจากถาด แล้วอ่านแอมมิเตอร์', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>

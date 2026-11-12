@@ -179,3 +179,4 @@ body.kid { font-size: 17px; }
 .qa label.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .qa input.why { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); padding: 8px 10px; margin-top: 4px; }
 table.res.plan td:last-child { white-space: nowrap; font-weight: 400; color: var(--muted); }
+table.data input.txt { text-align: left; padding-left: 8px; min-width: 120px; }

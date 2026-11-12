@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>กล้องจุลทรรศน์และเซลล์ · ห้องปฏิบัติการชีววิทยา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.stage canvas { height: 520px; } @media (max-width: 900px) { .stage canvas { height: 560px; } } @media (max-width: 640px) { .stage canvas { height: 660px; } }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script>
+// เส้นผ่านศูนย์กลางภาพที่เห็นในกล้อง (mm) ตามกำลังขยายรวม (เลนส์ใกล้ตา 10×)
+const FOV = { 4: 4.5, 10: 1.8, 40: 0.45 };
+const SLIDES = {
+  onion: { name: 'เยื่อหอมใหญ่', L: 260, W: 62 },     // เซลล์รูปสี่เหลี่ยมยาว (μm)
+  cheek: { name: 'เซลล์เยื่อบุข้างแก้ม', L: 62 },     // เซลล์แบนรูปร่างไม่แน่นอน
+  elodea: { name: 'ใบสาหร่ายหางกระรอก', L: 105, W: 34 },
+};
+
+Lab.init({
+  id: 'cells',
+  kid: true,
+  subject: 'ชีววิทยา',
+  short: 'กล้องจุลทรรศน์และเซลล์',
+  title: 'ใช้กล้องจุลทรรศน์ดูเซลล์และประมาณขนาดของเซลล์',
+  level: 'ม.1',
+  intro: {
+    plan: [[10, 'อ่านความรู้ก่อนทดลองและทายผล'], [15, 'ฝึกใช้กล้อง: เปลี่ยนเลนส์และปรับโฟกัส'], [35, 'ดูเซลล์ 3 ชนิด นับเซลล์บนเส้นผ่านศูนย์กลางภาพ'], [10, 'เขียนกราฟเปรียบเทียบขนาดเซลล์'], [20, 'ตอบคำถาม สรุปผล และส่งรายงาน']],
+    objective: [
+      'ใช้กล้องจุลทรรศน์อย่างถูกวิธี: เริ่มจากกำลังขยายต่ำ ปรับหยาบแล้วปรับละเอียด',
+      'สังเกตและเปรียบเทียบเซลล์พืช (หอมใหญ่ สาหร่ายหางกระรอก) กับเซลล์สัตว์ (เยื่อบุข้างแก้ม)',
+      'ประมาณความยาวของเซลล์จากเส้นผ่านศูนย์กลางภาพและจำนวนเซลล์ที่เรียงอยู่',
+    ],
+    theory:
+      '<p><b>กำลังขยายรวม</b> = กำลังขยายของเลนส์ใกล้ตา × กำลังขยายของเลนส์ใกล้วัตถุ เช่น 10 × 40 = 400 เท่า</p>' +
+      '<p>เมื่อกำลังขยายมากขึ้น ภาพใหญ่ขึ้นแต่<b>เห็นบริเวณแคบลง</b> ตารางข้างล่างบอกเส้นผ่านศูนย์กลางของวงภาพ</p>' +
+      '<div class="eq">40× → 4.5 mm &nbsp;·&nbsp; 100× → 1.8 mm &nbsp;·&nbsp; 400× → 0.45 mm</div>' +
+      '<p><b>ประมาณขนาดเซลล์</b>: นับว่ามีเซลล์เรียงอยู่บนเส้นแดง (เส้นผ่านศูนย์กลางภาพ) กี่เซลล์ แล้ว</p>' +
+      '<div class="eq">ความยาวเซลล์ ≈ เส้นผ่านศูนย์กลางภาพ ÷ จำนวนเซลล์</div>' +
+      '<p>1 mm = 1,000 ไมโครเมตร (μm) · <b>เซลล์พืช</b>มีผนังเซลล์ รูปร่างค่อนข้างเป็นเหลี่ยม บางชนิดมีคลอโรพลาสต์สีเขียว · <b>เซลล์สัตว์</b>ไม่มีผนังเซลล์ รูปร่างไม่แน่นอน</p>',
+    equipment: ['กล้องจุลทรรศน์ เลนส์ใกล้ตา 10× เลนส์ใกล้วัตถุ 4× 10× 40×', 'สไลด์เยื่อหอมใหญ่ (ย้อมไอโอดีน)', 'สไลด์เซลล์เยื่อบุข้างแก้ม (ย้อมเมทิลีนบลู)', 'สไลด์ใบสาหร่ายหางกระรอก'],
+    procedure: [
+      'เลือกสไลด์เยื่อหอมใหญ่ และเลนส์ใกล้วัตถุ 4× หมุนปุ่มปรับหยาบจนภาพชัด',
+      'เปลี่ยนเป็นเลนส์ 10× แล้วใช้ปุ่มปรับละเอียดให้ภาพคมที่สุด',
+      'นับจำนวนเซลล์ที่เรียงต่อกันบนเส้นแดง (นับตามความยาวของเซลล์ เศษให้ประมาณเป็นครึ่งเซลล์) บันทึกลงตาราง',
+      'ทำเช่นเดียวกันกับเซลล์เยื่อบุข้างแก้ม (ใช้ 400×) และใบสาหร่ายหางกระรอก (ใช้ 100× หรือ 400×)',
+      'ใส่ชื่อเซลล์ในแต่ละแถวไม่ให้ซ้ำกัน ถ้าวัดเซลล์เดียวกันสองกำลังขยาย ให้ใส่กำลังขยายต่อท้าย เช่น "หอม 100×"',
+    ],
+    tip: 'เมื่อใช้เลนส์ 40× ห้ามใช้ปุ่มปรับหยาบ เพราะเลนส์อาจชนสไลด์จนแตก ให้ใช้ปุ่มปรับละเอียดเท่านั้น',
+  },
+  predict: [
+    { q: 'เซลล์ชนิดใดน่าจะมีขนาดยาวที่สุด', choices: ['เซลล์เยื่อหอมใหญ่', 'เซลล์เยื่อบุข้างแก้ม', 'เซลล์ใบสาหร่ายหางกระรอก'] },
+    { q: 'เมื่อเปลี่ยนจากกำลังขยาย 100× เป็น 400× ภาพที่เห็นจะเป็นอย่างไร', choices: ['เห็นบริเวณกว้างขึ้น เซลล์เล็กลง', 'เห็นบริเวณแคบลง เซลล์ใหญ่ขึ้น', 'เหมือนเดิม'] },
+  ],
+  table: {
+    rows: 6,
+    hint: 'ความยาวเซลล์ (μm) = เส้นผ่านศูนย์กลางภาพ (mm) × 1000 ÷ จำนวนเซลล์ ชื่อเซลล์แต่ละแถวต้องไม่ซ้ำกัน',
+    columns: [
+      { key: 'name', label: 'ชนิดเซลล์', input: true, text: true },
+      { key: 'mag', label: 'กำลังขยายรวม<br>(เท่า)', input: true },
+      { key: 'D', label: 'เส้นผ่านศูนย์กลางภาพ<br>(mm)', input: true },
+      { key: 'n', label: 'จำนวนเซลล์<br>บนเส้นแดง', input: true },
+      { key: 'len', label: 'ความยาวเซลล์<br>(μm)', calc: (r) => (r.D * 1000) / r.n, digits: 0 },
+    ],
+  },
+  graph: {
+    mode: 'bar', title: 'ความยาวของเซลล์แต่ละชนิด', y: 'len', label: 'name', xlabel: 'ชนิดเซลล์', ylabel: 'ความยาวเซลล์ (μm)',
+    explain: 'เปรียบเทียบความสูงของแท่ง เซลล์ชนิดใดยาวที่สุด และสั้นที่สุด',
+  },
+  questions: [
+    { q: 'เมื่อใช้เลนส์ใกล้ตา 10× และเลนส์ใกล้วัตถุ 40× กำลังขยายรวมเท่าใด', choices: ['50 เท่า', '400 เท่า', '4,000 เท่า'] },
+    { q: 'เพราะเหตุใดเมื่อใช้เลนส์ 40× จึงต้องใช้ปุ่มปรับละเอียด', choices: ['ปุ่มปรับหยาบหมุนไม่ได้', 'ภาพชัดในช่วงแคบมาก และเลนส์อยู่ใกล้สไลด์ อาจชนสไลด์', 'ปุ่มปรับละเอียดทำให้ภาพใหญ่ขึ้น'], why: true },
+    { q: 'เซลล์ชนิดใดมีคลอโรพลาสต์สีเขียว', choices: ['เยื่อหอมใหญ่', 'เยื่อบุข้างแก้ม', 'ใบสาหร่ายหางกระรอก'], why: true },
+    { q: 'เซลล์เยื่อบุข้างแก้มรูปร่างไม่เป็นเหลี่ยมเหมือนเซลล์หอม เพราะเหตุใด', choices: ['ไม่มีผนังเซลล์', 'ไม่มีนิวเคลียส', 'ถูกย้อมสีต่างกัน'], why: true },
+    { q: 'ถ้านับเซลล์หอมที่ 100× ได้ 7 เซลล์ ความยาวเซลล์หอมประมาณเท่าใด', choices: ['ประมาณ 26 μm', 'ประมาณ 260 μm', 'ประมาณ 2,600 μm'] },
+  ],
+  conclusionPrompt: 'สรุปสิ่งที่ได้เรียนรู้: วิธีใช้กล้องจุลทรรศน์ ขนาดของเซลล์แต่ละชนิด และความแตกต่างระหว่างเซลล์พืชกับเซลล์สัตว์',
+  apparatus(stage, ctrls, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const lens = Lab.lens(cv, { zoom: 2, r: 90 });
+    lens.button(stage);
+    const rng = api.rng;
+    // ขนาดเซลล์จริงของสไลด์ชุดนี้ (ต่างกันเล็กน้อยแต่ละเครื่อง) และตำแหน่งโฟกัสของสไลด์
+    const K = {};
+    Object.keys(SLIDES).forEach((k) => (K[k] = { f: 1 + 0.24 * (rng() - 0.5), z: 42 + rng() * 16, seed: Math.floor(rng() * 1e9) }));
+    const s = { slide: 'onion', obj: 4, focus: 20, warn: 0 };
+    const HAS_FILTER = 'filter' in CanvasRenderingContext2D.prototype;
+
+    ctrls.innerHTML =
+      '<h3>สไลด์</h3><div class="seg" id="sl"><button data-v="onion">หอมใหญ่</button><button data-v="cheek">ข้างแก้ม</button><button data-v="elodea">สาหร่าย</button></div>' +
+      '<h3>เลนส์ใกล้วัตถุ (ใกล้ตา 10×)</h3><div class="seg" id="obj"><button data-v="4">4×</button><button data-v="10">10×</button><button data-v="40">40×</button></div>' +
+      '<h3>ปุ่มปรับหยาบ</h3><input type="range" id="coarse" min="0" max="100" step="1">' +
+      '<h3>ปุ่มปรับละเอียด</h3><div class="row"><button class="btn" data-f="-0.5">◀◀</button><button class="btn" data-f="-0.1">◀</button><button class="btn" data-f="0.1">▶</button><button class="btn" data-f="0.5">▶▶</button></div>' +
+      '<p id="warn" class="note warn" style="display:none;font-size:14px">ระวัง! ใช้ปุ่มปรับหยาบกับเลนส์ 40× เลนส์อาจชนสไลด์ ให้ใช้ปุ่มปรับละเอียด</p>' +
+      '<table class="res" style="font-size:14px;margin-top:8px"><tr><td>กำลังขยายรวม</td><td>เส้นผ่านศูนย์กลางภาพ</td></tr><tr><td>40×</td><td>4.5 mm</td></tr><tr><td>100×</td><td>1.8 mm</td></tr><tr><td>400×</td><td>0.45 mm</td></tr></table>';
+    const $ = (q) => ctrls.querySelector(q);
+    const coarse = $('#coarse'), warn = $('#warn');
+    let dirty = true;
+    const setF = (v) => { s.focus = Math.max(0, Math.min(100, v)); coarse.value = Math.round(s.focus); dirty = true; };
+    setF(s.focus);
+    coarse.oninput = () => {
+      setF(+coarse.value);
+      if (s.obj === 40) { warn.style.display = ''; clearTimeout(s.warn); s.warn = setTimeout(() => (warn.style.display = 'none'), 4000); }
+    };
+    ctrls.addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (b) setF(s.focus + +b.dataset.f); });
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); dirty = true; } });
+      sync();
+    }
+    seg('sl', () => s.slide, (v) => (s.slide = v));
+    seg('obj', () => s.obj, (v) => (s.obj = +v));
+
+    // ---------- สร้างภาพเซลล์ในพิกัด μm (ศูนย์กลางภาพที่ (0,0)) ----------
+    function mul(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    let img = null;
+    function build(Dpx) {
+      const sl = SLIDES[s.slide], k = K[s.slide], R = mul(k.seed);
+      const fovUm = FOV[s.obj] * 1000, ppu = Dpx / fovUm, half = fovUm / 2 + 300;
+      if (!img) img = document.createElement('canvas');
+      const dpr = cv.dpr || 1;
+      img.width = Math.round(Dpx * dpr); img.height = Math.round(Dpx * dpr);
+      const g = img.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const bg = s.slide === 'onion' ? '#f3e7c4' : s.slide === 'cheek' ? '#eef3f8' : '#eef6e6';
+      g.fillStyle = bg; g.fillRect(0, 0, Dpx, Dpx);
+      g.save(); g.translate(Dpx / 2, Dpx / 2); g.scale(ppu, ppu);
+      const lw = 1.3 / ppu;
+      if (s.slide === 'onion' || s.slide === 'elodea') {
+        const L = sl.L * k.f, W = sl.W * k.f, onion = s.slide === 'onion';
+        for (let row = -Math.ceil(half / W); row <= Math.ceil(half / W); row++) {
+          const y = row * W - W / 2, shift = (R() - 0.5) * L;
+          for (let c = -Math.ceil(half / L) - 1; c <= Math.ceil(half / L) + 1; c++) {
+            const x = c * L + shift + (row === 0 ? L / 2 - shift : 0); // แถวกลาง (บนเส้นแดง) จัดให้เซลล์เรียงสมมาตรรอบจุดศูนย์กลาง
+            const jl = L * (1 + 0.08 * (R() - 0.5));
+            g.fillStyle = onion ? 'rgba(214,170,90,.35)' : 'rgba(150,200,120,.35)';
+            g.fillRect(x, y, jl, W);
+            g.strokeStyle = onion ? '#9a6b2a' : '#4d7a35'; g.lineWidth = lw * (onion ? 1.3 : 1.1);
+            g.strokeRect(x, y, jl, W);
+            if (onion) {
+              g.fillStyle = 'rgba(130,80,30,.75)'; g.beginPath(); g.ellipse(x + jl * (0.3 + 0.4 * R()), y + W * 0.5, W * 0.17, W * 0.13, 0, 0, 7); g.fill();
+            } else {
+              g.fillStyle = 'rgba(40,140,50,.85)';
+              for (let i = 0; i < 9; i++) { g.beginPath(); g.ellipse(x + 4 + R() * (jl - 8), y + 4 + R() * (W - 8), 3.2, 2.2, R() * 3, 0, 7); g.fill(); }
+            }
+          }
+        }
+      } else {
+        // เซลล์ข้างแก้ม: แผ่นเซลล์แบนรูปหลายเหลี่ยม เรียงชิดกันบนเส้นแดง
+        const D = sl.L * k.f;
+        for (let row = -Math.ceil(half / (D * 0.87)); row <= Math.ceil(half / (D * 0.87)); row++) {
+          for (let c = -Math.ceil(half / D) - 1; c <= Math.ceil(half / D) + 1; c++) {
+            if (row !== 0 && R() < 0.35) continue; // บางบริเวณไม่มีเซลล์
+            const cx = c * D + (row % 2 ? D / 2 : D / 2) + (row === 0 ? 0 : (R() - 0.5) * D * 0.2), cy = row * D * 0.87 + (row === 0 ? 0 : (R() - 0.5) * D * 0.2);
+            g.beginPath();
+            const n = 7, rr = D * 0.5;
+            for (let i = 0; i < n; i++) { const a = (i / n) * 6.283 + R() * 0.3, r = rr * (0.88 + 0.16 * R()); i ? g.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a)) : g.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a)); }
+            g.closePath();
+            g.fillStyle = 'rgba(120,160,220,.28)'; g.fill(); g.strokeStyle = '#4f74b8'; g.lineWidth = lw; g.stroke();
+            g.fillStyle = 'rgba(40,70,160,.85)'; g.beginPath(); g.arc(cx + (R() - 0.5) * D * 0.2, cy + (R() - 0.5) * D * 0.2, D * 0.09, 0, 7); g.fill();
+          }
+        }
+      }
+      g.restore();
+      dirty = false;
+    }
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 640;
+      L.D = L.narrow ? Math.min(w - 40, h - 320) : Math.min(h - 40, w - 250);
+      L.cx = L.narrow ? w / 2 : w - L.D / 2 - 24; L.cy = L.narrow ? h - L.D / 2 - 18 : h / 2;
+    }
+
+    function microscope(ctx, z) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const x0 = L.narrow ? 30 : 40, y0 = L.narrow ? 30 : 60, sc = L.narrow ? 0.62 : 1;
+      ctx.save(); ctx.translate(x0, y0); ctx.scale(sc, sc);
+      const body = dark ? '#9aa3b0' : '#3f4552';
+      ctx.fillStyle = body;
+      ctx.fillRect(40, 380, 140, 24);             // ฐาน
+      ctx.fillRect(130, 120, 22, 270);            // แขน
+      ctx.fillRect(40, 30, 26, 70);               // ลำกล้อง
+      ctx.fillRect(34, 10, 38, 22);               // เลนส์ใกล้ตา
+      ctx.fillRect(66, 70, 70, 16);
+      const ol = s.obj === 4 ? 26 : s.obj === 10 ? 36 : 48;
+      ctx.fillStyle = s.obj === 40 ? '#c8412a' : s.obj === 10 ? '#d6a21a' : '#2f6fde'; ctx.fillRect(46, 100, 14, ol); // เลนส์ใกล้วัตถุ
+      ctx.fillStyle = body; ctx.fillRect(10, 160 + (100 - s.focus) * 0.2, 130, 10); // แท่นวางสไลด์ขยับตามโฟกัส
+      ctx.fillStyle = 'rgba(190,220,240,.9)'; ctx.fillRect(22, 156 + (100 - s.focus) * 0.2, 70, 4);
+      ctx.beginPath(); ctx.arc(150, 260, 20, 0, 7); ctx.fill(); ctx.fillStyle = muted; ctx.beginPath(); ctx.arc(150, 260, 10, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(52, 250, 12, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('เลนส์ใกล้ตา 10×', 80, 20);
+      ctx.fillText('เลนส์ใกล้วัตถุ ' + s.obj + '×', 70, 112 + ol);
+      ctx.fillText('แท่นวางสไลด์', 10, 196);
+      ctx.fillText('ปุ่มปรับหยาบ/ละเอียด', 176, 260);
+      ctx.fillText('หลอดไฟ', 70, 250);
+      ctx.restore();
+    }
+
+    function scene(ctx, z) {
+      const muted = Lab.css('--muted'), ink = Lab.css('--ink');
+      microscope(ctx, z);
+      const D = L.D, cx = L.cx, cy = L.cy, R = D / 2;
+      if (dirty || !img) build(D);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+      ctx.fillStyle = '#000'; ctx.fillRect(cx - R, cy - R, D, D);
+      // ภาพเบลอตามระยะห่างจากโฟกัส: ยิ่งกำลังขยายสูง ช่วงที่ชัดยิ่งแคบ
+      const k = K[s.slide], blur = Math.abs(s.focus - k.z) * (s.obj === 4 ? 0.9 : s.obj === 10 ? 2.4 : 9);
+      if (blur > 0.6 && HAS_FILTER) {
+        ctx.filter = 'blur(' + (blur * 0.6 * z).toFixed(1) + 'px)'; ctx.drawImage(img, cx - R, cy - R, D, D); ctx.filter = 'none';
+      } else {
+        // เบราว์เซอร์ที่ไม่มี ctx.filter: เฉลี่ยภาพที่เลื่อนหลายตำแหน่งบนวงกลม
+        const pts = [[0, 0]];
+        if (blur > 0.6) for (let ring = 1; ring <= 3; ring++) for (let i = 0; i < 8 * ring; i++) { const a = (i / (8 * ring)) * 6.2832 + ring, r = (blur * ring) / 3; pts.push([r * Math.cos(a), r * Math.sin(a)]); }
+        pts.forEach(([dx, dy], i) => { ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(img, cx - R + dx, cy - R + dy, D, D); });
+        ctx.globalAlpha = 1;
+      }
+      // ขอบมืดรอบวงภาพ
+      const vg = ctx.createRadialGradient(cx, cy, R * 0.75, cx, cy, R);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, D, D);
+      // เส้นแดงตามเส้นผ่านศูนย์กลาง
+      ctx.strokeStyle = 'rgba(220,30,30,.85)'; ctx.lineWidth = 1.4 / z;
+      ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, 7); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ภาพในกล้อง: ' + SLIDES[s.slide].name + ' · กำลังขยาย ' + 10 * s.obj + '×', cx, cy - R - 8);
+    }
+
+    function onPointer(e) {
+      const [x, y] = Lab.pos(canvas, e);
+      if (lens.handle(e, x, y)) { e.preventDefault(); return; }
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    let lastD = 0;
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      if (Math.abs(L.D - lastD) > 0.5) { lastD = L.D; dirty = true; }
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      scene(ctx, 1);
+      lens.draw(scene);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lens.on ? 'แตะหรือลากบนภาพเพื่อย้ายแว่นขยาย' : 'ปรับโฟกัสให้ภาพคม แล้วนับเซลล์บนเส้นแดง', 10, 8);
+    });
+  },
+});
+</script>
+</body>
+</html>
