@@ -153,7 +153,7 @@ body:not([data-group="astro"]) nav button[data-group="astro"] { display: none; }
 </head>
 <body>
 <header>
-  <a href="./" style="display:inline-block;margin-bottom:8px;color:var(--accent);text-decoration:none;font-size:14px">← ห้องปฏิบัติการฟิสิกส์</a>
+  <a href="../classroom.html" style="display:inline-block;margin-bottom:8px;color:var(--accent);text-decoration:none;font-size:14px">← ห้องเรียนจำลอง</a>
   <div class="pages"><button data-group="mech" class="on">กลศาสตร์</button><button data-group="optics">แสง</button><button data-group="elec">ไฟฟ้า</button><button data-group="wave">คลื่นและเสียง</button><button data-group="modern">ฟิสิกส์ยุคใหม่</button><button data-group="fluid">ของไหลและความร้อน</button><button data-group="astro">ดาราศาสตร์</button></div>
   <h1>ห้องจำลองฟิสิกส์</h1>
   <p>จำลองการเคลื่อนที่ตามเนื้อหาฟิสิกส์มัธยมปลาย ปรับค่าด้วยแถบเลื่อนแล้วกด "เริ่ม"</p>
@@ -3575,6 +3575,8 @@ function initApp(sims, first) {
     document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.sim').forEach(x => x.classList.toggle('active', x.id === b.dataset.tab));
     active = b.dataset.tab;
+    // จำแท็บไว้ในที่อยู่หน้า ครูคัดลอกลิงก์ไปเปิดแท็บนี้ได้ตรง ๆ
+    try { history.replaceState(null, '', '#' + active); } catch (e) {}
   });
 
   // สลับหมวด กลศาสตร์ / แสง ภายในหน้าเดียว
@@ -3587,7 +3589,16 @@ function initApp(sims, first) {
   };
   pills.forEach(p => p.onclick = () => setGroup(p.dataset.group));
   document.body.dataset.group = 'mech';
-  if (location.hash === '#optics') setGroup('optics');
+  // ลิงก์ตรง: #<ชื่อแท็บ> เช่น #proj หรือ #<หมวด> เช่น #optics
+  const openHash = () => {
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (!h) return;
+    const tab = document.querySelector(`nav button[data-tab="${h}"]`);
+    if (tab) { setGroup(tab.dataset.group); tab.click(); window.scrollTo(0, 0); }
+    else if (document.querySelector(`.pages button[data-group="${h}"]`)) setGroup(h);
+  };
+  openHash();
+  window.addEventListener('hashchange', openHash);
 
   // แถบปุ่มใต้ภาพ: เริ่ม / หยุดชั่วคราว / รีเซ็ต (ปุ่มหยุดชั่วคราวใช้ร่วมกันทุกแท็บ)
   document.querySelectorAll('.sim').forEach(sec => {

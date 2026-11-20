@@ -5,70 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Virtual Lab">
-<title>ห้องปฏิบัติการเสมือน</title>
+<meta name="apple-mobile-web-app-title" content="Virtual Science">
+<title>ห้องวิทยาศาสตร์เสมือน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/lab.css">
-<style>.grid-cards.junior { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; } .grid-cards.junior .tile { padding: 12px 14px; } .grid-cards.junior h3 { font-size: 16px; }</style>
+<style>
+  .rooms { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0 28px; }
+  @media (max-width: 760px) { .rooms { grid-template-columns: 1fr; } }
+  .room { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 18px; padding: 22px; border-top: 5px solid var(--rc); transition: border-color .15s, transform .15s; }
+  .room:hover { border-color: var(--rc); transform: translateY(-2px); }
+  .room .icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: var(--rc); }
+  .room .icon svg { width: 32px; height: 32px; }
+  .room h2 { margin: 0; font-size: 24px; }
+  .room .who { font-weight: 600; color: var(--rc); font-size: 15px; }
+  .room p { margin: 0; color: var(--muted); }
+  .room ul { margin: 0; padding-left: 20px; color: var(--ink); font-size: 15px; }
+  .room .go { margin-top: auto; align-self: flex-start; background: var(--rc); color: #fff; border-radius: 10px; padding: 9px 16px; font-weight: 600; }
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .quick a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 5px 14px; font-size: 14px; }
+  .quick a:hover { border-color: var(--accent); }
+</style>
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>ห้องปฏิบัติการเสมือน</h1>
-    <p>ทำการทดลองวิทยาศาสตร์ได้ทุกที่ ตั้งแต่เตรียมอุปกรณ์ อ่านค่าเครื่องมือวัด บันทึกผล เขียนกราฟ จนถึงสรุปและส่งรายงาน
-      สำหรับนักเรียนชั้นประถมถึง ม.6</p>
+    <h1>ห้องวิทยาศาสตร์เสมือน</h1>
+    <p>สื่อการสอนและห้องทดลองวิทยาศาสตร์ออนไลน์ สำหรับครูและนักเรียนชั้นประถมถึง ม.6 แบ่งเป็นสองห้องตามวิธีใช้</p>
   </div>
 
-  <h2 class="section-title">เลือกวิชา</h2>
-  <div class="grid-cards">
-    <a class="tile" href="physics/">
-      <div class="icon" style="background:var(--phy)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></div>
-      <h3>ฟิสิกส์</h3>
-      <p>ปฏิบัติการเต็มรูปแบบ 39 เรื่อง แบ่งตามหน่วย ตั้งแต่ประถมถึง ม.6 และห้องจำลองอีกกว่า 60 เรื่อง</p>
-      <div class="meta"><span class="chip">พร้อมใช้งาน</span></div>
+  <div class="rooms">
+    <a class="room" href="classroom.html" style="--rc:var(--phy)">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 3 2 4-4"/></svg></div>
+      <h2>ห้องเรียนจำลอง</h2>
+      <div class="who">สำหรับครูสอนหน้าชั้นเรียน</div>
+      <p>สื่อจำลองแนวคิด ปรับค่าแล้วเห็นผลทันที ใช้อธิบายบทเรียนหรือให้นักเรียนสำรวจเอง</p>
+      <ul><li>ฟิสิกส์ 61 เรื่อง: กลศาสตร์ แสง ไฟฟ้า คลื่น ของไหล ดาราศาสตร์ ฟิสิกส์ยุคใหม่</li><li>เปิดสมการประกอบได้ และส่งลิงก์ตรงของแต่ละเรื่องได้</li></ul>
+      <span class="go">เข้าห้องเรียนจำลอง →</span>
     </a>
-    <a class="tile" href="chemistry/">
-      <div class="icon" style="background:var(--chem)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg></div>
-      <h3>เคมี</h3>
-      <p>การแยกสารผสม (ป.6) · เรื่องอื่นจะตามมา</p>
-      <div class="meta"><span class="chip">1 เรื่อง</span></div>
-    </a>
-    <a class="tile" href="biology/">
-      <div class="icon" style="background:var(--bio)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20c8 0 13-5 13-15-6 0-13 2-13 10 0 2 .5 3.5 1 5"/><path d="M6 20c2-5 5-8 9-10"/></svg></div>
-      <h3>ชีววิทยา</h3>
-      <p>กล้องจุลทรรศน์และเซลล์ (ม.1) · เรื่องอื่นจะตามมา</p>
-      <div class="meta"><span class="chip">1 เรื่อง</span></div>
-    </a>
-    <a class="tile" href="earth/">
-      <div class="icon" style="background:var(--earth)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></div>
-      <h3>โลกและอวกาศ</h3>
-      <p>ข้างขึ้นข้างแรม (ป.6) · เรื่องอื่นจะตามมา</p>
-      <div class="meta"><span class="chip">1 เรื่อง</span></div>
+    <a class="room" href="labs.html" style="--rc:var(--ok)">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg></div>
+      <h2>ห้องปฏิบัติการเสมือน</h2>
+      <div class="who">สำหรับนักเรียนลงมือทดลอง</div>
+      <p>ทำแล็บเต็มรูปแบบ อ่านเครื่องมือวัดเอง บันทึกตาราง เขียนกราฟ ตอบคำถาม และพิมพ์รายงานส่งครู</p>
+      <ul><li>ฟิสิกส์ 39 เรื่อง · เคมี ชีววิทยา โลกและอวกาศ วิชาละ 1 เรื่อง</li><li>ชุดประถม–ม.1 14 เรื่อง ทายผลก่อนทดลอง จบในคาบ 90 นาที</li></ul>
+      <span class="go">เข้าห้องปฏิบัติการ →</span>
     </a>
   </div>
 
-  <h2 class="section-title">ชุดสำหรับประถม–ม.1 (14 เรื่อง)</h2>
-  <p class="muted" style="margin:4px 0 0;font-size:14px">ทายผลก่อนทดลอง คำถามแบบเลือกตอบ กราฟอ่านง่าย ออกแบบให้จบในคาบละประมาณ 90 นาที</p>
-  <div class="grid-cards junior">
-    <a class="tile" href="physics/exp/conductor.html"><h3>วัสดุนำไฟฟ้าและฉนวน</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/circuit.html"><h3>วงจรอนุกรมและขนาน</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/electromagnet.html"><h3>แม่เหล็กไฟฟ้า</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/surfaces.html"><h3>แรงเสียดทานบนพื้นผิวต่าง ๆ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/seesaw.html"><h3>คานและไม้กระดก</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/float.html"><h3>จมหรือลอย</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/shadow.html"><h3>เงาของวัตถุ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/mirror.html"><h3>การสะท้อนของแสงบนกระจกเงา</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/pitch.html"><h3>เสียงสูง-ต่ำ</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/ice.html"><h3>น้ำแข็งละลายจนน้ำเดือด</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="physics/exp/insulate.html"><h3>วัสดุไหนเก็บความร้อนได้ดี</h3><div class="meta"><span class="chip">ฟิสิกส์</span></div></a>
-    <a class="tile" href="chemistry/exp/separate.html"><h3>การแยกสารผสม</h3><div class="meta"><span class="chip">เคมี</span></div></a>
-    <a class="tile" href="biology/exp/cells.html"><h3>กล้องจุลทรรศน์และเซลล์</h3><div class="meta"><span class="chip">ชีววิทยา</span></div></a>
-    <a class="tile" href="earth/exp/moon.html"><h3>ข้างขึ้นข้างแรม</h3><div class="meta"><span class="chip">โลกและอวกาศ</span></div></a>
-  </div>
-
-  <footer class="foot">ข้อมูลการทดลองและคำตอบบันทึกไว้บนอุปกรณ์ของผู้ใช้เท่านั้น ไม่ต้องเข้าสู่ระบบ</footer>
+  <h2 class="section-title">ไปที่หมวดโดยตรง</h2>
+  <div class="quick" style="margin:10px 0 8px"><a href="classroom.html#c-mech">จำลอง: กลศาสตร์</a><a href="classroom.html#c-optics">จำลอง: แสง</a><a href="classroom.html#c-elec">จำลอง: ไฟฟ้า</a><a href="classroom.html#c-wave">จำลอง: คลื่นและเสียง</a></div>
+  <div class="quick" style="margin:0 0 28px"><a href="physics/">แล็บฟิสิกส์</a><a href="chemistry/">แล็บเคมี</a><a href="biology/">แล็บชีววิทยา</a><a href="earth/">แล็บโลกและอวกาศ</a><a href="labs.html#junior">แล็บประถม–ม.1</a></div>
+  <footer class="foot">ใช้งานได้ทันทีบนคอมพิวเตอร์ แท็บเล็ต และโทรศัพท์ ไม่ต้องเข้าสู่ระบบ ข้อมูลการทดลองบันทึกไว้บนเครื่องของผู้ใช้เท่านั้น</footer>
 </div>
 </body>
 </html>

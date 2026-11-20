@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Virtual Science">
+<title>ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .groupnav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 4px; position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; }
+  .groupnav a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 12px; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .groupnav a:hover { border-color: var(--accent); }
+  .groupnav b { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .group { scroll-margin-top: 64px; }
+  .group h2 { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .group h2 .muted { font-size: 14px; font-weight: 400; }
+  .grid-cards.sims { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 12px 0 18px; }
+  .grid-cards.sims .tile { border-top: 3px solid var(--gc); padding: 12px 14px; }
+  .grid-cards.sims h3 { font-size: 16px; }
+  .subj { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .subj span { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 14px; background: var(--panel); }
+  .subj span.on { border-color: var(--phy); color: var(--phy); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="./">หน้าแรก</a><span>›</span>ห้องเรียนจำลอง</div>
+  <div class="hero">
+    <h1>ห้องเรียนจำลอง</h1>
+    <p>สื่อจำลองสำหรับครูใช้อธิบายแนวคิดหน้าชั้นเรียน ปรับค่าด้วยแถบเลื่อนแล้วดูผลทันที เปิดสมการประกอบได้ กดเรื่องที่ต้องการเพื่อเปิดตรงไปที่เรื่องนั้น และคัดลอกลิงก์จากแถบที่อยู่ไปให้นักเรียนเปิดตามได้</p>
+    <div class="subj"><span class="on">ฟิสิกส์ 61 เรื่อง</span><span class="muted">เคมี · เร็ว ๆ นี้</span><span class="muted">ชีววิทยา · เร็ว ๆ นี้</span><span class="muted">โลกและอวกาศ · เร็ว ๆ นี้</span></div>
+  </div>
+
+  <nav class="groupnav"><a href="#c-mech"><span class="dot" style="background:var(--phy)"></span>กลศาสตร์ <b>21</b></a><a href="#c-optics"><span class="dot" style="background:var(--warn)"></span>แสง <b>15</b></a><a href="#c-elec"><span class="dot" style="background:var(--bad)"></span>ไฟฟ้าและแม่เหล็ก <b>11</b></a><a href="#c-wave"><span class="dot" style="background:var(--ok)"></span>คลื่นและเสียง <b>5</b></a><a href="#c-fluid"><span class="dot" style="background:var(--chem)"></span>ของไหลและความร้อน <b>4</b></a><a href="#c-astro"><span class="dot" style="background:var(--earth)"></span>ดาราศาสตร์ <b>2</b></a><a href="#c-modern"><span class="dot" style="background:var(--earth)"></span>ฟิสิกส์ยุคใหม่ <b>3</b></a></nav>
+  <section class="group" id="c-mech"><h2 class="section-title"><span class="dot" style="background:var(--phy);width:12px;height:12px"></span>กลศาสตร์ <span class="muted">21 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#linear"><h3>แนวเส้นตรง</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#vtgraph"><h3>กราฟการเคลื่อนที่</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#relvel"><h3>ความเร็วสัมพัทธ์</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#proj"><h3>โพรเจกไทล์</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#projx"><h3>โปรเจกไทล์แบบโจทย์</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#incline"><h3>พื้นเอียงและแรงเสียดทาน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#friction"><h3>แรงเสียดทาน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#stack"><h3>กล่องซ้อนและวัตถุผูกติดกัน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#elevator"><h3>ลิฟต์และน้ำหนักปรากฏ</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#pulley"><h3>รอกและเครื่องกล</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#equil"><h3>สมดุลกล</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#ladder"><h3>บันไดพาดกำแพง</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#circular"><h3>การเคลื่อนที่แนววงกลม</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#rotate"><h3>การหมุนและการกลิ้ง</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#energy"><h3>งานและพลังงาน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#elastic"><h3>สปริงและสภาพยืดหยุ่น</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#coll"><h3>การชนและโมเมนตัม</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#impulse"><h3>การดลและแรงดล</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#mom"><h3>ชน 2 มิติ · ระเบิด · กระดอน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#ballistic"><h3>ลูกปืนยิงมวลแขวน</h3></a>
+    <a class="tile" style="--gc:var(--phy)" href="physics/sims.html#shm"><h3>การเคลื่อนที่แบบคาบ</h3></a>
+  </div></section>
+  <section class="group" id="c-optics"><h2 class="section-title"><span class="dot" style="background:var(--warn);width:12px;height:12px"></span>แสง <span class="muted">15 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#plane"><h3>กระจกเงาราบ</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#mirror"><h3>กระจกและเลนส์</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#bench"><h3>การเกิดภาพบนฉาก (3 มิติ)</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#refract"><h3>การหักเหและสะท้อนกลับหมด</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#depth"><h3>ลึกจริง ลึกปรากฏ</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#prism"><h3>ปริซึมและการกระจายแสง</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#eyesight"><h3>ตาและแว่นสายตา</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#instr"><h3>กล้องจุลทรรศน์และกล้องโทรทรรศน์</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#plx"><h3>พาราแล็กซ์ในการวัดและหาตำแหน่งภาพ</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#illum"><h3>ความสว่างและสีของแสง</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#polar"><h3>โพลาไรเซชัน</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#diffract"><h3>การเลี้ยวเบนผ่านช่อง</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#film"><h3>ฟิล์มบางและการแทรกสอด</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#michelson"><h3>อินเตอร์เฟอโรมิเตอร์ไมเคลสัน</h3></a>
+    <a class="tile" style="--gc:var(--warn)" href="physics/sims.html#beamx"><h3>Beam expander (ขยายลำแสง)</h3></a>
+  </div></section>
+  <section class="group" id="c-elec"><h2 class="section-title"><span class="dot" style="background:var(--bad);width:12px;height:12px"></span>ไฟฟ้าและแม่เหล็ก <span class="muted">11 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#coulomb"><h3>กฎของคูลอมบ์และประจุในสนาม</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#efield"><h3>สนามไฟฟ้า</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#capac"><h3>ตัวเก็บประจุ</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#circuit"><h3>แล็บต่อวงจร</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#intres"><h3>แรงเคลื่อนไฟฟ้าและพลังงานไฟฟ้า</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#galvo"><h3>แกลแวนอมิเตอร์และสะพานวีตสโตน</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#rc"><h3>วงจร RC</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#magnet"><h3>แรงแม่เหล็กต่อประจุและลวด</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#bfield"><h3>สนามแม่เหล็กจากกระแสและมอเตอร์</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#induct"><h3>การเหนี่ยวนำแม่เหล็กไฟฟ้า</h3></a>
+    <a class="tile" style="--gc:var(--bad)" href="physics/sims.html#rlc"><h3>ไฟฟ้ากระแสสลับ RLC</h3></a>
+  </div></section>
+  <section class="group" id="c-wave"><h2 class="section-title"><span class="dot" style="background:var(--ok);width:12px;height:12px"></span>คลื่นและเสียง <span class="muted">5 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--ok)" href="physics/sims.html#string"><h3>คลื่นนิ่งในเส้นลวด</h3></a>
+    <a class="tile" style="--gc:var(--ok)" href="physics/sims.html#pipe"><h3>การสั่นพ้องในท่อ</h3></a>
+    <a class="tile" style="--gc:var(--ok)" href="physics/sims.html#doppler"><h3>ปรากฏการณ์ดอปเพลอร์</h3></a>
+    <a class="tile" style="--gc:var(--ok)" href="physics/sims.html#ripple"><h3>การแทรกสอดของคลื่นผิวน้ำ</h3></a>
+    <a class="tile" style="--gc:var(--ok)" href="physics/sims.html#beats"><h3>บีตส์และระดับเสียง</h3></a>
+  </div></section>
+  <section class="group" id="c-fluid"><h2 class="section-title"><span class="dot" style="background:var(--chem);width:12px;height:12px"></span>ของไหลและความร้อน <span class="muted">4 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--chem)" href="physics/sims.html#fluid"><h3>ความดันและแรงลอยตัว</h3></a>
+    <a class="tile" style="--gc:var(--chem)" href="physics/sims.html#bernoulli"><h3>การไหลและหลักของแบร์นูลลี</h3></a>
+    <a class="tile" style="--gc:var(--chem)" href="physics/sims.html#gas"><h3>ทฤษฎีจลน์ของแก๊ส</h3></a>
+    <a class="tile" style="--gc:var(--chem)" href="physics/sims.html#heat"><h3>ความร้อนและการเปลี่ยนสถานะ</h3></a>
+  </div></section>
+  <section class="group" id="c-astro"><h2 class="section-title"><span class="dot" style="background:var(--earth);width:12px;height:12px"></span>ดาราศาสตร์ <span class="muted">2 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--earth)" href="physics/sims.html#parallax"><h3>พาราแล็กซ์ของดาว</h3></a>
+    <a class="tile" style="--gc:var(--earth)" href="physics/sims.html#orbit"><h3>วงโคจรและกฎของเคปเลอร์</h3></a>
+  </div></section>
+  <section class="group" id="c-modern"><h2 class="section-title"><span class="dot" style="background:var(--earth);width:12px;height:12px"></span>ฟิสิกส์ยุคใหม่ <span class="muted">3 เรื่อง</span></h2>
+  <div class="grid-cards sims">
+    <a class="tile" style="--gc:var(--earth)" href="physics/sims.html#photo"><h3>ปรากฏการณ์โฟโตอิเล็กทริก</h3></a>
+    <a class="tile" style="--gc:var(--earth)" href="physics/sims.html#bohr"><h3>อะตอมไฮโดรเจนของโบร์และสเปกตรัม</h3></a>
+    <a class="tile" style="--gc:var(--earth)" href="physics/sims.html#decay"><h3>การสลายตัวและครึ่งชีวิต</h3></a>
+  </div></section>
+  <footer class="foot">ใช้งานได้ทันทีบนคอมพิวเตอร์ แท็บเล็ต และโทรศัพท์ ไม่ต้องเข้าสู่ระบบ ข้อมูลการทดลองบันทึกไว้บนเครื่องของผู้ใช้เท่านั้น</footer>
+</div>
+</body>
+</html>

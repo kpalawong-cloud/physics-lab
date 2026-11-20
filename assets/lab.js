@@ -251,7 +251,7 @@
     const list = (a, tag) => '<' + tag + '>' + a.map((x) => '<li>' + x + '</li>').join('') + '</' + tag + '>';
     app.innerHTML =
       '<div class="wrap">' +
-      '<div class="crumbs no-print"><a href="../../">ห้องปฏิบัติการเสมือน</a><span>›</span><a href="../">' + (cfg.subject || 'ฟิสิกส์') + '</a><span>›</span>' + cfg.short + '</div>' +
+      '<div class="crumbs no-print"><a href="../../">หน้าแรก</a><span>›</span><a href="../../labs.html">ห้องปฏิบัติการเสมือน</a><span>›</span><a href="../">' + (cfg.subject || 'ฟิสิกส์') + '</a><span>›</span>' + cfg.short + '</div>' +
       '<div class="exp-head"><h1>' + cfg.title + '</h1><span class="chip">' + cfg.level + '</span></div>' +
       '<div class="print-only" id="pStudent"></div>' +
       '<div class="steps no-print">' +
