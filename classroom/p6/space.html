@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เทคโนโลยีอวกาศ · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 580px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 520px; } }
+  .info { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 10px; }
+  .info h4 { margin: 0 0 4px; font-size: 18px; }
+  .info p { margin: 4px 0; }
+  .sats { display: grid; grid-template-columns: 1fr; gap: 5px; margin: 6px 0; }
+  .sats .btn { text-align: left; font-size: 15px; padding: 6px 10px; }
+  .sats .btn i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  .log { font-size: 14.5px; margin: 8px 0 0; padding-left: 20px; }
+  .log li.on { font-weight: 700; color: var(--accent); }
+  .big { font-variant-numeric: tabular-nums; font-size: 17px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const GM = 398600, RE = 6371; // km³/s², km
+
+// ดาวเทียมตัวอย่าง (ระยะสูงจากผิวโลก km, คาบ นาที)
+const SATS = [
+  { id: 'iss', name: 'สถานีอวกาศนานาชาติ (ISS)', alt: 400, polar: false, col: '#f0f0f0', type: 'สถานีอวกาศ',
+    use: 'นักบินอวกาศจากหลายประเทศอาศัยและทำการทดลองในสภาพไร้น้ำหนัก เช่น การปลูกพืช ผลต่อร่างกายมนุษย์ มองเห็นจากพื้นโลกเป็นจุดสว่างเคลื่อนที่เร็วตอนหัวค่ำ' },
+  { id: 'theos', name: 'ไทยโชต (THEOS) ดาวเทียมสำรวจโลก', alt: 820, polar: true, col: '#5ad18a', type: 'ดาวเทียมสำรวจทรัพยากรโลก',
+    use: 'ดาวเทียมสำรวจโลกดวงแรกของไทย ถ่ายภาพพื้นผิวโลกเพื่อทำแผนที่ ติดตามน้ำท่วม ไฟป่า การเกษตร และการใช้ที่ดิน โคจรผ่านขั้วโลก จึงถ่ายภาพได้เกือบทุกพื้นที่ของโลก (ปัจจุบันมี THEOS-2 ทำหน้าที่ต่อ)' },
+  { id: 'gps', name: 'ดาวเทียมนำทาง GPS', alt: 20200, polar: false, incl: true, col: '#6aa0f5', type: 'ดาวเทียมนำทาง',
+    use: 'ระบบมีดาวเทียมประมาณ 30 ดวง โทรศัพท์รับสัญญาณจากดาวเทียมอย่างน้อย 4 ดวงพร้อมกัน เพื่อคำนวณตำแหน่งของเรา ใช้ในแผนที่นำทาง แอปเรียกรถ และการส่งของ' },
+  { id: 'wx', name: 'ดาวเทียมอุตุนิยมวิทยา (ฮิมาวาริ)', alt: 35786, polar: false, col: '#f0a93b', type: 'ดาวเทียมอุตุนิยมวิทยา',
+    use: 'อยู่สูงมากและโคจรรอบโลกพร้อมกับที่โลกหมุน จึงอยู่เหนือพื้นที่เดิมตลอด ถ่ายภาพเมฆทุก 10 นาที กรมอุตุนิยมวิทยาใช้ติดตามพายุและพยากรณ์อากาศ' },
+  { id: 'com', name: 'ดาวเทียมสื่อสารค้างฟ้า (ไทยคม)', alt: 35786, polar: false, offset: 0.35, col: '#e3639b', type: 'ดาวเทียมสื่อสาร',
+    use: 'อยู่ในวงโคจรค้างฟ้า คาบ 24 ชั่วโมงเท่ากับการหมุนรอบตัวเองของโลก จึงอยู่นิ่งเหนือจุดเดิมบนเส้นศูนย์สูตร ส่งสัญญาณโทรทัศน์ โทรศัพท์ และอินเทอร์เน็ตไปยังพื้นที่ห่างไกล' },
+];
+SATS.forEach((q) => { const a = RE + q.alt; q.T = (2 * Math.PI * Math.sqrt((a * a * a) / GM)) / 60; }); // นาที
+
+SimKit.page({
+  id: 'p6-space',
+  title: 'เทคโนโลยีอวกาศ',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'ดูการส่งจรวดหลายท่อนขึ้นสู่อวกาศ ลองยิงวัตถุด้วยความเร็วต่าง ๆ ว่าตกกลับ โคจรรอบโลก หรือหลุดออกไป และดูดาวเทียมแต่ละชนิดที่ช่วยชีวิตประจำวันของเรา',
+  about:
+    '<p><b>จรวด</b>เคลื่อนที่ขึ้นได้เพราะเผาเชื้อเพลิงแล้วพ่นแก๊สร้อนออกทางท้ายด้วยความเร็วสูง แก๊สดันจรวดไปทางตรงข้าม จรวดใช้งานจริงมักเป็น<b>จรวดหลายท่อน</b> เมื่อเชื้อเพลิงท่อนใดหมดก็ปลดท่อนนั้นทิ้ง จรวดจึงเบาลงและเร่งต่อได้ง่ายขึ้น</p>' +
+    '<p>ถ้ายิงวัตถุในแนวราบด้วยความเร็วต่ำ วัตถุจะตกกลับสู่พื้นโลก ถ้าเร็วประมาณ <b>8 กิโลเมตรต่อวินาที</b> วัตถุจะตกรอบโลกไปเรื่อย ๆ ไม่ถึงพื้น เรียกว่า<b>โคจรรอบโลก</b> ถ้าเร็วถึงประมาณ <b>11 กิโลเมตรต่อวินาที</b> จะหลุดออกจากแรงดึงดูดของโลก</p>' +
+    '<p><b>ดาวเทียม</b>คือวัตถุที่โคจรรอบโลก ดาวเทียมที่มนุษย์สร้างมีหลายชนิด เช่น ดาวเทียมสื่อสาร ดาวเทียมสำรวจทรัพยากรโลก ดาวเทียมอุตุนิยมวิทยา และดาวเทียมนำทาง ยิ่งอยู่สูง ยิ่งโคจรช้า</p>' +
+    '<p><b>ยานสำรวจอวกาศ</b> เช่น ยานที่ไปสำรวจดาวอังคาร ดวงจันทร์ และดาวเคราะห์ชั้นนอก ส่งภาพและข้อมูลกลับมาให้นักวิทยาศาสตร์ศึกษา <b>สถานีอวกาศ</b>เป็นที่อยู่และห้องทดลองของนักบินอวกาศ</p>' +
+    '<p class="muted" style="font-size:14px">ความเร็วและระยะในภาพใช้ค่าประมาณจากของจริง ส่วนเวลาถูกเร่งให้เร็วขึ้นเพื่อให้ดูทันในคาบเรียน</p>',
+  think: [
+    'ทำไมจรวดจึงต้องปลดท่อนที่เชื้อเพลิงหมดทิ้งไป',
+    'ถ้ายิงด้วยความเร็วน้อยกว่า 8 กิโลเมตรต่อวินาที วัตถุจะเป็นอย่างไร และถ้ามากกว่า 11 กิโลเมตรต่อวินาทีล่ะ',
+    'ทำไมดาวเทียมสื่อสารและดาวเทียมอุตุนิยมวิทยาบางดวงจึงอยู่นิ่งเหนือพื้นที่เดิมตลอดเวลา',
+    'ในหนึ่งวัน นักเรียนได้ใช้ประโยชน์จากดาวเทียมชนิดใดบ้าง',
+    'ดาวเทียมไทยโชตโคจรผ่านขั้วโลก ทำไมการโคจรแบบนี้จึงเหมาะกับการถ่ายภาพพื้นโลก',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const rng = api.rng;
+    const STARS = []; for (let i = 0; i < 160; i++) STARS.push([rng(), rng(), 0.4 + rng() * 1.2]);
+    const s = { mode: 'rocket' };
+
+    panel.innerHTML =
+      '<h3>เลือกเรื่อง</h3><div class="seg" id="mode"><button data-v="rocket">จรวดหลายท่อน</button><button data-v="cannon">ความเร็วยิง</button><button data-v="sat">ดาวเทียม</button></div>' +
+      '<div id="pRocket"><div class="row"><button class="btn primary" id="launch">ปล่อยจรวด</button><button class="btn" id="rReset">เริ่มใหม่</button></div>' +
+      '<div class="info big" id="rOut"></div><ol class="log" id="rLog"></ol></div>' +
+      '<div id="pCannon" style="display:none"><h3>ความเร็วยิงในแนวราบ</h3><input type="range" id="v0" min="3" max="12.5" step="0.1" value="6">' +
+      '<p class="big" style="margin:2px 0 6px" id="vLbl"></p>' +
+      '<div class="row"><button class="btn primary" id="fire">ยิง</button><button class="btn" id="clear">ล้างเส้นทาง</button></div>' +
+      '<div class="row"><button class="btn" data-pv="5">5 km/s</button><button class="btn" data-pv="7.8">7.8 km/s</button><button class="btn" data-pv="9">9 km/s</button><button class="btn" data-pv="11.5">11.5 km/s</button></div></div>' +
+      '<div id="pSat" style="display:none"><h3>แตะดาวเทียมเพื่อดูข้อมูล</h3><div class="sats" id="sats"></div>' +
+      '<h3>มุมมอง</h3><div class="seg" id="zoom"><button data-v="0" class="on">ทุกวงโคจร</button><button data-v="1">ขยายใกล้โลก</button></div>' +
+      '<h3>ความเร็วของเวลา</h3><input type="range" id="tsp" min="0.2" max="3" step="0.1" value="1"><div class="info" id="satInfo"></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const modeEl = $('#mode');
+    const syncMode = () => {
+      modeEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.mode));
+      $('#pRocket').style.display = s.mode === 'rocket' ? '' : 'none';
+      $('#pCannon').style.display = s.mode === 'cannon' ? '' : 'none';
+      $('#pSat').style.display = s.mode === 'sat' ? '' : 'none';
+      api.note(s.mode === 'rocket' ? 'กด "ปล่อยจรวด" แล้วดูว่าจรวดปลดท่อนใดทิ้งเมื่อใด' : s.mode === 'cannon' ? 'ลองยิงด้วยความเร็วต่าง ๆ แล้วดูว่าวัตถุตกกลับ โคจรรอบโลก หรือหลุดออกไป' : '');
+    };
+    modeEl.onclick = (e) => { const b = e.target.closest('button'); if (b) { s.mode = b.dataset.v; syncMode(); } };
+
+    // ================= 1. จรวดหลายท่อน =================
+    // เหตุการณ์ (เวลาจริง วินาที): ค่าประมาณของจรวดสองท่อนที่ส่งดาวเทียมสู่วงโคจรต่ำ
+    const EVENTS = [
+      { t: 0, txt: 'จุดเครื่องยนต์ท่อนที่ 1 จรวดยกตัวขึ้น' },
+      { t: 70, txt: 'ผ่านชั้นบรรยากาศที่หนาแน่นที่สุด' },
+      { t: 160, txt: 'เชื้อเพลิงท่อนที่ 1 หมด ปลดท่อนที่ 1 ทิ้ง', sep: 1 },
+      { t: 165, txt: 'จุดเครื่องยนต์ท่อนที่ 2' },
+      { t: 210, txt: 'ปลดฝาครอบหัวจรวด (พ้นบรรยากาศแล้ว)', sep: 'fair' },
+      { t: 520, txt: 'เชื้อเพลิงท่อนที่ 2 หมด ความเร็วถึง 7.8 km/s', sep: 2 },
+      { t: 540, txt: 'ปล่อยดาวเทียมเข้าสู่วงโคจร', sep: 'sat' },
+    ];
+    const r = { t: 0, run: false, parts: [], done: {} };
+    function profile(t) { // ความสูง (km) และความเร็ว (km/s) โดยประมาณ
+      const alt = t < 160 ? 65 * (t / 160) ** 1.8 : t < 520 ? 65 + 135 * (1 - Math.pow(1 - (t - 160) / 360, 2)) : 200;
+      const v = t < 160 ? 2.2 * (t / 160) ** 1.6 : t < 520 ? 2.2 + 5.6 * ((t - 160) / 360) ** 1.3 : 7.8;
+      return { alt, v };
+    }
+    function rReset() { r.t = 0; r.run = false; r.parts = []; r.done = {}; renderLog(); }
+    function renderLog() {
+      $('#rLog').innerHTML = EVENTS.map((e, i) => '<li class="' + (r.t >= e.t && (i === EVENTS.length - 1 || r.t < EVENTS[i + 1].t) && (r.run || r.t > 0) ? 'on' : '') + '" style="' + (r.t >= e.t ? '' : 'opacity:.5') + '">' + e.txt + '</li>').join('');
+      const p = profile(r.t);
+      $('#rOut').innerHTML = 'เวลา <b>' + Math.floor(r.t / 60) + ':' + String(Math.floor(r.t % 60)).padStart(2, '0') + '</b> นาที<br>ความสูง <b>' + p.alt.toFixed(0) + ' km</b> · ความเร็ว <b>' + p.v.toFixed(1) + ' km/s</b>';
+    }
+    $('#launch').onclick = () => { if (r.t >= 560) rReset(); r.run = true; };
+    $('#rReset').onclick = rReset;
+    let lastLogT = -1;
+    function stepRocket(dt) {
+      if (!r.run) return;
+      const before = r.t;
+      r.t = Math.min(560, r.t + dt * 22); // เร่งเวลา 22 เท่า
+      EVENTS.forEach((e) => { if (e.sep && before < e.t && r.t >= e.t) r.parts.push({ k: e.sep, y: 0, vy: 0, x: 0, vx: e.sep === 'fair' ? 1 : 0, rot: 0 }); });
+      if (r.t >= 560) r.run = false;
+      if (Math.floor(r.t) !== lastLogT) { lastLogT = Math.floor(r.t); renderLog(); }
+    }
+    function drawRocketBody(ctx, x, y, sc, has) {
+      // has: {s1, s2, fair, sat}
+      const W = 22 * sc;
+      let yy = y;
+      ctx.lineWidth = 1.2;
+      if (has.s1) { ctx.fillStyle = '#e9edf3'; ctx.fillRect(x - W / 2, yy - 90 * sc, W, 90 * sc); ctx.strokeStyle = '#8a93a3'; ctx.strokeRect(x - W / 2, yy - 90 * sc, W, 90 * sc);
+        ctx.fillStyle = '#c8412a'; ctx.fillRect(x - W / 2, yy - 20 * sc, W, 6 * sc);
+        ctx.fillStyle = '#8a93a3'; ctx.beginPath(); ctx.moveTo(x - W / 2, yy); ctx.lineTo(x - W / 2 - 10 * sc, yy + 6 * sc); ctx.lineTo(x - W / 2, yy - 22 * sc); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x + W / 2, yy); ctx.lineTo(x + W / 2 + 10 * sc, yy + 6 * sc); ctx.lineTo(x + W / 2, yy - 22 * sc); ctx.fill();
+        ctx.fillStyle = '#333'; ctx.font = 11 * sc + 'px Sarabun'; ctx.textAlign = 'center'; ctx.fillText('1', x, yy - 50 * sc);
+        yy -= 90 * sc; }
+      if (has.s2) { ctx.fillStyle = '#dfe4ec'; ctx.fillRect(x - W / 2, yy - 46 * sc, W, 46 * sc); ctx.strokeStyle = '#8a93a3'; ctx.strokeRect(x - W / 2, yy - 46 * sc, W, 46 * sc);
+        ctx.fillStyle = '#333'; ctx.font = 11 * sc + 'px Sarabun'; ctx.textAlign = 'center'; ctx.fillText('2', x, yy - 20 * sc); yy -= 46 * sc; }
+      if (has.sat) { ctx.fillStyle = '#d6b44a'; ctx.fillRect(x - 7 * sc, yy - 16 * sc, 14 * sc, 14 * sc); ctx.fillStyle = '#3d6fb5'; ctx.fillRect(x - 20 * sc, yy - 12 * sc, 11 * sc, 6 * sc); ctx.fillRect(x + 9 * sc, yy - 12 * sc, 11 * sc, 6 * sc); }
+      if (has.fair) { ctx.fillStyle = '#f4f6f9'; ctx.strokeStyle = '#8a93a3'; ctx.beginPath(); ctx.moveTo(x - W / 2, yy); ctx.lineTo(x - W / 2, yy - 22 * sc); ctx.quadraticCurveTo(x, yy - 52 * sc, x + W / 2, yy - 22 * sc); ctx.lineTo(x + W / 2, yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      return yy;
+    }
+    function drawRocket(ctx, w, h, dt) {
+      const p = profile(r.t), t = Math.min(1, p.alt / 120);
+      // ท้องฟ้าเปลี่ยนจากฟ้าเป็นดำเมื่อสูงขึ้น
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      const top = [Math.round(90 * (1 - t) + 4), Math.round(160 * (1 - t) + 6), Math.round(230 * (1 - t) + 16)];
+      g.addColorStop(0, 'rgb(' + top + ')'); g.addColorStop(1, 'rgb(' + Math.round(170 * (1 - t) + 8) + ',' + Math.round(210 * (1 - t) + 12) + ',' + Math.round(245 * (1 - t) + 26) + ')');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      if (t > 0.3) STARS.forEach(([sx, sy, sr]) => { ctx.fillStyle = 'rgba(255,255,255,' + (t - 0.3) + ')'; ctx.fillRect(sx * w, ((sy * h + p.alt * 4) % h), sr, sr); });
+      // พื้นดินเลื่อนลงเมื่อจรวดสูงขึ้น
+      const groundY = h * 0.82 + p.alt * 60;
+      if (groundY < h + 40) { ctx.fillStyle = '#5b8a3c'; ctx.fillRect(0, groundY, w, h); ctx.fillStyle = '#9aa3b0'; ctx.fillRect(w / 2 - 50, groundY - 8, 100, 8); }
+      // เส้นโค้งของโลกเมื่อสูงมาก
+      if (p.alt > 80) { ctx.fillStyle = 'rgba(70,130,220,' + Math.min(0.9, (p.alt - 80) / 100) + ')'; ctx.beginPath(); ctx.ellipse(w / 2, h * 1.9, w * 1.4, h * 1.05, 0, 0, 7); ctx.fill(); }
+      const sc = Math.min(1.5, h / 330);
+      const cx = w / 2, baseY = Math.min(h * 0.8, groundY - 8);
+      const has = { s1: r.t < 160, s2: r.t < 520, fair: r.t < 210, sat: r.t < 540 };
+      const firing = r.run && ((r.t < 160) || (r.t >= 165 && r.t < 520));
+      // เปลวไฟ
+      if (firing) {
+        const fy = baseY - (has.s1 ? 0 : 0), L = (40 + 12 * Math.sin(performance.now() / 50)) * sc;
+        const fg = ctx.createLinearGradient(0, fy, 0, fy + L);
+        fg.addColorStop(0, 'rgba(255,250,210,.95)'); fg.addColorStop(0.4, 'rgba(255,170,40,.9)'); fg.addColorStop(1, 'rgba(255,90,20,0)');
+        ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(cx - 9 * sc, fy); ctx.lineTo(cx, fy + L); ctx.lineTo(cx + 9 * sc, fy); ctx.fill();
+      }
+      const bodyBase = has.s1 ? baseY : baseY - 90 * sc;
+      drawRocketBody(ctx, cx, has.s1 ? baseY : has.s2 ? baseY : baseY, sc, has);
+      // ชิ้นส่วนที่ปลดทิ้ง ร่วงลงและลอยห่างออกไป
+      r.parts.forEach((q) => {
+        q.vy += 40 * dt; q.y += q.vy * dt; q.x += q.vx * 30 * dt; q.rot += dt * 0.6;
+        ctx.save();
+        if (q.k === 1) { ctx.translate(cx - q.x, baseY + 30 * sc + q.y); ctx.rotate(-q.rot * 0.3); drawRocketBody(ctx, 0, 0, sc, { s1: true }); }
+        else if (q.k === 2) { ctx.translate(cx + q.x * 0.5, baseY + 20 * sc + q.y * 0.5); ctx.rotate(q.rot * 0.2); drawRocketBody(ctx, 0, 0, sc, { s2: true }); }
+        else if (q.k === 'fair') { ctx.globalAlpha = Math.max(0, 1 - q.y / 300);
+          [-1, 1].forEach((d) => { ctx.save(); ctx.translate(cx + d * (14 + q.x * 2) * sc, baseY - 150 * sc + q.y * 0.4); ctx.rotate(d * q.rot); ctx.fillStyle = '#f4f6f9'; ctx.fillRect(-4 * sc, -26 * sc, 8 * sc, 30 * sc); ctx.restore(); }); }
+        else if (q.k === 'sat') { ctx.translate(cx + q.y * 0.6, baseY - 140 * sc - q.y * 0.15); drawRocketBody(ctx, 0, 0, sc, { sat: true }); }
+        ctx.restore();
+      });
+      ctx.fillStyle = t > 0.5 ? '#fff' : '#123'; ctx.font = '16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('ความสูง ' + p.alt.toFixed(0) + ' km', 12, 10);
+      ctx.fillText(p.alt < 100 ? 'ชั้นบรรยากาศ' : 'อวกาศ (สูงเกิน 100 km)', 12, 32);
+    }
+
+    // ================= 2. ความเร็วยิง (ปืนใหญ่ของนิวตัน) =================
+    const c = { shots: [], cur: null };
+    const COLS = ['#f0a93b', '#5ad18a', '#6aa0f5', '#e3639b', '#c9a0ff'];
+    const showV = () => { const v = +$('#v0').value; $('#vLbl').textContent = v.toFixed(1) + ' km/s (' + Math.round(v * 3600).toLocaleString('th-TH') + ' km/ชั่วโมง)'; };
+    $('#v0').oninput = showV; showV();
+    panel.querySelectorAll('[data-pv]').forEach((b) => (b.onclick = () => { $('#v0').value = b.dataset.pv; showV(); fire(); }));
+    function fire() {
+      const v = +$('#v0').value, alt = 300;
+      api.note('ยิงด้วยความเร็ว ' + v.toFixed(1) + ' km/s … ดูเส้นทางของวัตถุ');
+      c.cur = { x: 0, y: RE + alt, vx: v, vy: 0, path: [[0, RE + alt]], col: COLS[c.shots.length % COLS.length], v, t: 0, res: null, ang: 0 };
+      c.shots.push(c.cur); if (c.shots.length > 5) c.shots.shift();
+    }
+    $('#fire').onclick = fire;
+    $('#clear').onclick = () => { c.shots = []; c.cur = null; api.note('ลองยิงด้วยความเร็วต่าง ๆ แล้วดูว่าวัตถุตกกลับ โคจรรอบโลก หรือหลุดออกไป'); };
+    function stepCannon(dt) {
+      const q = c.cur; if (!q || q.res) return;
+      let simT = dt * 1500; // เร่งเวลา 1,500 เท่า
+      while (simT > 0) {
+        const h = Math.min(4, simT); simT -= h;
+        const rr = Math.hypot(q.x, q.y), a = -GM / (rr * rr * rr);
+        q.vx += a * q.x * h; q.vy += a * q.y * h; q.x += q.vx * h; q.y += q.vy * h; q.t += h;
+        const ang = Math.atan2(q.x, q.y); if (ang < q.ang - 3) q.lap = true; q.ang = ang;
+        if (Math.hypot(q.x, q.y) < RE) { q.res = 'fall'; break; }
+        const rr2 = Math.hypot(q.x, q.y), en = (q.vx * q.vx + q.vy * q.vy) / 2 - GM / rr2;
+        if (en >= 0 && rr2 > RE * 3) { q.res = 'escape'; break; } // พลังงานพอหลุดพ้น และออกนอกภาพแล้ว
+        if (rr2 > RE * 30) { q.res = 'escape'; break; }
+        if (q.t > 60 && q.lap && q.x >= 0 && q.y > 0 && q.path.length > 50) { q.res = 'orbit'; break; }
+      }
+      q.path.push([q.x, q.y]);
+      if (q.res) {
+        const msg = { fall: 'ความเร็ว ' + q.v.toFixed(1) + ' km/s ไม่พอ วัตถุ<b>ตกกลับสู่พื้นโลก</b>',
+          orbit: 'ความเร็ว ' + q.v.toFixed(1) + ' km/s วัตถุ<b>โคจรรอบโลก</b> ตกรอบโลกไปเรื่อย ๆ ไม่ถึงพื้น เหมือนดาวเทียม',
+          escape: 'ความเร็ว ' + q.v.toFixed(1) + ' km/s มากพอที่จะ<b>หลุดออกจากแรงดึงดูดของโลก</b> เหมือนยานสำรวจที่ไปดาวเคราะห์อื่น' };
+        api.note(msg[q.res]);
+      }
+    }
+    function drawCannon(ctx, w, h) {
+      ctx.fillStyle = '#070a12'; ctx.fillRect(0, 0, w, h);
+      STARS.forEach(([sx, sy, sr]) => { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(sx * w, sy * h, sr, sr); });
+      const k = Math.min(w, h) / (RE * 4.6), cx = w / 2, cy = h * 0.4;
+      const P = (x, y) => [cx + x * k, cy - y * k];
+      const eg = ctx.createRadialGradient(cx - RE * k * 0.3, cy - RE * k * 0.3, 5, cx, cy, RE * k);
+      eg.addColorStop(0, '#6fb0ff'); eg.addColorStop(1, '#1f4f9a');
+      ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(cx, cy, RE * k, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(120,180,255,.18)'; ctx.beginPath(); ctx.arc(cx, cy, (RE + 300) * k, 0, 7); ctx.fill();
+      // ภูเขาและปืน
+      const [mx, my] = P(0, RE);
+      ctx.fillStyle = '#7a6a55'; ctx.beginPath(); ctx.moveTo(mx - 26, my + 4); ctx.lineTo(mx, my - 300 * k - 4); ctx.lineTo(mx + 26, my + 4); ctx.fill();
+      ctx.fillStyle = '#333'; ctx.fillRect(mx - 4, my - 300 * k - 9, 18, 6);
+      c.shots.forEach((q) => {
+        ctx.strokeStyle = q.col; ctx.lineWidth = 2.5; ctx.beginPath();
+        q.path.forEach(([x, y], i) => { const [px, py] = P(x, y); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+        ctx.stroke();
+        const [px, py] = P(q.x, q.y); ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(px, py, 5, 0, 7); ctx.fill();
+        ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(q.v.toFixed(1) + ' km/s', px + 8, py);
+      });
+      ctx.fillStyle = '#ddd'; ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('โลก', cx, cy);
+      ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('ยิงในแนวราบจากความสูง 300 km · เวลาเร่งให้เร็วขึ้น', 10, 10);
+    }
+
+    // ================= 3. ดาวเทียมรอบโลก =================
+    let sel = 'com', simMin = 0;
+    $('#sats').innerHTML = SATS.map((q) => '<button class="btn" data-sat="' + q.id + '"><i style="background:' + q.col + '"></i>' + q.name + '</button>').join('');
+    function showSat() {
+      const q = SATS.find((x) => x.id === sel);
+      panel.querySelectorAll('[data-sat]').forEach((b) => b.classList.toggle('on', b.dataset.sat === sel));
+      const T = q.T < 120 ? Math.round(q.T) + ' นาที' : (q.T / 60).toFixed(q.T > 1400 ? 0 : 1) + ' ชั่วโมง';
+      $('#satInfo').innerHTML = '<h4>' + q.name + '</h4><p><b>ชนิด:</b> ' + q.type + '</p><p><b>สูงจากพื้นโลก:</b> ประมาณ ' + q.alt.toLocaleString('th-TH') + ' km · <b>โคจรรอบโลก 1 รอบ:</b> ' + T + '</p><p>' + q.use + '</p>';
+    }
+    panel.querySelectorAll('[data-sat]').forEach((b) => (b.onclick = () => { sel = b.dataset.sat; showSat(); }));
+    showSat();
+    let satPos = {}, zoom = false;
+    $('#zoom').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; zoom = b.dataset.v === '1'; $('#zoom').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+    function drawSats(ctx, w, h, dt) {
+      simMin += dt * 60 * +$('#tsp').value; // 1 วินาทีจริง = 1 ชั่วโมงในภาพ (ที่ความเร็ว 1)
+      ctx.fillStyle = '#070a12'; ctx.fillRect(0, 0, w, h);
+      STARS.forEach(([sx, sy, sr]) => { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(sx * w, sy * h, sr, sr); });
+      const cx = w / 2, cy = h / 2, maxR = Math.min(w / 2 - 16, (h / 2 - 16) / 0.42);
+      const k = maxR / (RE + (zoom ? 5200 : 35786)), re = RE * k, flat = zoom ? 0.7 : 0.42; // มุมมองเอียงเล็กน้อย
+      const shown = (q) => !zoom || q.alt < 3000;
+      satPos = {};
+      const earthRot = (simMin / 1436) * 2 * Math.PI; // โลกหมุนรอบตัวเอง 1 รอบ ≈ 23 ชม. 56 นาที
+      const pos = (q) => {
+        const a = RE + q.alt, ang = (simMin / q.T) * 2 * Math.PI + (q.offset || 0) * 2 * Math.PI;
+        const pw = zoom ? 0.45 : 0.18;
+        if (q.polar) return [cx + a * k * pw * Math.cos(ang), cy - a * k * Math.sin(ang), Math.cos(ang) > 0];
+        const fl = q.incl ? 0.62 : flat;
+        return [cx + a * k * Math.cos(ang), cy + a * k * fl * Math.sin(ang), Math.sin(ang) > 0];
+      };
+      // วงโคจร (ด้านหลังโลก)
+      SATS.filter(shown).forEach((q) => {
+        const a = (RE + q.alt) * k;
+        ctx.strokeStyle = q.col; ctx.globalAlpha = q.id === sel ? 0.85 : 0.35; ctx.lineWidth = q.id === sel ? 2 : 1.2;
+        ctx.beginPath();
+        if (q.polar) ctx.ellipse(cx, cy, a * (zoom ? 0.45 : 0.18), a, 0, 0, 7); else ctx.ellipse(cx, cy, a, a * (q.incl ? 0.62 : flat), q.incl ? -0.5 : 0, 0, 7);
+        ctx.stroke(); ctx.globalAlpha = 1;
+      });
+      const drawSat = (q) => {
+        const [x, y] = pos(q); satPos[q.id] = [x, y];
+        const big = q.id === sel ? 1.4 : 1;
+        ctx.fillStyle = q.col; ctx.fillRect(x - 4 * big, y - 4 * big, 8 * big, 8 * big);
+        ctx.fillStyle = '#3d6fb5'; ctx.fillRect(x - 12 * big, y - 2 * big, 7 * big, 4 * big); ctx.fillRect(x + 5 * big, y - 2 * big, 7 * big, 4 * big);
+        if (q.id === sel) { ctx.fillStyle = '#fff'; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(q.name.split(' (')[0], x + 12, y - 6); }
+      };
+      SATS.filter(shown).forEach((q) => { if (!pos(q)[2]) drawSat(q); }); // ด้านหลังโลก
+      // โลก (หมุน มีจุดประเทศไทย)
+      const eg = ctx.createRadialGradient(cx - re * 0.3, cy - re * 0.3, 2, cx, cy, re);
+      eg.addColorStop(0, '#6fb0ff'); eg.addColorStop(1, '#1f4f9a');
+      ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(cx, cy, re, 0, 7); ctx.fill();
+      const tx = cx + re * 0.9 * Math.cos(earthRot), front = Math.sin(earthRot) > 0;
+      if (front) { ctx.fillStyle = '#ffdc5a'; ctx.beginPath(); ctx.arc(tx, cy + re * 0.12, 3.5, 0, 7); ctx.fill(); }
+      SATS.filter(shown).forEach((q) => { if (pos(q)[2]) drawSat(q); }); // ด้านหน้าโลก
+      ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('เวลาในภาพ: ' + Math.floor(simMin / 60) % 24 + ' ชั่วโมง (เร่งเวลา) · จุดเหลือง = ประเทศไทย', 10, 10);
+      ctx.fillText(zoom ? 'ขยายดูวงโคจรต่ำใกล้โลก (ดาวเทียมที่อยู่สูงออกนอกภาพ)' : 'ระยะห่างจากโลกเป็นมาตราส่วนจริง', 10, 28);
+    }
+
+    function onPointer(e) {
+      if (s.mode !== 'sat' || e.type !== 'pointerdown') return;
+      const [px, py] = Lab.pos(canvas, e);
+      let best = null, bd = 30;
+      Object.entries(satPos).forEach(([id, [x, y]]) => { const d = Math.hypot(px - x, py - y); if (d < bd) { bd = d; best = id; } });
+      if (best) { sel = best; showSat(); }
+    }
+    canvas.addEventListener('pointerdown', onPointer);
+
+    syncMode(); renderLog();
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx, w = cv.w, h = cv.h;
+      ctx.clearRect(0, 0, w, h);
+      if (s.mode === 'rocket') { stepRocket(dt); drawRocket(ctx, w, h, dt); }
+      else if (s.mode === 'cannon') { stepCannon(dt); drawCannon(ctx, w, h); }
+      else drawSats(ctx, w, h, dt);
+    }, 0.05);
+  },
+});
+</script>
+</body>
+</html>

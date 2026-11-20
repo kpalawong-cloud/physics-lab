@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แรงไฟฟ้า (ไฟฟ้าสถิต) · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 540px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 420px; } }
+  @media (max-width: 600px) { .simpage .stage canvas { height: 300px; } }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 6px 0; }
+  .grid2 .btn { padding: 6px 4px; font-size: 15px; line-height: 1.25; }
+  .grid2 .btn.on, .seg3 .btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0 8px; }
+  .seg3 .btn { padding: 6px 2px; font-size: 14.5px; }
+  .count { font-size: 15px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// คู่วัตถุที่นำมาขัดถูกัน: ทิศที่อิเล็กตรอน (ประจุลบ) ย้าย
+const PAIRS = [
+  { key: 'bw', obj: 'balloon', cloth: 'wool', name: 'ลูกโป่ง + ผ้าขนสัตว์', objName: 'ลูกโป่ง', clothName: 'ผ้าขนสัตว์', toObj: true },
+  { key: 'bh', obj: 'balloon', cloth: 'hair', name: 'ลูกโป่ง + เส้นผม', objName: 'ลูกโป่ง', clothName: 'เส้นผม', toObj: true },
+  { key: 'ch', obj: 'comb', cloth: 'hair', name: 'หวีพลาสติก + เส้นผม', objName: 'หวีพลาสติก', clothName: 'เส้นผม', toObj: true },
+  { key: 'gs', obj: 'glass', cloth: 'silk', name: 'แท่งแก้ว + ผ้าไหม', objName: 'แท่งแก้ว', clothName: 'ผ้าไหม', toObj: false },
+];
+const W = 800, H = 520, NEU = 8, MAXQ = 6;
+
+SimKit.page({
+  id: 'staticelec',
+  title: 'แรงไฟฟ้า (ไฟฟ้าสถิต)',
+  level: 'ป.6',
+  subject: 'แรงและพลังงาน',
+  lead: 'ขัดถูวัตถุสองชนิดเข้าด้วยกันแล้วดูประจุไฟฟ้าย้ายที่ วัตถุที่มีประจุดึงดูดเศษกระดาษได้ และวัตถุที่มีประจุจะดึงดูดหรือผลักกัน',
+  about:
+    '<p>วัตถุทุกชนิดมี<b>ประจุไฟฟ้าบวก</b>และ<b>ประจุไฟฟ้าลบ</b> ปกติมีจำนวนเท่ากัน วัตถุจึง<b>เป็นกลางทางไฟฟ้า</b></p>' +
+    '<p>เมื่อนำวัตถุสองชนิดมาขัดถูกัน ประจุลบจากวัตถุหนึ่งย้ายไปอยู่บนอีกวัตถุหนึ่ง วัตถุที่ได้รับประจุลบเพิ่มจะมีประจุลบมากกว่า ส่วนวัตถุที่เสียประจุลบไปจะมีประจุบวกมากกว่า</p>' +
+    '<ul><li>ลูกโป่งหรือหวีพลาสติกถูกับผมหรือผ้าขนสัตว์ → ลูกโป่ง/หวีมีประจุลบ</li><li>แท่งแก้วถูกับผ้าไหม → แท่งแก้วมีประจุบวก</li></ul>' +
+    '<p><b>แรงไฟฟ้า</b>: ประจุชนิดเดียวกัน<b>ผลัก</b>กัน ประจุต่างชนิดกัน<b>ดึงดูด</b>กัน และวัตถุที่มีประจุดึงดูดวัตถุที่เป็นกลางขนาดเล็กได้ เช่น เศษกระดาษ</p>' +
+    '<p><b>ฟ้าผ่า</b> เกิดจากประจุไฟฟ้าจำนวนมากที่สะสมในก้อนเมฆ เคลื่อนที่ลงสู่พื้นดินอย่างรวดเร็ว ขณะฝนฟ้าคะนองควรอยู่ในอาคาร ไม่อยู่ในที่โล่ง และไม่ยืนใต้ต้นไม้สูง</p>',
+  think: [
+    'หลังถูลูกโป่งกับผม ทำไมลูกโป่งจึงดูดเศษกระดาษได้ แต่ก่อนถูดูดไม่ได้',
+    'ถ้าถูลูกโป่งสองลูกกับผมทั้งคู่ แล้วแขวนไว้ใกล้กัน จะเกิดอะไรขึ้น เพราะเหตุใด',
+    'ประจุใดย้ายที่เมื่อขัดถูวัตถุ ประจุบวกหรือประจุลบ',
+    'ในชีวิตประจำวัน เคยเห็นปรากฏการณ์ไฟฟ้าสถิตที่ใดบ้าง (เช่น หวีผมแล้วผมฟู ถอดเสื้อกันหนาวแล้วมีเสียงเปรี๊ยะ)',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    let mode = 'rub', pair = PAIRS[0];
+    const s = { q: 0, ox: 430, oy: 250, drag: null, lastX: 0, dir: 0, travel: 0, strokes: 0, flying: [], auto: 0 };
+    const bits = []; for (let i = 0; i < 26; i++) bits.push({ hx: 520 + (i % 13) * 17 + (i * 7) % 5, hy: 452 - Math.floor(i / 13) * 6, x: 0, y: 0, stuck: false, a: i * 0.7 });
+    bits.forEach((b) => { b.x = b.hx; b.y = b.hy; });
+    // ลูกโป่งสองลูก
+    const two = { qa: -3, qb: -3, xa: 0, xb: 0, va: 0, vb: 0 };
+    // เมฆฟ้าผ่า
+    const sky = { charge: 0, flash: 0, bolt: null };
+
+    panel.innerHTML =
+      '<h3>เรื่องที่จะดู</h3><div class="seg3" id="mode"><button class="btn" data-mode="rub">ขัดถูวัตถุ</button><button class="btn" data-mode="two">ลูกโป่งสองลูก</button><button class="btn" data-mode="sky">ฟ้าผ่า</button></div>' +
+      '<div id="pRub"><h3>วัตถุที่นำมาถูกัน</h3><div class="grid2" id="pairs">' + PAIRS.map((p) => '<button class="btn" data-p="' + p.key + '">' + p.name + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn primary" id="rub5">ถู 5 ครั้ง</button><button class="btn" id="neutral">ทำให้เป็นกลาง</button></div>' +
+      '<div class="row"><button class="btn" id="toPaper">นำไปใกล้เศษกระดาษ</button><button class="btn" id="back">นำกลับมาที่ผ้า</button></div>' +
+      '<p class="count" id="cnt"></p></div>' +
+      '<div id="pTwo" style="display:none"><h3>ลูกโป่งซ้าย</h3><div class="seg3" id="qa"><button class="btn" data-q="-3">ประจุลบ</button><button class="btn" data-q="0">เป็นกลาง</button><button class="btn" data-q="3">ประจุบวก</button></div>' +
+      '<h3>ลูกโป่งขวา</h3><div class="seg3" id="qb"><button class="btn" data-q="-3">ประจุลบ</button><button class="btn" data-q="0">เป็นกลาง</button><button class="btn" data-q="3">ประจุบวก</button></div></div>' +
+      '<div id="pSky" style="display:none"><div class="row"><button class="btn primary" id="storm">สะสมประจุในเมฆ</button><button class="btn" id="calm">ฟ้าสงบ</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const sync = () => {
+      panel.querySelectorAll('#mode .btn').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+      panel.querySelectorAll('#pairs .btn').forEach((b) => b.classList.toggle('on', b.dataset.p === pair.key));
+      panel.querySelectorAll('#qa .btn').forEach((b) => b.classList.toggle('on', +b.dataset.q === two.qa));
+      panel.querySelectorAll('#qb .btn').forEach((b) => b.classList.toggle('on', +b.dataset.q === two.qb));
+      $('#pRub').style.display = mode === 'rub' ? '' : 'none'; $('#pTwo').style.display = mode === 'two' ? '' : 'none'; $('#pSky').style.display = mode === 'sky' ? '' : 'none';
+      const sign = s.q === 0 ? 'เป็นกลาง' : (pair.toObj ? 'มีประจุลบมากกว่า' : 'มีประจุบวกมากกว่า');
+      $('#cnt').innerHTML = 'ถูไปแล้ว ' + s.strokes + ' ครั้ง · ' + pair.objName + ' <b>' + sign + '</b>';
+    };
+    function explainRub() {
+      if (s.q === 0) api.note('ตอนนี้' + pair.objName + 'และ' + pair.clothName + '<b>เป็นกลาง</b> มีประจุบวกและลบเท่ากัน ลากวัตถุไปมาบนผ้าหรือกด "ถู 5 ครั้ง"');
+      else api.note('ประจุลบย้ายจาก' + (pair.toObj ? pair.clothName + 'ไปที่' + pair.objName : pair.objName + 'ไปที่' + pair.clothName) + ' ทำให้<b>' + pair.objName + 'มีประจุ' + (pair.toObj ? 'ลบ' : 'บวก') + '</b> และ' + pair.clothName + 'มีประจุ' + (pair.toObj ? 'บวก' : 'ลบ') + ' ลองนำไปใกล้เศษกระดาษ');
+    }
+    function explainTwo() {
+      const { qa, qb } = two;
+      if (qa && qb) api.note(qa * qb > 0 ? '<b>ประจุชนิดเดียวกัน ผลักกัน</b> ลูกโป่งแกว่งออกจากกัน' : '<b>ประจุต่างชนิดกัน ดึงดูดกัน</b> ลูกโป่งแกว่งเข้าหากัน');
+      else if (qa || qb) api.note('<b>วัตถุที่มีประจุดึงดูดวัตถุที่เป็นกลาง</b> ลูกโป่งเข้าหากันเล็กน้อย (เหมือนลูกโป่งดูดเศษกระดาษ)');
+      else api.note('ลูกโป่งทั้งสองเป็นกลาง <b>ไม่มีแรงไฟฟ้า</b> ลูกโป่งห้อยตรง');
+    }
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.mode) { mode = b.dataset.mode; mode === 'rub' ? explainRub() : mode === 'two' ? explainTwo() : api.note('กด "สะสมประจุในเมฆ" ประจุลบสะสมที่ฐานเมฆ เมื่อมากพอจะเคลื่อนที่ลงสู่พื้นดินอย่างรวดเร็วเป็นฟ้าผ่า'); }
+      if (b.dataset.p) { pair = PAIRS.find((p) => p.key === b.dataset.p); neutral(); s.ox = 430; s.oy = 250; }
+      if (b.id === 'rub5') { s.auto = 5; s.ox = 205; s.oy = 280; }
+      if (b.id === 'neutral') neutral();
+      if (b.id === 'toPaper') { s.target = [630, 300]; }
+      if (b.id === 'back') { s.target = [205, 280]; }
+      if (b.parentNode.id === 'qa') two.qa = +b.dataset.q;
+      if (b.parentNode.id === 'qb') two.qb = +b.dataset.q;
+      if (b.parentNode.id === 'qa' || b.parentNode.id === 'qb') explainTwo();
+      if (b.id === 'storm') sky.auto = true;
+      if (b.id === 'calm') { sky.auto = false; sky.charge = 0; }
+      sync();
+    });
+    function neutral() { s.q = 0; s.strokes = 0; s.flying = []; bits.forEach((b) => (b.stuck = false)); explainRub(); sync(); }
+    function stroke() {
+      s.strokes++;
+      if (s.q < MAXQ) {
+        s.q++;
+        // แอนิเมชันประจุลบย้ายที่
+        const from = pair.toObj ? cloth() : objPos(), to = pair.toObj ? objPos() : cloth();
+        s.flying.push({ x0: from[0], y0: from[1], x1: to[0], y1: to[1], t: 0 });
+      }
+      explainRub(); sync();
+    }
+    const CL = { x0: 70, x1: 330, y0: 170, y1: 420 };
+    const cloth = () => [(CL.x0 + CL.x1) / 2, (CL.y0 + CL.y1) / 2];
+    const objPos = () => [s.ox, s.oy];
+    const onCloth = () => s.ox > CL.x0 && s.ox < CL.x1 && s.oy > CL.y0 - 40 && s.oy < CL.y1;
+
+    // ---------- วาดสัญลักษณ์ประจุ ----------
+    // วาด + และ − แยกกันให้นับง่าย
+    function signs(ctx, cx, cy, rx, ry, plus, minus, seed) {
+      const list = [];
+      for (let i = 0; i < plus; i++) list.push(true);
+      for (let i = 0; i < minus; i++) list.push(false);
+      const n = list.length;
+      const order = list.map((v, i) => ({ v, k: (i * 0.618 + seed) % 1 })).sort((a, b) => a.k - b.k);
+      order.forEach((o, i) => {
+        const a = i * 2.39996 + seed, r = Math.sqrt((i + 0.5) / n);
+        sign(ctx, cx + Math.cos(a) * rx * r * 0.8, cy + Math.sin(a) * ry * r * 0.8, o.v);
+      });
+    }
+    function sign(ctx, x, y, pos) {
+      ctx.lineWidth = 2.6; ctx.strokeStyle = pos ? '#d6332a' : '#1f63d6';
+      ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y); if (pos) { ctx.moveTo(x, y - 6); ctx.lineTo(x, y + 6); } ctx.stroke();
+    }
+
+    function drawCloth(ctx) {
+      const dark = Lab.dark();
+      const { x0, x1, y0, y1 } = CL;
+      if (pair.cloth === 'hair') {
+        ctx.fillStyle = '#f0c9a0'; ctx.beginPath(); ctx.ellipse((x0 + x1) / 2, y1 + 40, 120, 150, 0, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#2b2018'; ctx.lineWidth = 3;
+        for (let i = 0; i < 40; i++) { const x = x0 + 10 + i * 6, f = s.q * 2.5; ctx.beginPath(); ctx.moveTo(x, y1 - 60 + Math.abs(i - 20) * 2.2); ctx.quadraticCurveTo(x + 6, y0 + 40 - f * Math.sin(i), x + (i % 3) * 3, y0 + 10 - f * (1 + Math.sin(i * 1.7))); ctx.stroke(); }
+      } else {
+        ctx.fillStyle = pair.cloth === 'wool' ? (dark ? '#8a7a66' : '#e8dcc4') : (dark ? '#9aa6c8' : '#e3e9fb');
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 16) : ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.fill();
+        if (pair.cloth === 'wool') { ctx.strokeStyle = 'rgba(120,100,70,.35)'; ctx.lineWidth = 2; for (let i = 0; i < 60; i++) { const x = x0 + 12 + (i * 37) % (x1 - x0 - 24), y = y0 + 12 + (i * 53) % (y1 - y0 - 24); ctx.beginPath(); ctx.arc(x, y, 6, 0, 5); ctx.stroke(); } }
+        else { const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, 'rgba(255,255,255,.0)'); g.addColorStop(0.5, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); }
+      }
+      // ประจุบนผ้า: เป็นกลาง NEU คู่ บวก/ลบ ตามที่ย้าย
+      const minus = NEU + (pair.toObj ? -s.q : s.q);
+      signs(ctx, (x0 + x1) / 2, (y0 + y1) / 2 + 20, (x1 - x0) / 2 - 16, (y1 - y0) / 2 - 30, NEU, minus, 0.3);
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(pair.clothName, (x0 + x1) / 2, y1 + 30);
+    }
+    function drawObj(ctx) {
+      const x = s.ox, y = s.oy;
+      let rx = 50, ry = 62;
+      if (pair.obj === 'balloon') {
+        ctx.strokeStyle = '#8a8f99'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y + 66); ctx.quadraticCurveTo(x + 14, y + 110, x - 4, y + 150); ctx.stroke();
+        const g = ctx.createRadialGradient(x - 18, y - 22, 6, x, y, 70); g.addColorStop(0, '#ff8f86'); g.addColorStop(1, '#d8322a');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 52, 64, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#b8261f'; ctx.beginPath(); ctx.moveTo(x - 7, y + 70); ctx.lineTo(x + 7, y + 70); ctx.lineTo(x, y + 62); ctx.fill();
+      } else if (pair.obj === 'comb') {
+        rx = 90; ry = 18;
+        ctx.fillStyle = '#2d3b55'; ctx.fillRect(x - 95, y - 20, 190, 20);
+        for (let i = 0; i < 30; i++) ctx.fillRect(x - 92 + i * 6.3, y, 3, 26);
+      } else {
+        rx = 110; ry = 10;
+        const g = ctx.createLinearGradient(0, y - 12, 0, y + 12); g.addColorStop(0, 'rgba(200,230,255,.95)'); g.addColorStop(0.5, 'rgba(150,200,240,.8)'); g.addColorStop(1, 'rgba(110,170,220,.9)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 120, y - 12, 240, 24, 12) : ctx.rect(x - 120, y - 12, 240, 24); ctx.fill();
+        ctx.strokeStyle = 'rgba(80,130,180,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      const minus = NEU + (pair.toObj ? s.q : -s.q);
+      signs(ctx, x, pair.obj === 'comb' ? y - 4 : y, rx, ry, NEU, minus, 1.1);
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 17px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(pair.objName, x, pair.obj === 'balloon' ? y - 74 : y - 30);
+    }
+    const objBottom = () => [s.ox, s.oy + (pair.obj === 'balloon' ? 60 : pair.obj === 'comb' ? 26 : 12)];
+
+    function sceneRub(ctx, dt) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#3a3328' : '#d9c4a0'; ctx.fillRect(500, 456, 260, 14);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('เศษกระดาษ', 630, 492);
+      drawCloth(ctx);
+      // เศษกระดาษ: ถูกดูดเมื่อวัตถุมีประจุและอยู่ใกล้
+      const [bx, by] = objBottom();
+      const want = Math.round((Math.abs(s.q) / MAXQ) * bits.length * 0.9);
+      let stuck = bits.filter((b) => b.stuck).length;
+      bits.forEach((b, i) => {
+        const near = Math.hypot(b.hx - bx, b.hy - by) < 70 + Math.abs(s.q) * 22;
+        if (!b.stuck && near && stuck < want && s.q !== 0) { b.stuck = true; stuck++; }
+        if (b.stuck && (s.q === 0 || Math.hypot(b.x - bx, b.y - by) > 240)) b.stuck = false;
+        const tx = b.stuck ? bx + ((i % 9) - 4) * 9 : b.hx, ty = b.stuck ? by + 4 + Math.floor((i % 18) / 9) * 6 : b.hy;
+        b.x += (tx - b.x) * Math.min(1, dt * (b.stuck ? 7 : 4)); b.y += (ty - b.y) * Math.min(1, dt * (b.stuck ? 7 : 5)) + (b.stuck ? 0 : 0);
+        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a + (b.stuck ? 0.3 : 0)); ctx.fillStyle = dark ? '#e8e8e8' : '#fffdf2'; ctx.strokeStyle = '#999'; ctx.lineWidth = 0.8;
+        ctx.fillRect(-4, -3, 8, 6); ctx.strokeRect(-4, -3, 8, 6); ctx.restore();
+      });
+      drawObj(ctx);
+      // ประจุลบที่กำลังย้าย
+      s.flying.forEach((f) => { f.t += dt * 1.6; const u = Math.min(1, f.t); sign(ctx, f.x0 + (f.x1 - f.x0) * u, f.y0 + (f.y1 - f.y0) * u - Math.sin(u * Math.PI) * 40, false); });
+      s.flying = s.flying.filter((f) => f.t < 1);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('ลากวัตถุไปมาบน' + pair.clothName + 'เพื่อขัดถู แล้วลากไปใกล้เศษกระดาษ', 16, 28);
+      // ป้ายสัญลักษณ์
+      sign(ctx, 600, 60, true); ctx.fillStyle = Lab.css('--ink'); ctx.fillText('ประจุบวก', 614, 66);
+      sign(ctx, 700, 60, false); ctx.fillText('ประจุลบ', 714, 66);
+    }
+
+    function sceneTwo(ctx, dt) {
+      const dark = Lab.dark();
+      // แรงในแนวนอน: ประจุคู่กัน (+ ผลัก, − ดูด), ประจุกับวัตถุเป็นกลางดูดกันเล็กน้อย
+      const L = 260, top = 60, ax = 330, bxp = 470;
+      const pa = ax + two.xa, pb = bxp + two.xb, d = Math.max(60, pb - pa);
+      let f;
+      if (two.qa && two.qb) f = (two.qa * two.qb) * 3600 / (d * d);
+      else if (two.qa || two.qb) f = -Math.abs(two.qa + two.qb) * 1000 / (d * d);
+      else f = 0;
+      // ลูกโป่งเหมือนลูกตุ้ม: แรงคืนตัว ∝ ระยะออกจากแนวดิ่ง
+      const k = 0.012;
+      two.va += (-f * 40 - k * two.xa * 60 - two.va * 2.2) * dt * 6;
+      two.vb += (f * 40 - k * two.xb * 60 - two.vb * 2.2) * dt * 6;
+      two.xa = Math.max(-150, Math.min(50, two.xa + two.va * dt));
+      two.xb = Math.max(-50, Math.min(150, two.xb + two.vb * dt));
+      // ลูกโป่งชนกันแล้วหยุด ไม่ทะลุกัน
+      const gap = (bxp + two.xb) - (ax + two.xa);
+      if (gap < 104) { const push = (104 - gap) / 2; two.xa -= push; two.xb += push; two.va = Math.min(0, two.va); two.vb = Math.max(0, two.vb); }
+      ctx.fillStyle = dark ? '#8a93a3' : '#5b6372'; ctx.fillRect(200, top - 10, 400, 10);
+      [[ax, two.xa, two.qa], [bxp, two.xb, two.qb]].forEach(([x0, dx, q], i) => {
+        const ang = Math.asin(Math.max(-0.9, Math.min(0.9, dx / L))), bx = x0 + Math.sin(ang) * L, by = top + Math.cos(ang) * L;
+        ctx.strokeStyle = '#8a8f99'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, top); ctx.lineTo(bx, by - 64); ctx.stroke();
+        const g = ctx.createRadialGradient(bx - 18, by - 22, 6, bx, by, 70); g.addColorStop(0, i ? '#9fd0ff' : '#ff8f86'); g.addColorStop(1, i ? '#2f6fde' : '#d8322a');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(bx, by, 48, 60, ang, 0, 7); ctx.fill();
+        signs(ctx, bx, by, 44, 54, 6 + (q > 0 ? q : 0), 6 + (q < 0 ? -q : 0), i * 0.7);
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 16px Sarabun, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(q < 0 ? 'ประจุลบ' : q > 0 ? 'ประจุบวก' : 'เป็นกลาง', bx, by + 88);
+        // ลูกศรแรง
+        if (Math.abs(f) > 0.02) {
+          const dir = (i === 0 ? -1 : 1) * Math.sign(f), len = Math.min(90, 20 + Math.abs(f) * 60), yy = by;
+          ctx.strokeStyle = Lab.css('--ok'); ctx.fillStyle = Lab.css('--ok'); ctx.lineWidth = 4;
+          const sx = bx + dir * 54, ex = sx + dir * len;
+          ctx.beginPath(); ctx.moveTo(sx, yy); ctx.lineTo(ex, yy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(ex + dir * 10, yy); ctx.lineTo(ex, yy - 8); ctx.lineTo(ex, yy + 8); ctx.closePath(); ctx.fill();
+        }
+      });
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 22px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      const msg = two.qa && two.qb ? (two.qa * two.qb > 0 ? 'ประจุชนิดเดียวกัน → ผลักกัน' : 'ประจุต่างชนิดกัน → ดึงดูดกัน') : two.qa || two.qb ? 'มีประจุ กับ เป็นกลาง → ดึงดูดกันเล็กน้อย' : 'เป็นกลางทั้งคู่ → ไม่มีแรงไฟฟ้า';
+      ctx.fillText(msg, 400, 470);
+    }
+
+    function sceneSky(ctx, dt) {
+      const dark = Lab.dark();
+      if (sky.auto) sky.charge = Math.min(1, sky.charge + dt * 0.25);
+      if (sky.charge >= 1 && !sky.bolt) {
+        const pts = [[380, 150]]; let x = 380, y = 150; while (y < 420) { y += 20 + Math.random() * 25; x += (Math.random() - 0.5) * 50; pts.push([x, Math.min(y, 420)]); }
+        sky.bolt = { pts, t: 0 }; sky.flash = 1; sky.charge = 0.05;
+        api.note('<b>ฟ้าผ่า!</b> ประจุไฟฟ้าจำนวนมากเคลื่อนที่จากเมฆลงสู่พื้นดินอย่างรวดเร็ว เกิดแสงสว่างจ้าและเสียงฟ้าร้อง');
+      }
+      ctx.fillStyle = dark ? '#1a2030' : '#c8d4e6'; ctx.fillRect(0, 0, W, H);
+      if (sky.flash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + sky.flash * 0.7 + ')'; ctx.fillRect(0, 0, W, H); sky.flash -= dt * 2; }
+      // พื้นดิน บ้าน ต้นไม้
+      ctx.fillStyle = dark ? '#2f3b26' : '#7aa05a'; ctx.fillRect(0, 420, W, 100);
+      ctx.fillStyle = '#7d5a3a'; ctx.fillRect(612, 300, 14, 120); ctx.fillStyle = '#3f7a3a'; ctx.beginPath(); ctx.arc(619, 290, 46, 0, 7); ctx.fill();
+      ctx.fillStyle = dark ? '#c9ced8' : '#f2ede2'; ctx.fillRect(120, 360, 110, 60); ctx.fillStyle = '#b8483a'; ctx.beginPath(); ctx.moveTo(110, 362); ctx.lineTo(175, 316); ctx.lineTo(240, 362); ctx.fill();
+      // เมฆ
+      ctx.fillStyle = dark ? '#4a5266' : '#6f7787';
+      [[300, 110, 70], [380, 90, 80], [470, 110, 70], [350, 140, 60], [430, 140, 60]].forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); });
+      const n = Math.round(sky.charge * 14);
+      for (let i = 0; i < 14; i++) sign(ctx, 280 + i * 15, 50 + (i % 2) * 10, true);
+      for (let i = 0; i < n; i++) sign(ctx, 290 + (i % 7) * 30, 160 + Math.floor(i / 7) * 16, false);
+      for (let i = 0; i < n; i++) sign(ctx, 270 + (i % 7) * 36, 438 + Math.floor(i / 7) * 14, true);
+      if (sky.bolt) {
+        sky.bolt.t += dt;
+        ctx.strokeStyle = 'rgba(255,250,200,' + Math.max(0, 1 - sky.bolt.t * 2) + ')'; ctx.lineWidth = 5; ctx.beginPath();
+        sky.bolt.pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke();
+        if (sky.bolt.t > 0.6) sky.bolt = null;
+      }
+      ctx.fillStyle = dark ? '#fff' : '#1c2230'; ctx.font = '16px Sarabun, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('ประจุลบสะสมที่ฐานเมฆ ประจุบวกถูกเหนี่ยวนำที่พื้นดิน', 16, 494);
+      ctx.fillRect(600, 30, 160, 14); ctx.fillStyle = '#f0a93b'; ctx.fillRect(600, 30, 160 * sky.charge, 14);
+      ctx.fillStyle = dark ? '#fff' : '#1c2230'; ctx.fillText('ประจุในเมฆ', 600, 64);
+    }
+
+    function toDesign(e) { const [x, y] = Lab.pos(canvas, e), sc = Math.min(cv.w / W, cv.h / H); return [(x - (cv.w - W * sc) / 2) / sc, (y - (cv.h - H * sc) / 2) / sc]; }
+    canvas.addEventListener('pointerdown', (e) => {
+      if (mode !== 'rub') return;
+      const [x, y] = toDesign(e);
+      if (Math.abs(x - s.ox) < (pair.obj === 'balloon' ? 60 : 125) && Math.abs(y - s.oy) < (pair.obj === 'balloon' ? 75 : 40)) { s.drag = { dx: x - s.ox, dy: y - s.oy }; s.lastX = x; s.target = null; try { canvas.setPointerCapture(e.pointerId); } catch (er) {} }
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!s.drag) return;
+      const [x, y] = toDesign(e);
+      s.ox = Math.max(60, Math.min(W - 60, x - s.drag.dx)); s.oy = Math.max(80, Math.min(400, y - s.drag.dy));
+      // นับการถู: เปลี่ยนทิศไปมาบนผ้า
+      if (onCloth()) {
+        const d = x - s.lastX, dir = Math.sign(d);
+        if (dir && dir !== s.dir) { if (s.travel > 35) stroke(); s.travel = 0; s.dir = dir; }
+        s.travel += Math.abs(d);
+      }
+      s.lastX = x;
+    });
+    ['pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, () => { s.drag = null; }));
+
+    let autoT = 0;
+    explainRub(); sync();
+    Lab.loop((dt) => {
+      if (mode === 'rub') {
+        if (s.auto > 0) { autoT += dt; s.ox = 205 + Math.sin(autoT * 9) * 70; s.oy = 280; if (autoT > 0.35) { autoT = 0; s.auto--; stroke(); } }
+        if (s.target && !s.drag) { s.ox += (s.target[0] - s.ox) * Math.min(1, dt * 4); s.oy += (s.target[1] - s.oy) * Math.min(1, dt * 4); if (Math.hypot(s.target[0] - s.ox, s.target[1] - s.oy) < 1) s.target = null; }
+      }
+      if (!cv.w) return;
+      const ctx = cv.ctx, sc = Math.min(cv.w / W, cv.h / H);
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      ctx.save(); ctx.translate((cv.w - W * sc) / 2, (cv.h - H * sc) / 2); ctx.scale(sc, sc);
+      if (mode === 'rub') sceneRub(ctx, dt); else if (mode === 'two') sceneTwo(ctx, dt); else sceneSky(ctx, dt);
+      ctx.restore();
+    });
+  },
+});
+</script>
+</body>
+</html>

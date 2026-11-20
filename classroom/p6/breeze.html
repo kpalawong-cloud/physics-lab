@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ลมบกและลมทะเล · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 560px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 460px; } }
+  .clock { font: 600 34px/1.1 "Consolas", "SF Mono", ui-monospace, monospace; text-align: center; background: #10141b; color: #ffd36b;
+    border-radius: 12px; padding: 8px; }
+  .clock small { display: block; font: 400 13px "Sarabun", sans-serif; color: #c9b88a; }
+  .temps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .temps div { background: var(--soft); border-radius: 10px; padding: 8px; text-align: center; }
+  .temps b { display: block; font-size: 26px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'breeze',
+  title: 'ลมบกและลมทะเล',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'เลื่อนเวลาตั้งแต่เช้าจนถึงกลางคืน ดูว่าพื้นดินกับพื้นน้ำร้อนขึ้นและเย็นลงต่างกันอย่างไร และลมพัดไปทางไหน',
+  about:
+    '<p><b>ลม</b> คืออากาศที่เคลื่อนที่ เกิดจากอุณหภูมิของอากาศสองบริเวณต่างกัน อากาศที่ร้อนขยายตัว เบาลง และลอยตัวสูงขึ้น ' +
+    'ทำให้บริเวณนั้นมี<b>ความกดอากาศต่ำ</b> อากาศที่เย็นกว่าซึ่งมี<b>ความกดอากาศสูง</b>จะเคลื่อนเข้ามาแทนที่</p>' +
+    '<p><b>พื้นดินร้อนเร็วและเย็นเร็วกว่าพื้นน้ำ</b> เมื่อได้รับความร้อนจากดวงอาทิตย์เท่ากัน</p>' +
+    '<p><b>ลมทะเล</b> เกิดในเวลากลางวัน พื้นดินร้อนกว่าพื้นน้ำ อากาศเหนือพื้นดินลอยตัวขึ้น อากาศเย็นจากทะเลจึงพัดเข้าหาฝั่ง</p>' +
+    '<p><b>ลมบก</b> เกิดในเวลากลางคืน พื้นดินเย็นเร็วกว่าพื้นน้ำ อากาศเหนือทะเลอุ่นกว่าจึงลอยตัวขึ้น อากาศจากฝั่งจึงพัดออกสู่ทะเล</p>' +
+    '<p>ชาวประมงพื้นบ้านอาศัยลมบกแล่นเรือออกทะเลตอนกลางคืน และอาศัยลมทะเลแล่นเรือกลับเข้าฝั่งตอนเช้าถึงสาย</p>',
+  think: [
+    'ตอนบ่ายที่ชายหาด ลมพัดมาจากทางไหน เพราะเหตุใด',
+    'ทำไมพื้นดินจึงร้อนเร็วกว่าน้ำ ลองนึกถึงทรายกับน้ำทะเลตอนเที่ยงวัน',
+    'ช่วงเวลาใดที่ลมแทบไม่พัด สังเกตจากอุณหภูมิของพื้นดินกับพื้นน้ำ',
+    'ถ้าเป็นชาวประมงที่ใช้เรือใบ ควรออกเรือเวลาใด และกลับเวลาใด',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const cv = Lab.canvas(stage.querySelector('canvas'));
+    const s = { t: 14, play: false, speed: 2 };
+
+    panel.innerHTML =
+      '<div class="clock"><span id="clk">14:00</span><small>เวลาในหนึ่งวัน</small></div>' +
+      '<h3>เลื่อนเวลา</h3><input type="range" id="tm" min="0" max="24" step="0.05">' +
+      '<div class="row"><button class="btn primary" id="play">▶ เล่น</button><button class="btn" id="day">บ่ายโมง</button><button class="btn" id="night">ตีสอง</button></div>' +
+      '<h3>ความเร็วเวลา</h3><div class="seg" id="spd"><button data-v="1">ช้า</button><button data-v="2">ปกติ</button><button data-v="5">เร็ว</button></div>' +
+      '<div class="temps"><div>พื้นดิน<b id="tL">–</b></div><div>พื้นน้ำ<b id="tS">–</b></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const tm = $('#tm');
+    const setT = (t) => { s.t = ((t % 24) + 24) % 24; tm.value = s.t; };
+    setT(s.t);
+    tm.oninput = () => setT(+tm.value);
+    const showPlay = () => { $('#play').textContent = s.play ? '❚❚ หยุด' : '▶ เล่น'; $('#play').classList.toggle('primary', !s.play); };
+    $('#play').onclick = () => { s.play = !s.play; showPlay(); };
+    $('#day').onclick = () => { setT(13); s.play = false; showPlay(); };
+    $('#night').onclick = () => { setT(2); s.play = false; showPlay(); };
+    const spd = $('#spd');
+    const syncSpd = () => spd.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s.speed));
+    spd.onclick = (e) => { const b = e.target.closest('button'); if (b) { s.speed = +b.dataset.v; syncSpd(); } };
+    syncSpd();
+
+    // อุณหภูมิผิวพื้น (°C): ดินขึ้นลงมากและไว น้ำเปลี่ยนน้อย
+    const TL = (t) => 29.5 + 7 * Math.sin((2 * Math.PI * (t - 9)) / 24);
+    const TS = (t) => 29 + 1.2 * Math.sin((2 * Math.PI * (t - 11)) / 24);
+    const sun = (t) => Math.sin((Math.PI * (t - 6)) / 12); // > 0 กลางวัน
+
+    // ก้อนอากาศวนเป็นวง: ผิวพื้น → ลอยขึ้น → ด้านบน → จมลง
+    const parcels = [];
+    for (let i = 0; i < 46; i++) parcels.push({ u: i / 46, j: Math.random() });
+    let lastNote = '';
+
+    function loopPos(u, L) {
+      // วงสี่เหลี่ยมมุมมน: 0–0.35 ผิวพื้น (ทะเล→ฝั่ง), 0.35–0.5 ขึ้น, 0.5–0.85 ด้านบน (ฝั่ง→ทะเล), 0.85–1 ลง
+      const { x0, x1, yLo, yHi } = L;
+      if (u < 0.35) { const k = u / 0.35; return [x0 + (x1 - x0) * k, yLo]; }
+      if (u < 0.5) { const k = (u - 0.35) / 0.15; return [x1, yLo + (yHi - yLo) * k]; }
+      if (u < 0.85) { const k = (u - 0.5) / 0.35; return [x1 + (x0 - x1) * k, yHi]; }
+      const k = (u - 0.85) / 0.15; return [x0, yHi + (yLo - yHi) * k];
+    }
+
+    function arrow(ctx, x0, y0, x1, y1, col, wdt) {
+      const a = Math.atan2(y1 - y0, x1 - x0), hl = 10 + wdt * 2.2;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = wdt; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - Math.cos(a) * hl * 0.6, y1 - Math.sin(a) * hl * 0.6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - hl * Math.cos(a - 0.45), y1 - hl * Math.sin(a - 0.45));
+      ctx.lineTo(x1 - hl * Math.cos(a + 0.45), y1 - hl * Math.sin(a + 0.45)); ctx.closePath(); ctx.fill();
+    }
+
+    function draw(dt) {
+      if (!cv.w) return;
+      if (s.play) setT(s.t + dt * 0.6 * s.speed);
+      const ctx = cv.ctx, w = cv.w, h = cv.h, t = s.t;
+      const tl = TL(t), ts = TS(t), d = tl - ts; // > 0 ลมทะเล, < 0 ลมบก
+      const sn = sun(t), dayK = Math.max(0, Math.min(1, sn * 2 + 0.3));
+      const ground = h * 0.66, shore = w * 0.5;
+      // ท้องฟ้า
+      const sky = ctx.createLinearGradient(0, 0, 0, ground);
+      const mix = (a, b) => a.map((v, i) => Math.round(v * (1 - dayK) + b[i] * dayK));
+      sky.addColorStop(0, 'rgb(' + mix([14, 22, 48], [96, 168, 235]) + ')');
+      sky.addColorStop(1, 'rgb(' + mix([40, 52, 92], [196, 228, 250]) + ')');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, ground);
+      // ดวงอาทิตย์ / ดวงจันทร์ เคลื่อนเป็นวงโค้ง
+      const ang = (Math.PI * (t - 6)) / 12;
+      const cx = w * 0.5 - Math.cos(ang) * w * 0.42, cy = ground - Math.sin(ang) * (ground - 50);
+      if (sn > -0.05) { ctx.fillStyle = '#ffd34d'; ctx.beginPath(); ctx.arc(cx, cy, 26, 0, 7); ctx.fill(); }
+      else {
+        const ma = ang + Math.PI, mx = w * 0.5 - Math.cos(ma) * w * 0.42, my = ground - Math.sin(ma) * (ground - 50);
+        ctx.fillStyle = '#f2f0dc'; ctx.beginPath(); ctx.arc(mx, my, 20, 0, 7); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 24; i++) { ctx.fillRect((i * 97) % w, (i * 53) % (ground * 0.6), 2, 2); }
+      }
+      // ทะเล (ซ้าย) และพื้นดิน (ขวา)
+      ctx.fillStyle = dayK > 0.5 ? '#2f7fc1' : '#1d4f7a'; ctx.fillRect(0, ground, shore, h - ground);
+      ctx.fillStyle = 'rgba(255,255,255,.25)';
+      for (let i = 0; i < 6; i++) { const yy = ground + 14 + i * 18; ctx.fillRect(10 + ((i * 41 + performance.now() / 40) % 60), yy, shore - 80, 2); }
+      ctx.fillStyle = dayK > 0.5 ? '#d9b26a' : '#8a7448';
+      ctx.beginPath(); ctx.moveTo(shore - 30, h); ctx.lineTo(shore - 10, ground); ctx.lineTo(w, ground); ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = dayK > 0.5 ? '#6aa84f' : '#3f6a30'; ctx.fillRect(shore + 90, ground - 6, w - shore - 90, 8);
+      // ต้นมะพร้าว + บ้าน
+      const tx = shore + 60;
+      ctx.strokeStyle = '#7a5530'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(tx, ground); ctx.quadraticCurveTo(tx + 8, ground - 50, tx - 4, ground - 100); ctx.stroke();
+      ctx.strokeStyle = '#3d8c3a'; ctx.lineWidth = 5;
+      const sway = Math.max(-1, Math.min(1, d / 5)) * 10;
+      for (let i = 0; i < 5; i++) { const a = -2.6 + i * 0.55; ctx.beginPath(); ctx.moveTo(tx - 4, ground - 100); ctx.quadraticCurveTo(tx - 4 + Math.cos(a) * 30 + sway, ground - 110 + Math.sin(a) * 20, tx - 4 + Math.cos(a) * 52 + sway * 1.5, ground - 96 + Math.sin(a) * 30 + 20); ctx.stroke(); }
+      ctx.fillStyle = '#c9876a'; ctx.fillRect(w - 150, ground - 50, 70, 46);
+      ctx.fillStyle = '#8a3b2a'; ctx.beginPath(); ctx.moveTo(w - 160, ground - 50); ctx.lineTo(w - 115, ground - 82); ctx.lineTo(w - 70, ground - 50); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = dayK > 0.5 ? '#3b2f2a' : '#ffd36b'; ctx.fillRect(w - 128, ground - 36, 18, 18);
+
+      // เรือประมง: กลางคืนออกทะเล กลางวันกลับฝั่ง
+      const out = Math.max(0, Math.min(1, 0.5 - d / 4));
+      const bx = shore - 70 - out * (shore - 140), by = ground - 2;
+      ctx.fillStyle = '#7a4a24'; ctx.beginPath(); ctx.moveTo(bx - 34, by - 6); ctx.lineTo(bx + 34, by - 6); ctx.lineTo(bx + 24, by + 8); ctx.lineTo(bx - 24, by + 8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by - 6); ctx.lineTo(bx, by - 60); ctx.stroke();
+      const sail = Math.sign(d || 1) * Math.min(1, Math.abs(d) / 3 + 0.3);
+      ctx.fillStyle = '#f4efe2'; ctx.beginPath(); ctx.moveTo(bx, by - 58); ctx.quadraticCurveTo(bx + 30 * sail, by - 36, bx, by - 12); ctx.closePath(); ctx.fill();
+
+      // วงการไหลของอากาศ
+      const L = { x0: w * 0.14, x1: w * 0.86, yLo: ground - 28, yHi: Math.max(70, ground - 250) };
+      const dir = d >= 0 ? 1 : -1, str = Math.min(1, Math.abs(d) / 5);
+      parcels.forEach((p) => {
+        p.u = (p.u + dt * (0.012 + 0.07 * str) * s.speed * 0.6) % 1;
+        let [x, y] = loopPos(p.u, L);
+        if (dir < 0) x = L.x0 + L.x1 - x; // ลมบก: กลับด้านทั้งวง
+        const warm = (dir > 0 && x > w * 0.5) || (dir < 0 && x < w * 0.5);
+        ctx.fillStyle = warm ? 'rgba(240,110,60,' + (0.35 + 0.5 * str) + ')' : 'rgba(80,150,240,' + (0.35 + 0.5 * str) + ')';
+        ctx.beginPath(); ctx.arc(x + (p.j - 0.5) * 16, y + (p.j - 0.5) * 22, 6, 0, 7); ctx.fill();
+      });
+      // ลูกศรใหญ่บอกทิศลมที่ผิวพื้น และการลอยตัว/จมตัว
+      if (str > 0.08) {
+        const wd = 4 + 6 * str, yA = ground - 58;
+        const warmX = dir > 0 ? w * 0.74 : w * 0.26, coolX = dir > 0 ? w * 0.26 : w * 0.74;
+        arrow(ctx, dir > 0 ? w * 0.2 : w * 0.8, yA, dir > 0 ? w * 0.68 : w * 0.32, yA, 'rgba(30,90,200,.9)', wd);
+        arrow(ctx, warmX, ground - 90, warmX, L.yHi + 92, 'rgba(220,80,40,.85)', wd * 0.8);
+        arrow(ctx, coolX, L.yHi + 80, coolX, ground - 90, 'rgba(60,120,220,.7)', wd * 0.8);
+        ctx.font = '600 ' + Math.min(22, w / 17) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = dayK > 0.4 ? '#0b2a6b' : '#d6e4ff';
+        ctx.fillText(dir > 0 ? 'ลมทะเล: พัดจากทะเลเข้าหาฝั่ง' : 'ลมบก: พัดจากฝั่งออกสู่ทะเล', w * 0.5, yA - 10);
+        // ป้ายบอกการลอยตัว/จมตัว มีพื้นหลังทึบ ไม่ปนกับจุดก้อนอากาศ
+        const label = (x, l1, l2, col) => {
+          ctx.font = '600 ' + Math.min(15, w / 26) + 'px Sarabun, sans-serif';
+          const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 16, by = L.yHi + 26;
+          ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(x - bw / 2, by, bw, 44);
+          ctx.fillStyle = col; ctx.textBaseline = 'top';
+          ctx.fillText(l1, x, by + 4); ctx.fillText(l2, x, by + 23);
+          ctx.textBaseline = 'bottom';
+        };
+        label(warmX, 'อากาศร้อนลอยตัวขึ้น', 'ความกดอากาศต่ำ', '#9a2b10');
+        label(coolX, 'อากาศเย็นจมตัวลง', 'ความกดอากาศสูง', '#123d8a');
+      } else {
+        ctx.font = '600 ' + Math.min(22, w / 17) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = dayK > 0.4 ? '#0b2a6b' : '#d6e4ff';
+        ctx.fillText('ลมสงบ: พื้นดินกับพื้นน้ำอุณหภูมิใกล้กัน', w * 0.5, ground - 60);
+      }
+      // ป้ายอุณหภูมิบนพื้น
+      const tag = (x, label, T) => {
+        ctx.fillStyle = 'rgba(16,20,27,.78)'; ctx.fillRect(x - 70, ground + 26, 140, 52);
+        ctx.fillStyle = '#fff'; ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(label, x, ground + 30);
+        ctx.font = '600 22px Sarabun, sans-serif'; ctx.fillStyle = T > 32 ? '#ff9a6b' : T < 27 ? '#8cc0ff' : '#ffe08a';
+        ctx.fillText(T.toFixed(1) + ' °C', x, ground + 50);
+      };
+      tag(w * 0.24, 'พื้นน้ำ (ทะเล)', ts); tag(w * 0.78, 'พื้นดิน', tl);
+
+      const hh = Math.floor(t), mm = Math.floor((t - hh) * 60);
+      $('#clk').textContent = String(hh % 24).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+      $('#tL').textContent = tl.toFixed(1) + ' °C'; $('#tS').textContent = ts.toFixed(1) + ' °C';
+      const note = str <= 0.08 ? '<b>ลมสงบ</b> พื้นดินกับพื้นน้ำร้อนใกล้เคียงกัน อากาศจึงแทบไม่เคลื่อนที่'
+        : d > 0 ? '<b>ลมทะเล</b> พื้นดินร้อนกว่าพื้นน้ำ ' + d.toFixed(1) + ' °C อากาศเหนือพื้นดินลอยตัวขึ้น อากาศเย็นจากทะเลจึงพัดเข้ามาแทนที่'
+          : '<b>ลมบก</b> พื้นดินเย็นกว่าพื้นน้ำ ' + (-d).toFixed(1) + ' °C อากาศเหนือทะเลลอยตัวขึ้น อากาศจากฝั่งจึงพัดออกไปแทนที่';
+      if (note !== lastNote) { api.note(note); lastNote = note; }
+    }
+    Lab.loop(draw);
+  },
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ปรากฏการณ์เรือนกระจก · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 580px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 480px; } }
+  .temp { font: 600 34px/1.1 "Consolas", "SF Mono", ui-monospace, monospace; text-align: center; background: #10141b; color: #ffb36b; border-radius: 12px; padding: 8px; }
+  .temp small { display: block; font: 400 13px "Sarabun", sans-serif; color: #c9a88a; }
+  .acts label { display: flex; gap: 8px; align-items: center; margin: 5px 0; font-size: 15.5px; }
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .presets .btn { padding: 6px 4px; font-size: 14.5px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ระดับแก๊สเรือนกระจก g (0–4) → อุณหภูมิเฉลี่ยผิวโลก (°C) แบบจำลองอย่างง่ายเพื่อการสอน
+const GT = [[0, -18], [1, 4], [2, 14], [3, 15], [4, 18]];
+const tempOf = (g) => { for (let i = 1; i < GT.length; i++) if (g <= GT[i][0]) { const [a, ta] = GT[i - 1], [b, tb] = GT[i]; return ta + ((g - a) / (b - a)) * (tb - ta); } return GT[GT.length - 1][1]; };
+const LEVELS = [{ g: 0, n: 'ไม่มีชั้นบรรยากาศ' }, { g: 2, n: 'ก่อนยุคอุตสาหกรรม' }, { g: 3, n: 'ปัจจุบัน' }, { g: 4, n: 'มากขึ้นในอนาคต' }];
+const ACTS = [
+  { k: 'fuel', n: '🚗 เผาเชื้อเพลิง: รถยนต์ โรงไฟฟ้า โรงงาน (CO₂)', d: 0.35 },
+  { k: 'forest', n: '🪓 ตัดไม้ทำลายป่า (ต้นไม้ดูด CO₂ ได้น้อยลง)', d: 0.25 },
+  { k: 'rice', n: '🌾 นาข้าวขังน้ำและเลี้ยงวัว (มีเทน)', d: 0.15 },
+  { k: 'waste', n: '🗑️ ขยะฝังกลบและเผาขยะ (มีเทน CO₂)', d: 0.1 },
+];
+const FIX = [
+  { k: 'tree', n: '🌳 ปลูกต้นไม้ รักษาป่า', d: -0.3 },
+  { k: 'solar', n: '☀️ ใช้พลังงานแสงอาทิตย์และลม', d: -0.35 },
+  { k: 'bus', n: '🚲 เดิน ปั่นจักรยาน ใช้ขนส่งสาธารณะ', d: -0.15 },
+  { k: 'reduce', n: '♻️ ลดขยะ แยกขยะ ใช้ซ้ำ', d: -0.1 },
+];
+
+SimKit.page({
+  id: 'greenhouse',
+  title: 'ปรากฏการณ์เรือนกระจก',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'ดูแสงจากดวงอาทิตย์ที่ส่องมายังโลก และความร้อนที่โลกปล่อยกลับออกไป แก๊สเรือนกระจกทำให้โลกอบอุ่น แต่ถ้ามากเกินไปโลกจะร้อนขึ้น',
+  about:
+    '<p>แสงจากดวงอาทิตย์ผ่านชั้นบรรยากาศลงมาทำให้พื้นโลกอุ่นขึ้น พื้นโลกจึงปล่อย<b>ความร้อน (รังสีอินฟราเรด)</b> กลับขึ้นไป ' +
+    '<b>แก๊สเรือนกระจก</b> เช่น แก๊สคาร์บอนไดออกไซด์ (CO₂) แก๊สมีเทน (CH₄) และไอน้ำ ดูดกลืนความร้อนนี้ไว้บางส่วน แล้วปล่อยออกไปทุกทิศทาง ส่วนหนึ่งกลับลงมาที่พื้นโลก</p>' +
+    '<p>ปรากฏการณ์นี้ทำให้อุณหภูมิเฉลี่ยของโลกประมาณ 15 °C ถ้าไม่มีแก๊สเรือนกระจกเลย โลกจะเย็นถึงประมาณ −18 °C สิ่งมีชีวิตจึงอยู่ได้เพราะปรากฏการณ์เรือนกระจก</p>' +
+    '<p>กิจกรรมของมนุษย์ เช่น การเผาเชื้อเพลิง การตัดไม้ทำลายป่า นาข้าวและการเลี้ยงสัตว์ ทำให้แก๊สเรือนกระจกเพิ่มขึ้น โลกจึงร้อนขึ้น เรียกว่า<b>ภาวะโลกร้อน</b> ' +
+    'ส่งผลให้น้ำแข็งขั้วโลกและธารน้ำแข็งละลาย ระดับน้ำทะเลสูงขึ้น ปะการังฟอกขาว และสภาพอากาศแปรปรวน</p>' +
+    '<p>ชื่อ "เรือนกระจก" มาจากโรงเรือนปลูกพืชที่มีหลังคากระจก แสงเข้าไปได้แต่ความร้อนออกมายาก ภายในจึงอุ่นกว่าภายนอก เหมือนรถที่จอดตากแดดโดยปิดกระจก</p>' +
+    '<p class="muted" style="font-size:14px">ตัวเลขอุณหภูมิในภาพจำลองเป็นค่าประมาณเพื่อการสอน</p>',
+  think: [
+    'ถ้าไม่มีแก๊สเรือนกระจกเลย โลกจะเป็นอย่างไร ปรากฏการณ์เรือนกระจกเป็นเรื่องดีหรือไม่ดี',
+    'ทำไมการตัดไม้ทำลายป่าจึงทำให้แก๊สคาร์บอนไดออกไซด์ในอากาศเพิ่มขึ้น',
+    'ภาวะโลกร้อนส่งผลต่อประเทศไทยอย่างไรบ้าง',
+    'นักเรียนช่วยลดแก๊สเรือนกระจกได้อย่างไรในชีวิตประจำวัน',
+    'ทำไมรถที่จอดตากแดดโดยปิดกระจกจึงร้อนกว่าข้างนอกมาก',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const cv = Lab.canvas(stage.querySelector('canvas'));
+    const s = { mode: 'ray', g: 3, T: 15, on: {}, glass: true, car: 33, carT: 0 };
+    let lastNote = '';
+    panel.innerHTML =
+      '<div class="seg" id="mode"><button data-v="ray">แสงและความร้อน</button><button data-v="human">ฝีมือมนุษย์</button><button data-v="car">รถตากแดด</button></div>' +
+      '<div class="temp" style="margin-top:10px"><span id="tv">15.0 °C</span><small id="tl">อุณหภูมิเฉลี่ยผิวโลก</small></div>' +
+      '<div id="pRay"><h3>ปริมาณแก๊สเรือนกระจก</h3><input type="range" id="gas" min="0" max="4" step="0.02">' +
+      '<div class="presets">' + LEVELS.map((l) => '<button class="btn" data-g="' + l.g + '">' + l.n + '</button>').join('') + '</div></div>' +
+      '<div id="pHuman" class="acts"><h3>กิจกรรมที่เพิ่มแก๊สเรือนกระจก</h3>' + ACTS.map((a) => '<label><input type="checkbox" data-k="' + a.k + '">' + a.n + '</label>').join('') +
+      '<h3>วิธีช่วยลด</h3>' + FIX.map((a) => '<label><input type="checkbox" data-k="' + a.k + '">' + a.n + '</label>').join('') + '</div>' +
+      '<div id="pCar"><h3>กระจกรถ</h3><div class="seg" id="glass"><button data-v="1">ปิดกระจก</button><button data-v="0">เปิดกระจก</button></div>' +
+      '<div class="row"><button class="btn" id="carReset">เริ่มจอดใหม่</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const gas = $('#gas');
+    const setG = (g) => { s.g = Math.max(0, Math.min(4, g)); gas.value = s.g; };
+    setG(s.g);
+    gas.oninput = () => setG(+gas.value);
+    $('.presets').onclick = (e) => { const b = e.target.closest('[data-g]'); if (b) setG(+b.dataset.g); };
+    const humanG = () => 3 + [...ACTS, ...FIX].reduce((a, x) => a + (s.on[x.k] ? x.d : 0), 0);
+    $('#pHuman').addEventListener('change', (e) => { const k = e.target.dataset.k; if (k) { s.on[k] = e.target.checked; setG(humanG()); } });
+    const segMode = $('#mode');
+    function setMode(m) {
+      s.mode = m;
+      segMode.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === m));
+      $('#pRay').style.display = m === 'ray' ? '' : 'none';
+      $('#pHuman').style.display = m === 'human' ? '' : 'none';
+      $('#pCar').style.display = m === 'car' ? '' : 'none';
+      $('#tl').textContent = m === 'car' ? 'อุณหภูมิในรถ (ข้างนอก 33 °C)' : 'อุณหภูมิเฉลี่ยผิวโลก';
+      if (m === 'human') setG(humanG());
+      if (m === 'car') { s.car = 33; s.carT = 0; }
+      lastNote = '';
+    }
+    segMode.onclick = (e) => { const b = e.target.closest('button'); if (b) setMode(b.dataset.v); };
+    const segGlass = $('#glass');
+    const syncGlass = () => segGlass.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === +s.glass));
+    segGlass.onclick = (e) => { const b = e.target.closest('button'); if (b) { s.glass = b.dataset.v === '1'; syncGlass(); } };
+    syncGlass();
+    $('#carReset').onclick = () => { s.car = 33; s.carT = 0; };
+    setMode('ray');
+
+    // โฟตอน: แสงอาทิตย์ (เหลือง) ลงมา ความร้อน (แดง) ขึ้นไป แก๊สดูดกลืนแล้วปล่อยออกทุกทิศ
+    const ph = [];
+    const mols = [];
+    for (let i = 0; i < 60; i++) mols.push({ x: Math.random(), y: Math.random(), t: i % 3, a: Math.random() * 6, hit: 0 });
+    let spawn = 0;
+
+    function drawMol(ctx, x, y, type, glow) {
+      const r = 5;
+      if (glow > 0) { ctx.fillStyle = 'rgba(255,90,60,' + glow * 0.5 + ')'; ctx.beginPath(); ctx.arc(x, y, 16, 0, 7); ctx.fill(); }
+      if (type === 0) { // CO2: O=C=O
+        ctx.fillStyle = '#e04a3a'; ctx.beginPath(); ctx.arc(x - 9, y, r, 0, 7); ctx.arc(x + 9, y, r, 0, 7); ctx.fill();
+        ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, 7); ctx.fill();
+      } else if (type === 1) { // CH4
+        ctx.fillStyle = '#ddd'; [[-8, -6], [8, -6], [-6, 8], [7, 7]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, 3.5, 0, 7); ctx.fill(); });
+        ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, 7); ctx.fill();
+      } else { // H2O
+        ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(x - 7, y + 6, 3.5, 0, 7); ctx.arc(x + 7, y + 6, 3.5, 0, 7); ctx.fill();
+        ctx.fillStyle = '#3a7be0'; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, 7); ctx.fill();
+      }
+    }
+    function wave(ctx, x, y, vx, vy, col, len) {
+      const a = Math.atan2(vy, vx), n = 3;
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i <= 18; i++) {
+        const k = i / 18, px = -k * len, py = Math.sin(k * Math.PI * 2 * n) * 4;
+        const X = x + px * Math.cos(a) - py * Math.sin(a), Y = y + px * Math.sin(a) + py * Math.cos(a);
+        i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill();
+    }
+
+    function sceneRay(ctx, w, h, dt) {
+      const dark = Lab.dark();
+      const ground = h - 70, atmTop = 120, atmBot = ground - 10;
+      // อวกาศ ชั้นบรรยากาศ พื้นโลก
+      ctx.fillStyle = '#070b1a'; ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 40; i++) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect((i * 131) % w, (i * 37) % atmTop, 2, 2); }
+      const atm = ctx.createLinearGradient(0, atmTop, 0, atmBot);
+      atm.addColorStop(0, 'rgba(90,150,255,.05)'); atm.addColorStop(1, 'rgba(120,180,255,' + (0.15 + 0.12 * s.g / 4) + ')');
+      if (s.g > 0.05) { ctx.fillStyle = atm; ctx.fillRect(0, atmTop, w, atmBot - atmTop); }
+      const Tn = s.T;
+      const gc = Tn < 0 ? '#cfe3f0' : Tn > 16.5 ? '#9a8a4a' : '#5aa04a';
+      ctx.fillStyle = gc; ctx.beginPath(); ctx.moveTo(0, ground + 20); ctx.quadraticCurveTo(w / 2, ground - 20, w, ground + 20); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.moveTo(w * 0.62, ground + 12); ctx.quadraticCurveTo(w * 0.8, ground + 2, w, ground + 20); ctx.lineTo(w, h); ctx.lineTo(w * 0.62, h); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('พื้นโลก', 14, h - 14);
+      ctx.fillStyle = 'rgba(200,220,255,.8)'; ctx.textBaseline = 'top'; ctx.fillText(s.g > 0.05 ? 'ชั้นบรรยากาศ' : 'ไม่มีชั้นบรรยากาศ', 14, atmTop + 6);
+      // ดวงอาทิตย์
+      const sx = w * 0.12, sy = 52;
+      const sg = ctx.createRadialGradient(sx, sy, 6, sx, sy, 60); sg.addColorStop(0, '#fff6c0'); sg.addColorStop(0.4, '#ffcf3a'); sg.addColorStop(1, 'rgba(255,180,40,0)');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 60, 0, 7); ctx.fill();
+      // โมเลกุลแก๊ส (จำนวนตามปริมาณแก๊ส)
+      const nMol = Math.round((s.g / 4) * mols.length);
+      for (let i = 0; i < nMol; i++) {
+        const m = mols[i]; m.a += dt * 0.6; m.hit = Math.max(0, m.hit - dt * 1.5);
+        m.px = 20 + m.x * (w - 40) + Math.sin(m.a) * 6; m.py = atmTop + 30 + m.y * (atmBot - atmTop - 50) + Math.cos(m.a * 0.8) * 5;
+        drawMol(ctx, m.px, m.py, m.t, m.hit);
+      }
+      // ปล่อยโฟตอนแสงอาทิตย์
+      spawn += dt;
+      while (spawn > 0.16) {
+        spawn -= 0.16;
+        const tx = w * (0.25 + Math.random() * 0.7);
+        const vx = tx - sx, vy = ground - sy, L = Math.hypot(vx, vy);
+        ph.push({ x: sx + 20, y: sy + 20, vx: (vx / L) * 260, vy: (vy / L) * 260, k: 'sun', life: 0 });
+      }
+      for (let i = ph.length - 1; i >= 0; i--) {
+        const p = ph[i];
+        p.x += p.vx * dt; p.y += p.vy * dt; p.life += dt;
+        if (p.k === 'sun' && p.y >= ground - 4) {
+          // 30% สะท้อนกลับ ที่เหลือทำให้พื้นอุ่น แล้วพื้นปล่อยความร้อนขึ้นไป
+          if (Math.random() < 0.3) { p.vy = -Math.abs(p.vy); p.k = 'refl'; }
+          else { ph.splice(i, 1); const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.2; ph.push({ x: p.x, y: ground - 6, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, k: 'ir', life: 0, hits: 0 }); continue; }
+        }
+        if (p.k === 'ir') {
+          // ชนโมเลกุลแก๊ส: ดูดกลืนแล้วปล่อยออกในทิศสุ่ม
+          for (let j = 0; j < nMol; j++) {
+            const m = mols[j];
+            if (Math.abs(p.x - m.px) < 12 && Math.abs(p.y - m.py) < 12 && p.cool !== j && p.hits < 4) {
+              m.hit = 1; p.hits++; p.cool = j;
+              const a = Math.random() * Math.PI * 2; p.vx = Math.cos(a) * 150; p.vy = Math.sin(a) * 150; break;
+            }
+          }
+          if (p.y >= ground - 4 && p.vy > 0) { ph.splice(i, 1); continue; } // กลับลงมาให้พื้นอุ่น
+        }
+        if (p.y < -20 || p.x < -20 || p.x > w + 20 || p.life > 8) { ph.splice(i, 1); continue; }
+        wave(ctx, p.x, p.y, p.vx, p.vy, p.k === 'sun' ? '#ffd34d' : p.k === 'refl' ? 'rgba(255,230,140,.6)' : '#ff5a3c', p.k === 'ir' ? 26 : 22);
+      }
+      // คำอธิบายสี
+      ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffd34d'; ctx.fillText('แสงอาทิตย์', w - 16, 22);
+      ctx.fillStyle = '#ff7a5c'; ctx.fillText('ความร้อน (อินฟราเรด) จากพื้นโลก', w - 16, 44);
+      if (nMol) {
+        ctx.fillStyle = '#cfd8e8'; ctx.fillText('แก๊สเรือนกระจก: CO₂  มีเทน  ไอน้ำ', w - 16, 66);
+      }
+      // เทอร์โมมิเตอร์บนพื้น
+      thermo(ctx, w - 46, ground - 150, 130, s.T, -20, 25);
+    }
+
+    function thermo(ctx, x, y, hgt, T, lo, hi) {
+      ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(x - 9, y, 18, hgt); ctx.beginPath(); ctx.arc(x, y + hgt + 8, 13, 0, 7); ctx.fill();
+      const k = Math.max(0, Math.min(1, (T - lo) / (hi - lo)));
+      ctx.fillStyle = T < 0 ? '#3a8ad8' : '#e0402a';
+      ctx.fillRect(x - 4, y + hgt * (1 - k), 8, hgt * k + 4); ctx.beginPath(); ctx.arc(x, y + hgt + 8, 9, 0, 7); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.font = '11px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let v = lo; v <= hi; v += 10) { const yy = y + hgt * (1 - (v - lo) / (hi - lo)); ctx.fillRect(x - 9, yy, 6, 1); }
+    }
+
+    function sceneHuman(ctx, w, h) {
+      const dark = Lab.dark();
+      const rise = Math.max(0, s.T - 14); // °C ที่สูงกว่ายุคก่อน
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, rise > 2.5 ? '#e8b07a' : '#8ec5ee'); sky.addColorStop(1, rise > 2.5 ? '#f6dcb8' : '#dff0fb');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+      const base = h * 0.7, sea = base + 10 - rise * 9;
+      // ภูเขาและธารน้ำแข็ง (ซ้าย)
+      ctx.fillStyle = '#7d7a73'; ctx.beginPath(); ctx.moveTo(0, base); ctx.lineTo(w * 0.17, h * 0.18); ctx.lineTo(w * 0.36, base); ctx.closePath(); ctx.fill();
+      const ice = Math.max(0, 1 - rise / 4);
+      if (ice > 0.02) { ctx.fillStyle = '#f4fbff'; ctx.beginPath(); ctx.moveTo(w * 0.17, h * 0.18); ctx.lineTo(w * 0.17 - w * 0.09 * ice, h * 0.18 + (base - h * 0.18) * 0.5 * ice); ctx.lineTo(w * 0.17 + w * 0.09 * ice, h * 0.18 + (base - h * 0.18) * 0.5 * ice); ctx.closePath(); ctx.fill(); }
+      // ชายฝั่งและบ้าน (กลาง)
+      ctx.fillStyle = '#c9a66a'; ctx.fillRect(w * 0.36, base, w * 0.24, h - base);
+      for (let i = 0; i < 3; i++) {
+        const hx = w * 0.4 + i * w * 0.065, flooded = sea < base + 4 && i > 0;
+        ctx.fillStyle = '#d98e6a'; ctx.fillRect(hx, base - 30, w * 0.045, 30);
+        ctx.fillStyle = '#8a3b2a'; ctx.beginPath(); ctx.moveTo(hx - 4, base - 30); ctx.lineTo(hx + w * 0.0225, base - 48); ctx.lineTo(hx + w * 0.049, base - 30); ctx.closePath(); ctx.fill();
+      }
+      // ทะเลด้านขวา ระดับน้ำสูงขึ้นตามอุณหภูมิ
+      ctx.fillStyle = 'rgba(47,111,176,.92)'; ctx.fillRect(w * 0.55, sea, w * 0.45, h - sea);
+      if (sea < base) { ctx.fillStyle = 'rgba(47,111,176,.75)'; ctx.fillRect(w * 0.36, sea, w * 0.24, base - sea + 2); }
+      // ปะการังใต้น้ำ: ฟอกขาวเมื่ออุณหภูมิสูง
+      const bleach = Math.max(0, Math.min(1, (rise - 1) / 2.5));
+      for (let i = 0; i < 6; i++) {
+        const cx = w * 0.62 + i * w * 0.06, cy = h - 12;
+        const col = 'rgb(' + Math.round(240 * (1 - bleach) + 245 * bleach) + ',' + Math.round(110 * (1 - bleach) + 245 * bleach) + ',' + Math.round(120 * (1 - bleach) + 240 * bleach) + ')';
+        ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 34); ctx.moveTo(cx, cy - 18); ctx.lineTo(cx - 12, cy - 32); ctx.moveTo(cx, cy - 22); ctx.lineTo(cx + 12, cy - 38); ctx.stroke();
+      }
+      // ควันจากกิจกรรม
+      const smoke = (x, y, on) => { if (!on) return; const t = performance.now() / 1000; for (let i = 0; i < 4; i++) { const k = (t * 0.4 + i / 4) % 1; ctx.fillStyle = 'rgba(90,90,90,' + 0.4 * (1 - k) + ')'; ctx.beginPath(); ctx.arc(x + k * 30, y - k * 70, 8 + k * 14, 0, 7); ctx.fill(); } };
+      ctx.fillStyle = '#555'; ctx.fillRect(w * 0.06, base - 50, 16, 50); smoke(w * 0.06 + 8, base - 50, s.on.fuel);
+      // ป้ายผลกระทบ
+      ctx.fillStyle = 'rgba(16,20,27,.8)'; ctx.fillRect(12, 12, Math.min(330, w - 24), 104);
+      ctx.fillStyle = '#fff'; ctx.font = '600 17px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('โลกร้อนขึ้นกว่ายุคก่อนอุตสาหกรรม ' + rise.toFixed(1) + ' °C', 22, 20);
+      ctx.font = '15px Sarabun, sans-serif';
+      ctx.fillText('ธารน้ำแข็ง: ' + (ice > 0.8 ? 'ยังมีมาก' : ice > 0.3 ? 'ละลายไปมาก' : 'แทบหมด'), 22, 46);
+      ctx.fillText('ระดับน้ำทะเล: ' + (rise < 1.2 ? 'ปกติ' : rise < 2.5 ? 'สูงขึ้น ชายฝั่งถูกกัดเซาะ' : 'สูงขึ้นมาก น้ำท่วมชายฝั่ง'), 22, 68);
+      ctx.fillText('ปะการัง: ' + (bleach < 0.1 ? 'สีสดใส' : bleach < 0.7 ? 'เริ่มฟอกขาว' : 'ฟอกขาว'), 22, 90);
+    }
+
+    function sceneCar(ctx, w, h, dt) {
+      // รถจอดกลางแดด: ปิดกระจก ความร้อนสะสม เปิดกระจก อากาศระบายออก
+      const out = 33;
+      s.carT += dt * 6; // นาทีจำลอง
+      const target = s.glass ? out + 22 : out + 3;
+      s.car += (target - s.car) * Math.min(1, dt * 0.25);
+      ctx.fillStyle = '#9fd0f2'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#7d7f84'; ctx.fillRect(0, h * 0.78, w, h * 0.22);
+      const sx = w * 0.85, sy = 60; ctx.fillStyle = '#ffcf3a'; ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 7); ctx.fill();
+      const cx = w * 0.42, cy = h * 0.6, cw = Math.min(w * 0.6, 520), chh = cw * 0.36;
+      ctx.fillStyle = '#c8412a';
+      ctx.beginPath(); ctx.moveTo(cx - cw / 2, cy + chh * 0.4); ctx.lineTo(cx - cw / 2, cy); ctx.lineTo(cx - cw * 0.3, cy - chh * 0.55); ctx.lineTo(cx + cw * 0.2, cy - chh * 0.55); ctx.lineTo(cx + cw * 0.38, cy); ctx.lineTo(cx + cw / 2, cy + 6); ctx.lineTo(cx + cw / 2, cy + chh * 0.4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = s.glass ? 'rgba(170,215,240,.85)' : 'rgba(40,40,50,.6)';
+      ctx.beginPath(); ctx.moveTo(cx - cw * 0.27, cy - chh * 0.48); ctx.lineTo(cx + cw * 0.18, cy - chh * 0.48); ctx.lineTo(cx + cw * 0.32, cy - 4); ctx.lineTo(cx - cw * 0.42, cy - 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#222'; [cx - cw * 0.3, cx + cw * 0.3].forEach((x) => { ctx.beginPath(); ctx.arc(x, cy + chh * 0.4, chh * 0.22, 0, 7); ctx.fill(); });
+      // แสงเข้ารถ และความร้อนในรถ
+      const t = performance.now() / 1000;
+      for (let i = 0; i < 4; i++) { const k = (t * 0.6 + i / 4) % 1; wave(ctx, sx - 20 - k * (sx - cx - 20), sy + 20 + k * (cy - sy - 40), -(sx - cx), cy - sy, '#ffd34d', 22); }
+      const heat = Math.max(0, Math.min(1, (s.car - out) / 22));
+      for (let i = 0; i < 7; i++) {
+        const a = t * 1.3 + i * 0.9, px = cx - cw * 0.25 + ((i * 53 + t * 40) % (cw * 0.5)), py = cy - chh * 0.3 + Math.sin(a) * 14;
+        ctx.fillStyle = 'rgba(255,90,60,' + (0.25 + 0.6 * heat) + ')'; ctx.beginPath(); ctx.arc(px, py, 5, 0, 7); ctx.fill();
+        if (!s.glass && i < 3) { const k = (t * 0.5 + i / 3) % 1; ctx.fillStyle = 'rgba(255,90,60,' + 0.5 * (1 - k) + ')'; ctx.beginPath(); ctx.arc(cx + cw * 0.1, cy - chh * 0.55 - k * 80, 5, 0, 7); ctx.fill(); }
+      }
+      ctx.fillStyle = '#10141b'; ctx.font = '600 18px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('ข้างนอก ' + out + ' °C', 16, 16);
+      ctx.fillText('ในรถ ' + s.car.toFixed(1) + ' °C  (จอดมาแล้ว ' + Math.floor(s.carT) + ' นาที)', 16, 42);
+      ctx.font = '15px Sarabun, sans-serif';
+      ctx.fillText(s.glass ? 'แสงผ่านกระจกเข้าไปทำให้ของในรถร้อน แต่ความร้อนออกไม่ได้' : 'เปิดกระจก อากาศร้อนระบายออก อุณหภูมิใกล้ข้างนอก', 16, 70);
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx, w = cv.w, h = cv.h;
+      if (s.mode !== 'car') s.T += (tempOf(s.g) - s.T) * Math.min(1, dt * 1.2);
+      ctx.clearRect(0, 0, w, h);
+      if (s.mode === 'ray') sceneRay(ctx, w, h, dt);
+      else if (s.mode === 'human') sceneHuman(ctx, w, h);
+      else sceneCar(ctx, w, h, dt);
+      $('#tv').textContent = (s.mode === 'car' ? s.car : s.T).toFixed(1) + ' °C';
+      const note = s.mode === 'car' ? (s.glass ? 'ปิดกระจก: เหมือน<b>เรือนกระจก</b> แสงเข้าได้แต่ความร้อนออกยาก ห้ามทิ้งเด็กหรือสัตว์ไว้ในรถ' : 'เปิดกระจก: ความร้อนระบายออกได้ อุณหภูมิในรถจึงไม่สูงมาก')
+        : s.g < 0.3 ? '<b>ไม่มีแก๊สเรือนกระจก</b> ความร้อนจากพื้นโลกหนีออกสู่อวกาศหมด โลกเย็นจัดประมาณ −18 °C'
+          : s.g < 2.5 ? 'แก๊สเรือนกระจก<b>พอเหมาะ</b> ดูดกลืนความร้อนไว้บางส่วน โลกอบอุ่นพอให้สิ่งมีชีวิตอยู่ได้'
+            : s.g < 3.3 ? 'แก๊สเรือนกระจก<b>มากกว่ายุคก่อน</b> จากกิจกรรมของมนุษย์ โลกเริ่มร้อนขึ้น'
+              : '<b>แก๊สเรือนกระจกมากเกินไป</b> ความร้อนถูกกักไว้มาก เกิดภาวะโลกร้อน';
+      if (note !== lastNote) { api.note(note); lastNote = note; }
+    });
+  },
+});
+</script>
+</body>
+</html>

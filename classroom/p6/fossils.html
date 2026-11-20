@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ซากดึกดำบรรพ์ · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 600px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: auto; aspect-ratio: 4 / 3; } }
+  .info { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 10px; }
+  .info h4 { margin: 0 0 4px; font-size: 18px; }
+  .info p { margin: 4px 0; }
+  .steps-list { list-style: none; padding: 0; margin: 8px 0 0; font-size: 15px; }
+  .steps-list li { padding: 4px 8px; border-radius: 8px; color: var(--muted); }
+  .steps-list li.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .badge { display: inline-block; font-size: 13px; padding: 0 9px; border-radius: 999px; font-weight: 600; color: #fff; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const STEPS = [
+  'สิ่งมีชีวิตตายลง ร่างอยู่ริมแหล่งน้ำหรือก้นทะเล',
+  'ส่วนที่อ่อนนุ่มเน่าเปื่อยไป เหลือส่วนแข็ง เช่น กระดูก ฟัน เปลือก',
+  'ตะกอนทับถมปิดซากอย่างรวดเร็ว ซากจึงไม่ถูกทำลาย',
+  'ชั้นตะกอนทับถมหนาขึ้น อัดแน่นกลายเป็นหินตะกอน',
+  'แร่ธาตุในน้ำใต้ดินค่อย ๆ แทนที่เนื้อกระดูก ซากกลายเป็นหิน',
+  'เปลือกโลกยกตัวขึ้น ลมและน้ำกัดกร่อนชั้นหินด้านบน',
+  'ซากโผล่ออกมา นักวิทยาศาสตร์ขุดค้นและศึกษา',
+];
+const TYPES = [
+  { k: 'bone', name: 'ซากกระดูกและฟัน', how: 'ส่วนแข็งของสัตว์ถูกฝังในตะกอน แร่ธาตุแทนที่เนื้อกระดูกจนกลายเป็นหิน รูปร่างยังเหมือนเดิม', ex: 'กระดูกไดโนเสาร์ภูเวียงโกซอรัส สิรินธรเน่ อ.ภูเวียง จ.ขอนแก่น อายุประมาณ 130 ล้านปี' },
+  { k: 'track', name: 'รอยเท้า', how: 'สัตว์เดินบนโคลนหรือทรายเปียก รอยเท้าแห้งแข็งแล้วถูกตะกอนทับถมจนกลายเป็นหิน บอกได้ว่าสัตว์เดินไปทางไหน ตัวใหญ่เท่าใด', ex: 'รอยเท้าไดโนเสาร์ที่ภูแฝก จ.กาฬสินธุ์ และภูหลวง จ.เลย' },
+  { k: 'print', name: 'รอยพิมพ์', how: 'ใบไม้หรือสิ่งมีชีวิตแบน ๆ กดลงในโคลนละเอียด ตัวมันสลายไป เหลือเพียงรอยประทับในเนื้อหิน', ex: 'รอยพิมพ์ใบเฟิร์นและใบไม้ในหินดินดาน' },
+  { k: 'cast', name: 'รูปหล่อ', how: 'เปลือกหอยถูกฝังแล้วละลายไป เกิดช่องว่างเป็นแม่พิมพ์ จากนั้นแร่ธาตุเข้าไปเติมเต็มช่องว่าง ได้เป็นรูปหล่อตามรูปร่างเดิม', ex: 'แอมโมไนต์และหอยทะเลในหินปูน' },
+  { k: 'amber', name: 'อำพัน', how: 'แมลงติดอยู่ในยางไม้เหนียว ยางไม้แข็งตัวเป็นอำพัน รักษาร่างแมลงไว้ได้ครบแม้แต่ปีกบาง ๆ', ex: 'แมลงและแมงมุมในอำพันที่พบในหลายประเทศ' },
+  { k: 'wood', name: 'ไม้กลายเป็นหิน', how: 'ลำต้นไม้ถูกฝังในตะกอน ซิลิกาในน้ำใต้ดินแทนที่เนื้อไม้ทีละน้อย จนเห็นวงปีเหมือนไม้แต่แข็งเป็นหิน', ex: 'ต้นไม้กลายเป็นหิน อุทยานแห่งชาติต้นไม้กลายเป็นหิน จ.ตาก ยาวกว่า 70 เมตร' },
+];
+// ชั้นหิน: ล่าง (index 0) เก่าที่สุด
+const LAYERS = [
+  { rock: 'หินปูน', col: '#cfc9b6', env: 'ทะเลตื้น', sea: true, fossil: 'coral', fname: 'ปะการังและหอยทะเล', why: 'ปะการังและหอยทะเลอาศัยอยู่ในทะเลตื้นที่น้ำอุ่น' },
+  { rock: 'หินดินดาน', col: '#7d7c84', env: 'ทะเลลึก', sea: true, fossil: 'ammonite', fname: 'แอมโมไนต์', why: 'แอมโมไนต์เป็นสัตว์ทะเลที่สูญพันธุ์ไปแล้ว พบได้เฉพาะในหินที่เกิดในทะเล' },
+  { rock: 'หินทราย', col: '#d4a76a', env: 'ชายฝั่งหรือริมแม่น้ำ', sea: false, fossil: 'track', fname: 'รอยเท้าไดโนเสาร์', why: 'รอยเท้าเกิดบนโคลนหรือทรายเปียกริมน้ำ แสดงว่าบริเวณนี้เคยเป็นพื้นดินริมน้ำ' },
+  { rock: 'หินทรายแป้ง', col: '#b98e5f', env: 'บนบก ที่ราบน้ำท่วมถึง', sea: false, fossil: 'bone', fname: 'กระดูกไดโนเสาร์', why: 'ไดโนเสาร์กินพืชอาศัยอยู่บนบก แสดงว่าบริเวณนี้กลายเป็นแผ่นดินแล้ว' },
+  { rock: 'หินดินดานสีเข้ม', col: '#5f5a50', env: 'ป่าบนบก ชุ่มชื้น', sea: false, fossil: 'fern', fname: 'รอยพิมพ์ใบเฟิร์น', why: 'เฟิร์นขึ้นในป่าบนบกที่ชุ่มชื้น' },
+  { rock: 'ชั้นตะกอนใหม่', col: '#a7865b', env: 'บึงน้ำจืด', sea: false, fossil: 'snail', fname: 'หอยน้ำจืด', why: 'หอยขมเป็นหอยน้ำจืด แสดงว่าเคยเป็นบึงหรือทะเลสาบน้ำจืด เหมือนสุสานหอย จ.กระบี่' },
+];
+
+SimKit.page({
+  id: 'fossils',
+  title: 'ซากดึกดำบรรพ์',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'ดูว่าซากดึกดำบรรพ์เกิดขึ้นได้อย่างไร รู้จักซากดึกดำบรรพ์แต่ละชนิด และใช้ชั้นหินกับซากที่พบอนุมานสภาพแวดล้อมและอายุเปรียบเทียบในอดีต',
+  about:
+    '<p><b>ซากดึกดำบรรพ์</b> คือซากหรือร่องรอยของสิ่งมีชีวิตในอดีตที่ถูกเก็บรักษาไว้ในหิน ส่วนใหญ่พบใน<b>หินตะกอน</b> เพราะซากถูกตะกอนทับถมและเก็บรักษาไว้ ส่วนในหินอัคนีแทบไม่พบเพราะความร้อนจากแมกมาทำลายซากไปหมด</p>' +
+    '<p>การเกิดต้องมีภาวะที่เหมาะสม เช่น ซากถูกฝังอย่างรวดเร็ว มีส่วนแข็ง และไม่ถูกทำลาย จึงพบได้ไม่บ่อย</p>' +
+    '<p><b>ชนิด</b>: ซากกระดูกและฟัน รอยเท้า รอยพิมพ์ รูปหล่อ ซากในอำพัน และไม้กลายเป็นหิน</p>' +
+    '<p><b>ประโยชน์</b>: บอกสภาพแวดล้อมในอดีต เช่น พบหอยทะเลแสดงว่าเคยเป็นทะเล พบเฟิร์นแสดงว่าเคยเป็นป่าบนบก บอกอายุเปรียบเทียบของชั้นหิน (ชั้นล่างเกิดก่อน อายุมากกว่า ถ้าชั้นหินไม่ถูกพลิกกลับ) บอกวิวัฒนาการของสิ่งมีชีวิต และใช้หาแหล่งเชื้อเพลิงซากดึกดำบรรพ์</p>' +
+    '<p><b>ตัวอย่างในประเทศไทย</b>: ไดโนเสาร์ภูเวียง จ.ขอนแก่น, รอยเท้าไดโนเสาร์ภูแฝก จ.กาฬสินธุ์, สุสานหอยแหลมโพธิ์ จ.กระบี่ (หอยน้ำจืด), ต้นไม้กลายเป็นหิน จ.ตาก</p>',
+  think: [
+    'เหตุใดจึงพบซากดึกดำบรรพ์ในหินตะกอนมากกว่าหินชนิดอื่น',
+    'ถ้าพบซากหอยทะเลบนยอดเขา จะอธิบายได้อย่างไร',
+    'ในชั้นหิน ซากที่อยู่ชั้นล่างกับชั้นบน ซากใดมีอายุมากกว่า เพราะเหตุใด',
+    'แมงกะพรุนตัวนิ่ม ๆ กลายเป็นซากดึกดำบรรพ์ได้ยากกว่าหอย เพราะเหตุใด',
+    'รอยเท้าไดโนเสาร์บอกอะไรเราได้บ้างที่กระดูกบอกไม่ได้',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const W = 800, H = 600;
+    const s = { mode: 'form', who: 'dino', t: 0, play: false, pick: 'bone', found: new Set(), showEnv: false };
+
+    panel.innerHTML =
+      '<h3>เลือกเรื่อง</h3><div class="seg" id="mode"><button data-v="form">การเกิด</button><button data-v="types">ชนิด</button><button data-v="layers">ชั้นหิน</button></div>' +
+      '<div id="pForm"><h3>สิ่งมีชีวิต</h3><div class="seg" id="who"><button data-v="dino">ไดโนเสาร์ (บก)</button><button data-v="shell">แอมโมไนต์ (ทะเล)</button></div>' +
+      '<div class="row"><button class="btn primary" id="play">▶ เล่น</button><button class="btn" id="restart">เริ่มใหม่</button></div>' +
+      '<input type="range" id="prog" min="0" max="1" step="0.001" value="0" aria-label="ความคืบหน้า"><ol class="steps-list" id="steps"></ol></div>' +
+      '<div id="pTypes" hidden><p class="muted" style="font-size:14px;margin:8px 0">แตะการ์ดในภาพเพื่อดูว่าเกิดอย่างไร</p><div class="info" id="typeInfo"></div></div>' +
+      '<div id="pLayers" hidden><p class="muted" style="font-size:14px;margin:8px 0">แตะซากในแต่ละชั้นหิน เพื่ออนุมานว่าบริเวณนี้เคยเป็นอะไร</p>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:15px"><input type="checkbox" id="env"> แสดงภาพสภาพแวดล้อมในอดีต</label>' +
+      '<div class="row"><button class="btn" id="reveal">เฉลยทุกชั้น</button><button class="btn" id="clearL">ล้าง</button></div><div class="info" id="layerInfo">พบซากแล้ว 0 จาก 6 ชั้น</div></div>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === get()));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync();
+    }
+    const prog = $('#prog'), playB = $('#play');
+    const setPlay = (p) => { s.play = p; playB.textContent = p ? '⏸ หยุด' : '▶ เล่น'; };
+    const restart = () => { s.t = 0; prog.value = 0; setPlay(true); };
+    seg('mode', () => s.mode, (v) => { s.mode = v; $('#pForm').hidden = v !== 'form'; $('#pTypes').hidden = v !== 'types'; $('#pLayers').hidden = v !== 'layers'; api.note(''); lastStep = -1; });
+    seg('who', () => s.who, (v) => { s.who = v; restart(); });
+    playB.onclick = () => { if (s.t >= 1) s.t = 0; setPlay(!s.play); };
+    $('#restart').onclick = restart;
+    prog.oninput = () => { s.t = +prog.value; setPlay(false); };
+    $('#env').onchange = (e) => (s.showEnv = e.target.checked);
+    $('#reveal').onclick = () => { LAYERS.forEach((_, i) => s.found.add(i)); layerText(LAYERS.length - 1); };
+    $('#clearL').onclick = () => { s.found.clear(); $('#layerInfo').innerHTML = 'พบซากแล้ว 0 จาก 6 ชั้น'; };
+    function showType() {
+      const T = TYPES.find((x) => x.k === s.pick);
+      $('#typeInfo').innerHTML = '<h4>' + T.name + '</h4><p>' + T.how + '</p><p><b>ตัวอย่าง:</b> ' + T.ex + '</p>';
+    }
+    showType();
+    function layerText(i) {
+      const L = LAYERS[i], age = ['เก่าที่สุด', 'เก่ามาก', 'เก่า', 'ค่อนข้างใหม่', 'ใหม่', 'ใหม่ที่สุด'][i];
+      $('#layerInfo').innerHTML = '<h4>ชั้นที่ ' + (i + 1) + ' จากล่าง: ' + L.rock + '</h4><p><b>พบ:</b> ' + L.fname + '</p>' +
+        '<p><span class="badge" style="background:' + (L.sea ? '#2e7dc4' : '#4c9a3c') + '">' + (L.sea ? 'เคยเป็นทะเล' : 'เคยเป็นบก') + '</span> ' + L.env + '</p>' +
+        '<p>' + L.why + '</p><p><b>อายุเปรียบเทียบ:</b> ' + age + ' (ชั้นล่างทับถมก่อน)</p><p class="muted">พบซากแล้ว ' + s.found.size + ' จาก 6 ชั้น</p>';
+    }
+    let lastStep = -1;
+    function syncSteps() {
+      const i = Math.min(STEPS.length - 1, Math.floor(s.t * STEPS.length * 0.999));
+      if (i === lastStep) return;
+      lastStep = i;
+      $('#steps').innerHTML = STEPS.map((x, k) => '<li class="' + (k === i ? 'on' : '') + '">' + (k + 1) + '. ' + x + '</li>').join('');
+    }
+
+    let view = { s: 1, ox: 0, oy: 0 };
+    function setView(ctx) {
+      const sc = Math.min(cv.w / W, cv.h / H);
+      view = { s: sc, ox: (cv.w - W * sc) / 2, oy: (cv.h - H * sc) / 2 };
+      ctx.setTransform(cv.dpr * sc, 0, 0, cv.dpr * sc, cv.dpr * view.ox, cv.dpr * view.oy);
+    }
+    const toDesign = (x, y) => [(x - view.ox) / view.s, (y - view.oy) / view.s];
+    const ink = () => Lab.css('--ink');
+    const clamp = (v) => Math.max(0, Math.min(1, v)), seg01 = (t, a, b) => clamp((t - a) / (b - a)), lerp = (a, b, k) => a + (b - a) * k;
+    function label(ctx, txt, x, y, size, col, align) { ctx.font = '600 ' + (size || 18) + 'px Sarabun, sans-serif'; ctx.fillStyle = col || ink(); ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x, y); }
+    function pill(ctx, txt, x, y, size, bg) {
+      ctx.font = '600 ' + size + 'px Sarabun, sans-serif'; const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = bg || 'rgba(20,24,32,.75)'; ctx.fillRect(x - tw / 2 - 9, y - size * 0.8, tw + 18, size * 1.6);
+      label(ctx, txt, x, y, size, '#fff');
+    }
+
+    // ---------- ภาพซาก ----------
+    function dinoSkeleton(ctx, x, y, sc, col, flesh) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+      if (flesh > 0) {
+        ctx.globalAlpha = flesh; ctx.fillStyle = '#6f9a4a';
+        ctx.beginPath(); ctx.ellipse(0, -8, 70, 26, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-60, -10); ctx.quadraticCurveTo(-120, -30, -150, -12); ctx.lineTo(-60, 4); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(60, -16); ctx.quadraticCurveTo(110, -60, 120, -70); ctx.lineTo(132, -62); ctx.quadraticCurveTo(110, -40, 66, 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(132, -72, 16, 9, -0.3, 0, 7); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineCap = 'round'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(-150, -12); ctx.quadraticCurveTo(-60, -22, 0, -14); ctx.quadraticCurveTo(80, -10, 120, -66); ctx.stroke();
+      for (let i = -9; i <= 7; i++) { const xx = i * 12, yy = -16 + Math.abs(i) * 0.6; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + 2, yy + (i > -3 && i < 5 ? 22 : 8)); ctx.stroke(); }
+      ctx.beginPath(); ctx.ellipse(132, -72, 14, 8, -0.3, 0, 7); ctx.fill();
+      ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(-30, 18); ctx.moveTo(30, -6); ctx.lineTo(40, 18); ctx.stroke();
+      ctx.restore();
+    }
+    function ammonite(ctx, x, y, r, col, fill) {
+      ctx.save(); ctx.translate(x, y);
+      if (fill) { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
+      ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.5, r * 0.08);
+      ctx.beginPath(); for (let a = 0; a < 6 * Math.PI; a += 0.1) { const rr = r * Math.exp(-0.17 * (6 * Math.PI - a)); const px = Math.cos(a) * rr, py = Math.sin(a) * rr; a ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke();
+      for (let a = 0; a < 2 * Math.PI; a += 0.35) { ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke(); }
+      ctx.restore();
+    }
+    function footprint(ctx, x, y, sc, col) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.fillStyle = col;
+      ctx.beginPath(); ctx.ellipse(0, 10, 14, 12, 0, 0, 7); ctx.fill();
+      [[-16, -14, -0.5], [0, -22, 0], [16, -14, 0.5]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.ellipse(dx, dy, 6, 16, r, 0, 7); ctx.fill(); });
+      ctx.restore();
+    }
+    function fern(ctx, x, y, sc, col) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(0, 40); ctx.quadraticCurveTo(4, 0, -4, -40); ctx.stroke();
+      for (let i = 0; i < 9; i++) { const yy = 34 - i * 9, l = 22 - i * 1.8; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(-l, yy - 8); ctx.moveTo(0, yy); ctx.lineTo(l, yy - 8); ctx.stroke(); }
+      ctx.restore();
+    }
+    function coral(ctx, x, y, sc, col) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round';
+      const br = (bx, by, a, l, d) => { if (d > 3) return; const ex = bx + Math.cos(a) * l, ey = by + Math.sin(a) * l; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke(); br(ex, ey, a - 0.45, l * 0.7, d + 1); br(ex, ey, a + 0.45, l * 0.7, d + 1); };
+      br(0, 30, -Math.PI / 2, 24, 0); ctx.restore();
+    }
+    function snail(ctx, x, y, sc, col) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(0, -i * 9, 16 - i * 3.5, 7, 0, 0, Math.PI); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(0, -34); ctx.lineTo(16, 0); ctx.stroke(); ctx.restore();
+    }
+    function drawFossil(ctx, k, x, y, sc, col) {
+      if (k === 'bone') dinoSkeleton(ctx, x, y, sc * 0.45, col, 0);
+      else if (k === 'ammonite' || k === 'cast') ammonite(ctx, x, y, 30 * sc, col);
+      else if (k === 'track') { footprint(ctx, x - 26 * sc, y + 8 * sc, sc, col); footprint(ctx, x + 26 * sc, y - 12 * sc, sc, col); }
+      else if (k === 'fern' || k === 'print') fern(ctx, x, y, sc, col);
+      else if (k === 'coral') coral(ctx, x, y, sc, col);
+      else if (k === 'snail') { snail(ctx, x - 16 * sc, y + 8 * sc, sc, col); snail(ctx, x + 18 * sc, y, sc * 0.8, col); }
+    }
+
+    // ---------- ฉาก: การเกิด ----------
+    function drawForm(ctx, t) {
+      const dark = Lab.dark(), dino = s.who === 'dino';
+      const k = (i) => seg01(t, i / 7, (i + 1) / 7); // ความคืบหน้าในขั้นที่ i
+      const uplift = k(5), expose = k(6);
+      // ฟ้าหรือน้ำ
+      ctx.fillStyle = dino ? (dark ? '#1c2533' : '#cfe6f7') : (dark ? '#123049' : '#4e93c9'); ctx.fillRect(0, 0, W, H);
+      if (uplift > 0) { ctx.fillStyle = dark ? '#1c2533' : '#cfe6f7'; ctx.globalAlpha = uplift; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+      // พื้นเดิม
+      const base = 420 - uplift * 120;
+      ctx.fillStyle = dino ? '#9b7b58' : '#c7b28c'; ctx.fillRect(0, base, W, H - base);
+      // ชั้นตะกอนทับถม
+      const nL = Math.round(lerp(0, 5, k(2) * 0.4 + k(3) * 0.6));
+      const lh = 34;
+      const cols = ['#c9a36b', '#a8875d', '#d8c39a', '#8f7a63', '#bfa077'];
+      let top = base;
+      for (let i = 0; i < nL; i++) { top -= lh; ctx.fillStyle = cols[i % 5]; ctx.fillRect(0, top, W, lh); }
+      // กัดกร่อนชั้นบน: ตัดหุบเขาตรงกลาง
+      if (expose > 0 || uplift > 0.5) {
+        const depth = (nL * lh) * expose + 10 * uplift;
+        ctx.fillStyle = dark ? '#1c2533' : '#cfe6f7';
+        ctx.beginPath(); ctx.moveTo(220, top - 2); ctx.lineTo(580, top - 2); ctx.lineTo(500, top + depth); ctx.lineTo(300, top + depth); ctx.closePath(); ctx.fill();
+        if (uplift > 0) { label(ctx, '💨  🌧', 680, 60, 30); }
+      }
+      // ซาก
+      const decay = k(1), mineral = k(4);
+      const boneCol = 'rgb(' + Math.round(lerp(240, 120, mineral)) + ',' + Math.round(lerp(232, 110, mineral)) + ',' + Math.round(lerp(214, 105, mineral)) + ')';
+      const fy = base - 8;
+      if (dino) dinoSkeleton(ctx, 400, fy, 1, boneCol, 1 - decay);
+      else {
+        ammonite(ctx, 400, fy - 22, 40, boneCol, decay < 1 ? 'rgba(220,170,120,' + (1 - decay) + ')' : null);
+        if (decay < 1) { ctx.globalAlpha = 1 - decay; ctx.fillStyle = '#d98b6a'; for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.ellipse(440 + i * 6, fy - 10 + i * 2, 4, 14, 0.4, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
+      }
+      // นักวิทยาศาสตร์
+      if (expose > 0.6) {
+        const a = seg01(expose, 0.6, 1);
+        ctx.globalAlpha = a; ctx.fillStyle = '#2d5fb3';
+        const px = 600, py = top + nL * lh * expose - 4;
+        ctx.beginPath(); ctx.arc(px, py - 70, 12, 0, 7); ctx.fill(); ctx.fillRect(px - 9, py - 58, 18, 36);
+        ctx.strokeStyle = '#2d5fb3'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(px - 4, py - 22); ctx.lineTo(px - 10, py); ctx.moveTo(px + 4, py - 22); ctx.lineTo(px + 10, py); ctx.moveTo(px - 8, py - 50); ctx.lineTo(px - 40, py - 30); ctx.stroke();
+        ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px - 40, py - 30); ctx.lineTo(px - 60, py - 8); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      // เวลา
+      const my = Math.round(lerp(0, dino ? 130 : 180, clamp(t * 1.15)));
+      pill(ctx, dino ? 'เวลาผ่านไป ' + my + ' ล้านปี' : 'เวลาผ่านไป ' + my + ' ล้านปี', 150, 34, 20);
+      if (mineral > 0 && mineral < 1) pill(ctx, 'แร่ธาตุแทนที่กระดูก', 400, base + 60, 17, 'rgba(60,50,40,.8)');
+      if (k(3) > 0 && k(3) < 1) pill(ctx, 'ตะกอนอัดแน่นเป็นหิน', 400, top - 26 < 70 ? 90 : top - 26, 17);
+      if (uplift > 0 && uplift < 1) pill(ctx, '↑ เปลือกโลกยกตัว ↑', 400, H - 30, 18, 'rgba(160,60,30,.85)');
+    }
+
+    // ---------- ฉาก: ชนิด ----------
+    function typeCell(i) { const c = i % 3, r = Math.floor(i / 3); return { x: 140 + c * 260, y: 160 + r * 280 }; }
+    function drawTypes(ctx) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#1d222b' : '#f6f3ec'; ctx.fillRect(0, 0, W, H);
+      TYPES.forEach((T, i) => {
+        const { x, y } = typeCell(i), on = T.k === s.pick;
+        ctx.fillStyle = on ? (dark ? 'rgba(91,147,240,.22)' : 'rgba(47,111,222,.14)') : 'transparent'; ctx.fillRect(x - 122, y - 130, 244, 260);
+        if (on) { ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 3; ctx.strokeRect(x - 122, y - 130, 244, 260); }
+        // พื้นหิน
+        ctx.fillStyle = T.k === 'amber' ? 'transparent' : T.k === 'wood' ? '#8a6d56' : '#bdb2a0';
+        ctx.beginPath(); ctx.ellipse(x, y - 10, 100, 80, 0, 0, 7); ctx.fill();
+        if (T.k === 'bone') { dinoSkeleton(ctx, x + 5, y + 10, 0.55, '#6e6458', 0); }
+        else if (T.k === 'track') { footprint(ctx, x - 30, y + 20, 1.4, '#857a6a'); footprint(ctx, x + 30, y - 30, 1.4, '#857a6a'); }
+        else if (T.k === 'print') fern(ctx, x, y - 10, 1.6, '#6f6658');
+        else if (T.k === 'cast') ammonite(ctx, x, y - 10, 60, '#5e554a', '#a59a87');
+        else if (T.k === 'amber') {
+          const g = ctx.createRadialGradient(x - 20, y - 30, 5, x, y - 10, 90); g.addColorStop(0, '#ffcf5a'); g.addColorStop(1, '#c9771c');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y - 10, 90, 70, 0.2, 0, 7); ctx.fill();
+          ctx.fillStyle = '#3a2a14'; ctx.beginPath(); ctx.ellipse(x, y - 10, 18, 8, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(x + 20, y - 10, 6, 0, 7); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(x - 6, y - 26, 16, 7, -0.5, 0, 7); ctx.ellipse(x + 6, y - 26, 16, 7, 0.5, 0, 7); ctx.fill();
+          ctx.strokeStyle = '#3a2a14'; ctx.lineWidth = 2; for (let l = -1; l <= 1; l++) { ctx.beginPath(); ctx.moveTo(x + l * 6, y - 4); ctx.lineTo(x + l * 12, y + 14); ctx.stroke(); }
+        } else if (T.k === 'wood') {
+          for (let r = 70; r > 4; r -= 9) { ctx.strokeStyle = r % 18 ? '#a07d5f' : '#6b5141'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x, y - 10, r * 1.2, r * 0.95, 0, 0, 7); ctx.stroke(); }
+          ctx.fillStyle = 'rgba(200,220,240,.18)'; ctx.beginPath(); ctx.ellipse(x, y - 10, 100, 80, 0, 0, 7); ctx.fill();
+        }
+        label(ctx, T.name, x, y + 100, 19);
+      });
+    }
+
+    // ---------- ฉาก: ชั้นหิน ----------
+    const LH = 84, LY0 = 560;
+    const layerY = (i) => LY0 - (i + 1) * LH;
+    const fossilX = (i) => [560, 300, 470, 230, 600, 380][i];
+    function drawLayers(ctx) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#1c2533' : '#cfe6f7'; ctx.fillRect(0, 0, W, H);
+      LAYERS.forEach((L, i) => {
+        const y = layerY(i);
+        ctx.fillStyle = L.col; ctx.fillRect(60, y, 680, LH);
+        // ลายเนื้อหิน
+        ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1;
+        for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(60, y + 14 + k * 18); ctx.lineTo(740, y + 12 + k * 18); ctx.stroke(); }
+        if (s.showEnv && s.found.has(i)) {
+          ctx.fillStyle = L.sea ? 'rgba(46,125,196,.35)' : 'rgba(76,154,60,.32)'; ctx.fillRect(60, y, 680, LH);
+        }
+        drawFossil(ctx, L.fossil, fossilX(i), y + LH / 2, 0.85, 'rgba(40,30,20,.75)');
+        label(ctx, L.rock, 72, y + LH / 2, 15, '#222', 'left');
+        if (s.found.has(i)) {
+          const bx = 700, txt = L.sea ? 'ทะเล' : 'บก';
+          ctx.fillStyle = L.sea ? '#2e7dc4' : '#4c9a3c'; ctx.beginPath(); ctx.arc(bx, y + LH / 2, 26, 0, 7); ctx.fill();
+          label(ctx, txt, bx, y + LH / 2, 16, '#fff');
+          ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fossilX(i), y + LH / 2, 36, 0, 7); ctx.stroke();
+        }
+      });
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(60, layerY(5), 680, 6 * LH);
+      // ลูกศรอายุ
+      ctx.fillStyle = ink(); ctx.strokeStyle = ink(); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(44, layerY(5) + 10); ctx.lineTo(44, LY0 - 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(44, LY0 - 2); ctx.lineTo(36, LY0 - 18); ctx.lineTo(52, LY0 - 18); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.translate(20, (layerY(5) + LY0) / 2); ctx.rotate(-Math.PI / 2); label(ctx, 'ยิ่งลึก ยิ่งเก่า', 0, 0, 16); ctx.restore();
+      label(ctx, 'หน้าผาชั้นหิน (มองด้านข้าง)', 400, 24, 19);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const [px, py] = Lab.pos(canvas, e), [x, y] = toDesign(px, py);
+      if (s.mode === 'types') TYPES.forEach((T, i) => { const c = typeCell(i); if (Math.abs(x - c.x) < 122 && Math.abs(y - c.y) < 130) { s.pick = T.k; showType(); } });
+      if (s.mode === 'layers') LAYERS.forEach((L, i) => { const yy = layerY(i) + LH / 2; if (Math.abs(y - yy) < LH / 2 && Math.abs(x - fossilX(i)) < 70) { s.found.add(i); layerText(i); } });
+    });
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      if (s.mode === 'form') { if (s.play) { s.t = Math.min(1, s.t + dt / 16); prog.value = s.t; if (s.t >= 1) setPlay(false); } syncSteps(); }
+      const ctx = cv.ctx;
+      ctx.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0); ctx.clearRect(0, 0, cv.w, cv.h);
+      setView(ctx);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+      if (s.mode === 'form') drawForm(ctx, s.t); else if (s.mode === 'types') drawTypes(ctx); else drawLayers(ctx);
+      ctx.restore();
+    });
+    restart();
+  },
+});
+</script>
+</body>
+</html>

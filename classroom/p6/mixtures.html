@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การแยกสารผสม · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 540px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 420px; } }
+  @media (max-width: 600px) { .simpage .stage canvas { height: 300px; } }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 6px 0; }
+  .grid2 .btn { padding: 6px 4px; font-size: 15px; line-height: 1.25; }
+  .grid2 .btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .log { font-size: 14px; margin: 8px 0 0; padding-left: 20px; }
+  .log li { margin: 2px 0; }
+  .ok { color: var(--ok); font-weight: 600; } .no { color: var(--bad); font-weight: 600; } .mid { color: var(--warn); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// สมบัติของสารแต่ละชนิด: ขนาด (หน่วยภาพ), ดึงดูดกับแม่เหล็ก, ละลายน้ำ
+const COMP = {
+  rice:  { name: 'ข้าวสาร', col: '#f4f1e6', edge: '#c9c2a8', size: 7, shape: 'grain' },
+  stone: { name: 'กรวด', col: '#8d929b', edge: '#5d636c', size: 13, shape: 'rock' },
+  sand:  { name: 'ทราย', col: '#d8b878', size: 1.8, shape: 'dot' },
+  iron:  { name: 'ผงเหล็ก', col: '#3d4148', size: 1.6, shape: 'dot', magnetic: true },
+  soil:  { name: 'ดินโคลน', col: '#7a5634', size: 1.7, shape: 'dot' },
+  salt:  { name: 'เกลือ', col: '#ffffff', edge: '#b8c2cc', size: 2.6, shape: 'cube', soluble: true },
+  bean:  { name: 'ถั่วเขียว', col: '#5f9a3a', edge: '#3e6d24', size: 5, shape: 'bean' },
+};
+const MIX = [
+  { key: 'rice', name: 'ข้าวสารปนกรวด', solids: { rice: 110, stone: 12 }, best: 'หยิบออก (กรวดชิ้นใหญ่ มีจำนวนน้อย)' },
+  { key: 'iron', name: 'ทรายปนผงเหล็ก', solids: { sand: 170, iron: 120 }, best: 'ใช้แม่เหล็กดึงดูด' },
+  { key: 'bean', name: 'ถั่วเขียวปนทราย', solids: { bean: 55, sand: 170 }, best: 'ร่อน (ขนาดต่างกัน)' },
+  { key: 'mud', name: 'น้ำโคลน', liquid: [{ n: 'น้ำ', amt: 0.6 }], susp: { soil: 170 }, best: 'ตกตะกอนแล้วรินออก หรือกรอง' },
+  { key: 'salt', name: 'น้ำเกลือ', liquid: [{ n: 'น้ำ', amt: 0.6 }], dissolved: ['salt'], best: 'ระเหยแห้ง' },
+  { key: 'oil', name: 'น้ำมันกับน้ำ', liquid: [{ n: 'น้ำ', amt: 0.42 }, { n: 'น้ำมัน', amt: 0.2 }], best: 'ตั้งทิ้งไว้ให้แยกชั้นแล้วรินน้ำมันออก' },
+  { key: 'ss', name: 'ทรายปนเกลือ', solids: { sand: 150, salt: 110 }, best: 'เติมน้ำให้เกลือละลาย → กรอง → ระเหยแห้ง' },
+];
+const LIQ = { 'น้ำ': 'rgba(120,180,235,.55)', 'น้ำมัน': 'rgba(240,200,60,.75)' };
+const METHODS = [
+  { key: 'pick', name: 'หยิบออก', prop: 'ขนาดใหญ่ มองเห็นชัด และมีจำนวนน้อย' },
+  { key: 'sieve', name: 'ร่อน', prop: 'ขนาดของอนุภาคต่างกัน' },
+  { key: 'magnet', name: 'ใช้แม่เหล็กดึงดูด', prop: 'บางชนิดถูกแม่เหล็กดึงดูด' },
+  { key: 'dissolve', name: 'เติมน้ำแล้วคน', prop: 'บางชนิดละลายน้ำได้' },
+  { key: 'settle', name: 'ตั้งทิ้งไว้ (ตกตะกอน)', prop: 'ของแข็งที่ไม่ละลายและหนักกว่าน้ำจะจมลง' },
+  { key: 'pour', name: 'รินออก', prop: 'ของเหลวด้านบนแยกจากตะกอนหรือของเหลวอีกชั้น' },
+  { key: 'filter', name: 'กรอง', prop: 'ของแข็งที่ไม่ละลายน้ำติดอยู่บนกระดาษกรอง' },
+  { key: 'evap', name: 'ระเหยแห้ง', prop: 'น้ำระเหยไป สารที่ละลายอยู่เหลือเป็นของแข็ง' },
+];
+const W = 800, H = 520;
+
+SimKit.page({
+  id: 'mixtures',
+  title: 'การแยกสารผสม',
+  level: 'ป.6',
+  subject: 'สาร',
+  lead: 'เลือกสารผสม แล้วลองใช้วิธีแยกสารแต่ละวิธี ดูว่าวิธีไหนแยกสารได้ เพราะใช้สมบัติอะไรของสารที่แตกต่างกัน',
+  about:
+    '<p><b>สารผสม</b> เกิดจากสารตั้งแต่ 2 ชนิดขึ้นไปมารวมกัน เราแยกสารผสมได้โดยใช้<b>สมบัติที่แตกต่างกัน</b>ของสารในสารผสม</p>' +
+    '<ul><li><b>หยิบออก</b> ใช้กับของแข็งที่ชิ้นใหญ่ เห็นชัด และมีจำนวนน้อย เช่น กรวดในข้าวสาร</li>' +
+    '<li><b>ร่อน</b> ใช้กับของแข็งที่ขนาดต่างกันมาก เช่น ถั่วเขียวปนทราย ร่อนแป้ง</li>' +
+    '<li><b>ใช้แม่เหล็กดึงดูด</b> ใช้กับของแข็งที่มีสารที่ถูกแม่เหล็กดึงดูด เช่น ผงเหล็กในทราย</li>' +
+    '<li><b>ตกตะกอนและรินออก</b> ใช้กับของแข็งที่ไม่ละลายน้ำและจมน้ำ เช่น น้ำโคลน หรือของเหลวที่ไม่ผสมกัน เช่น น้ำมันกับน้ำ</li>' +
+    '<li><b>กรอง</b> ใช้แยกของแข็งที่ไม่ละลายน้ำออกจากของเหลว แต่แยกสารที่ละลายน้ำไม่ได้</li>' +
+    '<li><b>ระเหยแห้ง</b> ใช้แยกของแข็งที่ละลายอยู่ในน้ำ เช่น การทำนาเกลือ</li></ul>' +
+    '<p><b>ในชีวิตประจำวัน</b>: ฝัดข้าวและเก็บกรวดออกจากข้าวสาร ร่อนแป้งทำขนม ใช้แม่เหล็กแยกเศษเหล็กในโรงงานรีไซเคิล ตักไขมันออกจากน้ำแกง ทำน้ำประปาด้วยการตกตะกอนและกรอง ทำนาเกลือด้วยการระเหยน้ำทะเล</p>',
+  think: [
+    'ทำไมการกรองจึงแยกเกลือออกจากน้ำเกลือไม่ได้',
+    'ถ้ามีทรายปนเกลือ ต้องใช้วิธีใดบ้าง และเรียงลำดับอย่างไร',
+    'ข้าวสารปนกรวด ถ้าใช้ตะแกรงร่อนจะได้ผลหรือไม่ เพราะเหตุใด',
+    'น้ำมันลอยอยู่เหนือน้ำ บอกอะไรเกี่ยวกับน้ำมันและน้ำ',
+    'ชาวนาเกลือใช้วิธีใดแยกเกลือออกจากน้ำทะเล และต้องอาศัยอะไรจากธรรมชาติ',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    let mix = MIX[0], parts = [], V, tasks = [], cur = null, magnet = null, tilt = 0, stream = null, flame = null, sieveOn = false, hand = null, steam = 0;
+    const log = [];
+
+    panel.innerHTML =
+      '<h3>เลือกสารผสม</h3><div class="grid2" id="mixes">' + MIX.map((m) => '<button class="btn" data-m="' + m.key + '">' + m.name + '</button>').join('') + '</div>' +
+      '<h3>วิธีแยกสาร</h3><div class="grid2" id="meths">' + METHODS.map((m) => '<button class="btn" data-k="' + m.key + '">' + m.name + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่</button><button class="btn" id="hint">ดูวิธีที่เหมาะสม</button></div>' +
+      '<ol class="log" id="log"></ol>';
+    const $ = (q) => panel.querySelector(q);
+
+    // ---------- สถานะภาชนะ ----------
+    // L = ภาชนะเริ่มต้น (ถาดหรือบีกเกอร์), R = ภาชนะรับ (จานหรือบีกเกอร์), F = กระดาษกรองในกรวย, S = ตะแกรง, M = แม่เหล็ก
+    function vessel(kind) { return { kind, liq: [], dissolved: [], susp: false }; }
+    function load(m) {
+      mix = m; tasks = []; cur = null; magnet = null; tilt = 0; stream = null; flame = null; sieveOn = false; hand = null; steam = 0;
+      V = { L: vessel(m.liquid ? 'beaker' : 'tray'), R: vessel(m.liquid ? 'beaker' : 'dish'), F: null };
+      parts = [];
+      const rnd = Lab.rng('mix-' + m.key);
+      const add = (c, n, v) => { for (let i = 0; i < n; i++) parts.push({ c, v, r1: rnd(), r2: rnd(), r3: rnd(), x: 0, y: 0, path: null, delay: 0, hidden: false }); };
+      if (m.solids) Object.entries(m.solids).forEach(([c, n]) => add(c, n, 'L'));
+      if (m.susp) { Object.entries(m.susp).forEach(([c, n]) => add(c, n, 'L')); V.L.susp = true; }
+      if (m.liquid) V.L.liq = m.liquid.map((l) => ({ ...l }));
+      if (m.dissolved) V.L.dissolved = [...m.dissolved];
+      parts.forEach((p) => { const h = home(p); p.x = h[0]; p.y = h[1]; });
+      log.length = 0; renderLog();
+      panel.querySelectorAll('#mixes .btn').forEach((b) => b.classList.toggle('on', b.dataset.m === m.key));
+      api.note('สารผสม: <b>' + m.name + '</b> มี ' + names(m).join(' และ ') + ' เลือกวิธีแยกสารจากปุ่มด้านบน');
+    }
+    function names(m) {
+      const s = [];
+      if (m.solids) Object.keys(m.solids).forEach((c) => s.push(COMP[c].name));
+      if (m.susp) Object.keys(m.susp).forEach((c) => s.push(COMP[c].name));
+      if (m.liquid) m.liquid.forEach((l) => s.push(l.n));
+      if (m.dissolved) m.dissolved.forEach((c) => s.push(COMP[c].name + ' (ละลายอยู่)'));
+      return s;
+    }
+
+    // ---------- ตำแหน่งของภาชนะ (พิกัดออกแบบ 800 × 520) ----------
+    const G = {
+      L: { tray: [90, 360, 440, 46], beaker: [150, 310, 440, 210] },
+      R: { dish: [480, 710, 440, 34], beaker: [510, 670, 440, 190] },
+    };
+    function box(id) { const v = V[id]; const g = G[id][v.kind]; return { x0: g[0], x1: g[1], yb: g[2], h: g[3] }; }
+    const liqAmt = (v) => v.liq.reduce((a, l) => a + l.amt, 0);
+    function home(p) {
+      const c = COMP[p.c];
+      if (p.v === 'M' && magnet) return [magnet.x - 60 + p.r1 * 120, magnet.y + 16 + p.r2 * 10 * Math.min(1, 40 / 60)];
+      if (p.v === 'S') return [500 + p.r1 * 190, 238 - p.r2 * 10];
+      if (p.v === 'F') return [590 + (p.r1 - 0.5) * 70 * (1 - p.r2 * 0.6), 228 - p.r2 * 26];
+      const v = V[p.v], b = box(p.v);
+      const w = b.x1 - b.x0 - 16;
+      if (v.kind === 'beaker' && v.susp && p.v === 'L') {
+        const top = b.yb - 6 - (b.h - 10) * liqAmt(v);
+        return [b.x0 + 8 + p.r1 * w, top + 8 + p.r2 * (b.yb - 14 - top)];
+      }
+      const pile = v.kind === 'tray' || v.kind === 'dish' ? 24 : 18;
+      const big = c.size > 4 ? 1 : 0;
+      return [b.x0 + 8 + p.r1 * w, b.yb - 4 - c.size - p.r2 * pile * (big ? 0.7 : 1)];
+    }
+
+    // ---------- ลำดับงานแอนิเมชัน ----------
+    function run(list) { tasks.push(...list); }
+    const T = (dur, start, update, end) => ({ dur, start, update, end, t: 0 });
+    const moveParts = (sel, to, opts) => T(opts.dur || 2.2, () => {
+      let i = 0;
+      parts.filter(sel).forEach((p) => { p.v = to; p.delay = (opts.stagger || 0) * i++ + (opts.jitter ? p.r3 * opts.jitter : 0); p.path = opts.via ? opts.via(p) : null; });
+    }, null, null);
+
+    function busy() { return cur || tasks.length; }
+    function result(cls, msg) { api.note(msg); log.push('<span class="' + cls + '">' + (cls === 'ok' ? '✓' : cls === 'mid' ? '△' : '✗') + '</span> ' + msg.replace(/<[^>]+>/g, '').split('. ')[0]); renderLog(); }
+    function renderLog() { $('#log').innerHTML = log.map((l) => '<li>' + l + '</li>').join(''); }
+    const inL = (f) => parts.filter((p) => p.v === 'L' && !p.hidden && f(p));
+
+    function apply(k) {
+      if (busy()) return;
+      const L = V.L, m = METHODS.find((x) => x.key === k);
+      const hasLiq = liqAmt(L) > 0.01;
+      if (k === 'pick') {
+        if (hasLiq) return result('no', 'หยิบออกไม่ได้ เพราะสารอยู่ในของเหลว');
+        const big = inL((p) => COMP[p.c].size >= 10);
+        const med = inL((p) => COMP[p.c].size >= 4 && COMP[p.c].size < 10);
+        if (big.length) {
+          run([T(0.1, () => { hand = { x: 0, y: 0 }; }), moveParts((p) => big.includes(p), 'R', { stagger: 0.32, via: (p) => [[p.x, p.y - 90], [640, 330]] }), T(big.length * 0.32 + 1.4, null, null, () => { hand = null; })]);
+          return result('ok', '<b>หยิบกรวดออกได้</b> เพราะกรวดชิ้นใหญ่ มองเห็นชัด และมีจำนวนน้อย. ใช้สมบัติ: ' + m.prop);
+        }
+        if (med.length) return result('mid', '<b>หยิบได้แต่ช้ามาก</b> เพราะเม็ดมีจำนวนมาก ควรใช้วิธีอื่นที่เร็วกว่า เช่น ร่อน');
+        return result('no', '<b>หยิบออกไม่ได้</b> เพราะอนุภาคเล็กเกินไป');
+      }
+      if (k === 'sieve') {
+        if (hasLiq) return result('no', 'ร่อนไม่ได้ เพราะสารอยู่ในของเหลว ของเหลวจะไหลผ่านตะแกรงไปหมด');
+        const all = inL(() => true);
+        const small = all.filter((p) => COMP[p.c].size < 4), large = all.filter((p) => COMP[p.c].size >= 4);
+        run([
+          T(0.1, () => { sieveOn = true; }),
+          moveParts((p) => all.includes(p), 'S', { dur: 1.6, jitter: 0.5, via: (p) => [[p.x, 250]] }),
+          moveParts((p) => small.includes(p), 'R', { dur: 2.2, jitter: 1.2 }),
+          moveParts((p) => large.includes(p), 'L', { dur: 1.8, jitter: 0.4, via: (p) => [[p.x, 200], [230, 300]] }),
+          T(0.1, null, null, () => { sieveOn = false; }),
+        ]);
+        const kinds = new Set(all.map((p) => p.c));
+        const sm = [...kinds].filter((c) => COMP[c].size < 4), lg = [...kinds].filter((c) => COMP[c].size >= 4);
+        if (sm.length && lg.length) {
+          if (lg.includes('stone') && lg.includes('rice')) return result('mid', 'ข้าวสารและกรวดใหญ่กว่ารูตะแกรงทั้งคู่ จึงค้างบนตะแกรงด้วยกัน');
+          return result('ok', '<b>ร่อนได้</b> ' + sm.map((c) => COMP[c].name).join(' ') + ' ลอดรูตะแกรงลงไป ส่วน ' + lg.map((c) => COMP[c].name).join(' ') + ' ค้างอยู่. ใช้สมบัติ: ' + m.prop);
+        }
+        return result('no', '<b>ร่อนแล้วไม่แยก</b> เพราะ ' + [...kinds].map((c) => COMP[c].name).join(' กับ ') + ' มีขนาดใกล้เคียงกัน ' + (lg.length ? 'ค้างบนตะแกรงทั้งหมด' : 'ลอดตะแกรงลงไปด้วยกันทั้งหมด'));
+      }
+      if (k === 'magnet') {
+        if (hasLiq) return result('no', 'ในสารผสมนี้ไม่มีสารที่ถูกแม่เหล็กดึงดูด');
+        const mag = inL((p) => COMP[p.c].magnetic);
+        const b = box('L');
+        run([
+          T(1.4, () => { magnet = { x: b.x0 - 40, y: 310 }; }, (u) => { magnet.x = b.x0 - 40 + u * (b.x1 - b.x0 + 40) * 0.6; }),
+          moveParts((p) => mag.includes(p), 'M', { dur: 1.0, stagger: 0.004 }),
+          T(1.4, null, (u) => { magnet.x = b.x0 - 40 + (0.6 + 0.4 * u) * (b.x1 - b.x0 + 40); }),
+          T(1.6, null, (u) => { magnet.x = b.x1 + u * 230; magnet.y = 310 - Math.sin(u * Math.PI) * 60; }),
+          moveParts((p) => mag.includes(p), 'R', { dur: 1.4, jitter: 0.5 }),
+          T(0.8, null, (u) => { magnet.y = 310 - u * 260; }, () => { magnet = null; }),
+        ]);
+        if (mag.length) return result('ok', '<b>แม่เหล็กดูดผงเหล็กออกมาได้</b> ส่วนทรายไม่ถูกดูด. ใช้สมบัติ: ' + m.prop);
+        return result('no', '<b>แม่เหล็กไม่ดูดสารใดเลย</b> เพราะ ' + names(mix).join(' และ ') + ' ไม่ถูกแม่เหล็กดึงดูด');
+      }
+      if (k === 'dissolve') {
+        if (L.kind === 'tray') {
+          const sol = inL((p) => COMP[p.c].soluble);
+          run([T(1.6, () => { L.kind = 'beaker'; L.liq = [{ n: 'น้ำ', amt: 0 }]; parts.filter((p) => p.v === 'L').forEach((p) => { p.delay = p.r3 * 0.4; }); },
+            (u) => { L.liq[0].amt = 0.55 * u; parts.filter((p) => sol.includes(p)).forEach((p) => (p.fade = u)); },
+            () => { sol.forEach((p) => (p.hidden = true)); if (sol.length) L.dissolved = [...new Set(sol.map((p) => p.c))]; })]);
+          if (sol.length) return result('ok', '<b>เกลือละลายน้ำหมด</b> ส่วนทรายไม่ละลายและจมอยู่ก้นบีกเกอร์. ใช้สมบัติ: ' + m.prop + ' ขั้นต่อไปลองกรองหรือรินออก');
+          return result('no', '<b>เติมน้ำแล้วไม่มีสารใดละลาย</b> ' + names(mix).join(' และ ') + ' ไม่ละลายน้ำ วิธีนี้จึงยังไม่ช่วยแยก');
+        }
+        return result('no', 'มีของเหลวอยู่แล้ว การเติมน้ำเพิ่มไม่ทำให้สารแยกกัน');
+      }
+      if (k === 'settle') {
+        if (L.susp) {
+          run([T(3.2, () => { L.susp = false; parts.filter((p) => p.v === 'L').forEach((p) => (p.delay = p.r2 * 1.4)); }, (u) => { L.murk = 1 - u; })]);
+          return result('ok', '<b>ดินโคลนจมลงเป็นตะกอนที่ก้นบีกเกอร์</b> น้ำด้านบนใสขึ้น. ใช้สมบัติ: ' + m.prop + ' ขั้นต่อไปลองรินน้ำใสออก');
+        }
+        if (L.liq.length > 1) return result('mid', '<b>น้ำมันกับน้ำแยกชั้นกันอยู่แล้ว</b> น้ำมันลอยอยู่ด้านบนเพราะเบากว่าน้ำ ขั้นต่อไปลองรินน้ำมันออก');
+        if (L.dissolved.length) return result('no', '<b>ตั้งทิ้งไว้แล้วไม่มีตะกอน</b> เพราะเกลือละลายอยู่ในน้ำ ไม่จมลงมา');
+        return result('no', hasLiq ? 'ไม่มีอะไรตกตะกอนเพิ่ม' : 'ตั้งทิ้งไว้ไม่ช่วยแยก เพราะไม่มีของเหลว');
+      }
+      if (k === 'pour') {
+        if (!hasLiq) return result('no', 'รินออกไม่ได้ เพราะไม่มีของเหลว');
+        const top = L.liq[L.liq.length - 1];
+        const go = L.susp ? inL(() => true) : [];
+        const R = V.R;
+        if (R.kind !== 'beaker') R.kind = 'beaker';
+        const take = L.liq.length > 1 ? top.amt : top.amt * 0.85;
+        run([pourTask(take, top.n, go, 'R', L.dissolved)]);
+        if (L.liq.length > 1) return result('ok', '<b>รินน้ำมันที่ลอยอยู่ด้านบนออกได้</b> เพราะน้ำมันกับน้ำไม่ผสมกันและแยกชั้น. ใช้สมบัติ: ' + m.prop);
+        if (L.susp) return result('no', '<b>รินแล้วยังขุ่น</b> เพราะตะกอนยังลอยอยู่ ควรตั้งทิ้งไว้ให้ตกตะกอนก่อน');
+        if (L.dissolved.length) return result(parts.some((p) => p.v === 'L' && !p.hidden) ? 'ok' : 'no', parts.some((p) => p.v === 'L' && !p.hidden) ? '<b>รินน้ำเกลือออกได้</b> ทรายที่จมอยู่เหลือในบีกเกอร์เดิม แต่เกลือยังละลายอยู่ในน้ำที่รินออกมา' : '<b>รินแล้วเกลือยังอยู่ในน้ำ</b> เพราะเกลือละลายน้ำ การรินแยกไม่ได้');
+        return result('ok', '<b>รินน้ำใสออกได้</b> ตะกอนยังอยู่ที่ก้นบีกเกอร์เดิม. ใช้สมบัติ: ' + m.prop);
+      }
+      if (k === 'filter') {
+        if (!hasLiq) return result('no', 'ต้องมีของเหลวจึงจะกรองได้ ลองเติมน้ำก่อน');
+        V.F = true; V.R.kind = 'beaker';
+        const solid = inL(() => true);
+        const amt = liqAmt(L), names2 = L.liq.map((l) => l.n);
+        run([pourTask(amt, names2.length > 1 ? 'ผสม' : names2[0], solid, 'F', L.dissolved, true)]);
+        if (L.liq.length > 1) return result('no', '<b>กรองแยกน้ำมันกับน้ำไม่ได้</b> ของเหลวทั้งสองผ่านกระดาษกรองไปด้วยกัน');
+        if (solid.length) return result('ok', '<b>กรองได้</b> ' + [...new Set(solid.map((p) => COMP[p.c].name))].join(' ') + ' ติดอยู่บนกระดาษกรอง ' + (L.dissolved.length ? 'แต่เกลือละลายอยู่ จึงผ่านกระดาษกรองไปกับน้ำ' : 'น้ำที่ผ่านกระดาษกรองใส') + '. ใช้สมบัติ: ' + m.prop);
+        return result('no', '<b>กรองแล้วไม่ได้อะไรบนกระดาษกรอง</b> เพราะเกลือละลายอยู่ในน้ำ อนุภาคเล็กมากจึงผ่านกระดาษกรองไปได้');
+      }
+      if (k === 'evap') {
+        const id = liqAmt(V.R) > 0.02 ? 'R' : liqAmt(L) > 0.02 ? 'L' : null;
+        if (!id) return result('no', 'ไม่มีของเหลวให้ระเหย');
+        const v = V[id], start = v.liq.map((l) => l.amt), sol = v.dissolved.slice();
+        run([T(3.4, () => { flame = id; }, (u) => { v.liq.forEach((l, i) => (l.amt = start[i] * (1 - u))); steam = u < 0.95 ? 1 : 0; },
+          () => {
+            v.liq = []; flame = null; steam = 0; v.dissolved = [];
+            const rnd = Lab.rng('crystal');
+            sol.forEach((c) => { for (let i = 0; i < 90; i++) parts.push({ c, v: id, r1: rnd(), r2: rnd() * 0.4, r3: rnd(), x: 0, y: 0, path: null, delay: 0, fade: 0, appear: 0 }); });
+            parts.filter((p) => p.v === id).forEach((p) => { const h = home(p); if (!p.x) { p.x = h[0]; p.y = h[1]; } });
+          })]);
+        if (sol.length) return result('ok', '<b>น้ำระเหยไปหมด เหลือผลึกเกลือ</b> ในภาชนะ. ใช้สมบัติ: ' + m.prop);
+        if (v.liq.some((l) => l.n === 'น้ำมัน')) return result('no', 'ระเหยแห้งไม่เหมาะ น้ำมันกับน้ำระเหยหายไป ไม่ได้สารกลับคืน');
+        return result('mid', '<b>น้ำระเหยไปหมด</b> ไม่มีสารที่ละลายอยู่ จึงไม่มีของแข็งเหลือ ' + (parts.some((p) => p.v === id && !p.hidden) ? 'เหลือเพียงตะกอนที่มีอยู่เดิม' : ''));
+      }
+    }
+    // เทของเหลวจาก L ไปยัง R (ผ่านกรวยถ้ากรอง) พร้อมพาอนุภาคที่ลอยอยู่ไปด้วย
+    function pourTask(amt, liqName, carry, to, dissolved, viaFunnel) {
+      const L = V.L, R = V.R;
+      let taken = 0;
+      return T(3.0, () => {
+        carry.forEach((p) => { p.v = to; p.delay = 0.6 + p.r3 * 1.6; p.path = [[310, 220], [viaFunnel ? 590 : 600, viaFunnel ? 160 : 230]]; });
+        if (dissolved.length) R.dissolved = [...new Set([...R.dissolved, ...dissolved])];
+      }, (u) => {
+        tilt = u < 0.2 ? u / 0.2 : u > 0.85 ? (1 - u) / 0.15 : 1;
+        const want = amt * Math.min(1, Math.max(0, (u - 0.15) / 0.65)), d = want - taken;
+        if (d > 0) {
+          taken = want;
+          // เอาจากชั้นบนสุดก่อน
+          let left = d;
+          for (let i = L.liq.length - 1; i >= 0 && left > 0; i--) {
+            const k2 = Math.min(left, L.liq[i].amt); L.liq[i].amt -= k2; left -= k2;
+            let r = R.liq.find((l) => l.n === L.liq[i].n); if (!r) { r = { n: L.liq[i].n, amt: 0 }; R.liq.push(r); R.liq.sort((a, b) => (a.n === 'น้ำ' ? -1 : 1)); }
+            r.amt += k2;
+          }
+          L.liq = L.liq.filter((l) => l.amt > 0.002 || L.liq.length === 1);
+        }
+        stream = u > 0.15 && u < 0.85 ? { col: L.susp ? 'rgba(150,110,70,.8)' : LIQ[liqName] || 'rgba(170,190,140,.7)' } : null;
+        if (L.susp && carry.length) L.murk = 1;
+      }, () => { tilt = 0; stream = null; if (carry.length && to === 'R') { R.susp = true; R.murk = 1; } if (liqAmt(L) < 0.02) { L.susp = false; } });
+    }
+
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.m) load(MIX.find((m) => m.key === b.dataset.m));
+      else if (b.dataset.k) apply(b.dataset.k);
+      else if (b.id === 'reset') load(mix);
+      else if (b.id === 'hint') api.note('วิธีที่เหมาะกับ <b>' + mix.name + '</b>: ' + mix.best);
+    });
+
+    // ---------- วาด ----------
+    function drawComp(ctx, p) {
+      const c = COMP[p.c], a = p.fade != null ? 1 - p.fade : 1;
+      if (a <= 0.02) return;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = c.col; ctx.strokeStyle = c.edge || c.col; ctx.lineWidth = 0.8;
+      if (c.shape === 'dot') { ctx.fillRect(p.x - c.size / 2, p.y - c.size / 2, c.size, c.size); }
+      else if (c.shape === 'cube') { ctx.fillRect(p.x - 1.3, p.y - 1.3, 2.6, 2.6); ctx.strokeRect(p.x - 1.3, p.y - 1.3, 2.6, 2.6); }
+      else if (c.shape === 'grain') { ctx.beginPath(); ctx.ellipse(p.x, p.y, 6, 2.6, p.r3 * 3, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (c.shape === 'bean') { ctx.beginPath(); ctx.ellipse(p.x, p.y, 4.6, 3.6, p.r3 * 3, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (c.shape === 'rock') {
+        ctx.beginPath();
+        for (let i = 0; i < 7; i++) { const a2 = (i / 7) * 6.283, r = 6 + 2.6 * Math.sin(p.r1 * 40 + i * 2.1); ctx.lineTo(p.x + Math.cos(a2) * r, p.y + Math.sin(a2) * r * 0.8); }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    function drawVessel(ctx, id) {
+      const v = V[id], b = box(id), dark = Lab.dark();
+      const glass = dark ? 'rgba(200,220,240,.55)' : 'rgba(90,120,150,.65)';
+      // ของเหลว
+      let y = b.yb - 3;
+      const inner = v.kind === 'beaker' ? b.h - 10 : b.h - 6;
+      v.liq.forEach((l) => {
+        const hh = inner * l.amt;
+        let col = LIQ[l.n] || 'rgba(170,190,140,.6)';
+        if (l.n === 'น้ำ' && v.susp) col = 'rgba(' + Math.round(120 + 40 * (v.murk ?? 1)) + ',' + Math.round(180 - 70 * (v.murk ?? 1)) + ',' + Math.round(235 - 170 * (v.murk ?? 1)) + ',.6)';
+        ctx.fillStyle = col; ctx.fillRect(b.x0 + 3, y - hh, b.x1 - b.x0 - 6, hh); y -= hh;
+      });
+      if (v.dissolved.length && liqAmt(v) > 0.02) {
+        ctx.fillStyle = Lab.css('--muted'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('มี' + v.dissolved.map((c) => COMP[c].name).join(' ') + 'ละลายอยู่', (b.x0 + b.x1) / 2, Math.max(b.yb - b.h + 18, y - 8));
+      }
+      // ตัวภาชนะ
+      ctx.strokeStyle = glass; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(b.x0 - 4, b.yb - b.h); ctx.lineTo(b.x0, b.yb - b.h + 4); ctx.lineTo(b.x0, b.yb); ctx.lineTo(b.x1, b.yb); ctx.lineTo(b.x1, b.yb - b.h + 4); ctx.lineTo(b.x1 + 4, b.yb - b.h); ctx.stroke();
+      if (v.kind === 'beaker') { ctx.lineWidth = 1; for (let i = 1; i < 5; i++) { const yy = b.yb - (b.h - 10) * i * 0.2; ctx.beginPath(); ctx.moveTo(b.x0, yy); ctx.lineTo(b.x0 + 14, yy); ctx.stroke(); } }
+    }
+
+    function scene(ctx) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // โต๊ะ
+      ctx.fillStyle = dark ? '#3a3328' : '#d9c4a0'; ctx.fillRect(0, 446, W, 74);
+      // ตะเกียงเมื่อระเหย
+      ['L', 'R'].forEach((id) => {
+        if (flame !== id) return;
+        const b = box(id), cx = (b.x0 + b.x1) / 2;
+        ctx.strokeStyle = muted; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x0 - 6, b.yb + 2); ctx.lineTo(b.x1 + 6, b.yb + 2); ctx.stroke();
+        const f = 1 + 0.1 * Math.sin(performance.now() / 70), g = ctx.createRadialGradient(cx, b.yb + 30, 2, cx, b.yb + 26, 30);
+        g.addColorStop(0, 'rgba(255,255,220,.95)'); g.addColorStop(0.4, 'rgba(110,160,255,.8)'); g.addColorStop(1, 'rgba(255,140,40,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, b.yb + 28, 12 * f, 24 * f, 0, 0, 7); ctx.fill();
+        if (steam) for (let i = 0; i < 5; i++) { const t = performance.now() / 700 + i * 1.3, yy = b.yb - b.h - ((t * 40) % 80); ctx.fillStyle = 'rgba(200,210,225,' + 0.35 * (1 - ((t * 40) % 80) / 80) + ')'; ctx.beginPath(); ctx.arc(cx - 40 + i * 20 + 8 * Math.sin(t * 2), yy, 12, 0, 7); ctx.fill(); }
+      });
+      // ภาชนะ L (เอียงเมื่อริน)
+      const bl = box('L');
+      ctx.save();
+      if (tilt) { ctx.translate(bl.x1, bl.yb - bl.h); ctx.rotate(tilt * 0.55); ctx.translate(-bl.x1, -(bl.yb - bl.h)); }
+      drawVessel(ctx, 'L');
+      parts.forEach((p) => { if (p.v === 'L' && !p.path && !(p.hidden && !p.fade)) drawComp(ctx, p); });
+      ctx.restore();
+      drawVessel(ctx, 'R');
+      // กรวยกรอง
+      if (V.F) {
+        ctx.fillStyle = dark ? 'rgba(240,240,230,.85)' : 'rgba(255,255,255,.95)'; ctx.strokeStyle = muted; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(525, 150); ctx.lineTo(655, 150); ctx.lineTo(598, 236); ctx.lineTo(598, 268); ctx.lineTo(582, 268); ctx.lineTo(582, 236); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = muted; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('กระดาษกรอง', 662, 170);
+      }
+      // ตะแกรง
+      if (sieveOn) {
+        ctx.strokeStyle = muted; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(488, 250); ctx.lineTo(702, 250); ctx.stroke();
+        ctx.lineWidth = 1; for (let x = 492; x < 700; x += 6) { ctx.beginPath(); ctx.moveTo(x, 246); ctx.lineTo(x, 254); ctx.stroke(); }
+        ctx.fillStyle = muted; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('ตะแกรง', 595, 272);
+      }
+      // ลำของเหลวที่ริน
+      if (stream) {
+        ctx.strokeStyle = stream.col; ctx.lineWidth = 7; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(bl.x1 + 6, bl.yb - bl.h + 10); ctx.quadraticCurveTo(470, 150, V.F ? 590 : 590, V.F ? 160 : 260); ctx.stroke(); ctx.lineCap = 'butt';
+      }
+      parts.forEach((p) => { if ((p.v !== 'L' || p.path) && !(p.hidden && !p.fade)) drawComp(ctx, p); });
+      // แม่เหล็ก
+      if (magnet) {
+        const x = magnet.x, y = magnet.y;
+        ctx.fillStyle = '#c8412a'; ctx.fillRect(x - 70, y - 10, 70, 22); ctx.fillStyle = '#2f6fde'; ctx.fillRect(x, y - 10, 70, 22);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', x - 35, y + 6); ctx.fillText('S', x + 35, y + 6);
+      }
+      if (hand) {
+        const mv = parts.find((p) => p.path && p.v === 'R');
+        if (mv) { ctx.strokeStyle = ink; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mv.x - 6, mv.y - 6); ctx.lineTo(mv.x - 18, mv.y - 50); ctx.moveTo(mv.x + 6, mv.y - 6); ctx.lineTo(mv.x + 10, mv.y - 50); ctx.stroke(); }
+      }
+      // ป้าย
+      ctx.fillStyle = ink; ctx.font = '16px Sarabun, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('สารผสม: ' + mix.name, (bl.x0 + bl.x1) / 2, 478);
+      ctx.fillText('ภาชนะรับ', 595, 478);
+      // รายการสารในแต่ละภาชนะ
+      ctx.font = '14px Sarabun, sans-serif'; ctx.fillStyle = muted;
+      [['L', (bl.x0 + bl.x1) / 2], ['R', 595]].forEach(([id, x]) => {
+        const s = new Set(parts.filter((p) => p.v === id && !p.hidden && !p.path).map((p) => COMP[p.c].name));
+        V[id].liq.filter((l) => l.amt > 0.01).forEach((l) => s.add(l.n));
+        V[id].dissolved.forEach((c) => liqAmt(V[id]) > 0.02 && s.add(COMP[c].name + ' (ละลาย)'));
+        ctx.fillText(s.size ? [...s].join(' · ') : 'ว่าง', x, 500);
+      });
+      if (V.F) { const s = new Set(parts.filter((p) => p.v === 'F').map((p) => COMP[p.c].name)); if (s.size) { ctx.textAlign = 'left'; ctx.fillText('บนกระดาษกรอง: ' + [...s].join(' '), 662, 192); } }
+    }
+
+    function step(dt) {
+      if (!cur && tasks.length) { cur = tasks.shift(); cur.t = 0; if (cur.start) cur.start(); }
+      if (cur) {
+        cur.t += dt; const u = Math.min(1, cur.t / cur.dur);
+        if (cur.update) cur.update(u);
+        if (u >= 1) { if (cur.end) cur.end(); cur = null; }
+      }
+      parts.forEach((p) => {
+        if (p.delay > 0) { p.delay -= dt; return; }
+        let tx, ty;
+        if (p.path && p.path.length) { [tx, ty] = p.path[0]; }
+        else { [tx, ty] = home(p); }
+        const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy), sp = 380 * dt;
+        if (d <= sp) { p.x = tx; p.y = ty; if (p.path && p.path.length) { p.path.shift(); if (!p.path.length) p.path = null; } }
+        else { p.x += (dx / d) * sp; p.y += (dy / d) * sp; }
+      });
+    }
+
+    load(MIX[0]);
+    Lab.loop((dt) => {
+      step(dt);
+      if (!cv.w) return;
+      const ctx = cv.ctx, s = Math.min(cv.w / W, cv.h / H);
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      ctx.save(); ctx.translate((cv.w - W * s) / 2, (cv.h - H * s) / 2); ctx.scale(s, s);
+      scene(ctx);
+      ctx.restore();
+    });
+  },
+});
+</script>
+</body>
+</html>

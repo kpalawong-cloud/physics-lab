@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หินและวัฏจักรหิน · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 600px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: auto; aspect-ratio: 4 / 3; } }
+  .info { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 10px; }
+  .info h4 { margin: 0 0 4px; font-size: 18px; }
+  .info p { margin: 4px 0; }
+  .steps-list { list-style: none; padding: 0; margin: 8px 0 0; font-size: 15px; }
+  .steps-list li { padding: 4px 8px; border-radius: 8px; color: var(--muted); }
+  .steps-list li.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .seg button { font-size: 15px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ---------- ข้อมูลหิน ----------
+const ROCKS = {
+  granite: { name: 'หินแกรนิต', type: 'อัคนี', tex: 'ผลึกใหญ่ มองเห็นแร่หลายสีด้วยตาเปล่า (ชมพู ขาว ดำ)', prop: 'แข็งมาก ทนทาน ขัดเงาได้', use: 'ปูพื้น ทำครกหิน ผนังอาคาร ป้าย', born: 'แมกมาเย็นตัวช้า ๆ ใต้ผิวโลก' },
+  basalt: { name: 'หินบะซอลต์', type: 'อัคนี', tex: 'เนื้อละเอียด สีเข้ม ผลึกเล็กมาก บางก้อนมีรูพรุน', prop: 'แข็ง หนัก', use: 'หินโรยทางรถไฟ ทำถนน ก่อสร้าง', born: 'ลาวาเย็นตัวเร็วบนผิวโลก' },
+  pumice: { name: 'หินพัมมิซ', type: 'อัคนี', tex: 'สีอ่อน มีรูพรุนมากจากฟองแก๊ส', prop: 'เบามาก ลอยน้ำได้', use: 'ขัดผิว ขัดเท้า ใส่ในกระถางต้นไม้', born: 'ลาวาที่มีแก๊สมากพุ่งออกมาแล้วเย็นตัวทันที' },
+  sandstone: { name: 'หินทราย', type: 'ตะกอน', tex: 'เม็ดทรายเชื่อมกัน ผิวสาก มักเห็นเป็นชั้น', prop: 'ค่อนข้างแข็ง ดูดซับน้ำได้', use: 'สร้างปราสาทหิน ปูพื้น หินลับมีด', born: 'ทรายทับถมแล้วอัดแน่นและเชื่อมประสาน' },
+  limestone: { name: 'หินปูน', type: 'ตะกอน', tex: 'เนื้อละเอียด สีเทาหรือขาว อาจพบเปลือกหอย', prop: 'หยดกรดแล้วเกิดฟองแก๊ส ไม่แข็งมาก', use: 'ทำปูนซีเมนต์ ปูนขาว ปรับสภาพดินเปรี้ยว', born: 'เปลือกและซากสิ่งมีชีวิตในทะเลทับถมกัน' },
+  shale: { name: 'หินดินดาน', type: 'ตะกอน', tex: 'เนื้อละเอียดมาก เป็นชั้นบาง ๆ แตกเป็นแผ่น', prop: 'เปราะ แตกง่ายตามชั้น', use: 'ใช้ผสมทำปูนซีเมนต์ ทำอิฐ', born: 'โคลนและดินเหนียวทับถมแล้วอัดแน่น' },
+  marble: { name: 'หินอ่อน', type: 'แปร', tex: 'ผลึกแร่เกาะกันแน่น มีลายเส้น สีขาวหรือหลายสี', prop: 'ขัดเงาได้สวย หยดกรดแล้วเกิดฟองแก๊ส', use: 'ปูพื้น ผนัง รูปปั้น โต๊ะ', born: 'หินปูนได้รับความร้อนและความดันสูง' },
+  slate: { name: 'หินชนวน', type: 'แปร', tex: 'เนื้อละเอียด แตกเป็นแผ่นเรียบบาง', prop: 'แข็งกว่าหินดินดาน ผิวเรียบ', use: 'กระดานชนวน แผ่นปูพื้น มุงหลังคา', born: 'หินดินดานได้รับความร้อนและความดัน' },
+  quartzite: { name: 'หินควอตไซต์', type: 'แปร', tex: 'เม็ดทรายหลอมเชื่อมกันแน่น มีประกายระยิบ', prop: 'แข็งมาก ทนทาน', use: 'ก่อสร้าง หินประดับ', born: 'หินทรายได้รับความร้อนและความดันสูง' },
+};
+const TYPE_COL = { 'อัคนี': '#e0662a', 'ตะกอน': '#c99a3b', 'แปร': '#7b5cc9' };
+
+// สุ่มแบบกำหนดได้ (ลายหินเหมือนเดิมทุกครั้งที่วาด)
+function mrand(seed) { let a = seed | 0; return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// วาดก้อนหิน: kind = ชนิดหิน, grain = ตัวคูณขนาดผลึก (ใช้แสดงผลึกโตขึ้น), shape = 'blob' หรือ 'circle'
+function rockPath(ctx, cx, cy, r, seed, shape) {
+  ctx.beginPath();
+  if (shape === 'circle') { ctx.arc(cx, cy, r, 0, 7); return; }
+  const R = mrand(seed), n = 15;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2, rr = r * (0.82 + 0.18 * R());
+    const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.82;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+}
+function drawTexture(ctx, kind, cx, cy, r, seed, grain) {
+  const R = mrand(seed * 7 + 3);
+  grain = grain == null ? 1 : grain;
+  const poly = (x, y, s, col) => {
+    ctx.fillStyle = col; ctx.beginPath();
+    const k = 5 + Math.floor(R() * 3);
+    for (let i = 0; i < k; i++) { const a = (i / k) * 6.283 + R() * 0.6, rr = s * (0.6 + 0.4 * R()); i ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+    ctx.closePath(); ctx.fill();
+  };
+  const P = () => [cx + (R() * 2 - 1) * r, cy + (R() * 2 - 1) * r];
+  switch (kind) {
+    case 'granite': {
+      ctx.fillStyle = '#d9cbc3'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      const n = Math.round(90 / Math.max(0.3, grain)), cols = ['#e7a39a', '#f6f2ea', '#8f8f93', '#2b2b2e', '#e7a39a', '#f6f2ea'];
+      for (let i = 0; i < n; i++) { const [x, y] = P(); poly(x, y, r * 0.13 * grain * (0.6 + R()), cols[i % cols.length]); }
+      break;
+    }
+    case 'basalt': {
+      ctx.fillStyle = '#3c3e44'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < 260; i++) { const [x, y] = P(); ctx.fillStyle = R() < 0.5 ? '#575a62' : '#2a2b30'; ctx.fillRect(x, y, r * 0.025 * grain + 0.6, r * 0.025 * grain + 0.6); }
+      for (let i = 0; i < 6; i++) { const [x, y] = P(); ctx.fillStyle = '#1d1e22'; ctx.beginPath(); ctx.arc(x, y, r * (0.03 + 0.04 * R()), 0, 7); ctx.fill(); }
+      break;
+    }
+    case 'pumice': {
+      ctx.fillStyle = '#dcd7cc'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < 120; i++) { const [x, y] = P(); ctx.fillStyle = R() < 0.6 ? '#b8b1a3' : '#a39b8c'; ctx.beginPath(); ctx.ellipse(x, y, r * (0.02 + 0.05 * R()), r * (0.015 + 0.03 * R()), R() * 3, 0, 7); ctx.fill(); }
+      break;
+    }
+    case 'sandstone': {
+      ctx.fillStyle = '#d6ad74'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let b = -r; b < r; b += r * 0.28) { ctx.fillStyle = 'rgba(160,100,50,.16)'; ctx.fillRect(cx - r, cy + b, 2 * r, r * 0.1); }
+      for (let i = 0; i < 380; i++) { const [x, y] = P(); ctx.fillStyle = ['#e8c590', '#c0915a', '#f1dcb4', '#b17d48'][i % 4]; ctx.beginPath(); ctx.arc(x, y, r * 0.018 * grain + 0.7, 0, 7); ctx.fill(); }
+      break;
+    }
+    case 'limestone': {
+      ctx.fillStyle = '#d8d3c2'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < 160; i++) { const [x, y] = P(); ctx.fillStyle = R() < 0.5 ? '#c9c3b0' : '#e6e2d4'; ctx.fillRect(x, y, 2, 2); }
+      ctx.strokeStyle = '#9d957f'; ctx.lineWidth = Math.max(1, r * 0.02);
+      for (let i = 0; i < 5; i++) { const [x, y] = P(); const s = r * (0.08 + 0.06 * R()); ctx.beginPath(); ctx.arc(x, y, s, Math.PI, 0); ctx.stroke(); for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + k * s * 0.4, y - s * 0.9); ctx.stroke(); } }
+      break;
+    }
+    case 'shale': {
+      ctx.fillStyle = '#66656b'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let y = cy - r; y < cy + r; y += r * 0.06) { ctx.strokeStyle = R() < 0.5 ? 'rgba(40,40,45,.55)' : 'rgba(130,130,138,.45)'; ctx.lineWidth = Math.max(0.8, r * 0.012); ctx.beginPath(); ctx.moveTo(cx - r, y); ctx.lineTo(cx + r, y + (R() - 0.5) * r * 0.05); ctx.stroke(); }
+      break;
+    }
+    case 'marble': {
+      ctx.fillStyle = '#f1efe9'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < Math.round(40 / Math.max(0.4, grain)); i++) { const [x, y] = P(); poly(x, y, r * 0.12 * grain, R() < 0.5 ? '#f8f7f3' : '#e4e1d8'); }
+      ctx.strokeStyle = 'rgba(110,110,120,.55)'; ctx.lineWidth = Math.max(1, r * 0.018);
+      for (let i = 0; i < 4; i++) { const [x, y] = P(); ctx.beginPath(); ctx.moveTo(x - r, y); ctx.bezierCurveTo(x - r * 0.3, y - r * 0.4 * R(), x + r * 0.2, y + r * 0.5 * R(), x + r, y - r * 0.2); ctx.stroke(); }
+      break;
+    }
+    case 'slate': {
+      ctx.fillStyle = '#4b525b'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      ctx.strokeStyle = 'rgba(120,130,145,.5)'; ctx.lineWidth = Math.max(0.8, r * 0.01);
+      for (let k = -2 * r; k < 2 * r; k += r * 0.09) { ctx.beginPath(); ctx.moveTo(cx - r, cy + k); ctx.lineTo(cx + r, cy + k - r * 0.35); ctx.stroke(); }
+      break;
+    }
+    case 'quartzite': {
+      ctx.fillStyle = '#e8dccd'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < 140; i++) { const [x, y] = P(); poly(x, y, r * 0.07 * grain, ['#efe5d8', '#dccbb7', '#f7f1e8'][i % 3]); }
+      for (let i = 0; i < 30; i++) { const [x, y] = P(); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(x, y, 2, 2); }
+      break;
+    }
+    case 'magma': {
+      const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, r * 1.4);
+      g.addColorStop(0, '#ffd54a'); g.addColorStop(0.5, '#f07a1f'); g.addColorStop(1, '#a52714');
+      ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      break;
+    }
+    case 'sediment': {
+      ctx.fillStyle = '#e3cfa7'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      for (let i = 0; i < 70; i++) { const [x, y] = P(); ctx.fillStyle = ['#c9a36b', '#8d8a85', '#b9824e', '#efe3c8'][i % 4]; ctx.beginPath(); ctx.arc(x, y, r * (0.03 + 0.04 * R()), 0, 7); ctx.fill(); }
+      break;
+    }
+  }
+}
+function drawRock(ctx, kind, cx, cy, r, seed, opts) {
+  opts = opts || {};
+  ctx.save();
+  rockPath(ctx, cx, cy, r, seed, opts.shape);
+  ctx.clip();
+  drawTexture(ctx, kind, cx, cy, r, seed, opts.grain);
+  if (opts.shape !== 'circle') {
+    const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.1);
+    g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(0,0,0,.28)');
+    ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+  }
+  ctx.restore();
+  ctx.save(); rockPath(ctx, cx, cy, r, seed, opts.shape); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+}
+
+// ---------- ขั้นการเกิดหินแต่ละประเภท ----------
+const FORM = {
+  igneous: {
+    name: 'หินอัคนี',
+    ways: [{ v: 'slow', label: 'เย็นตัวใต้ดิน' }, { v: 'fast', label: 'เย็นตัวบนผิวโลก' }, { v: 'gas', label: 'พุ่งออกพร้อมแก๊ส' }],
+    steps: { slow: ['แมกมาดันตัวขึ้นมาค้างอยู่ใต้ผิวโลก', 'เย็นตัวช้ามาก (นับพันถึงล้านปี)', 'ผลึกแร่มีเวลาโตจนใหญ่', 'ได้หินแกรนิต ผลึกใหญ่ มองเห็นด้วยตาเปล่า'],
+      fast: ['แมกมาพุ่งขึ้นตามปล่องภูเขาไฟ', 'ไหลออกมาบนผิวโลก เรียกว่า ลาวา', 'ลาวาเย็นตัวเร็ว ผลึกจึงเล็กมาก', 'ได้หินบะซอลต์ เนื้อละเอียด สีเข้ม'],
+      gas: ['แมกมามีแก๊สละลายอยู่มาก', 'ภูเขาไฟระเบิด ลาวาพุ่งออกมาเป็นฟอง', 'เย็นตัวทันที ฟองแก๊สถูกขังไว้เป็นรู', 'ได้หินพัมมิซ มีรูพรุน เบา ลอยน้ำได้'] },
+  },
+  sedimentary: {
+    name: 'หินตะกอน',
+    ways: [{ v: 'sand', label: 'ทราย' }, { v: 'mud', label: 'โคลน' }, { v: 'shell', label: 'เปลือกหอย' }],
+    steps: ['ผุพัง: หินบนภูเขาแตกออกเพราะแดด ฝน ความร้อนเย็น และรากพืช', 'กร่อนและพัดพา: น้ำพาตะกอนไหลลงสู่ทะเล', 'ทับถม: ตะกอนตกทับกันเป็นชั้นที่ก้นทะเล ชั้นล่างเก่ากว่า', 'อัดแน่นและเชื่อมประสาน: น้ำหนักชั้นบนกดทับ แร่เชื่อมตะกอนเป็นหิน'],
+    result: { sand: 'sandstone', mud: 'shale', shell: 'limestone' },
+  },
+  metamorphic: {
+    name: 'หินแปร',
+    ways: [{ v: 'shale', label: 'หินดินดาน' }, { v: 'limestone', label: 'หินปูน' }, { v: 'sandstone', label: 'หินทราย' }],
+    steps: ['หินเดิมอยู่ลึกใต้ผิวโลก', 'แผ่นเปลือกโลกดันกัน เกิดความดันสูง', 'ความร้อนจากแมกมาที่อยู่ใกล้ (แต่หินไม่หลอมเหลว)', 'เนื้อหินและแร่จัดเรียงตัวใหม่ เกิดเป็นหินแปร'],
+    result: { shale: 'slate', limestone: 'marble', sandstone: 'quartzite' },
+  },
+};
+
+// ---------- วัฏจักรหิน ----------
+const NODES = {
+  magma: { x: 250, y: 500, label: 'แมกมา', tex: 'magma' },
+  igneous: { x: 120, y: 270, label: 'หินอัคนี', tex: 'granite' },
+  sediment: { x: 400, y: 95, label: 'ตะกอน', tex: 'sediment' },
+  sedimentary: { x: 680, y: 270, label: 'หินตะกอน', tex: 'sandstone' },
+  metamorphic: { x: 550, y: 500, label: 'หินแปร', tex: 'marble' },
+};
+const ARROWS = [
+  { from: 'magma', to: 'igneous', bend: 55, label: 'เย็นตัวและแข็งตัว', info: 'แมกมาหรือลาวาเย็นตัวลงและแข็งตัว เกิดเป็นหินอัคนี ถ้าเย็นช้าใต้ดินผลึกใหญ่ ถ้าเย็นเร็วบนผิวโลกผลึกเล็ก' },
+  { from: 'igneous', to: 'sediment', bend: 40, label: 'ผุพังและกร่อน', info: 'หินอัคนีที่โผล่บนผิวโลกถูกแดด ฝน ลม และสิ่งมีชีวิตทำให้ผุพัง แตกเป็นชิ้นเล็กกลายเป็นตะกอน' },
+  { from: 'sedimentary', to: 'sediment', bend: 45, label: 'ผุพังและกร่อน', info: 'หินตะกอนที่โผล่ขึ้นมาก็ผุพังและถูกกร่อนกลายเป็นตะกอนได้อีก' },
+  { from: 'metamorphic', to: 'sediment', bend: 0, label: 'ผุพังและกร่อน', info: 'หินแปรที่ถูกยกตัวขึ้นมาบนผิวโลกผุพังและกร่อนกลายเป็นตะกอนได้เช่นกัน' },
+  { from: 'sediment', to: 'sedimentary', bend: 40, label: 'ทับถมและอัดแน่น', info: 'ตะกอนถูกพัดพาไปทับถมเป็นชั้น ๆ น้ำหนักกดทับให้อัดแน่น และแร่เชื่อมประสานตะกอนเข้าด้วยกันเป็นหินตะกอน' },
+  { from: 'sedimentary', to: 'metamorphic', bend: 40, label: 'ความร้อนและความดัน', info: 'หินตะกอนที่จมลงลึกได้รับความร้อนและความดันสูง เนื้อหินเปลี่ยนไปเป็นหินแปร โดยไม่หลอมเหลว' },
+  { from: 'igneous', to: 'metamorphic', bend: -60, label: 'ความร้อนและความดัน', info: 'หินอัคนีที่ได้รับความร้อนและความดันสูงก็เปลี่ยนเป็นหินแปรได้' },
+  { from: 'metamorphic', to: 'magma', bend: 40, label: 'หลอมเหลว', info: 'หินที่ลงไปลึกมากจนร้อนพอ จะหลอมเหลวกลับเป็นแมกมา แล้ววัฏจักรก็เริ่มใหม่' },
+  { from: 'igneous', to: 'magma', bend: 55, label: 'หลอมเหลว', info: 'หินอัคนีที่ลงไปลึกใต้เปลือกโลกก็หลอมเหลวกลับเป็นแมกมาได้' },
+];
+
+SimKit.page({
+  id: 'rocks',
+  title: 'หินและวัฏจักรหิน',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'ดูการเกิดหินอัคนี หินตะกอน และหินแปร แตะลูกศรในวัฏจักรหินเพื่อดูว่าหินเปลี่ยนจากประเภทหนึ่งเป็นอีกประเภทหนึ่งได้อย่างไร แล้วสำรวจตัวอย่างหินและการนำไปใช้',
+  about:
+    '<p><b>หิน</b> คือของแข็งที่เกิดเองตามธรรมชาติ ประกอบด้วยแร่ตั้งแต่ 1 ชนิดขึ้นไป แบ่งตามลักษณะการเกิดได้ 3 ประเภท</p>' +
+    '<p><b>หินอัคนี</b> เกิดจากแมกมาหรือลาวาเย็นตัวและแข็งตัว เย็นตัวช้าใต้ผิวโลกผลึกใหญ่ (แกรนิต) เย็นตัวเร็วบนผิวโลกผลึกเล็ก (บะซอลต์) ถ้ามีแก๊สมากจะมีรูพรุน (พัมมิซ ลอยน้ำได้)</p>' +
+    '<p><b>หินตะกอน</b> เกิดจากตะกอนที่ได้จากการผุพังและกร่อนของหินเดิม ถูกพัดพาไปทับถม อัดแน่น และเชื่อมประสาน มักเห็นเป็นชั้น และอาจพบซากดึกดำบรรพ์ (หินทราย หินดินดาน หินปูน)</p>' +
+    '<p><b>หินแปร</b> เกิดจากหินเดิมได้รับความร้อนและความดันสูงจนเนื้อหินเปลี่ยนไป แต่ไม่หลอมเหลว เช่น หินดินดาน → หินชนวน, หินปูน → หินอ่อน, หินทราย → หินควอตไซต์</p>' +
+    '<p><b>วัฏจักรหิน</b> คือการที่หินเปลี่ยนจากประเภทหนึ่งไปเป็นอีกประเภทหนึ่งหมุนเวียนต่อเนื่อง ใช้เวลานานมาก ตั้งแต่หลายพันจนถึงหลายล้านปี</p>' +
+    '<p><b>การใช้ประโยชน์</b> หินแกรนิตและหินอ่อนใช้ปูพื้นและตกแต่ง หินปูนใช้ทำปูนซีเมนต์ หินชนวนใช้ทำกระดานชนวนและแผ่นปูพื้น หินบะซอลต์ใช้โรยทางรถไฟและทำถนน</p>',
+  think: [
+    'เหตุใดหินแกรนิตจึงมีผลึกใหญ่กว่าหินบะซอลต์ ทั้งที่เกิดจากแมกมาเหมือนกัน',
+    'ถ้าหยดกรดเจือจางลงบนหินแล้วเกิดฟองแก๊ส หินนั้นอาจเป็นหินชนิดใดได้บ้าง',
+    'เหตุใดจึงพบซากดึกดำบรรพ์ในหินตะกอน แต่แทบไม่พบในหินอัคนี',
+    'หินพัมมิซลอยน้ำได้ ขณะที่หินบะซอลต์จมน้ำ ทั้งที่เป็นหินอัคนีเหมือนกัน เพราะเหตุใด',
+    'ลองเล่าการเดินทางของเม็ดทรายหนึ่งเม็ด ตั้งแต่อยู่ในหินแกรนิตบนภูเขา จนกลายเป็นหินควอตไซต์',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const W = 800, H = 600;
+    const s = { mode: 'form', kind: 'igneous', way: { igneous: 'slow', sedimentary: 'sand', metamorphic: 'shale' }, t: 0, play: false,
+      arrow: -1, dot: null, tour: null, tourLog: [], pick: 'granite', test: null, testT: 0 };
+
+    panel.innerHTML =
+      '<h3>เลือกเรื่อง</h3><div class="seg" id="mode"><button data-v="form">การเกิดหิน</button><button data-v="cycle">วัฏจักรหิน</button><button data-v="sample">ตัวอย่างหิน</button></div>' +
+      '<div id="pForm">' +
+      '<h3>ประเภทหิน</h3><div class="seg" id="kind"><button data-v="igneous">อัคนี</button><button data-v="sedimentary">ตะกอน</button><button data-v="metamorphic">แปร</button></div>' +
+      '<h3 id="wayT">วิธีเกิด</h3><div class="seg" id="way"></div>' +
+      '<div class="row"><button class="btn primary" id="play">▶ เล่น</button><button class="btn" id="restart">เริ่มใหม่</button></div>' +
+      '<input type="range" id="prog" min="0" max="1" step="0.001" value="0" aria-label="ความคืบหน้า">' +
+      '<ol class="steps-list" id="steps"></ol></div>' +
+      '<div id="pCycle" hidden><p class="muted" style="font-size:14px;margin:8px 0">แตะลูกศรในภาพเพื่อดูว่าเกิดอะไรขึ้น</p>' +
+      '<div class="row"><button class="btn primary" id="tour">เดินทางของเม็ดหิน (สุ่มเส้นทาง)</button></div><div class="info" id="cycInfo">แตะลูกศรใดก็ได้</div></div>' +
+      '<div id="pSample" hidden><p class="muted" style="font-size:14px;margin:8px 0">แตะหินในภาพเพื่อดูรายละเอียด แล้วลองทดสอบ</p>' +
+      '<div class="row"><button class="btn" id="acid">หยดกรดเจือจาง</button><button class="btn" id="water">ใส่ลงในน้ำ</button></div><div class="info" id="smpInfo"></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === get()));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); } });
+      sync(); return sync;
+    }
+    const prog = $('#prog'), playB = $('#play');
+    function setPlay(p) { s.play = p; playB.textContent = p ? '⏸ หยุด' : '▶ เล่น'; }
+    function restart() { s.t = 0; prog.value = 0; setPlay(true); }
+    function renderWays() {
+      const F = FORM[s.kind];
+      $('#wayT').textContent = s.kind === 'igneous' ? 'วิธีเย็นตัว' : s.kind === 'sedimentary' ? 'ตะกอนที่ทับถม' : 'หินเดิม';
+      $('#way').innerHTML = F.ways.map((w) => '<button data-v="' + w.v + '">' + w.label + '</button>').join('');
+      $('#way').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.way[s.kind]));
+    }
+    $('#way').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; s.way[s.kind] = b.dataset.v; renderWays(); restart(); });
+    seg('kind', () => s.kind, (v) => { s.kind = v; renderWays(); restart(); });
+    seg('mode', () => s.mode, (v) => {
+      s.mode = v; api.note(''); lastStep = -1; $('#pForm').hidden = v !== 'form'; $('#pCycle').hidden = v !== 'cycle'; $('#pSample').hidden = v !== 'sample';
+      if (v === 'sample') showSample();
+    });
+    playB.onclick = () => { if (s.t >= 1) s.t = 0; setPlay(!s.play); };
+    $('#restart').onclick = restart;
+    prog.oninput = () => { s.t = +prog.value; setPlay(false); };
+    renderWays();
+    function stepList() { const F = FORM[s.kind]; return Array.isArray(F.steps) ? F.steps : F.steps[s.way[s.kind]]; }
+    let lastStep = -1, lastKey = '';
+    function syncSteps() {
+      const st = stepList(), i = Math.min(st.length - 1, Math.floor(s.t * st.length * 0.999));
+      const key = s.kind + s.way[s.kind];
+      if (i === lastStep && key === lastKey) return;
+      lastStep = i; lastKey = key;
+      $('#steps').innerHTML = st.map((x, k) => '<li class="' + (k === i ? 'on' : '') + '">' + (k + 1) + '. ' + x + '</li>').join('');
+      const resKind = s.kind === 'igneous' ? { slow: 'granite', fast: 'basalt', gas: 'pumice' }[s.way.igneous] : FORM[s.kind].result[s.way[s.kind]];
+      api.note(i === st.length - 1 ? '<b>ได้ ' + ROCKS[resKind].name + '</b> · ' + ROCKS[resKind].tex : '');
+    }
+    // วัฏจักร
+    $('#tour').onclick = () => { s.tour = { at: 'magma', k: 0 }; s.tourLog = ['แมกมา']; nextTour(); };
+    function nextTour() {
+      if (!s.tour) return;
+      const outs = ARROWS.map((a, i) => [a, i]).filter(([a]) => a.from === s.tour.at);
+      const [a, i] = outs[Math.floor(Math.random() * outs.length)];
+      s.arrow = i; s.dot = { i, p: 0 };
+      s.tour.at = a.to; s.tour.k++;
+      s.tourLog.push(NODES[a.to].label);
+      $('#cycInfo').innerHTML = '<h4>' + a.label + '</h4><p>' + a.info + '</p><p class="muted">เส้นทาง: ' + s.tourLog.join(' → ') + '</p>';
+    }
+    function pickArrow(i) {
+      s.tour = null; s.arrow = i; s.dot = { i, p: 0 };
+      const a = ARROWS[i];
+      $('#cycInfo').innerHTML = '<h4>' + NODES[a.from].label + ' → ' + NODES[a.to].label + '</h4><p><b>' + a.label + '</b></p><p>' + a.info + '</p>';
+    }
+    // ตัวอย่างหิน
+    const KEYS = Object.keys(ROCKS);
+    function showSample() {
+      const r = ROCKS[s.pick];
+      $('#smpInfo').innerHTML = '<h4>' + r.name + ' <span style="font-size:13px;color:' + TYPE_COL[r.type] + '">(หิน' + r.type + ')</span></h4>' +
+        '<p><b>เกิดจาก:</b> ' + r.born + '</p><p><b>ลักษณะ:</b> ' + r.tex + '</p><p><b>สมบัติ:</b> ' + r.prop + '</p><p><b>การใช้ประโยชน์:</b> ' + r.use + '</p>';
+      api.note('');
+    }
+    $('#acid').onclick = () => { s.test = 'acid'; s.testT = 0; const fizz = s.pick === 'limestone' || s.pick === 'marble';
+      api.note(fizz ? '<b>เกิดฟองแก๊ส</b> หินนี้มีแร่แคลไซต์ (หินปูน หินอ่อน) ทำปฏิกิริยากับกรดได้แก๊สคาร์บอนไดออกไซด์' : 'ไม่เกิดฟองแก๊ส หินนี้ไม่ทำปฏิกิริยากับกรดเจือจาง'); };
+    $('#water').onclick = () => { s.test = 'water'; s.testT = 0;
+      api.note(s.pick === 'pumice' ? '<b>ลอยน้ำ</b> หินพัมมิซมีรูพรุนที่มีอากาศอยู่มาก จึงเบากว่าน้ำ' : 'จมน้ำ หินส่วนใหญ่หนักกว่าน้ำที่มีปริมาตรเท่ากัน'); };
+    showSample();
+
+    // ---------- ตำแหน่งในพิกัดออกแบบ ----------
+    let view = { s: 1, ox: 0, oy: 0 };
+    function setView(ctx) {
+      const sc = Math.min(cv.w / W, cv.h / H);
+      view = { s: sc, ox: (cv.w - W * sc) / 2, oy: (cv.h - H * sc) / 2 };
+      ctx.setTransform(cv.dpr * sc, 0, 0, cv.dpr * sc, cv.dpr * view.ox, cv.dpr * view.oy);
+    }
+    const toDesign = (x, y) => [(x - view.ox) / view.s, (y - view.oy) / view.s];
+    const ink = () => Lab.css('--ink'), muted = () => Lab.css('--muted');
+    const lerp = (a, b, k) => a + (b - a) * k, clamp = (v) => Math.max(0, Math.min(1, v));
+    const seg01 = (t, a, b) => clamp((t - a) / (b - a));
+    function label(ctx, txt, x, y, size, col, align) { ctx.font = '600 ' + (size || 18) + 'px Sarabun, sans-serif'; ctx.fillStyle = col || ink(); ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x, y); }
+    function zoomCircle(ctx, x, y, r, draw, cap) {
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.clip(); draw(); ctx.restore();
+      ctx.strokeStyle = ink(); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.stroke();
+      if (cap) {
+        ctx.font = '600 16px Sarabun, sans-serif'; const tw = ctx.measureText(cap).width;
+        ctx.fillStyle = 'rgba(20,24,32,.72)'; ctx.fillRect(x - tw / 2 - 8, y + r + 8, tw + 16, 26);
+        label(ctx, cap, x, y + r + 21, 16, '#fff');
+      }
+    }
+
+    // ---------- ฉาก: หินอัคนี ----------
+    function drawIgneous(ctx, t) {
+      const way = s.way.igneous, dark = Lab.dark();
+      ctx.fillStyle = dark ? '#1c2533' : '#cfe6f7'; ctx.fillRect(0, 0, W, 170);
+      ctx.fillStyle = dark ? '#4a3a2c' : '#a07a55'; ctx.fillRect(0, 170, W, H - 170);
+      for (let y = 220; y < H; y += 60) { ctx.fillStyle = 'rgba(0,0,0,.07)'; ctx.fillRect(0, y, W, 28); }
+      // ภูเขาไฟ
+      ctx.fillStyle = dark ? '#5b4636' : '#8a6544';
+      ctx.beginPath(); ctx.moveTo(150, 170); ctx.lineTo(370, 70); ctx.lineTo(430, 70); ctx.lineTo(650, 170); ctx.closePath(); ctx.fill();
+      // ห้องแมกมาและปล่อง
+      const glow = (x, y, rx, ry) => { const g = ctx.createRadialGradient(x, y, 4, x, y, rx); g.addColorStop(0, '#ffd54a'); g.addColorStop(0.6, '#f07a1f'); g.addColorStop(1, '#b3311a'); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill(); };
+      glow(400, 520, 170, 55);
+      if (way !== 'slow') { ctx.fillStyle = '#f07a1f'; ctx.fillRect(390, 75, 20, 450); }
+      label(ctx, 'ห้องแมกมา', 400, 560, 17, '#fff');
+      if (way === 'slow') {
+        // แมกมาแทรกดันขึ้นมาค้างใต้ดิน แล้วเย็นตัวช้า ๆ
+        const up = seg01(t, 0, 0.3), cool = seg01(t, 0.25, 1);
+        const y = lerp(470, 330, up);
+        ctx.fillStyle = 'rgba(240,122,31,.9)'; ctx.fillRect(388, y + 30, 24, 470 - y);
+        const col = (k) => 'rgb(' + Math.round(lerp(240, 200, k)) + ',' + Math.round(lerp(122, 180, k)) + ',' + Math.round(lerp(31, 170, k)) + ')';
+        ctx.fillStyle = col(cool); ctx.beginPath(); ctx.ellipse(400, y, 110, 45, 0, 0, 7); ctx.fill();
+        if (cool > 0.05) { ctx.save(); ctx.beginPath(); ctx.ellipse(400, y, 110, 45, 0, 0, 7); ctx.clip(); ctx.globalAlpha = cool; drawTexture(ctx, 'granite', 400, y, 110, 11, 0.35 + 0.65 * cool); ctx.restore(); }
+        label(ctx, 'ใต้ผิวโลก เย็นตัวช้า', 400, y - 64, 17, '#fff');
+        zoomCircle(ctx, 680, 320, 95, () => {
+          ctx.fillStyle = '#e05a1c'; ctx.fillRect(585, 225, 190, 190);
+          ctx.globalAlpha = cool; drawTexture(ctx, 'granite', 680, 320, 95, 21, 0.25 + 1.1 * cool); ctx.globalAlpha = 1;
+        }, 'ผลึกแร่ค่อย ๆ โตจนใหญ่');
+        label(ctx, 'เวลา: นับพันถึงล้านปี', 120, 30, 18, ink(), 'left');
+      } else {
+        const out = seg01(t, 0, 0.35), flow = seg01(t, 0.3, 0.75), cool = seg01(t, 0.55, 1);
+        // การปะทุ
+        if (out > 0 && cool < 1) {
+          const n = way === 'gas' ? 40 : 14;
+          for (let i = 0; i < n; i++) {
+            const a = -Math.PI / 2 + (i / n - 0.5) * (way === 'gas' ? 1.6 : 0.8), d = (out * 70 + ((performance.now() / 8 + i * 37) % 50)) * (1 - cool);
+            ctx.fillStyle = way === 'gas' ? 'rgba(110,105,100,.7)' : 'rgba(255,140,40,.9)';
+            ctx.beginPath(); ctx.arc(400 + Math.cos(a) * d, 70 + Math.sin(a) * d, way === 'gas' ? 9 : 6, 0, 7); ctx.fill();
+          }
+        }
+        // ลาวาไหลลงตามไหล่เขา แล้วเย็นตัวเป็นหินสีเข้ม
+        const len = flow;
+        ctx.lineCap = 'round'; ctx.lineWidth = 22;
+        const col = way === 'gas' ? 'rgb(' + Math.round(lerp(255, 210, cool)) + ',' + Math.round(lerp(140, 204, cool)) + ',' + Math.round(lerp(40, 190, cool)) + ')'
+          : 'rgb(' + Math.round(lerp(255, 60, cool)) + ',' + Math.round(lerp(120, 62, cool)) + ',' + Math.round(lerp(30, 68, cool)) + ')';
+        ctx.strokeStyle = col;
+        ctx.beginPath(); ctx.moveTo(430, 75); ctx.lineTo(lerp(430, 640, len), lerp(75, 168, len)); ctx.stroke();
+        label(ctx, 'ลาวา', 520, 100, 17, ink());
+        zoomCircle(ctx, 680, 340, 95, () => {
+          ctx.fillStyle = '#ff7a1f'; ctx.fillRect(585, 245, 190, 190);
+          ctx.globalAlpha = cool; drawTexture(ctx, way === 'gas' ? 'pumice' : 'basalt', 680, 340, 95, 33, 1); ctx.globalAlpha = 1;
+          if (way === 'gas' && cool < 1) for (let i = 0; i < 14; i++) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(600 + (i * 53) % 160, 270 + (i * 71) % 150, 6 + (i % 4) * 3, 0, 7); ctx.stroke(); }
+        }, way === 'gas' ? 'ฟองแก๊สถูกขังเป็นรูพรุน' : 'เย็นเร็ว ผลึกเล็กมาก');
+        label(ctx, 'เวลา: หลายวันถึงหลายปี', 120, 30, 18, ink(), 'left');
+      }
+    }
+
+    // ---------- ฉาก: หินตะกอน ----------
+    const grains = []; for (let i = 0; i < 46; i++) grains.push({ o: Math.random(), y: Math.random() });
+    function drawSedimentary(ctx, t) {
+      const dark = Lab.dark(), way = s.way.sedimentary;
+      const gcol = way === 'sand' ? '#e0b46c' : way === 'mud' ? '#8b7a68' : '#ece4d2';
+      ctx.fillStyle = dark ? '#1c2533' : '#cfe6f7'; ctx.fillRect(0, 0, W, H);
+      // ภูเขาและแผ่นดิน
+      ctx.fillStyle = dark ? '#4c5a3f' : '#7c9a5a'; ctx.beginPath(); ctx.moveTo(0, 330); ctx.lineTo(150, 110); ctx.lineTo(300, 330); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = dark ? '#5a4a3a' : '#9b7b58'; ctx.beginPath(); ctx.moveTo(0, 330); ctx.lineTo(420, 330); ctx.lineTo(490, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+      // ทะเล
+      ctx.fillStyle = dark ? '#1f4466' : '#5aa1d8'; ctx.beginPath(); ctx.moveTo(420, 330); ctx.lineTo(W, 330); ctx.lineTo(W, H); ctx.lineTo(490, H); ctx.closePath(); ctx.fill();
+      // แม่น้ำ
+      ctx.strokeStyle = dark ? '#3f78a8' : '#6fb6e8'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(170, 170); ctx.quadraticCurveTo(210, 300, 410, 334); ctx.stroke();
+      // ผุพัง: รอยแตกและเศษหินบนภูเขา
+      const weather = seg01(t, 0, 0.25);
+      ctx.strokeStyle = 'rgba(40,30,20,.8)'; ctx.lineWidth = 2.5;
+      for (let i = 0; i < Math.round(weather * 8); i++) { const x = 100 + i * 14, y = 170 + (i % 3) * 30; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 10, y + 16); ctx.lineTo(x + 4, y + 30); ctx.stroke(); }
+      label(ctx, '☀ ☂', 150, 70, 30, '#e9a400');
+      // พัดพา: ตะกอนลอยตามแม่น้ำ
+      const carry = seg01(t, 0.2, 0.55);
+      if (carry > 0 && carry < 1) grains.forEach((g) => {
+        const k = (g.o + performance.now() / 4000) % 1, x = lerp(170, 410, k), y = lerp(170, 334, Math.sqrt(k)) + (g.y - 0.5) * 8;
+        ctx.fillStyle = gcol; ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
+      });
+      // ทับถม: ชั้นตะกอนที่ก้นทะเล
+      const dep = seg01(t, 0.45, 0.8), comp = seg01(t, 0.75, 1);
+      const nLayers = Math.round(dep * 6);
+      const thick = lerp(26, 17, comp);
+      for (let i = 0; i < nLayers; i++) {
+        const y = H - 10 - (i + 1) * thick;
+        ctx.fillStyle = i % 2 ? gcol : 'rgba(0,0,0,.08)';
+        ctx.fillStyle = i % 2 ? gcol : shade(gcol, -18);
+        ctx.fillRect(500, y, W - 500, thick);
+        if (comp > 0) { ctx.fillStyle = 'rgba(60,40,20,' + 0.25 * comp + ')'; ctx.fillRect(500, y, W - 500, thick); }
+      }
+      if (nLayers) { label(ctx, 'ชั้นล่าง = เก่ากว่า', 640, H - 10 - nLayers * thick - 18, 16, '#fff'); }
+      if (comp > 0) { ctx.fillStyle = '#fff'; for (let i = 0; i < 4; i++) { const x = 520 + i * 70; ctx.fillRect(x - 3, 360, 6, 40); ctx.beginPath(); ctx.moveTo(x - 12, 400); ctx.lineTo(x + 12, 400); ctx.lineTo(x, 416); ctx.closePath(); ctx.fill(); } label(ctx, 'น้ำหนักกดทับ', 620, 348, 16, '#fff'); }
+      zoomCircle(ctx, 640, 170, 80, () => {
+        drawTexture(ctx, way === 'sand' ? 'sediment' : way === 'mud' ? 'shale' : 'limestone', 640, 170, 80, 5, 1);
+        if (comp > 0) { ctx.globalAlpha = comp; drawTexture(ctx, FORM.sedimentary.result[way], 640, 170, 80, 9, 1); ctx.globalAlpha = 1; }
+      }, comp > 0.5 ? 'ตะกอนเชื่อมกันเป็น' + ROCKS[FORM.sedimentary.result[way]].name : 'ตะกอน' + (way === 'sand' ? 'ทราย' : way === 'mud' ? 'โคลน' : 'เปลือกหอย'));
+    }
+    function shade(hex, d) { const n = parseInt(hex.slice(1), 16), c = (v) => Math.max(0, Math.min(255, v + d)); return 'rgb(' + c(n >> 16) + ',' + c((n >> 8) & 255) + ',' + c(n & 255) + ')'; }
+
+    // ---------- ฉาก: หินแปร ----------
+    function drawMetamorphic(ctx, t) {
+      const dark = Lab.dark(), from = s.way.metamorphic, to = FORM.metamorphic.result[from];
+      ctx.fillStyle = dark ? '#3c2f25' : '#9b7b58'; ctx.fillRect(0, 0, W, H);
+      for (let y = 30; y < H; y += 70) { ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(0, y, W, 30); }
+      label(ctx, 'ลึกใต้ผิวโลก', 20, 30, 18, '#fff', 'left');
+      const press = seg01(t, 0.2, 0.75), heat = seg01(t, 0.4, 0.8), change = seg01(t, 0.6, 1);
+      // แมกมาด้านล่างให้ความร้อน
+      const g = ctx.createRadialGradient(270, 600, 10, 270, 600, 200 * (0.4 + heat));
+      g.addColorStop(0, 'rgba(255,200,60,.9)'); g.addColorStop(1, 'rgba(240,90,30,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 300, 560, 300);
+      label(ctx, 'ความร้อนจากแมกมา', 270, 570, 17, '#fff');
+      // ก้อนหินถูกบีบ
+      const bw = lerp(300, 220, press), bh = lerp(200, 250, press), x0 = 270 - bw / 2, y0 = 290 - bh / 2;
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, bw, bh); ctx.clip();
+      drawTexture(ctx, from, 270, 290, Math.max(bw, bh) / 2 + 10, 4, 1);
+      if (change > 0) { ctx.globalAlpha = change; drawTexture(ctx, to, 270, 290, Math.max(bw, bh) / 2 + 10, 8, 1); ctx.globalAlpha = 1; }
+      ctx.restore();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.strokeRect(x0, y0, bw, bh);
+      // ลูกศรแรงดัน
+      const arrowSide = (x, dir) => { ctx.fillStyle = '#ffdd55'; ctx.beginPath(); ctx.moveTo(x, 290); ctx.lineTo(x - dir * 36, 262); ctx.lineTo(x - dir * 36, 278); ctx.lineTo(x - dir * 80, 278); ctx.lineTo(x - dir * 80, 302); ctx.lineTo(x - dir * 36, 302); ctx.lineTo(x - dir * 36, 318); ctx.closePath(); ctx.fill(); };
+      if (press > 0) { arrowSide(x0 - 8, 1); arrowSide(x0 + bw + 8, -1); label(ctx, 'ความดัน', 270, y0 - 24, 18, '#fff'); }
+      label(ctx, change > 0.5 ? ROCKS[to].name : ROCKS[from].name, 270, y0 + bh + 28, 20, '#fff');
+      zoomCircle(ctx, 650, 260, 100, () => {
+        drawTexture(ctx, from, 650, 260, 100, 14, 1);
+        ctx.globalAlpha = change; drawTexture(ctx, to, 650, 260, 100, 15, 1); ctx.globalAlpha = 1;
+      }, 'เนื้อหินเปลี่ยนไป แต่ไม่หลอมเหลว');
+      label(ctx, ROCKS[from].name + ' → ' + ROCKS[to].name, 650, 410, 19, '#fff');
+    }
+
+    // ---------- ฉาก: วัฏจักรหิน ----------
+    function arrowPts(a) {
+      const A = NODES[a.from], B = NODES[a.to];
+      const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+      const mx = (A.x + B.x) / 2 + nx * a.bend, my = (A.y + B.y) / 2 + ny * a.bend;
+      const pts = [];
+      for (let i = 0; i <= 40; i++) { const k = i / 40, x = (1 - k) * (1 - k) * A.x + 2 * k * (1 - k) * mx + k * k * B.x, y = (1 - k) * (1 - k) * A.y + 2 * k * (1 - k) * my + k * k * B.y; pts.push([x, y]); }
+      const cut = (p) => Math.hypot(p[0] - A.x, p[1] - A.y) > 62 && Math.hypot(p[0] - B.x, p[1] - B.y) > 62;
+      return pts.filter(cut);
+    }
+    function drawCycle(ctx) {
+      ctx.fillStyle = Lab.dark() ? '#1d222b' : '#f6f3ec'; ctx.fillRect(0, 0, W, H);
+      ARROWS.forEach((a, i) => {
+        const p = arrowPts(a); if (p.length < 2) return;
+        const on = i === s.arrow;
+        ctx.strokeStyle = on ? Lab.css('--accent') : (Lab.dark() ? '#8a93a3' : '#7d8492'); ctx.lineWidth = on ? 6 : 3.5; ctx.lineCap = 'round';
+        ctx.beginPath(); p.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+        const [x1, y1] = p[p.length - 1], [x0, y0] = p[p.length - 4];
+        const ang = Math.atan2(y1 - y0, x1 - x0);
+        ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.moveTo(x1 + Math.cos(ang) * 6, y1 + Math.sin(ang) * 6);
+        ctx.lineTo(x1 + Math.cos(ang + 2.6) * 18, y1 + Math.sin(ang + 2.6) * 18); ctx.lineTo(x1 + Math.cos(ang - 2.6) * 18, y1 + Math.sin(ang - 2.6) * 18); ctx.closePath(); ctx.fill();
+        const [lx, ly] = p[Math.floor(p.length / 2)];
+        ctx.font = '600 15px Sarabun, sans-serif';
+        const tw = ctx.measureText(a.label).width;
+        ctx.fillStyle = Lab.dark() ? 'rgba(29,34,43,.9)' : 'rgba(246,243,236,.92)'; ctx.fillRect(lx - tw / 2 - 5, ly - 12, tw + 10, 24);
+        label(ctx, a.label, lx, ly, 15, on ? Lab.css('--accent') : ink());
+      });
+      Object.entries(NODES).forEach(([k, n], i) => {
+        drawRock(ctx, n.tex, n.x, n.y, 52, 40 + i, { shape: 'circle' });
+        ctx.strokeStyle = ink(); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(n.x, n.y, 52, 0, 7); ctx.stroke();
+        ctx.font = '700 19px Sarabun, sans-serif'; const tw = ctx.measureText(n.label).width;
+        ctx.fillStyle = Lab.dark() ? '#2a303b' : '#fff'; ctx.fillRect(n.x - tw / 2 - 8, n.y + 56, tw + 16, 28);
+        label(ctx, n.label, n.x, n.y + 70, 19);
+      });
+      if (s.dot) {
+        const p = arrowPts(ARROWS[s.dot.i]), k = Math.min(p.length - 1, Math.floor(s.dot.p * (p.length - 1)));
+        const [x, y] = p[k];
+        ctx.save(); ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.clip(); drawTexture(ctx, 'sediment', x, y, 13, 3, 1); ctx.restore();
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.stroke();
+      }
+    }
+
+    // ---------- ฉาก: ตัวอย่างหิน ----------
+    function cellOf(i) { const c = i % 3, r = Math.floor(i / 3); return { x: 140 + c * 260, y: 105 + r * 195 }; }
+    function drawSamples(ctx) {
+      ctx.fillStyle = Lab.dark() ? '#1d222b' : '#f6f3ec'; ctx.fillRect(0, 0, W, H);
+      KEYS.forEach((k, i) => {
+        const { x, y } = cellOf(i), r = ROCKS[k], on = k === s.pick;
+        if (on) { ctx.fillStyle = Lab.dark() ? 'rgba(91,147,240,.18)' : 'rgba(47,111,222,.12)'; ctx.fillRect(x - 125, y - 95, 250, 190); }
+        let dy = 0;
+        if (on && s.test === 'water') {
+          // บีกเกอร์น้ำ: พัมมิซลอย หินอื่นจม
+          ctx.fillStyle = 'rgba(90,160,220,.35)'; ctx.fillRect(x - 110, y - 40, 220, 120);
+          dy = k === 'pumice' ? -38 : lerp(0, 22, Math.min(1, s.testT));
+        }
+        drawRock(ctx, k, x, y + dy, 62, 100 + i);
+        if (on && s.test === 'acid') {
+          ctx.fillStyle = '#e8f3ff'; ctx.beginPath(); ctx.arc(x, y - 70, 6, 0, 7); ctx.fill();
+          if (k === 'limestone' || k === 'marble') for (let b = 0; b < 16; b++) {
+            const ph = (performance.now() / 600 + b * 0.37) % 1;
+            ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(x - 30 + (b * 13) % 60, y - 25 - ph * 50, 3 + (b % 3), 0, 7); ctx.stroke();
+          }
+        }
+        label(ctx, r.name, x, y + 78, 18);
+        ctx.fillStyle = TYPE_COL[r.type]; ctx.font = '600 13px Sarabun, sans-serif';
+        label(ctx, 'หิน' + r.type, x, y - 80, 14, TYPE_COL[r.type]);
+      });
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const [px, py] = Lab.pos(canvas, e), [x, y] = toDesign(px, py);
+      if (s.mode === 'cycle') {
+        let best = -1, bd = 26;
+        ARROWS.forEach((a, i) => arrowPts(a).forEach(([ax, ay]) => { const d = Math.hypot(ax - x, ay - y); if (d < bd) { bd = d; best = i; } }));
+        if (best >= 0) pickArrow(best);
+      } else if (s.mode === 'sample') {
+        KEYS.forEach((k, i) => { const c = cellOf(i); if (Math.abs(x - c.x) < 125 && Math.abs(y - c.y) < 95) { s.pick = k; s.test = null; showSample(); } });
+      }
+    });
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      if (s.mode === 'form') {
+        if (s.play) { s.t = Math.min(1, s.t + dt / 12); prog.value = s.t; if (s.t >= 1) setPlay(false); }
+        syncSteps();
+      }
+      if (s.dot) { s.dot.p = Math.min(1, s.dot.p + dt / 1.6); if (s.dot.p >= 1 && s.tour && s.tour.k < 8) { s.tour.wait = (s.tour.wait || 0) + dt; if (s.tour.wait > 1.2) { s.tour.wait = 0; nextTour(); } } }
+      if (s.test) s.testT += dt;
+      const ctx = cv.ctx;
+      ctx.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0); ctx.clearRect(0, 0, cv.w, cv.h);
+      setView(ctx);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+      if (s.mode === 'form') (s.kind === 'igneous' ? drawIgneous : s.kind === 'sedimentary' ? drawSedimentary : drawMetamorphic)(ctx, s.t);
+      else if (s.mode === 'cycle') drawCycle(ctx);
+      else drawSamples(ctx);
+      ctx.restore();
+    });
+    restart();
+  },
+});
+</script>
+</body>
+</html>

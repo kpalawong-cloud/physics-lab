@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>มรสุมและฤดูของประเทศไทย · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 600px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 760px; } }
+  .months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 6px 0; }
+  .months .btn { padding: 6px 2px; font-size: 15px; }
+  .season { border-radius: 12px; padding: 10px 12px; color: #fff; font-weight: 600; font-size: 20px; text-align: center; margin-bottom: 8px; }
+  .cityv { background: var(--soft); border-radius: 10px; padding: 8px 10px; font-size: 15px; margin-top: 8px; }
+  .cityv i { display: inline-block; width: 11px; height: 11px; margin-right: 6px; border-radius: 2px; }
+  .season small { display: block; font-weight: 400; font-size: 14px; opacity: .9; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+// ค่าเฉลี่ยโดยประมาณ (ปัดเลข) ใช้เพื่อการสอน: ฝน (มม./เดือน) และอุณหภูมิเฉลี่ย (°C)
+const CITY = {
+  bkk: { name: 'กรุงเทพฯ', rain: [13, 20, 42, 92, 220, 212, 218, 220, 344, 241, 48, 10], temp: [27.0, 28.3, 29.5, 30.5, 30.0, 29.5, 29.0, 28.8, 28.4, 28.2, 27.7, 26.5], col: '#2f6fde' },
+  skl: { name: 'สงขลา (ภาคใต้ฝั่งตะวันออก)', rain: [120, 40, 50, 80, 150, 110, 110, 110, 140, 250, 600, 450], temp: [26.5, 27.0, 27.8, 28.5, 28.5, 28.3, 28.0, 28.0, 27.7, 27.2, 26.6, 26.3], col: '#c8412a' },
+};
+// ฤดูตามกรมอุตุนิยมวิทยา: ร้อน 16 ก.พ.–15 พ.ค., ฝน 16 พ.ค.–15 ต.ค., หนาว 16 ต.ค.–15 ก.พ. (m = เดือนแบบทศนิยม 0 = ต้นมกราคม)
+function season(m) {
+  if (m >= 1.5 && m < 4.5) return { key: 'hot', name: 'ฤดูร้อน', range: 'กลางกุมภาพันธ์ – กลางพฤษภาคม', col: '#d0612b' };
+  if (m >= 4.5 && m < 9.5) return { key: 'rain', name: 'ฤดูฝน', range: 'กลางพฤษภาคม – กลางตุลาคม', col: '#2f7fc1' };
+  return { key: 'cold', name: 'ฤดูหนาว', range: 'กลางตุลาคม – กลางกุมภาพันธ์', col: '#5a6fb8' };
+}
+// มรสุมที่พัดอยู่: ตะวันตกเฉียงใต้ กลาง พ.ค.–กลาง ต.ค., ตะวันออกเฉียงเหนือ กลาง ต.ค.–ก.พ.
+function monsoon(m) {
+  if (m >= 4.5 && m < 9.5) return 'SW';
+  if (m >= 9.5 || m < 2.0) return 'NE';
+  return 'none';
+}
+// แผนที่อย่างง่าย (ลองจิจูด, ละติจูด)
+const MAINLAND = [[92, 25], [112, 25], [112, 21.6], [108.5, 21.6], [107.5, 20.8], [106.5, 19.5], [105.8, 18.6], [106.6, 17.5], [107.5, 16.4], [108.8, 15.3], [109.3, 13.4], [109.2, 11.6], [108.0, 10.9], [106.7, 10.4], [105.2, 8.6], [104.8, 9.6], [105.0, 10.4], [104.4, 10.4], [103.5, 10.6], [103.0, 11.4], [102.6, 12.0], [102.3, 12.2],
+  [101.5, 12.6], [100.9, 12.7], [100.9, 13.4], [100.5, 13.5], [100.0, 13.3], [99.95, 12.5], [99.5, 11.5], [99.2, 10.3], [99.3, 9.2], [99.9, 9.2], [100.3, 8.4], [100.5, 7.4], [101.0, 6.9], [101.5, 6.6], [102.1, 6.2],
+  [103.2, 5.0], [103.4, 4.0], [103.4, 2.8], [104.2, 1.4], [103.5, 1.3], [101.3, 2.8], [100.6, 4.2], [100.3, 5.5], [100.1, 6.4], [99.7, 6.9], [99.3, 7.5], [98.6, 8.3], [98.3, 8.4], [98.3, 9.0], [98.6, 10.0], [98.5, 11.5],
+  [98.6, 12.7], [98.1, 13.8], [97.7, 15.5], [97.3, 16.5], [96.5, 16.8], [95.4, 15.8], [94.4, 16.2], [94.2, 18.0], [93.6, 19.5], [92.4, 20.7], [92, 22]];
+const THAI = [[99.9, 20.4], [100.5, 20.2], [101.2, 19.5], [101.0, 18.4], [102.1, 18.2], [103.0, 18.0], [104.0, 17.5], [104.7, 16.5], [105.5, 15.2], [105.0, 14.4], [103.5, 14.4], [102.6, 13.6], [102.3, 12.2],
+  [101.5, 12.6], [100.9, 12.7], [100.9, 13.4], [100.5, 13.5], [100.0, 13.3], [99.95, 12.5], [99.5, 11.5], [99.2, 10.3], [99.3, 9.2], [99.9, 9.2], [100.3, 8.4], [100.5, 7.4], [101.0, 6.9], [101.5, 6.6], [102.1, 6.2],
+  [101.7, 5.8], [101.1, 5.7], [100.3, 6.5], [100.1, 6.4], [99.7, 6.9], [99.3, 7.5], [98.6, 8.3], [98.3, 8.4], [98.3, 9.0], [98.6, 10.0], [99.2, 11.0], [99.5, 12.0], [99.1, 13.0], [98.4, 14.5], [98.2, 15.2], [98.6, 16.2], [97.8, 17.5], [97.5, 18.5], [98.0, 19.7], [98.9, 19.8]];
+const SUMATRA = [[95.2, 5.6], [97.5, 5.2], [99.0, 3.6], [100.5, 2.0], [102.0, 0.0], [100.3, 0.0], [98.5, 1.8], [96.4, 3.7]];
+
+SimKit.page({
+  id: 'monsoon',
+  title: 'มรสุมและฤดูของประเทศไทย',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'เลื่อนเดือนตลอดทั้งปี ดูว่าลมมรสุมพัดมาจากทางไหน นำอะไรมาด้วย และทำให้ประเทศไทยมีฤดูอะไร',
+  about:
+    '<p><b>ลมมรสุม</b> คือลมประจำฤดูที่พัดเปลี่ยนทิศตามฤดูกาล เกิดจากหลักเดียวกับลมบกลมทะเล แต่เป็นระหว่าง<b>ผืนแผ่นดินใหญ่กับมหาสมุทร</b> และเปลี่ยนทิศปีละ 2 ครั้ง</p>' +
+    '<p><b>มรสุมตะวันตกเฉียงใต้</b> (กลางเดือนพฤษภาคม – กลางเดือนตุลาคม): แผ่นดินร้อนกว่ามหาสมุทร ลมจึงพัดจากมหาสมุทรอินเดียเข้าสู่แผ่นดิน นำความชื้นมาด้วย ทำให้ประเทศไทยเข้าสู่<b>ฤดูฝน</b> ฝนตกชุกทั่วไป โดยเฉพาะชายฝั่งทะเลอันดามัน</p>' +
+    '<p><b>มรสุมตะวันออกเฉียงเหนือ</b> (กลางเดือนตุลาคม – กุมภาพันธ์): แผ่นดินจีนเย็นลงมาก อากาศเย็นและแห้งพัดลงมา ทำให้ภาคเหนือ ภาคอีสาน และภาคกลางเข้าสู่<b>ฤดูหนาว</b> ' +
+    'แต่ลมนี้พัดผ่านอ่าวไทยจึงนำความชื้นไปทำให้<b>ภาคใต้ฝั่งตะวันออก</b>มีฝนตกหนักในเดือนพฤศจิกายน – ธันวาคม</p>' +
+    '<p><b>ฤดูร้อน</b> (กลางเดือนกุมภาพันธ์ – กลางเดือนพฤษภาคม): ช่วงเปลี่ยนมรสุม ดวงอาทิตย์อยู่เกือบตรงศีรษะ อากาศร้อนอบอ้าว อาจมีพายุฤดูร้อน</p>' +
+    '<p class="muted" style="font-size:14px">ตัวเลขฝนและอุณหภูมิในกราฟเป็นค่าเฉลี่ยโดยประมาณเพื่อการสอน แผนที่วาดอย่างง่าย</p>',
+  think: [
+    'เดือนไหนกรุงเทพฯ ฝนตกมากที่สุด เดือนไหนสงขลาฝนตกมากที่สุด ทำไมจึงต่างกัน',
+    'มรสุมตะวันตกเฉียงใต้พัดผ่านอะไรก่อนมาถึงประเทศไทย จึงนำฝนมาด้วย',
+    'ทำไมลมจากประเทศจีนในฤดูหนาวจึงทำให้ภาคเหนือหนาวและแห้ง แต่ภาคใต้ฝั่งตะวันออกกลับมีฝน',
+    'ลมมรสุมเหมือนลมบกลมทะเลอย่างไร และต่างกันอย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const cv = Lab.canvas(stage.querySelector('canvas'));
+    const s = { m: 6.5, play: false };
+    panel.innerHTML =
+      '<div class="season" id="sea"></div>' +
+      '<h3>เดือน</h3><input type="range" id="mm" min="0" max="11.99" step="0.05">' +
+      '<div class="months" id="mbtn">' + MONTHS.map((n, i) => '<button class="btn" data-m="' + i + '">' + n + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn primary" id="play">▶ เล่นทั้งปี</button></div>' +
+      '<div class="cityv" id="cityv"></div>';
+    const $ = (q) => panel.querySelector(q);
+    const mm = $('#mm');
+    const setM = (v) => { s.m = ((v % 12) + 12) % 12; mm.value = s.m; };
+    setM(s.m);
+    mm.oninput = () => setM(+mm.value);
+    $('#mbtn').onclick = (e) => { const b = e.target.closest('[data-m]'); if (b) { setM(+b.dataset.m + 0.5); s.play = false; showPlay(); } };
+    const showPlay = () => { $('#play').textContent = s.play ? '❚❚ หยุด' : '▶ เล่นทั้งปี'; $('#play').classList.toggle('primary', !s.play); };
+    $('#play').onclick = () => { s.play = !s.play; showPlay(); };
+
+    // อนุภาคลม (พิกัดลองจิจูด/ละติจูด)
+    const P = [];
+    for (let i = 0; i < 170; i++) P.push({ x: 92 + Math.random() * 20, y: Math.random() * 25, a: Math.random() * 3 });
+    let lastKey = '';
+
+    function windAt(m, lon, lat) {
+      const mon = monsoon(m);
+      if (mon === 'SW') return [1.0, 0.8];
+      if (mon === 'NE') return [-0.9, -0.85];
+      return [0.15, 0.5]; // ฤดูร้อน: ลมใต้อ่อน ๆ
+    }
+
+    function cloud(ctx, x, y, r, a, dark) {
+      ctx.fillStyle = dark ? 'rgba(110,120,140,' + a + ')' : 'rgba(255,255,255,' + a + ')';
+      [[0, 0, 1], [-0.9, 0.25, 0.75], [0.9, 0.25, 0.75], [0.35, -0.45, 0.7], [-0.4, -0.4, 0.6]].forEach(([dx, dy, k]) => { ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, r * k, 0, 7); ctx.fill(); });
+    }
+
+    function draw(dt) {
+      if (!cv.w) return;
+      if (s.play) setM(s.m + dt * 0.5);
+      const ctx = cv.ctx, w = cv.w, h = cv.h, m = s.m, mi = Math.floor(m), sea = season(m), mon = monsoon(m);
+      const dark = Lab.dark();
+      ctx.clearRect(0, 0, w, h);
+      // แบ่งพื้นที่: แผนที่ + กราฟ
+      const wide = w > 700;
+      const mapW = wide ? Math.min(w * 0.56, (h - 16) * 0.8) : w - 16, mapH = mapW * 1.25;
+      const mx0 = 8, my0 = 8;
+      const X = (lon) => mx0 + ((lon - 92) / 20) * mapW, Y = (lat) => my0 + ((25 - lat) / 25) * mapH;
+      // ทะเล
+      ctx.fillStyle = dark ? '#173a5c' : '#bfe0f5'; ctx.fillRect(mx0, my0, mapW, mapH);
+      const poly = (pts, fill, stroke) => { ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(X(a), Y(b)) : ctx.moveTo(X(a), Y(b)))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); } };
+      const landCol = sea.key === 'hot' ? '#e2c08a' : sea.key === 'rain' ? '#9cc98a' : '#c8cfa0';
+      poly(MAINLAND, dark ? '#4b5a45' : landCol, dark ? '#6c7a64' : '#8a9a78');
+      poly(SUMATRA, dark ? '#4b5a45' : landCol, dark ? '#6c7a64' : '#8a9a78');
+      poly(THAI, dark ? '#7c6a3e' : '#f3d27a', '#b07a20');
+      // ชื่อบริเวณ
+      ctx.font = '600 ' + Math.max(12, mapW / 28) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = dark ? '#ffe6a8' : '#5a3a00'; ctx.fillText('ประเทศไทย', X(101.2), Y(15.8));
+      ctx.fillStyle = dark ? '#9fc8ef' : '#1f5a8a';
+      ctx.fillText('มหาสมุทรอินเดีย', X(95.2), Y(13.2)); ctx.fillText('(ทะเลอันดามัน)', X(95.2), Y(12));
+      ctx.fillText('อ่าวไทย', X(101.6), Y(10.6)); ctx.fillText('ทะเลจีนใต้', X(109.4), Y(8.5));
+      ctx.fillStyle = dark ? '#d8e2c8' : '#3c4a2c'; ctx.fillText('จีน', X(104), Y(23.6));
+      ctx.font = Math.max(11, mapW / 34) + 'px Sarabun, sans-serif';
+      ctx.fillStyle = dark ? '#ffe6a8' : '#5a3a00';
+      ctx.fillText('● กรุงเทพฯ', X(101.3), Y(13.75)); ctx.fillText('● สงขลา', X(101.4), Y(7.2));
+      // ความกดอากาศ
+      const HL = (lon, lat, txt, sub, col) => {
+        ctx.fillStyle = col; ctx.font = '700 ' + Math.max(20, mapW / 15) + 'px Sarabun, sans-serif'; ctx.fillText(txt, X(lon), Y(lat));
+        ctx.font = '600 ' + Math.max(11, mapW / 36) + 'px Sarabun, sans-serif'; ctx.fillText(sub, X(lon), Y(lat) + Math.max(18, mapW / 18));
+      };
+      if (mon === 'SW') { HL(108, 23, 'L', 'แผ่นดินร้อน ความกดอากาศต่ำ', '#c8412a'); HL(94.5, 2.5, 'H', 'มหาสมุทรเย็นกว่า', '#1f5aa8'); }
+      if (mon === 'NE') { HL(100, 23.4, 'H', 'แผ่นดินจีนเย็น ความกดอากาศสูง', '#1f5aa8'); HL(108.5, 3, 'L', 'ทะเลอุ่นกว่า', '#c8412a'); }
+      // เมฆฝน
+      const t = performance.now() / 1000;
+      const rainC = (lon, lat, r, a) => { cloud(ctx, X(lon) + Math.sin(t * 0.6 + lon) * 4, Y(lat), r, a, true); ctx.strokeStyle = 'rgba(60,110,200,' + a + ')'; ctx.lineWidth = 2; for (let k = -2; k <= 2; k++) { const x = X(lon) + k * r * 0.4, yy = Y(lat) + r * 0.6 + ((t * 60 + k * 13) % (r * 0.9)); ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x - 3, yy + 7); ctx.stroke(); } };
+      const R = mapW / 22;
+      if (mon === 'SW') { rainC(97.8, 10, R * 1.2, 0.85); rainC(98.8, 15.5, R, 0.7); rainC(100.2, 18.5, R, 0.65); rainC(103.5, 16, R, 0.65); rainC(100.8, 13.6, R * 0.9, 0.6); rainC(102.6, 12.8, R, 0.6); }
+      if (mon === 'NE') {
+        const k = mi === 10 || mi === 11 ? 1 : mi === 0 ? 0.7 : 0.35;
+        rainC(100.4, 8.4, R * (0.8 + 0.4 * k), 0.4 + 0.5 * k); rainC(101.2, 6.6, R * (0.7 + 0.3 * k), 0.35 + 0.5 * k);
+        cloud(ctx, X(100), Y(18.7), R * 0.6, 0.0, false);
+      }
+      if (sea.key === 'hot' && mi >= 3) { rainC(101, 18, R * 0.7, 0.45); rainC(103.5, 16.5, R * 0.6, 0.4); }
+      // ดวงอาทิตย์ร้อนในฤดูร้อน / ลมหนาวในฤดูหนาว
+      if (sea.key === 'hot') { ctx.fillStyle = 'rgba(255,190,40,.9)'; ctx.beginPath(); ctx.arc(X(110), Y(19), R * 0.9, 0, 7); ctx.fill(); }
+      // อนุภาคลม
+      const [vx, vy] = windAt(m), sp = mon === 'none' ? 1.2 : 3.2;
+      ctx.lineCap = 'round';
+      P.forEach((p) => {
+        p.x += vx * sp * dt; p.y += vy * sp * dt; p.a += dt;
+        if (p.x < 92 || p.x > 112 || p.y < 0 || p.y > 25 || p.a > 6) {
+          p.a = 0;
+          if (mon === 'SW') { p.x = 92 + Math.random() * 12; p.y = Math.random() * 12; }
+          else if (mon === 'NE') { p.x = 100 + Math.random() * 12; p.y = 13 + Math.random() * 12; }
+          else { p.x = 92 + Math.random() * 20; p.y = Math.random() * 10; }
+        }
+        const al = Math.min(1, p.a) * Math.min(1, 6 - p.a) * (mon === 'none' ? 0.45 : 0.9);
+        ctx.strokeStyle = mon === 'SW' ? 'rgba(20,90,200,' + al + ')' : mon === 'NE' ? 'rgba(90,110,180,' + al + ')' : 'rgba(200,110,40,' + al + ')';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(X(p.x), Y(p.y)); ctx.lineTo(X(p.x - vx * 0.5), Y(p.y - vy * 0.5)); ctx.stroke();
+      });
+      // ลูกศรใหญ่
+      const big = (lon0, lat0, lon1, lat1, col, label) => {
+        const x0 = X(lon0), y0 = Y(lat0), x1 = X(lon1), y1 = Y(lat1), a = Math.atan2(y1 - y0, x1 - x0), wd = Math.max(8, mapW / 30), hl = wd * 2.6;
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = wd;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - Math.cos(a) * hl * 0.7, y1 - Math.sin(a) * hl * 0.7); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - hl * Math.cos(a - 0.5), y1 - hl * Math.sin(a - 0.5)); ctx.lineTo(x1 - hl * Math.cos(a + 0.5), y1 - hl * Math.sin(a + 0.5)); ctx.closePath(); ctx.fill();
+        ctx.save(); ctx.translate((x0 + x1) / 2, (y0 + y1) / 2); ctx.rotate(a > Math.PI / 2 || a < -Math.PI / 2 ? a + Math.PI : a);
+        ctx.fillStyle = '#fff'; ctx.font = '700 ' + Math.max(12, wd * 1.1) + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, 0, 1); ctx.restore();
+      };
+      if (mon === 'SW') big(92.8, 2.4, 98.1, 8.4, 'rgba(25,95,205,.88)', 'มรสุมตะวันตกเฉียงใต้');
+      if (mon === 'NE') big(109.5, 23, 103.2, 17.6, 'rgba(70,90,170,.9)', 'มรสุมตะวันออกเฉียงเหนือ');
+      ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1; ctx.strokeRect(mx0, my0, mapW, mapH);
+      // เข็มทิศ
+      ctx.fillStyle = dark ? '#e6e9ef' : '#1c2230'; ctx.font = '700 15px Sarabun, sans-serif';
+      ctx.fillText('N ↑', mx0 + mapW - 24, my0 + 18);
+
+      // ---------- กราฟฝนรายเดือน ----------
+      const gx0 = wide ? mx0 + mapW + 24 : 12, gx1 = w - 12;
+      const gy0 = wide ? 24 : my0 + mapH + 30, gy1 = wide ? h - 30 : h - 28;
+      drawChart(ctx, gx0, gy0, gx1, gy1, m);
+      // ข้อความประกอบ
+      const key = mi + mon;
+      if (key !== lastKey) {
+        lastKey = key;
+        const sv = $('#sea'); sv.style.background = sea.col; sv.innerHTML = sea.name + '<small>' + sea.range + '</small>';
+        $('#mbtn').querySelectorAll('[data-m]').forEach((b) => b.classList.toggle('on', +b.dataset.m === mi));
+        $('#cityv').innerHTML = '<b>' + MONTHS_FULL[mi] + '</b> (ค่าเฉลี่ย)' + Object.values(CITY).map((c) => '<div><i style="background:' + c.col + '"></i>' + c.name.split(' ')[0] + ': ฝน ' + c.rain[mi] + ' มม. · ' + c.temp[mi].toFixed(1) + ' °C</div>').join('');
+        api.note('<b>' + MONTHS_FULL[mi] + '</b>: ' +
+          (mon === 'SW' ? 'มรสุมตะวันตกเฉียงใต้พัดจากมหาสมุทรอินเดียเข้าสู่ประเทศไทย นำความชื้นมาทำให้ฝนตกชุก'
+            : mon === 'NE' ? 'มรสุมตะวันออกเฉียงเหนือพัดอากาศเย็นและแห้งจากจีนลงมา ภาคเหนือและอีสานหนาว แต่ภาคใต้ฝั่งตะวันออกมีฝนเพราะลมพัดผ่านอ่าวไทย'
+              : 'ช่วงเปลี่ยนมรสุม ไม่มีลมมรสุมหลัก ลมใต้พัดอ่อน ๆ อากาศร้อนอบอ้าว อาจมีพายุฤดูร้อนในภาคเหนือและอีสาน'));
+      }
+    }
+
+    function drawChart(ctx, x0, y0, x1, y1, m) {
+      const dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      ctx.fillStyle = dark ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.75)'; ctx.fillRect(x0 - 6, y0 - 18, x1 - x0 + 12, y1 - y0 + 44);
+      ctx.fillStyle = ink; ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ปริมาณฝนเฉลี่ยรายเดือน (มม.)', x0, y0 + 4);
+      const pl = x0 + 38, pt = y0 + 46, pb = y1 - 34, pw = x1 - pl - 4, ph = pb - pt, max = 650;
+      const Y = (v) => pb - (v / max) * ph;
+      // แถบฤดู
+      const band = (a, b, col) => { ctx.fillStyle = col; ctx.fillRect(pl + (a / 12) * pw, pb + 4, ((b - a) / 12) * pw, 10); };
+      band(0, 1.5, '#5a6fb8'); band(1.5, 4.5, '#d0612b'); band(4.5, 9.5, '#2f7fc1'); band(9.5, 12, '#5a6fb8');
+      ctx.font = '12px Sarabun, sans-serif'; ctx.fillStyle = muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let v = 0; v <= 600; v += 100) { ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pl, Y(v)); ctx.lineTo(pl + pw, Y(v)); ctx.stroke(); ctx.fillText(v, pl - 5, Y(v)); }
+      const bw = pw / 12;
+      // เดือนปัจจุบัน
+      ctx.fillStyle = 'rgba(240,169,59,.25)'; ctx.fillRect(pl + Math.floor(m) * bw, pt - 6, bw, ph + 6);
+      Object.values(CITY).forEach((c, k) => {
+        c.rain.forEach((r, i) => { ctx.fillStyle = c.col; ctx.globalAlpha = i === Math.floor(m) ? 1 : 0.7; ctx.fillRect(pl + i * bw + bw * (0.12 + k * 0.38), Y(r), bw * 0.36, pb - Y(r)); });
+        ctx.globalAlpha = 1;
+      });
+      ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = (bw > 34 ? 13 : 10.5) + 'px Sarabun, sans-serif';
+      MONTHS.forEach((n, i) => ctx.fillText(bw > 26 ? n : n.slice(0, 2), pl + (i + 0.5) * bw, pb + 16));
+      // คำอธิบาย
+      ctx.font = '13.5px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      let lx = pl;
+      Object.values(CITY).forEach((c) => { ctx.fillStyle = c.col; ctx.fillRect(lx, y0 + 16, 12, 12); ctx.fillStyle = ink; ctx.fillText(c.name, lx + 16, y0 + 22); lx += 30 + ctx.measureText(c.name).width; });
+    }
+    Lab.loop(draw);
+  },
+});
+</script>
+</body>
+</html>

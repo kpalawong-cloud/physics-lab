@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วงจรไฟฟ้าอย่างง่าย · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 540px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 400px; } }
+  @media (max-width: 600px) { .simpage .stage canvas { height: 300px; } }
+  .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0 8px; }
+  .seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 4px 0 8px; }
+  .seg3 .btn, .seg4 .btn { padding: 6px 2px; font-size: 14.5px; line-height: 1.25; }
+  .seg3 .btn.on, .seg4 .btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .tip { font-size: 14px; color: var(--muted); margin: 4px 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const W = 800, H = 520, EMF = 1.5, RIN = 0.3, RB = 6;
+const INFO = {
+  cell: '<b>แหล่งพลังงานไฟฟ้า</b> (เซลล์ไฟฟ้าหรือถ่านไฟฉาย) ให้พลังงานไฟฟ้าแก่วงจร มีขั้วบวก (+) และขั้วลบ (−)',
+  wire: '<b>สายไฟ</b> เป็นตัวนำไฟฟ้า ใช้เชื่อมต่อส่วนต่าง ๆ ของวงจรให้ครบรอบ',
+  bulb: '<b>เครื่องใช้ไฟฟ้า</b> (หลอดไฟ) เปลี่ยนพลังงานไฟฟ้าเป็นพลังงานแสงและความร้อน',
+  sw: '<b>สวิตช์</b> ใช้เปิด-ปิดวงจร เมื่อกดสวิตช์ให้ต่อกัน วงจรครบรอบ (วงจรปิด) กระแสไฟฟ้าจึงไหลได้',
+};
+
+SimKit.page({
+  id: 'p6circuit',
+  title: 'วงจรไฟฟ้าอย่างง่าย',
+  level: 'ป.6',
+  subject: 'แรงและพลังงาน',
+  lead: 'ดูส่วนประกอบของวงจรไฟฟ้า วงจรปิดกับวงจรเปิด การต่อเซลล์ไฟฟ้าแบบอนุกรม และการต่อหลอดไฟแบบอนุกรมกับแบบขนาน จุดสีเหลืองแสดงทิศการไหลของกระแสไฟฟ้า',
+  about:
+    '<p><b>วงจรไฟฟ้าอย่างง่าย</b> ประกอบด้วย แหล่งพลังงานไฟฟ้า สายไฟ และเครื่องใช้ไฟฟ้า อาจมีสวิตช์สำหรับเปิด-ปิด กระแสไฟฟ้าไหลจากขั้วบวกของแหล่งพลังงาน ผ่านสายไฟและเครื่องใช้ไฟฟ้า แล้วกลับเข้าขั้วลบ</p>' +
+    '<p><b>วงจรปิด</b> คือวงจรที่ต่อครบรอบ กระแสไฟฟ้าไหลได้ หลอดไฟสว่าง · <b>วงจรเปิด</b> คือวงจรที่ขาดตอน เช่น ปิดสวิตช์หรือสายไฟขาด กระแสไฟฟ้าไหลไม่ได้</p>' +
+    '<p><b>การต่อเซลล์ไฟฟ้าแบบอนุกรม</b>: นำขั้วบวกของเซลล์หนึ่งต่อกับขั้วลบของอีกเซลล์หนึ่ง ทำให้มีพลังงานไฟฟ้ามากขึ้น หลอดไฟสว่างขึ้น ใช้ในไฟฉายและรีโมต ถ้าใส่เซลล์กลับขั้ว เซลล์จะหักล้างกัน</p>' +
+    '<p><b>หลอดไฟแบบอนุกรม</b>: ต่อเรียงกันทางเดียว ยิ่งหลายหลอดยิ่งสว่างน้อยลง ถ้าหลอดหนึ่งดับ หลอดอื่นดับด้วย · <b>หลอดไฟแบบขนาน</b>: ต่อแยกเป็นแขนง แต่ละหลอดสว่างเกือบเท่าเดิม ถอดหลอดหนึ่งออก หลอดอื่นยังสว่าง ไฟในบ้านจึงต่อแบบขนาน</p>' +
+    '<p><b>ความปลอดภัย</b>: ห้ามจับปลั๊กหรือสวิตช์ขณะมือเปียก ไม่เสียบปลั๊กหลายอันในเต้ารับเดียว ไม่ใช้สายไฟที่ฉนวนชำรุด ไม่นำโลหะแหย่เต้ารับ และไม่ต่อสายไฟจากขั้วบวกถึงขั้วลบของถ่านโดยตรง</p>',
+  think: [
+    'ทำไมเมื่อปิดสวิตช์ หลอดไฟจึงดับทันที',
+    'ถ้าใส่ถ่านไฟฉายกลับขั้วหนึ่งก้อนในไฟฉายที่ใช้ถ่าน 2 ก้อน จะเกิดอะไรขึ้น',
+    'ไฟประดับต้นคริสต์มาสบางแบบ หลอดหนึ่งเสียแล้วดับทั้งสาย ต่อแบบใด',
+    'ไฟในบ้านของเราต่อแบบใด รู้ได้อย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { mode: 'basic', on: true, cut: false, cells: [1, 1, 1, 1], ncell: 2, nb: 2, par: false, out: [false, false, false], phase: 0, hit: [] };
+
+    panel.innerHTML =
+      '<h3>เรื่องที่จะดู</h3><div class="seg3" id="mode"><button class="btn" data-m="basic">ส่วนประกอบ วงจรปิด-เปิด</button><button class="btn" data-m="cells">ต่อเซลล์แบบอนุกรม</button><button class="btn" data-m="bulbs">หลอดอนุกรม-ขนาน</button></div>' +
+      '<div id="pBasic"><h3>สวิตช์</h3><div class="seg3" id="sw" style="grid-template-columns:1fr 1fr"><button class="btn" data-v="1">ปิดวงจร (กดสวิตช์)</button><button class="btn" data-v="0">เปิดวงจร</button></div>' +
+      '<div class="row"><button class="btn" id="cut">ตัดสายไฟ / ต่อสายไฟ</button></div><p class="tip">แตะที่ส่วนต่าง ๆ ของวงจรในภาพเพื่อดูหน้าที่</p></div>' +
+      '<div id="pCells" style="display:none"><h3>จำนวนเซลล์ไฟฟ้า</h3><div class="seg4" id="nc"><button class="btn" data-v="1">1</button><button class="btn" data-v="2">2</button><button class="btn" data-v="3">3</button><button class="btn" data-v="4">4</button></div>' +
+      '<div class="row"><button class="btn" id="flip">กลับขั้วเซลล์ก้อนสุดท้าย</button></div><p class="tip">แตะเซลล์ในภาพเพื่อกลับขั้วก้อนนั้น</p></div>' +
+      '<div id="pBulbs" style="display:none"><h3>การต่อหลอดไฟ</h3><div class="seg3" id="par" style="grid-template-columns:1fr 1fr"><button class="btn" data-v="0">แบบอนุกรม</button><button class="btn" data-v="1">แบบขนาน</button></div>' +
+      '<h3>จำนวนหลอด</h3><div class="seg3" id="nb"><button class="btn" data-v="1">1 หลอด</button><button class="btn" data-v="2">2 หลอด</button><button class="btn" data-v="3">3 หลอด</button></div>' +
+      '<p class="tip">แตะหลอดไฟในภาพเพื่อถอดออกหรือใส่กลับ</p></div>';
+    const $ = (q) => panel.querySelector(q);
+    function sync() {
+      const on = (id, v) => panel.querySelectorAll('#' + id + ' .btn').forEach((b) => b.classList.toggle('on', b.dataset.v === String(v) || b.dataset.m === String(v)));
+      on('mode', s.mode); on('sw', +s.on); on('nc', s.ncell); on('par', +s.par); on('nb', s.nb);
+      $('#pBasic').style.display = s.mode === 'basic' ? '' : 'none'; $('#pCells').style.display = s.mode === 'cells' ? '' : 'none'; $('#pBulbs').style.display = s.mode === 'bulbs' ? '' : 'none';
+      explain();
+    }
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const id = b.parentNode.id;
+      if (b.dataset.m) s.mode = b.dataset.m;
+      if (id === 'sw') s.on = b.dataset.v === '1';
+      if (b.id === 'cut') s.cut = !s.cut;
+      if (id === 'nc') { s.ncell = +b.dataset.v; for (let i = 0; i < 4; i++) if (i >= s.ncell) s.cells[i] = 1; }
+      if (b.id === 'flip') s.cells[s.ncell - 1] *= -1;
+      if (id === 'par') { s.par = b.dataset.v === '1'; s.out = [false, false, false]; }
+      if (id === 'nb') { s.nb = +b.dataset.v; s.out = [false, false, false]; }
+      sync();
+    });
+
+    // ---------- ไฟฟ้า ----------
+    function solve() {
+      // คืนค่า: V รวม, กระแสหลัก, กระแสแต่ละหลอด, วงจรปิดหรือไม่
+      if (s.mode === 'basic') {
+        const closed = s.on && !s.cut, V = 2 * EMF, I = closed ? V / (RB + 2 * RIN) : 0;
+        return { V, I, Ib: [I], closed };
+      }
+      if (s.mode === 'cells') {
+        let V = 0; for (let i = 0; i < s.ncell; i++) V += EMF * s.cells[i];
+        const I = V / (RB + s.ncell * RIN);
+        return { V, I, Ib: [I], closed: true };
+      }
+      const V = 2 * EMF, r = 2 * RIN, Ib = [0, 0, 0];
+      if (!s.par) {
+        if (s.out.slice(0, s.nb).some((x) => x)) return { V, I: 0, Ib, closed: false };
+        const I = V / (s.nb * RB + r); for (let i = 0; i < s.nb; i++) Ib[i] = I;
+        return { V, I, Ib, closed: true };
+      }
+      const k = s.out.slice(0, s.nb).filter((x) => !x).length;
+      if (!k) return { V, I: 0, Ib, closed: false };
+      const Rp = RB / k, I = V / (Rp + r), Vb = I * Rp;
+      for (let i = 0; i < s.nb; i++) Ib[i] = s.out[i] ? 0 : Vb / RB;
+      return { V, I, Ib, closed: true };
+    }
+    const IREF = (2 * EMF) / (RB + 2 * RIN); // หลอดเดียว ถ่าน 2 ก้อน
+    const bright = (I) => Math.min(1.6, (I / IREF) ** 2);
+
+    function explain() {
+      const r = solve();
+      if (s.mode === 'basic') {
+        if (r.closed) api.note('<b>วงจรปิด</b> ต่อครบรอบ กระแสไฟฟ้าไหลจากขั้วบวก ผ่านหลอดไฟ กลับเข้าขั้วลบ หลอดไฟสว่าง');
+        else api.note('<b>วงจรเปิด</b> ' + (s.cut ? 'สายไฟขาด' : 'สวิตช์ถูกเปิด') + ' วงจรไม่ครบรอบ กระแสไฟฟ้าไหลไม่ได้ หลอดไฟดับ');
+      } else if (s.mode === 'cells') {
+        const rev = s.cells.slice(0, s.ncell).filter((c) => c < 0).length;
+        if (r.V === 0) api.note('<b>หลอดไม่สว่าง</b> เซลล์ที่กลับขั้วหักล้างกับเซลล์ที่ต่อถูก พลังงานรวมเป็นศูนย์');
+        else if (rev) api.note('มีเซลล์กลับขั้ว ' + rev + ' ก้อน เซลล์ที่กลับขั้วหักล้างพลังงานกับเซลล์อื่น หลอดไฟจึง<b>สว่างน้อยกว่า</b>ที่ควรเป็น ต้องต่อขั้วบวกกับขั้วลบเรียงกัน');
+        else api.note('ต่อเซลล์ไฟฟ้าแบบอนุกรม ' + s.ncell + ' ก้อน (ขั้วบวกต่อกับขั้วลบ) พลังงานไฟฟ้ารวม ' + Math.abs(r.V).toFixed(1) + ' V ' + (s.ncell > 1 ? 'หลอดไฟ<b>สว่างขึ้น</b>เมื่อเพิ่มจำนวนเซลล์' : '') + (s.ncell === 4 ? ' ระวัง! แรงดันเกินที่หลอดรับได้ หลอดอาจขาด' : ''));
+      } else {
+        const removed = s.out.slice(0, s.nb).some((x) => x);
+        if (!s.par) api.note(removed ? '<b>อนุกรม: ถอดหลอดหนึ่งออก หลอดอื่นดับหมด</b> เพราะกระแสไฟฟ้ามีทางเดินทางเดียว' : 'หลอดไฟแบบ<b>อนุกรม</b> ' + s.nb + ' หลอด ' + (s.nb > 1 ? 'แต่ละหลอดสว่างน้อยลงเมื่อเพิ่มจำนวนหลอด' : ''));
+        else api.note(removed ? '<b>ขนาน: ถอดหลอดหนึ่งออก หลอดอื่นยังสว่าง</b> เพราะแต่ละหลอดมีทางเดินของกระแสไฟฟ้าแยกกัน' : 'หลอดไฟแบบ<b>ขนาน</b> ' + s.nb + ' หลอด แต่ละหลอดสว่าง<b>เกือบเท่าเดิม</b> เพราะแต่ละหลอดได้รับพลังงานเต็มที่');
+      }
+    }
+
+    // ---------- วาด ----------
+    const L = { x0: 130, x1: 670, y0: 110, y1: 420 };
+    function wire(ctx, pts, live) {
+      ctx.strokeStyle = live ? '#c8742a' : (Lab.dark() ? '#8a93a3' : '#4a505b'); ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke(); ctx.lineCap = 'butt';
+    }
+    function bulb(ctx, x, y, b, removed, label) {
+      const dark = Lab.dark();
+      ctx.fillStyle = dark ? '#6c7380' : '#7d8492'; ctx.fillRect(x - 18, y + 8, 36, 18);
+      if (removed) {
+        ctx.strokeStyle = Lab.css('--muted'); ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y - 12, 20, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = Lab.css('--bad'); ctx.font = 'bold 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('ถอดออก', x, y - 40);
+      } else {
+        if (b > 0.01) {
+          const R = 22 + 90 * Math.sqrt(Math.min(1.4, b)), g = ctx.createRadialGradient(x, y - 12, 3, x, y - 12, R);
+          g.addColorStop(0, 'rgba(255,240,160,' + Math.min(1, 0.35 + b) + ')'); g.addColorStop(1, 'rgba(255,220,120,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y - 12, R, 0, 7); ctx.fill();
+        }
+        ctx.fillStyle = b > 0.01 ? 'rgba(255,250,220,' + (0.6 + 0.4 * Math.min(1, b)) + ')' : (dark ? 'rgba(200,210,225,.3)' : 'rgba(225,232,242,.95)');
+        ctx.strokeStyle = dark ? '#aab3c2' : '#7d8492'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y - 12, 20, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = b > 0.01 ? '#ff9a2a' : '#888'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(x - 7, y + 6); ctx.lineTo(x - 5, y - 16); ctx.lineTo(x, y - 10); ctx.lineTo(x + 5, y - 16); ctx.lineTo(x + 7, y + 6); ctx.stroke();
+      }
+      if (label) { ctx.fillStyle = Lab.css('--ink'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + 44); }
+    }
+    function cell(ctx, x, y, h, dir, used) {
+      // เซลล์แนวตั้ง: dir=1 ขั้วบวกอยู่ด้านบน
+      ctx.fillStyle = used ? '#2a2d33' : '#c9ced8'; ctx.fillRect(x - 20, y, 40, h);
+      ctx.fillStyle = '#d24a2a'; ctx.fillRect(x - 20, dir > 0 ? y : y + h - 14, 40, 14);
+      ctx.fillStyle = '#c9ced8'; ctx.fillRect(x - 7, dir > 0 ? y - 5 : y + h, 14, 5);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('+', x, dir > 0 ? y + 7 : y + h - 7); ctx.fillText('−', x, dir > 0 ? y + h - 10 : y + 10);
+      ctx.font = '12px Sarabun, sans-serif'; ctx.fillText('1.5 V', x, y + h / 2 + (dir > 0 ? 3 : -3)); ctx.textBaseline = 'alphabetic';
+    }
+    function sw(ctx, x, y, on) {
+      ctx.fillStyle = Lab.css('--ink'); ctx.beginPath(); ctx.arc(x - 26, y, 6, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(x + 26, y, 6, 0, 7); ctx.fill();
+      ctx.strokeStyle = Lab.css('--ink'); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x - 26, y);
+      if (on) ctx.lineTo(x + 26, y); else ctx.lineTo(x + 18, y - 30); ctx.stroke();
+      ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('สวิตช์', x, y + 30);
+    }
+    // จุดกระแสไฟฟ้าวิ่งตามเส้นทาง
+    function dots(ctx, pts, I) {
+      if (Math.abs(I) < 1e-4) return;
+      let len = 0; const seg = [];
+      for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); len += d; }
+      const gap = 34, off = ((s.phase * 260 * I) % gap + gap) % gap;
+      ctx.fillStyle = '#ffd23a'; ctx.strokeStyle = '#8a6a00'; ctx.lineWidth = 1;
+      for (let d = off; d < len; d += gap) {
+        let r = d, i = 0; while (i < seg.length && r > seg[i]) { r -= seg[i]; i++; }
+        if (i >= seg.length) break;
+        const u = r / seg[i], x = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u, y = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u;
+        ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); ctx.stroke();
+      }
+    }
+
+    function scene(ctx) {
+      const r = solve(), { x0, x1, y0, y1 } = L, live = r.closed && Math.abs(r.I) > 1e-4, cut = s.mode === 'basic' && s.cut;
+      s.hit = [];
+      if (s.mode === 'basic' || s.mode === 'cells') {
+        const n = s.mode === 'cells' ? s.ncell : 2, ch = Math.min(70, 230 / n), top = (y0 + y1) / 2 - (n * ch) / 2;
+        const bx = (x0 + x1) / 2, swx = (x0 + x1) / 2, cutY = (y0 + y1) / 2;
+        // เส้นทางกระแส (จากขั้วบวกที่ด้านบนของก้อนเซลล์ ทวนเข็มนาฬิกา... ไปทางขวาบน)
+        const path = [[x0, top], [x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, top + n * ch]];
+        wire(ctx, [[x0, top - 4], [x0, y0], [bx - 20, y0]], live); wire(ctx, [[bx + 20, y0], [x1, y0], [x1, cut ? cutY - 14 : y1]], live);
+        if (cut) { wire(ctx, [[x1, cutY + 14], [x1, y1]], live); ctx.fillStyle = Lab.css('--bad'); ctx.font = 'bold 15px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('สายไฟขาด', x1 + 12, cutY + 5); }
+        const hasSw = s.mode === 'basic';
+        wire(ctx, [[x1, y1], [hasSw ? swx + 26 : x0, y1]], live); wire(ctx, [[hasSw ? swx - 26 : x0, y1], [x0, y1], [x0, top + n * ch + 4]], live);
+        if (hasSw) { sw(ctx, swx, y1, s.on); s.hit.push({ x: swx, y: y1, r: 40, k: 'sw' }); }
+        for (let i = 0; i < n; i++) {
+          const dir = s.mode === 'cells' ? s.cells[i] : 1;
+          cell(ctx, x0, top + i * ch + 3, ch - 6, dir, true);
+          s.hit.push({ x: x0, y: top + i * ch + ch / 2, r: Math.max(26, ch / 2), k: 'cell', i });
+        }
+        const b = live ? bright(r.I) : 0;
+        bulb(ctx, bx, y0 + 12, b, false, 'หลอดไฟ');
+        s.hit.push({ x: bx, y: y0, r: 34, k: 'bulb' }); s.hit.push({ x: x1, y: (y0 + y1) / 2, r: 30, k: 'wire' });
+        if (live) dots(ctx, r.I >= 0 ? path : path.slice().reverse(), Math.abs(r.I) / IREF);
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(s.mode === 'cells' ? 'เซลล์ไฟฟ้า ' + n + ' ก้อน · ' + Math.abs(r.V).toFixed(1) + ' V' : 'แหล่งพลังงานไฟฟ้า', 20, 40);
+        ctx.textAlign = 'right'; ctx.fillText(live ? 'วงจรปิด: กระแสไฟฟ้าไหล' : 'วงจรเปิด: กระแสไฟฟ้าไม่ไหล', W - 20, 40);
+        if (s.mode === 'cells' && n === 4 && Math.abs(r.V) > 5) { ctx.fillStyle = Lab.css('--bad'); ctx.fillText('สว่างจ้า ระวังหลอดขาด!', W - 20, 66); }
+      } else {
+        const n = s.nb, cx0 = x0 + 40;
+        cell(ctx, x0, (y0 + y1) / 2 - 70, 64, 1, true); cell(ctx, x0, (y0 + y1) / 2 + 6, 64, 1, true);
+        const top = (y0 + y1) / 2 - 70, bot = (y0 + y1) / 2 + 70;
+        if (!s.par) {
+          const xs = [...Array(n)].map((_, i) => x0 + 140 + ((x1 - x0 - 180) * (i + 0.5)) / n);
+          const pts = [[x0, top - 4], [x0, y0]]; xs.forEach((x) => { pts.push([x - 22, y0]); });
+          wire(ctx, [[x0, top - 4], [x0, y0], [xs[0] - 22, y0]], r.closed);
+          xs.forEach((x, i) => { wire(ctx, [[x + 22, y0], [i < n - 1 ? xs[i + 1] - 22 : x1, y0]], r.closed); });
+          wire(ctx, [[x1, y0], [x1, y1], [x0, y1], [x0, bot + 4]], r.closed);
+          xs.forEach((x, i) => { bulb(ctx, x, y0 + 12, s.out[i] ? 0 : bright(r.Ib[i]), s.out[i], 'หลอด ' + (i + 1)); s.hit.push({ x, y: y0, r: 34, k: 'rm', i }); });
+          if (r.closed) dots(ctx, [[x0, top], [x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, bot]], r.I / IREF);
+        } else {
+          const xs = [...Array(n)].map((_, i) => x0 + 220 + (n === 1 ? (x1 - x0 - 260) / 2 : ((x1 - x0 - 260) * i) / (n - 1)));
+          const xl = xs[n - 1];
+          wire(ctx, [[x0, top - 4], [x0, y0], [xl, y0]], r.closed); wire(ctx, [[xl, y1], [x0, y1], [x0, bot + 4]], r.closed);
+          xs.forEach((x, i) => {
+            const by = (y0 + y1) / 2 + 10;
+            wire(ctx, [[x, y0], [x, by - 34]], r.Ib[i] > 0); wire(ctx, [[x, by + 26], [x, y1]], r.Ib[i] > 0);
+            bulb(ctx, x, by, s.out[i] ? 0 : bright(r.Ib[i]), s.out[i], 'หลอด ' + (i + 1));
+            s.hit.push({ x, y: by - 10, r: 34, k: 'rm', i });
+            if (r.Ib[i] > 0) dots(ctx, [[x, y0], [x, y1]], r.Ib[i] / IREF);
+          });
+          // สายหลัก: กระแสรวมไหลบนเส้นจากถ่านถึงแขนงแรก แล้วแยก
+          if (r.closed) {
+            dots(ctx, [[x0, top], [x0, y0], [xs[0], y0]], r.I / IREF); dots(ctx, [[xs[0], y1], [x0, y1], [x0, bot]], r.I / IREF);
+            // สายระหว่างแขนง: กระแสที่เหลือไปยังแขนงถัดไป
+            for (let j = 0; j < n - 1; j++) { let rest = 0; for (let k2 = j + 1; k2 < n; k2++) rest += r.Ib[k2]; dots(ctx, [[xs[j], y0], [xs[j + 1], y0]], rest / IREF); dots(ctx, [[xs[j + 1], y1], [xs[j], y1]], rest / IREF); }
+          }
+        }
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('หลอดไฟแบบ' + (s.par ? 'ขนาน' : 'อนุกรม') + ' · ถ่าน 2 ก้อน', 20, 40);
+      }
+    }
+
+    function toDesign(e) { const [x, y] = Lab.pos(canvas, e), sc = Math.min(cv.w / W, cv.h / H); return [(x - (cv.w - W * sc) / 2) / sc, (y - (cv.h - H * sc) / 2) / sc]; }
+    canvas.addEventListener('pointerdown', (e) => {
+      const [x, y] = toDesign(e);
+      const h = s.hit.find((h) => Math.hypot(x - h.x, y - h.y) < h.r);
+      if (!h) return;
+      if (h.k === 'sw') { s.on = !s.on; sync(); api.note(INFO.sw + '<br>' + (s.on ? 'ตอนนี้: สวิตช์ต่อกัน วงจรปิด' : 'ตอนนี้: สวิตช์แยกกัน วงจรเปิด')); return; }
+      if (h.k === 'cell' && s.mode === 'cells') { s.cells[h.i] *= -1; sync(); return; }
+      if (h.k === 'rm') { s.out[h.i] = !s.out[h.i]; sync(); return; }
+      if (s.mode === 'basic') api.note(INFO[h.k]);
+    });
+
+    sync();
+    Lab.loop((dt) => {
+      s.phase += dt;
+      if (!cv.w) return;
+      const ctx = cv.ctx, sc = Math.min(cv.w / W, cv.h / H);
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      ctx.save(); ctx.translate((cv.w - W * sc) / 2, (cv.h - H * sc) / 2); ctx.scale(sc, sc);
+      scene(ctx);
+      ctx.restore();
+    });
+  },
+});
+</script>
+</body>
+</html>

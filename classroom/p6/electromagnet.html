@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แม่เหล็กไฟฟ้า · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 540px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 400px; } }
+  @media (max-width: 600px) { .simpage .stage canvas { height: 300px; } }
+  .seg3, .seg4 { display: grid; gap: 4px; margin: 4px 0 8px; }
+  .seg3 { grid-template-columns: repeat(3, 1fr); } .seg4 { grid-template-columns: repeat(4, 1fr); }
+  .seg3 .btn, .seg4 .btn { padding: 6px 2px; font-size: 14.5px; line-height: 1.25; }
+  .seg3 .btn.on, .seg4 .btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .meter { height: 12px; border-radius: 6px; background: var(--soft); overflow: hidden; margin: 4px 0 2px; }
+  .meter i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const W = 800, H = 520;
+
+SimKit.page({
+  id: 'p6electromagnet',
+  title: 'แม่เหล็กไฟฟ้า',
+  level: 'ป.6',
+  subject: 'แรงและพลังงาน',
+  lead: 'พันขดลวดรอบตะปูเหล็กแล้วต่อกับถ่านไฟฉาย ตะปูกลายเป็นแม่เหล็กเมื่อมีกระแสไฟฟ้าไหล ดูขั้วแม่เหล็กจากเข็มทิศ ความแรงจากเส้นแรงและจำนวนคลิป และการนำไปใช้ในกริ่งไฟฟ้าและเครนยกเหล็ก',
+  about:
+    '<p><b>แม่เหล็กไฟฟ้า</b> เกิดจากการพันขดลวดรอบแท่งเหล็ก เมื่อมีกระแสไฟฟ้าไหลผ่านขดลวด แท่งเหล็กจะเป็นแม่เหล็ก มีขั้วเหนือ (N) และขั้วใต้ (S) เมื่อไม่มีกระแสไฟฟ้า ความเป็นแม่เหล็กจะหมดไป</p>' +
+    '<ul><li>เพิ่ม<b>จำนวนรอบของขดลวด</b> หรือเพิ่ม<b>จำนวนเซลล์ไฟฟ้า</b> (กระแสไฟฟ้ามากขึ้น) แม่เหล็กไฟฟ้าแรงขึ้น</li>' +
+    '<li><b>กลับขั้วถ่าน</b> ทิศของกระแสไฟฟ้าเปลี่ยน ขั้วแม่เหล็กสลับกัน เข็มทิศชี้กลับทิศ</li></ul>' +
+    '<p><b>การนำไปใช้</b>: <b>กริ่งไฟฟ้า</b> แม่เหล็กไฟฟ้าดูดแผ่นเหล็กให้ค้อนตีกระดิ่งซ้ำ ๆ · <b>เครนยกเหล็ก</b> เปิดไฟฟ้าเพื่อดูดเศษเหล็ก ปิดไฟฟ้าเพื่อปล่อย · <b>ลำโพง</b> แม่เหล็กไฟฟ้าทำให้แผ่นลำโพงสั่นเกิดเสียง · <b>รถไฟแม็กเลฟ</b> ใช้แม่เหล็กไฟฟ้ายกตัวรถให้ลอยเหนือราง ลดแรงเสียดทาน</p>',
+  think: [
+    'ทำไมเมื่อปิดสวิตช์ คลิปจึงหล่นลงจากตะปู',
+    'ถ้าต้องการให้แม่เหล็กไฟฟ้าดูดคลิปได้มากขึ้น ทำได้กี่วิธี',
+    'เมื่อกลับขั้วถ่านไฟฉาย เข็มทิศเปลี่ยนไปอย่างไร บอกอะไรเกี่ยวกับขั้วแม่เหล็ก',
+    'ทำไมเครนยกเหล็กในโรงงานรีไซเคิลจึงใช้แม่เหล็กไฟฟ้า ไม่ใช้แม่เหล็กถาวร',
+    'เครนแม่เหล็กไฟฟ้ายกขวดพลาสติกหรือกระป๋องอะลูมิเนียมได้หรือไม่ เพราะเหตุใด',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { mode: 'coil', on: true, turns: 20, cells: 1, pol: 1, clips: [], held: 0, hit: [],
+      bell: { press: false, a: 0, v: 0, ring: 0, sound: true, rings: 0 },
+      crane: { on: false, y: 120, x: 260, goal: null, items: [] } };
+    // คลิปในจาน
+    for (let i = 0; i < 40; i++) s.clips.push({ hx: 470 + (i % 10) * 12 + ((i * 7) % 5), hy: 440 - Math.floor(i / 10) * 7, x: 0, y: 0, a: (i * 1.3) % 3, stuck: false });
+    s.clips.forEach((c) => { c.x = c.hx; c.y = c.hy; });
+    // เศษวัสดุสำหรับเครน: เหล็กถูกดูด อะลูมิเนียม พลาสติก ไม้ ไม่ถูกดูด
+    const mats = [['เหล็ก', 1, '#6d737d'], ['เหล็ก', 1, '#5b6068'], ['อะลูมิเนียม', 0, '#c9ced6'], ['พลาสติก', 0, '#5fb0e0'], ['เหล็ก', 1, '#7a6a5a'], ['ไม้', 0, '#b8894f'], ['เหล็ก', 1, '#4f555e'], ['พลาสติก', 0, '#e07a5f'], ['เหล็ก', 1, '#6a6f78']];
+    mats.forEach((m, i) => s.crane.items.push({ name: m[0], iron: m[1], col: m[2], hx: 150 + i * 36, hy: 438 - (i % 2) * 10, x: 150 + i * 36, y: 438 - (i % 2) * 10, held: false, w: 22 + (i % 3) * 6, h: 12 + (i % 2) * 6 }));
+
+    panel.innerHTML =
+      '<h3>เรื่องที่จะดู</h3><div class="seg3" id="mode"><button class="btn" data-m="coil">ตะปูกับขดลวด</button><button class="btn" data-m="bell">กริ่งไฟฟ้า</button><button class="btn" data-m="crane">เครนยกเหล็ก</button></div>' +
+      '<div id="pCoil"><h3>สวิตช์</h3><div class="seg3" id="sw" style="grid-template-columns:1fr 1fr"><button class="btn" data-v="1">ปิดวงจร (มีกระแส)</button><button class="btn" data-v="0">เปิดวงจร</button></div>' +
+      '<h3>จำนวนรอบขดลวด</h3><div class="seg4" id="turns"><button class="btn" data-v="10">10</button><button class="btn" data-v="20">20</button><button class="btn" data-v="40">40</button><button class="btn" data-v="60">60</button></div>' +
+      '<h3>จำนวนเซลล์ไฟฟ้า</h3><div class="seg3" id="cells"><button class="btn" data-v="1">1 ก้อน</button><button class="btn" data-v="2">2 ก้อน</button><button class="btn" data-v="3">3 ก้อน</button></div>' +
+      '<div class="row"><button class="btn" id="rev">กลับขั้วถ่าน</button></div>' +
+      '<h3>ความแรงของแม่เหล็กไฟฟ้า</h3><div class="meter"><i id="mtr"></i></div></div>' +
+      '<div id="pBell" style="display:none"><div class="row"><button class="btn primary" id="press">กดปุ่มกริ่ง</button><button class="btn" id="release">ปล่อยปุ่ม</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:8px 0;font-size:15px"><input type="checkbox" id="snd" checked> เปิดเสียงกริ่ง</label></div>' +
+      '<div id="pCrane" style="display:none"><h3>กระแสไฟฟ้าในแม่เหล็ก</h3><div class="seg3" id="cOn" style="grid-template-columns:1fr 1fr"><button class="btn" data-v="1">เปิดไฟฟ้า</button><button class="btn" data-v="0">ปิดไฟฟ้า</button></div>' +
+      '<div class="row"><button class="btn" id="down">ลดลงไปที่กองเศษ</button><button class="btn" id="up">ยกไปที่รถบรรทุก</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const strength = () => (s.on ? (s.turns / 20) * s.cells : 0); // 0–9
+    function sync() {
+      const on = (id, v) => panel.querySelectorAll('#' + id + ' .btn').forEach((b) => b.classList.toggle('on', b.dataset.v === String(v) || b.dataset.m === String(v)));
+      on('mode', s.mode); on('sw', +s.on); on('turns', s.turns); on('cells', s.cells); on('cOn', +s.crane.on);
+      $('#pCoil').style.display = s.mode === 'coil' ? '' : 'none'; $('#pBell').style.display = s.mode === 'bell' ? '' : 'none'; $('#pCrane').style.display = s.mode === 'crane' ? '' : 'none';
+      $('#mtr').style.width = (strength() / 9) * 100 + '%';
+      explain();
+    }
+    function explain() {
+      if (s.mode === 'coil') {
+        const S = strength();
+        if (!S) api.note('<b>ไม่มีกระแสไฟฟ้า</b> ตะปูไม่เป็นแม่เหล็ก คลิปหล่น เข็มทิศชี้ทิศเหนือของโลกตามปกติ');
+        else api.note('<b>ตะปูเป็นแม่เหล็กไฟฟ้า</b> ขดลวด ' + s.turns + ' รอบ เซลล์ไฟฟ้า ' + s.cells + ' ก้อน ขั้วเหนือ (N) อยู่ทาง' + (s.pol > 0 ? 'ขวา' : 'ซ้าย') + ' ' + (S >= 4 ? 'แม่เหล็กแรง ดูดคลิปได้มาก' : 'ลองเพิ่มจำนวนรอบหรือจำนวนเซลล์ให้แรงขึ้น'));
+      } else if (s.mode === 'bell') {
+        api.note(s.bell.press ? 'กระแสไฟฟ้าไหล → แม่เหล็กไฟฟ้าดูดแผ่นเหล็ก → ค้อนตีกระดิ่ง → หน้าสัมผัสแยกออก วงจรเปิด → แม่เหล็กหมดแรง สปริงดึงแผ่นเหล็กกลับ → หน้าสัมผัสต่อกันอีก วนซ้ำเร็วมาก จึงได้ยินเสียงกริ๊งต่อเนื่อง' : 'กด "กดปุ่มกริ่ง" เพื่อปิดวงจร แล้วดูการทำงานของแม่เหล็กไฟฟ้าในกริ่ง');
+      } else {
+        const held = s.crane.items.filter((i) => i.held).length;
+        api.note(s.crane.on ? 'เปิดไฟฟ้า แม่เหล็กไฟฟ้าดูด<b>เฉพาะวัตถุที่ทำจากเหล็ก</b> ' + (held ? 'ดูดไว้ ' + held + ' ชิ้น ' : '') + 'อะลูมิเนียม พลาสติก และไม้ไม่ถูกดูด' : 'ปิดไฟฟ้า แม่เหล็กไฟฟ้าหมดความเป็นแม่เหล็ก เศษเหล็กที่ดูดไว้จึงหล่นลง เครนจึงเลือกปล่อยของได้ตามต้องการ');
+      }
+    }
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const id = b.parentNode.id;
+      if (b.dataset.m) s.mode = b.dataset.m;
+      if (id === 'sw') s.on = b.dataset.v === '1';
+      if (id === 'turns') s.turns = +b.dataset.v;
+      if (id === 'cells') s.cells = +b.dataset.v;
+      if (b.id === 'rev') s.pol *= -1;
+      if (b.id === 'press') { s.bell.press = true; audio(); }
+      if (b.id === 'release') s.bell.press = false;
+      if (id === 'cOn') s.crane.on = b.dataset.v === '1';
+      if (b.id === 'down') s.crane.goal = [260, 380];
+      if (b.id === 'up') s.crane.goal = [600, 150];
+      sync();
+    });
+    $('#snd').onchange = (e) => (s.bell.sound = e.target.checked);
+    let ac = null;
+    function audio() { try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; } }
+    function ding() {
+      if (!ac || !s.bell.sound) return;
+      try {
+        const t = ac.currentTime, g = ac.createGain(); g.connect(ac.destination);
+        g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        [1850, 2620].forEach((f) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(g); o.start(t); o.stop(t + 0.26); });
+      } catch (e) {}
+    }
+
+    // ---------- ตะปูกับขดลวด ----------
+    const NX0 = 270, NX1 = 530, NY = 230;
+    function field(x, y) {
+      // สนามแม่เหล็กแบบไดโพล (ประมาณ) รวมกับสนามแม่เหล็กโลกที่ชี้ขึ้นด้านบนของภาพ
+      const S = strength(), dx = (x - 400) / 100, dy = (y - NY) / 100, r2 = dx * dx + dy * dy, r = Math.sqrt(r2), m = s.pol;
+      const mr = (m * dx) / r, bx = (3 * mr * dx / r - m) / (r2 * r), by = (3 * mr * dy / r) / (r2 * r);
+      return [bx * S * 0.6, by * S * 0.6 - 0.25];
+    }
+    function compass(ctx, x, y) {
+      const [bx, by] = field(x, y), a = Math.atan2(by, bx);
+      ctx.fillStyle = Lab.dark() ? '#2a2f38' : '#fff'; ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 26, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+      ctx.fillStyle = '#d6332a'; ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(0, -6); ctx.lineTo(0, 6); ctx.fill();
+      ctx.fillStyle = '#8a93a3'; ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(0, -6); ctx.lineTo(0, 6); ctx.fill();
+      ctx.restore();
+    }
+    function sceneCoil(ctx, dt) {
+      const dark = Lab.dark(), S = strength(), ink = Lab.css('--ink');
+      // เส้นแรงแม่เหล็ก (จำนวนตามความแรง)
+      const nl = Math.min(6, Math.round(S * 0.8));
+      ctx.lineWidth = 1.6;
+      for (let k = 1; k <= nl; k++) {
+        const hgt = 20 + k * 22, al = 0.75 - k * 0.06;
+        ctx.strokeStyle = 'rgba(47,111,222,' + Math.max(0.15, al) + ')';
+        [-1, 1].forEach((sd) => {
+          ctx.beginPath(); ctx.moveTo(NX1, NY); ctx.bezierCurveTo(NX1 + 60 + k * 18, NY + sd * hgt * 1.4, NX0 - 60 - k * 18, NY + sd * hgt * 1.4, NX0, NY); ctx.stroke();
+          // ลูกศรจาก N ไป S ด้านนอก
+          const ax = 400, ay = NY + sd * hgt * 1.05, dir = s.pol > 0 ? -1 : 1;
+          ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.moveTo(ax + dir * 8, ay); ctx.lineTo(ax - dir * 4, ay - 6); ctx.lineTo(ax - dir * 4, ay + 6); ctx.fill();
+        });
+      }
+      // ตะปู
+      ctx.fillStyle = dark ? '#9aa3b0' : '#7d8693';
+      ctx.fillRect(NX0 - 14, NY - 16, 10, 32); ctx.fillRect(NX0 - 4, NY - 7, NX1 - NX0 - 20, 14);
+      ctx.beginPath(); ctx.moveTo(NX1 - 24, NY - 7); ctx.lineTo(NX1, NY); ctx.lineTo(NX1 - 24, NY + 7); ctx.fill();
+      // ขดลวด
+      ctx.strokeStyle = s.on ? '#d27a2c' : '#a8692e'; ctx.lineWidth = Math.max(1, Math.min(3, 80 / s.turns));
+      const c0 = NX0 + 20, c1 = NX1 - 50;
+      for (let i = 0; i < s.turns; i++) { const x = c0 + ((c1 - c0) * (i + 0.5)) / s.turns; ctx.beginPath(); ctx.ellipse(x, NY, 3, 13, 0, 0, 7); ctx.stroke(); }
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('ขดลวด ' + s.turns + ' รอบ', (c0 + c1) / 2, NY - 26);
+      // ขั้วแม่เหล็ก
+      if (S) {
+        ctx.font = 'bold 26px Sarabun, sans-serif';
+        ctx.fillStyle = '#d6332a'; ctx.fillText('N', s.pol > 0 ? NX1 + 26 : NX0 - 40, NY + 9);
+        ctx.fillStyle = '#2f6fde'; ctx.fillText('S', s.pol > 0 ? NX0 - 40 : NX1 + 26, NY + 9);
+      }
+      // สายไฟ ถ่าน สวิตช์
+      const bx = 110, by = 330, n = s.cells;
+      ctx.strokeStyle = s.on ? '#c8742a' : (dark ? '#8a93a3' : '#4a505b'); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(c0, NY + 13); ctx.lineTo(c0, NY + 60); ctx.lineTo(bx + 40, NY + 60); ctx.lineTo(bx + 40, by - 10);
+      ctx.moveTo(c1, NY + 13); ctx.lineTo(c1, 470); ctx.lineTo(bx + 40, 470); ctx.lineTo(bx + 40, by + n * 44 + 10); ctx.stroke();
+      for (let i = 0; i < n; i++) {
+        const y0 = by + i * 44, up = s.pol > 0;
+        ctx.fillStyle = '#2a2d33'; ctx.fillRect(bx + 22, y0, 36, 40); ctx.fillStyle = '#d24a2a'; ctx.fillRect(bx + 22, up ? y0 : y0 + 30, 36, 10);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Sarabun, sans-serif'; ctx.fillText(up ? '+' : '−', bx + 40, y0 + (up ? 9 : 38)); ctx.fillText(up ? '−' : '+', bx + 40, y0 + (up ? 38 : 9));
+      }
+      ctx.fillStyle = ink; ctx.font = '15px Sarabun, sans-serif'; ctx.fillText('ถ่านไฟฉาย ' + n + ' ก้อน', bx + 40, by - 18);
+      // สวิตช์บนสายล่าง
+      const sx = 330;
+      ctx.fillStyle = dark ? '#c9ced8' : '#2f343d'; ctx.beginPath(); ctx.arc(sx - 20, 470, 5, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(sx + 20, 470, 5, 0, 7); ctx.fill();
+      if (!s.on) { ctx.fillStyle = Lab.css('--soft'); ctx.fillRect(sx - 16, 466, 32, 8); }
+      ctx.strokeStyle = dark ? '#c9ced8' : '#2f343d'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(sx - 20, 470); if (s.on) ctx.lineTo(sx + 20, 470); else ctx.lineTo(sx + 14, 446); ctx.stroke();
+      ctx.font = '14px Sarabun, sans-serif'; ctx.fillStyle = Lab.css('--muted'); ctx.fillText('สวิตช์', sx, 498);
+      // เข็มทิศ
+      [[NX0 - 110, NY], [NX1 + 110, NY], [400, NY - 120], [400, NY + 110]].forEach(([x, y]) => compass(ctx, x, y));
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('เข็มทิศ: ปลายสีแดงชี้ทิศเหนือ', 20, 40); ctx.textAlign = 'center';
+      // คลิป: ดูดได้ตามความแรง ติดที่ปลายตะปูด้านขวา
+      const want = Math.round(Math.min(26, S * 2.6));
+      let stuck = 0;
+      s.clips.forEach((c, i) => {
+        if (i < want) { c.stuck = true; stuck++; } else c.stuck = false;
+        const k2 = i, tx = c.stuck ? NX1 - 10 + ((k2 % 4) - 1.5) * 9 : c.hx, ty = c.stuck ? NY + 22 + Math.floor(k2 / 4) * 15 : c.hy;
+        c.x += (tx - c.x) * Math.min(1, dt * (c.stuck ? 6 : 3)); c.y += (ty - c.y) * Math.min(1, dt * (c.stuck ? 6 : 4));
+        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.stuck ? 0 : c.a); ctx.strokeStyle = '#8f98a6'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(-3, -7); ctx.lineTo(-3, 6); ctx.arc(0, 6, 3, Math.PI, 0, true); ctx.lineTo(3, -5); ctx.arc(0.5, -5, 2.5, 0, Math.PI, true); ctx.lineTo(-2, 4); ctx.stroke(); ctx.restore();
+      });
+      ctx.fillStyle = ink; ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('ดูดคลิปได้ ' + stuck + ' ตัว', W - 20, 40);
+    }
+
+    // ---------- กริ่งไฟฟ้า ----------
+    function sceneBell(ctx, dt) {
+      const b = s.bell, dark = Lab.dark(), ink = Lab.css('--ink');
+      // วงจรของกริ่ง: หน้าสัมผัสต่อ → แม่เหล็กดูดแผ่นเหล็กเข้าไปจนค้อนตีกระดิ่ง → หน้าสัมผัสแยก → สปริงดึงกลับ → ต่อใหม่
+      if (b.dir == null) b.dir = 0;
+      if (b.press && b.dir === 0 && b.a <= 0.02) b.dir = 1;
+      if (b.dir === 1) { b.a += dt * 7; if (b.a >= 1) { b.a = 1; b.dir = -1; b.ring = 1; b.rings++; ding(); } }
+      else if (b.dir === -1 || b.a > 0) { b.a -= dt * 5; if (b.a <= 0) { b.a = 0; b.dir = 0; } }
+      const contact = b.dir !== -1 && b.a < 0.5, magOn = b.press && b.dir === 1;
+      b.ring = Math.max(0, b.ring - dt * 4);
+      // แม่เหล็กไฟฟ้ารูปตัวยู
+      const mx = 260, my = 270;
+      ctx.fillStyle = dark ? '#9aa3b0' : '#7d8693';
+      ctx.fillRect(mx - 40, my - 70, 24, 120); ctx.fillRect(mx + 16, my - 70, 24, 120); ctx.fillRect(mx - 40, my + 40, 80, 22);
+      ctx.strokeStyle = magOn ? '#d27a2c' : '#a8692e'; ctx.lineWidth = 2;
+      for (let i = 0; i < 12; i++) { ctx.beginPath(); ctx.ellipse(mx - 28, my - 50 + i * 8, 16, 4, 0, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.ellipse(mx + 28, my - 50 + i * 8, 16, 4, 0, 0, 7); ctx.stroke(); }
+      if (magOn) { ctx.strokeStyle = 'rgba(47,111,222,.5)'; ctx.lineWidth = 2; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(mx, my - 78, 30 + k * 10, 10 + k * 6, 0, Math.PI, 0); ctx.stroke(); } }
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('แม่เหล็กไฟฟ้า', mx, my + 84);
+      // แผ่นเหล็ก (อาร์มาเจอร์) หมุนรอบจุดหมุนทางซ้าย ปลายมีค้อน
+      const px = 170, py = 190, ang = -0.18 + b.a * 0.2;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
+      ctx.fillStyle = dark ? '#c0c6d0' : '#5b6372'; ctx.fillRect(0, -6, 330, 12);
+      ctx.fillStyle = '#3d4148'; ctx.beginPath(); ctx.arc(340, 0, 14, 0, 7); ctx.fill(); ctx.fillRect(326, -4, 16, 8);
+      // หน้าสัมผัสบนแผ่นเหล็ก
+      ctx.fillStyle = '#e0b040'; ctx.fillRect(190, -14, 12, 8);
+      ctx.restore();
+      // สปริงและจุดหมุน
+      ctx.fillStyle = Lab.css('--ink'); ctx.beginPath(); ctx.arc(px, py, 7, 0, 7); ctx.fill();
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i <= 8; i++) ctx.lineTo(px - 10 + (i % 2 ? 8 : -8), py - 70 + i * 8); ctx.stroke();
+      ctx.font = '14px Sarabun, sans-serif'; ctx.fillStyle = Lab.css('--muted'); ctx.fillText('สปริง', px - 34, py - 40);
+      // สกรูหน้าสัมผัส
+      const cys = 140;
+      ctx.fillStyle = '#e0b040'; ctx.fillRect(px + 190, cys, 12, 32 + (contact ? 6 : 0));
+      ctx.fillText(contact ? 'หน้าสัมผัสต่อกัน' : 'หน้าสัมผัสแยก', px + 196, 108);
+      // กระดิ่ง
+      const gx = 560, gy = 244;
+      ctx.fillStyle = '#d8a83a'; ctx.beginPath(); ctx.arc(gx, gy, 70, Math.PI * 1.05, Math.PI * 1.95); ctx.lineTo(gx + 70, gy + 6); ctx.lineTo(gx - 70, gy + 6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#b8862a'; ctx.fillRect(gx - 6, gy - 80, 12, 14);
+      if (b.ring > 0) {
+        ctx.strokeStyle = 'rgba(214,51,42,' + b.ring + ')'; ctx.lineWidth = 3;
+        for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(gx, gy - 20, 80 + k * 18 * (1 - b.ring + 0.3), -0.9, 0.4); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(214,51,42,' + b.ring + ')'; ctx.font = 'bold 34px Sarabun, sans-serif'; ctx.fillText('กริ๊ง!', gx + 120, gy - 70);
+      }
+      ctx.fillStyle = ink; ctx.font = '14px Sarabun, sans-serif'; ctx.fillText('กระดิ่ง', gx, gy + 30); ctx.fillText('ค้อน', px + 340, py - 70);
+      // วงจรและปุ่ม
+      ctx.strokeStyle = magOn ? '#c8742a' : (dark ? '#8a93a3' : '#4a505b'); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(mx - 28, my + 62); ctx.lineTo(mx - 28, 440); ctx.lineTo(90, 440); ctx.lineTo(90, 120); ctx.lineTo(px + 196, 120); ctx.lineTo(px + 196, cys); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mx + 28, my + 62); ctx.lineTo(mx + 28, 470); ctx.lineTo(430, 470); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, 300); ctx.lineTo(130, 300); ctx.stroke();
+      ctx.fillStyle = '#2a2d33'; ctx.fillRect(66, 250, 48, 80); ctx.fillStyle = '#d24a2a'; ctx.fillRect(66, 250, 48, 12);
+      ctx.fillStyle = Lab.css('--muted'); ctx.fillText('ถ่าน', 90, 346);
+      ctx.fillStyle = b.press ? '#2f6fde' : '#c9ced8'; ctx.beginPath(); ctx.arc(450, 470, 18, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.fillText('ปุ่มกริ่ง' + (b.press ? ' (กดอยู่)' : ''), 450, 506);
+      ctx.font = 'bold 18px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(magOn ? 'แม่เหล็กไฟฟ้าทำงาน: ดูดแผ่นเหล็ก' : b.press ? 'หน้าสัมผัสแยก: แม่เหล็กหยุดทำงาน' : 'ยังไม่กดปุ่ม', 20, 40);
+      s.hit = [{ x: 450, y: 470, r: 30, k: 'press' }];
+    }
+
+    // ---------- เครนยกเหล็ก ----------
+    function sceneCrane(ctx, dt) {
+      const c = s.crane, dark = Lab.dark(), ink = Lab.css('--ink');
+      if (c.goal) {
+        // ยกขึ้นก่อน แล้วค่อยเลื่อนแนวนอน แล้วลดลง
+        const [gx, gy] = c.goal;
+        if (Math.abs(c.x - gx) > 2) { c.y += (110 - c.y) * Math.min(1, dt * 4); if (Math.abs(c.y - 110) < 4) c.x += Math.sign(gx - c.x) * Math.min(Math.abs(gx - c.x), 240 * dt); }
+        else { c.y += (gy - c.y) * Math.min(1, dt * 3); if (Math.abs(c.y - gy) < 1) c.goal = null; }
+      }
+      // ดูดเศษเหล็กเมื่อใกล้และเปิดไฟฟ้า
+      c.items.forEach((it, i) => {
+        if (c.on && it.iron && !it.held && Math.abs(it.x - c.x) < 110 && it.y - (c.y + 30) < 100) { it.held = true; it.dropped = null; }
+        // ปิดไฟฟ้า: ของที่ดูดไว้ตกลงตรง ๆ บนรถบรรทุกหรือพื้น
+        if (!c.on && it.held) { it.held = false; it.dropped = [it.x, it.x > 505 && it.x < 715 ? 342 - (i % 3) * 6 : 440 - (i % 2) * 8]; }
+        let tx = it.hx, ty = it.hy;
+        if (it.held) { const k = c.items.filter((j) => j.held).indexOf(it); tx = c.x - 50 + (k % 5) * 24; ty = c.y + 42 + Math.floor(k / 5) * 14; }
+        else if (it.dropped) { tx = it.dropped[0]; ty = it.dropped[1]; }
+        it.x += (tx - it.x) * Math.min(1, dt * (it.held ? 8 : 5)); it.y += (ty - it.y) * Math.min(1, dt * (it.held ? 8 : 6));
+      });
+      // พื้น รถบรรทุก โครงเครน
+      ctx.fillStyle = dark ? '#3a3328' : '#cdb894'; ctx.fillRect(0, 450, W, 70);
+      ctx.fillStyle = dark ? '#555c6a' : '#5b6372'; ctx.fillRect(500, 350, 220, 60); ctx.fillStyle = '#d8a83a'; ctx.fillRect(720, 360, 60, 50);
+      ctx.fillStyle = '#222'; [[540, 418], [680, 418], [750, 418]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 16, 0, 7); ctx.fill(); });
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('รถบรรทุก', 610, 440); ctx.fillText('กองเศษวัสดุ', 300, 512);
+      ctx.fillStyle = dark ? '#8a93a3' : '#e0a83a'; ctx.fillRect(60, 40, 14, 410); ctx.fillRect(60, 40, 680, 12);
+      ctx.strokeStyle = Lab.css('--ink'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c.x, 52); ctx.lineTo(c.x, c.y); ctx.stroke();
+      // จานแม่เหล็กไฟฟ้า
+      ctx.fillStyle = c.on ? '#c8412a' : '#6c7380'; ctx.beginPath(); ctx.ellipse(c.x, c.y + 18, 70, 16, 0, 0, 7); ctx.fill(); ctx.fillRect(c.x - 70, c.y + 2, 140, 16);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Sarabun, sans-serif'; ctx.fillText(c.on ? 'มีกระแสไฟฟ้า' : 'ไม่มีกระแสไฟฟ้า', c.x, c.y + 16);
+      c.items.forEach((it) => { ctx.fillStyle = it.col; ctx.fillRect(it.x - it.w / 2, it.y - it.h / 2, it.w, it.h); });
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif';
+      c.items.forEach((it, i) => { if (!it.held && !it.dropped) ctx.fillText(it.name, it.x, 470 + (i % 2) * 16); });
+    }
+
+    function toDesign(e) { const [x, y] = Lab.pos(canvas, e), sc = Math.min(cv.w / W, cv.h / H); return [(x - (cv.w - W * sc) / 2) / sc, (y - (cv.h - H * sc) / 2) / sc]; }
+    canvas.addEventListener('pointerdown', (e) => {
+      const [x, y] = toDesign(e);
+      if (s.mode === 'bell' && Math.hypot(x - 450, y - 470) < 34) { s.bell.press = !s.bell.press; audio(); sync(); }
+    });
+
+    sync();
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx, sc = Math.min(cv.w / W, cv.h / H);
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      ctx.save(); ctx.translate((cv.w - W * sc) / 2, (cv.h - H * sc) / 2); ctx.scale(sc, sc);
+      if (s.mode === 'coil') sceneCoil(ctx, dt); else if (s.mode === 'bell') sceneBell(ctx, Math.min(dt, 0.03)); else sceneCrane(ctx, dt);
+      ctx.restore();
+    });
+  },
+});
+</script>
+</body>
+</html>

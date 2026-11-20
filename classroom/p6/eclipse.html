@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สุริยุปราคาและจันทรุปราคา · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 580px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 720px; } }
+  .status { border-radius: 10px; padding: 10px 12px; margin-top: 10px; font-size: 16px; background: var(--soft); }
+  .status b { font-size: 18px; }
+  .daylbl { font-weight: 600; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const MONTH = 29.53;          // เดือนจันทรคติ (วัน)
+const R_SUN = 0.267;          // รัศมีปรากฏของดวงอาทิตย์ (องศา)
+const R_MOON = { near: 0.279, far: 0.245 }; // รัศมีปรากฏของดวงจันทร์ เมื่อใกล้และไกลโลก
+const R_UMB = 0.72, R_PEN = 1.25;            // รัศมีเงามืด-เงามัวของโลกที่ระยะดวงจันทร์ (องศา)
+const SKY = 0.07;             // แปลงมุมบนวงโคจรเป็นระยะบนท้องฟ้า (ขยายช่วงเกิดอุปราคาให้เห็นบนแถบเลื่อน)
+const TILT = 5.1;             // วงโคจรดวงจันทร์เอียงกับวงโคจรโลก (องศา)
+
+SimKit.page({
+  id: 'p6-eclipse',
+  title: 'สุริยุปราคาและจันทรุปราคา',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'เลื่อนดวงจันทร์ไปรอบโลก ดูว่าเมื่อใดเงาของดวงจันทร์ตกบนโลก (สุริยุปราคา) และเมื่อใดดวงจันทร์เข้าไปในเงาของโลก (จันทรุปราคา) ภาพนี้ไม่ได้ใช้มาตราส่วนจริง',
+  about:
+    '<p><b>สุริยุปราคา</b> เกิดเมื่อดวงจันทร์โคจรมาอยู่ระหว่างดวงอาทิตย์กับโลก ในแนวเดียวกัน เงาของดวงจันทร์ตกบนโลก เกิดได้เฉพาะวัน<b>จันทร์ดับ (แรม 14–15 ค่ำ)</b></p>' +
+    '<ul><li><b>เต็มดวง</b> ผู้ที่อยู่ในเงามืดของดวงจันทร์ เห็นดวงจันทร์บังดวงอาทิตย์ทั้งดวง ท้องฟ้ามืดลง</li>' +
+    '<li><b>บางส่วน</b> ผู้ที่อยู่ในเงามัว เห็นดวงอาทิตย์แหว่งไปบางส่วน</li>' +
+    '<li><b>วงแหวน</b> เมื่อดวงจันทร์อยู่ไกลโลก ดวงจันทร์ดูเล็กกว่าดวงอาทิตย์ จึงบังไม่มิด เห็นขอบดวงอาทิตย์เป็นวงแหวน</li></ul>' +
+    '<p><b>จันทรุปราคา</b> เกิดเมื่อโลกอยู่ระหว่างดวงอาทิตย์กับดวงจันทร์ ดวงจันทร์เข้าไปในเงาของโลก เกิดได้เฉพาะวัน<b>จันทร์เต็มดวง (ขึ้น 14–15 ค่ำ)</b> ขณะเต็มดวงดวงจันทร์ไม่หายไป แต่เป็นสีแดงอิฐ เพราะแสงแดงที่หักเหผ่านบรรยากาศของโลกยังส่องไปถึง</p>' +
+    '<p><b>ทำไมไม่เกิดทุกเดือน</b> วงโคจรของดวงจันทร์เอียงกับวงโคจรของโลกประมาณ 5 องศา วันจันทร์ดับหรือจันทร์เต็มดวงส่วนใหญ่ ดวงจันทร์จึงอยู่สูงหรือต่ำกว่าแนวดวงอาทิตย์–โลก เงาจึงพลาดกัน</p>' +
+    '<p style="margin-top:8px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb, var(--bad) 14%, transparent)"><b>ความปลอดภัย:</b> ห้ามมองดวงอาทิตย์ด้วยตาเปล่า แว่นกันแดด หรือกล้องส่องทางไกล แม้ขณะเกิดสุริยุปราคา ให้ใช้แว่นกรองแสงสำหรับดูดวงอาทิตย์โดยเฉพาะ หรือดูภาพที่ฉายผ่านรูเข็ม ส่วนจันทรุปราคาดูด้วยตาเปล่าได้</p>',
+  think: [
+    'สุริยุปราคาเกิดได้ในวันข้างขึ้นหรือข้างแรม เพราะอะไร',
+    'ทำไมคนทั้งประเทศเห็นจันทรุปราคาพร้อมกันได้ แต่สุริยุปราคาเต็มดวงเห็นได้เฉพาะบางพื้นที่',
+    'ถ้าวงโคจรของดวงจันทร์ไม่เอียงเลย จะเกิดสุริยุปราคาและจันทรุปราคาบ่อยเพียงใด',
+    'ทำไมบางครั้งเกิดสุริยุปราคาวงแหวน แทนที่จะเป็นเต็มดวง',
+    'ขณะจันทรุปราคาเต็มดวง ทำไมดวงจันทร์ยังมองเห็นเป็นสีแดง ไม่มืดสนิท',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { day: 3, dist: 'near', tilt: false, node: 0, play: false, drag: false };
+
+    panel.innerHTML =
+      '<h3>วันในเดือนจันทรคติ</h3><input type="range" id="day" min="0" max="' + MONTH + '" step="0.01">' +
+      '<p class="daylbl" id="dayLbl"></p>' +
+      '<div class="row"><button class="btn primary" id="play">▶ เล่น</button></div>' +
+      '<div class="row"><button class="btn" id="newm">จันทร์ดับ</button><button class="btn" id="fullm">จันทร์เต็มดวง</button></div>' +
+      '<h3>ระยะดวงจันทร์จากโลก</h3><div class="seg" id="dist"><button data-v="near">ใกล้โลก</button><button data-v="far">ไกลโลก</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:12px 0 4px"><input type="checkbox" id="tilt"> วงโคจรดวงจันทร์เอียง 5° (แบบจริง)</label>' +
+      '<div id="nodeBox" style="display:none"><h3>ช่วงเวลาของปี</h3><input type="range" id="node" min="0" max="360" step="1" value="0">' +
+      '<p class="muted" style="font-size:13px;margin:0">เลื่อนเพื่อเปลี่ยนตำแหน่งที่วงโคจรเอียงตัดแนวดวงอาทิตย์–โลก</p></div>' +
+      '<div class="status" id="status"></div>';
+    const $ = (q) => panel.querySelector(q);
+    const dayEl = $('#day');
+    const setDay = (d) => { s.day = ((d % MONTH) + MONTH) % MONTH; dayEl.value = s.day; };
+    setDay(s.day);
+    dayEl.oninput = () => { setDay(+dayEl.value); };
+    $('#play').onclick = () => { s.play = !s.play; $('#play').textContent = s.play ? '⏸ หยุด' : '▶ เล่น'; $('#play').classList.toggle('primary', !s.play); };
+    $('#newm').onclick = () => setDay(0);
+    $('#fullm').onclick = () => setDay(MONTH / 2);
+    const distSeg = $('#dist');
+    const syncDist = () => distSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.dist));
+    distSeg.onclick = (e) => { const b = e.target.closest('button'); if (b) { s.dist = b.dataset.v; syncDist(); } };
+    syncDist();
+    $('#tilt').onchange = () => { s.tilt = $('#tilt').checked; $('#nodeBox').style.display = s.tilt ? '' : 'none'; };
+    $('#node').oninput = () => (s.node = +$('#node').value);
+
+    // มุมของดวงจันทร์รอบโลก (องศา): 180 = อยู่ทางดวงอาทิตย์ (จันทร์ดับ), 0 = ด้านตรงข้าม (จันทร์เต็มดวง)
+    const theta = () => 180 + (s.day / MONTH) * 360;
+    const wrap = (a) => ((((a + 180) % 360) + 360) % 360) - 180;
+    const beta = () => (s.tilt ? TILT * Math.sin(((theta() - s.node) * Math.PI) / 180) : 0); // ดวงจันทร์สูง/ต่ำกว่าระนาบ (องศา)
+    function thaiDay() {
+      // วันที่ 0 = แรม 15 ค่ำ (จันทร์ดับ), 1–15 = ขึ้น 1–15 ค่ำ, หลังจากนั้น = แรม
+      const d = Math.round(s.day);
+      if (d === 0 || d >= 30) return 'แรม 15 ค่ำ (จันทร์ดับ)';
+      if (d <= 15) return 'ขึ้น ' + d + ' ค่ำ' + (d === 15 ? ' (จันทร์เต็มดวง)' : '');
+      return 'แรม ' + (d - 15) + ' ค่ำ';
+    }
+    // จัดประเภทอุปราคา
+    function classify() {
+      const th = theta(), rm = R_MOON[s.dist], b = beta();
+      const sx = SKY * wrap(th - 180), lx = SKY * wrap(th);
+      const ds = Math.hypot(sx, b), dl = Math.hypot(lx, b);
+      let solar = null, lunar = null;
+      if (ds < R_SUN + rm) solar = ds <= Math.abs(R_SUN - rm) ? (rm >= R_SUN ? 'total' : 'annular') : 'partial';
+      if (dl + rm <= R_UMB) lunar = 'total'; else if (dl - rm < R_UMB) lunar = 'partial'; else if (dl - rm < R_PEN) lunar = 'pen';
+      return { sx, lx, b, rm, solar, lunar, nearNew: Math.cos(((th - 180) * Math.PI) / 180) > 0 };
+    }
+    const NAME = { total: 'เต็มดวง', partial: 'บางส่วน', annular: 'วงแหวน', pen: 'เงามัว' };
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 720;
+      if (L.narrow) { L.tw = w; L.th = h * 0.56; L.vx = 10; L.vy = L.th + 10; L.vw = w / 2 - 15; L.vh = h - L.th - 20; L.ix = w / 2 + 5; L.iy = L.vy; L.iw = w / 2 - 15; L.ih = L.vh; }
+      else { L.tw = w * 0.6; L.th = h; L.vx = L.tw + 12; L.vy = 10; L.vw = w - L.tw - 22; L.vh = h * 0.56; L.ix = L.vx; L.iy = L.vy + L.vh + 12; L.iw = L.vw; L.ih = h - L.iy - 10; }
+      L.ex = L.tw * 0.58; L.ey = L.th / 2 + 10; L.er = Math.min(34, L.th * 0.07);
+      L.or = Math.min(L.tw * 0.32, L.th * 0.36); L.mr = L.er * 0.38;
+    }
+
+    function lit(ctx, x, y, r, dimRed) { // วัตถุทรงกลมที่ได้รับแสงจากทางซ้าย
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.clip();
+      ctx.fillStyle = '#20242c'; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+      ctx.fillStyle = dimRed || '#e9e6dc'; ctx.fillRect(x - r, y - r, r, 2 * r);
+      ctx.restore();
+    }
+
+    function drawTop(ctx, c) {
+      const { tw, th, ex, ey, er, or, mr } = L;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, tw, th); ctx.clip();
+      ctx.fillStyle = '#070a12'; ctx.fillRect(0, 0, tw, th);
+      // ดวงอาทิตย์ทางซ้าย
+      const sg = ctx.createRadialGradient(-th * 0.25, ey, 10, -th * 0.25, ey, th * 0.62);
+      sg.addColorStop(0, '#fff6c8'); sg.addColorStop(0.55, '#ffcf4a'); sg.addColorStop(0.62, 'rgba(255,170,40,.5)'); sg.addColorStop(1, 'rgba(255,150,30,0)');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(-th * 0.25, ey, th * 0.62, 0, 7); ctx.fill();
+      ctx.fillStyle = '#3a2a05'; ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ดวงอาทิตย์', 8, ey);
+      // แสงอาทิตย์
+      ctx.strokeStyle = 'rgba(255,220,120,.18)'; ctx.lineWidth = 1;
+      for (let k = -5; k <= 5; k++) { ctx.beginPath(); ctx.moveTo(th * 0.38, ey + k * th * 0.08); ctx.lineTo(tw, ey + k * th * 0.08); ctx.stroke(); }
+      // วงโคจร
+      ctx.strokeStyle = 'rgba(160,180,220,.45)'; ctx.setLineDash([5, 6]);
+      ctx.beginPath(); ctx.arc(ex, ey, or, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+      // เงาของโลก (ชี้ไปทางขวา)
+      const uLen = or * 2.4;
+      ctx.fillStyle = 'rgba(120,130,150,.18)';
+      ctx.beginPath(); ctx.moveTo(ex, ey - er); ctx.lineTo(ex + uLen, ey - er * 2.6); ctx.lineTo(ex + uLen, ey + er * 2.6); ctx.lineTo(ex, ey + er); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.6)';
+      ctx.beginPath(); ctx.moveTo(ex, ey - er); ctx.lineTo(ex + uLen, ey - er * 0.15); ctx.lineTo(ex + uLen, ey + er * 0.15); ctx.lineTo(ex, ey + er); ctx.fill();
+      // ดวงจันทร์
+      const a = (theta() * Math.PI) / 180, mx = ex + or * Math.cos(a), my = ey - or * Math.sin(a);
+      const off = s.tilt && Math.abs(c.b) > 0.6; // เงาพลาดเพราะอยู่สูงหรือต่ำกว่าแนว
+      // เงาของดวงจันทร์ ชี้ไปทางขวา
+      const umbLen = (ex - er - mx) > 0 ? (ex - mx) * (s.dist === 'near' ? 1.04 : 0.86) : or * 0.95;
+      ctx.globalAlpha = off ? 0.35 : 1;
+      ctx.fillStyle = 'rgba(120,130,150,.22)';
+      ctx.beginPath(); ctx.moveTo(mx, my - mr); ctx.lineTo(mx + umbLen * 1.15, my - mr * 3.4); ctx.lineTo(mx + umbLen * 1.15, my + mr * 3.4); ctx.lineTo(mx, my + mr); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.75)';
+      ctx.beginPath(); ctx.moveTo(mx, my - mr); ctx.lineTo(mx + umbLen, my); ctx.lineTo(mx, my + mr); ctx.fill();
+      ctx.globalAlpha = 1;
+      // โลก
+      lit(ctx, ex, ey, er);
+      ctx.strokeStyle = 'rgba(90,150,255,.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ex, ey, er, 0, 7); ctx.stroke();
+      if (c.solar) { // จุดเงาของดวงจันทร์บนโลก
+        const yy = ey + Math.max(-er * 0.8, Math.min(er * 0.8, (my - ey) * 0.9));
+        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(ex - er * 0.55, yy, er * 0.45, 0, 7); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,.85)'; ctx.beginPath(); ctx.arc(ex - er * 0.6, yy, c.solar === 'total' ? er * 0.12 : 0, 0, 7); ctx.fill();
+      }
+      ctx.fillStyle = '#cfe1ff'; ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('โลก', ex, ey + er + 6);
+      lit(ctx, mx, my, mr, c.lunar === 'total' ? '#9a3b22' : c.lunar === 'partial' ? '#b77a5a' : c.lunar === 'pen' ? '#bdb6a6' : null);
+      ctx.fillStyle = '#ddd'; ctx.font = '14px Sarabun, sans-serif'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ดวงจันทร์', mx, my - mr - 4);
+      ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillText('มองจากด้านบน · ไม่ใช่มาตราส่วนจริง', tw - 8, th - 8);
+      ctx.restore();
+      L.moon = [mx, my];
+    }
+
+    function drawSky(ctx, c) {
+      const { vx, vy, vw, vh } = L;
+      const cx = vx + vw / 2, cy = vy + vh / 2 + 10, rr = Math.min(vw, vh - 30) / 2 - 4, k = rr / 1.6; // px ต่อองศา
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const solarView = c.nearNew;
+      if (L.narrow) ctx.font = '12.5px Sarabun, sans-serif';
+      ctx.fillText(L.narrow ? (solarView ? 'ดวงอาทิตย์ที่เห็นจากโลก' : 'ดวงจันทร์ที่เห็นจากโลก') : solarView ? 'มองดวงอาทิตย์จากโลก (ใช้แว่นกรองแสง)' : 'มองดวงจันทร์จากโลกตอนกลางคืน', cx, vy);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 7); ctx.clip();
+      if (solarView) {
+        const cover = c.solar ? Math.max(0, 1 - Math.hypot(c.sx, c.b) / (R_SUN + c.rm)) : 0;
+        const dark = c.solar === 'total' ? 0.92 : cover * 0.5;
+        ctx.fillStyle = 'rgb(' + Math.round(110 * (1 - dark)) + ',' + Math.round(170 * (1 - dark)) + ',' + Math.round(230 * (1 - dark) + 15) + ')';
+        ctx.fillRect(cx - rr, cy - rr, 2 * rr, 2 * rr);
+        if (c.solar === 'total') { const g = ctx.createRadialGradient(cx, cy, R_SUN * k, cx, cy, R_SUN * k * 2.6); g.addColorStop(0, 'rgba(255,255,255,.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R_SUN * k * 2.6, 0, 7); ctx.fill(); }
+        ctx.fillStyle = '#fff2b0'; ctx.beginPath(); ctx.arc(cx, cy, R_SUN * k, 0, 7); ctx.fill();
+        // ดวงจันทร์ (ด้านมืดหันมาทางโลก) วาดเฉพาะเมื่ออยู่ใกล้ดวงอาทิตย์บนท้องฟ้า
+        const mx = cx - c.sx * k, my = cy - c.b * k;
+        ctx.fillStyle = '#15171c'; ctx.beginPath(); ctx.arc(mx, my, c.rm * k, 0, 7); ctx.fill();
+      } else {
+        ctx.fillStyle = '#05070d'; ctx.fillRect(cx - rr, cy - rr, 2 * rr, 2 * rr);
+        // เงามัวและเงามืดของโลก (มองไม่เห็นจริงบนท้องฟ้า วาดเส้นประให้รู้ตำแหน่ง)
+        ctx.strokeStyle = 'rgba(200,200,220,.35)'; ctx.setLineDash([4, 5]);
+        ctx.beginPath(); ctx.arc(cx, cy, R_PEN * k, 0, 7); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,120,90,.5)'; ctx.beginPath(); ctx.arc(cx, cy, R_UMB * k, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        const mx = cx + c.lx * k, my = cy - c.b * k, r = c.rm * k;
+        ctx.save(); ctx.beginPath(); ctx.arc(mx, my, r, 0, 7); ctx.clip();
+        ctx.fillStyle = '#ece8dc'; ctx.fillRect(mx - r, my - r, 2 * r, 2 * r);
+        ctx.fillStyle = 'rgba(40,40,50,.35)'; ctx.beginPath(); ctx.arc(cx, cy, R_PEN * k, 0, 7); ctx.fill();
+        ctx.fillStyle = 'rgba(150,45,20,.92)'; ctx.beginPath(); ctx.arc(cx, cy, R_UMB * k, 0, 7); ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('เส้นประ: ตำแหน่งเงาของโลก', cx, cy + rr - 22);
+      }
+      ctx.restore();
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 7); ctx.stroke();
+    }
+
+    function drawSide(ctx, c) {
+      const { ix, iy, iw, ih } = L;
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      if (L.narrow) ctx.font = '12.5px Sarabun, sans-serif';
+      ctx.fillText(L.narrow ? 'มองจากด้านข้าง' : 'มองจากด้านข้าง (ความเอียงขยายให้เห็นชัด)', ix + iw / 2, iy);
+      const top = iy + 24, h2 = ih - 28, cy = top + h2 / 2;
+      ctx.fillStyle = '#070a12'; ctx.fillRect(ix, top, iw, h2);
+      const sunX = ix + 16, earthX = ix + iw * 0.6, R = Math.min(iw * 0.3, h2 * 0.8);
+      ctx.fillStyle = '#ffcf4a'; ctx.beginPath(); ctx.arc(sunX, cy, 12, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,220,120,.35)'; ctx.beginPath(); ctx.moveTo(sunX, cy); ctx.lineTo(ix + iw, cy); ctx.stroke();
+      ctx.fillStyle = '#4c8fe8'; ctx.beginPath(); ctx.arc(earthX, cy, 9, 0, 7); ctx.fill();
+      // วงโคจรดวงจันทร์ (มองด้านข้างเป็นเส้นเอียง)
+      const tiltPx = s.tilt ? Math.sin(((180 - s.node) * Math.PI) / 180) : 0;
+      const a = (theta() * Math.PI) / 180, mx = earthX + R * 0.45 * Math.cos(a), my = cy - c.b * (h2 * 0.07);
+      ctx.strokeStyle = 'rgba(160,180,220,.6)'; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(earthX - R * 0.45, cy + tiltPx * TILT * h2 * 0.07); ctx.lineTo(earthX + R * 0.45, cy - tiltPx * TILT * h2 * 0.07); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#ddd'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(s.tilt ? (Math.abs(c.b) < 0.6 ? 'ดวงจันทร์อยู่ใกล้แนวดวงอาทิตย์–โลก' : 'ดวงจันทร์อยู่' + (c.b > 0 ? 'สูงกว่า' : 'ต่ำกว่า') + 'แนว') : 'วงโคจรไม่เอียง (แบบง่าย)', ix + 6, top + h2 - 4);
+    }
+
+    function updateStatus(c) {
+      const st = $('#status');
+      $('#dayLbl').textContent = 'วันที่ ' + s.day.toFixed(1) + ' · ' + thaiDay();
+      let html;
+      if (c.solar) html = '<b>สุริยุปราคา' + NAME[c.solar] + '</b><br>' + (c.solar === 'total' ? 'ดวงจันทร์บังดวงอาทิตย์มิดดวง ท้องฟ้ามืดลง เห็นแสงโคโรนารอบ ๆ' : c.solar === 'annular' ? 'ดวงจันทร์อยู่ไกลโลกจึงดูเล็กกว่า บังไม่มิด เห็นเป็นวงแหวน' : 'ดวงจันทร์บังดวงอาทิตย์บางส่วน') + '<br><span style="color:var(--bad)">ห้ามมองดวงอาทิตย์ด้วยตาเปล่า</span>';
+      else if (c.lunar) html = '<b>จันทรุปราคา' + NAME[c.lunar] + '</b><br>' + (c.lunar === 'total' ? 'ดวงจันทร์อยู่ในเงามืดของโลกทั้งดวง เห็นเป็นสีแดงอิฐ' : c.lunar === 'partial' ? 'ดวงจันทร์บางส่วนเข้าไปในเงามืดของโลก' : 'ดวงจันทร์อยู่ในเงามัวของโลก หมองลงเล็กน้อย สังเกตยาก');
+      else if (s.tilt && (Math.abs(wrap(theta() - 180)) < 8 || Math.abs(wrap(theta())) < 8)) html = '<b>ไม่เกิดอุปราคา</b><br>แม้เป็นวัน' + (Math.abs(wrap(theta() - 180)) < 8 ? 'จันทร์ดับ' : 'จันทร์เต็มดวง') + ' แต่ดวงจันทร์อยู่' + (c.b > 0 ? 'สูงกว่า' : 'ต่ำกว่า') + 'แนวดวงอาทิตย์–โลก เงาจึงพลาดกัน ลองเลื่อน "ช่วงเวลาของปี"';
+      else html = '<b>ไม่เกิดอุปราคา</b><br>ดวงอาทิตย์ โลก และดวงจันทร์ยังไม่อยู่ในแนวเดียวกัน';
+      st.innerHTML = html;
+      st.style.background = c.solar || c.lunar ? 'color-mix(in srgb, var(--warn) 18%, transparent)' : 'var(--soft)';
+    }
+
+    function onPointer(e) {
+      const [px, py] = Lab.pos(canvas, e);
+      if (e.type === 'pointerdown' && L.moon && Math.hypot(px - L.moon[0], py - L.moon[1]) < 30) { s.drag = true; canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') {
+        const ang = (Math.atan2(-(py - L.ey), px - L.ex) * 180) / Math.PI;
+        setDay(((ang - 180 + 720) % 360) / 360 * MONTH);
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = false;
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+
+    let lastKey = '';
+    Lab.loop((dt) => {
+      if (s.play) setDay(s.day + dt * 1.6);
+      if (!cv.w) return;
+      layout();
+      const c = classify();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      drawTop(ctx, c); drawSky(ctx, c); drawSide(ctx, c);
+      const key = s.day.toFixed(1) + (c.solar || '') + (c.lunar || '') + s.tilt + s.node;
+      if (key !== lastKey) { lastKey = key; updateStatus(c); }
+    });
+  },
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ภัยธรรมชาติ · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 600px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: auto; aspect-ratio: 4 / 3; } }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 6px 0; }
+  .modes .btn { padding: 6px 4px; font-size: 15px; }
+  .info { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 10px; }
+  .info h4 { margin: 8px 0 2px; font-size: 16px; }
+  .info h4:first-child { margin-top: 0; }
+  .info ul { margin: 2px 0; padding-left: 20px; }
+  .info li { margin: 1px 0; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 15px; margin-top: 8px; }
+  .ctl label b { color: var(--accent); font-weight: 600; }
+  .meter { height: 14px; border-radius: 7px; background: var(--soft); overflow: hidden; margin: 4px 0 2px; }
+  .meter i { display: block; height: 100%; width: 0; border-radius: 7px; transition: width .2s; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const INFO = {
+  flood: { name: 'น้ำท่วม',
+    cause: ['ฝนตกหนักต่อเนื่องหลายวัน', 'ป่าต้นน้ำถูกทำลาย ดินดูดซับน้ำได้น้อย น้ำไหลบ่าลงแม่น้ำเร็ว', 'ทางระบายน้ำอุดตัน หรือพื้นที่เป็นที่ลุ่มต่ำ'],
+    sign: ['ฝนตกหนักติดต่อกันหลายชั่วโมงหรือหลายวัน', 'ระดับน้ำในแม่น้ำสูงขึ้นเร็ว น้ำขุ่นข้น', 'มีประกาศเตือนจากกรมอุตุนิยมวิทยาหรือหน่วยงานท้องถิ่น'],
+    safe: ['ติดตามข่าวและประกาศเตือนภัย', 'ย้ายของมีค่าและเครื่องใช้ไฟฟ้าขึ้นที่สูง ตัดไฟฟ้าเมื่อน้ำเข้าบ้าน', 'ไม่เดินหรือขับรถผ่านกระแสน้ำไหลแรง', 'อพยพไปยังที่สูงตามคำแนะนำ'] },
+  coast: { name: 'การกัดเซาะชายฝั่ง',
+    cause: ['คลื่นและลมแรง โดยเฉพาะช่วงมรสุม', 'ป่าชายเลนถูกทำลาย ไม่มีสิ่งช่วยลดแรงคลื่น', 'การสร้างสิ่งก่อสร้างที่ขวางการเคลื่อนที่ของตะกอนตามชายฝั่ง'],
+    sign: ['ชายหาดแคบลงทุกปี', 'ต้นไม้ริมชายฝั่งล้ม รากโผล่', 'สิ่งก่อสร้างริมทะเลเสียหายหรือพังลง'],
+    safe: ['ปลูกและอนุรักษ์ป่าชายเลน', 'ไม่สร้างบ้านใกล้แนวชายฝั่งที่ถูกกัดเซาะ', 'ใช้วิธีป้องกันที่เหมาะสม กำแพงกันคลื่นช่วยพื้นที่ด้านหลัง แต่อาจทำให้หาดข้างเคียงถูกกัดเซาะมากขึ้น'] },
+  slide: { name: 'ดินถล่ม',
+    cause: ['ฝนตกหนักต่อเนื่อง ดินอุ้มน้ำจนหนักและลื่น', 'ภูเขาหรือเนินมีความลาดชันสูง', 'ป่าไม้ถูกทำลาย ไม่มีรากไม้ยึดดิน'],
+    sign: ['น้ำในลำห้วยเปลี่ยนเป็นสีขุ่นข้นเหมือนโคลน', 'ได้ยินเสียงดังผิดปกติจากภูเขา', 'พื้นดินแตกร้าว ต้นไม้หรือเสาไฟฟ้าเอียง', 'น้ำในลำห้วยลดลงหรือเพิ่มขึ้นอย่างรวดเร็ว'],
+    safe: ['ติดตามข่าวฝนตกหนักในพื้นที่ภูเขา', 'เมื่อพบสัญญาณเตือนให้อพยพออกห่างจากเชิงเขาและทางน้ำทันที', 'ไม่สร้างบ้านเรือนบริเวณเชิงเขาที่ลาดชัน', 'ช่วยกันปลูกป่าคลุมดิน'] },
+  quake: { name: 'แผ่นดินไหว',
+    cause: ['การเคลื่อนที่ของแผ่นธรณีภาคหรือรอยเลื่อน ทำให้หินแตกและปล่อยพลังงานออกมาเป็นคลื่นไหวสะเทือน', 'จุดที่หินแตกใต้ดินเรียกว่า จุดศูนย์กลางแผ่นดินไหว จุดบนผิวโลกเหนือจุดนั้นเรียกว่า จุดเหนือศูนย์กลาง'],
+    sign: ['แผ่นดินไหวเกิดขึ้นทันทีโดยแทบไม่มีสัญญาณเตือนล่วงหน้า', 'บริเวณใกล้รอยเลื่อนมีพลังมีโอกาสเกิดมากกว่า'],
+    safe: ['ขณะเกิด: หมอบลง ป้องกันศีรษะใต้โต๊ะที่แข็งแรง จับยึดไว้', 'อยู่ห่างจากหน้าต่าง กระจก และสิ่งของที่อาจตกหล่น', 'ถ้าอยู่นอกอาคาร ไปยังที่โล่ง ห่างจากอาคาร เสาไฟฟ้า ต้นไม้', 'หลังเกิด: ไม่ใช้ลิฟต์ ระวังอาฟเตอร์ช็อก'] },
+  tsunami: { name: 'สึนามิ',
+    cause: ['แผ่นดินไหวขนาดใหญ่ใต้ทะเล ทำให้พื้นทะเลยกตัวหรือยุบตัว น้ำทะเลทั้งแนวถูกดันขึ้น เกิดคลื่นยักษ์', 'อาจเกิดจากภูเขาไฟใต้ทะเลระเบิดหรือดินถล่มใต้ทะเล'],
+    sign: ['รู้สึกแผ่นดินไหวรุนแรงขณะอยู่ชายฝั่ง', 'น้ำทะเลลดลงจากชายฝั่งอย่างรวดเร็วผิดปกติ', 'ได้ยินเสียงดังคำรามจากทะเล', 'มีสัญญาณเตือนภัยสึนามิ (หอเตือนภัย ข้อความเตือน)'],
+    safe: ['เมื่อเห็นสัญญาณเตือน รีบหนีขึ้นที่สูงหรือห่างจากชายฝั่งทันที ตามเส้นทางอพยพ', 'ห้ามลงไปเก็บปลาหรือดูน้ำทะเลที่ลดลง', 'คลื่นอาจมาหลายลูก รอประกาศว่าปลอดภัยก่อนกลับ', 'ประเทศไทยเคยเกิดสึนามิเมื่อ 26 ธันวาคม 2547 ที่ชายฝั่งอันดามัน'] },
+};
+
+SimKit.page({
+  id: 'disasters',
+  title: 'ภัยธรรมชาติ',
+  level: 'ป.6',
+  subject: 'โลกและอวกาศ',
+  lead: 'จำลองน้ำท่วม การกัดเซาะชายฝั่ง ดินถล่ม แผ่นดินไหว และสึนามิ ปรับปัจจัยต่าง ๆ แล้วดูผล พร้อมสาเหตุ สัญญาณเตือน และวิธีปฏิบัติตนให้ปลอดภัย',
+  about:
+    '<p><b>ภัยธรรมชาติ</b> คือเหตุการณ์ที่เกิดขึ้นตามธรรมชาติและสร้างความเสียหายต่อชีวิตและทรัพย์สิน บางชนิดมนุษย์มีส่วนทำให้รุนแรงขึ้น เช่น การตัดไม้ทำลายป่าทำให้น้ำท่วมและดินถล่มรุนแรงขึ้น การทำลายป่าชายเลนทำให้ชายฝั่งถูกกัดเซาะมากขึ้น</p>' +
+    '<p><b>น้ำท่วม</b> เกิดจากฝนตกหนักจนน้ำล้นตลิ่ง <b>ดินถล่ม</b> เกิดเมื่อดินบนที่ลาดชันอุ้มน้ำจนเลื่อนไหลลงมา <b>การกัดเซาะชายฝั่ง</b> เกิดจากคลื่นและลมพัดพาตะกอนไป</p>' +
+    '<p><b>แผ่นดินไหว</b> เกิดจากการเคลื่อนที่ของแผ่นธรณีภาคหรือรอยเลื่อน <b>สึนามิ</b> มักเกิดตามหลังแผ่นดินไหวขนาดใหญ่ใต้ทะเล คลื่นเคลื่อนที่เร็วมากในทะเลลึก เมื่อเข้าใกล้ฝั่งที่น้ำตื้นจะช้าลงแต่สูงขึ้นมาก</p>' +
+    '<p>เราห้ามภัยธรรมชาติไม่ได้ แต่ลดความเสียหายได้ด้วยการรู้สัญญาณเตือน เตรียมพร้อม และปฏิบัติตนอย่างถูกต้อง</p>',
+  think: [
+    'ฝนตกเท่ากัน พื้นที่ที่มีป่ากับพื้นที่ที่ป่าถูกตัด จะเกิดน้ำท่วมต่างกันอย่างไร เพราะเหตุใด',
+    'ถ้าเห็นน้ำในลำห้วยบนภูเขาขุ่นเป็นสีโคลนหลังฝนตกหนัก ควรทำอย่างไร',
+    'เหตุใดป่าชายเลนจึงช่วยลดการกัดเซาะชายฝั่งได้',
+    'ขณะเกิดแผ่นดินไหวในห้องเรียน นักเรียนควรปฏิบัติตนอย่างไร',
+    'ถ้าอยู่ชายหาดแล้วเห็นน้ำทะเลลดลงอย่างรวดเร็ว ควรทำอย่างไร เพราะเหตุใด',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const W = 800, H = 600;
+    const S = {
+      mode: 'flood',
+      flood: { rain: 150, cover: 80, level: 0.3, t: 0 },
+      coast: { wave: 3, prot: 'none', years: 0, shore: 330, target: 0, anim: false },
+      slide: { slope: 30, rain: 100, cover: 70, sat: 0.2, over: 0, slid: 0 },
+      quake: { M: 6, t: -1 },
+      tsunami: { M: 8.5, t: -1, speed: 1, x: 120 },
+    };
+
+    panel.innerHTML = '<h3>เลือกภัยธรรมชาติ</h3><div class="modes" id="modes">' +
+      Object.entries(INFO).map(([k, v]) => '<button class="btn" data-v="' + k + '">' + v.name + '</button>').join('') + '</div>' +
+      '<div class="ctl" id="ctl"></div><div class="info" id="info"></div>';
+    const $ = (q) => panel.querySelector(q);
+    const ctl = $('#ctl');
+    const slider = (id, label, min, max, step, val, unit) =>
+      '<label for="' + id + '">' + label + ' <b id="' + id + 'V">' + val + (unit || '') + '</b></label><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '">';
+    function bind(id, obj, key, unit, fmt) {
+      const el = $('#' + id), out = $('#' + id + 'V');
+      const show = () => (out.textContent = (fmt ? fmt(+el.value) : el.value) + (unit || ''));
+      el.oninput = () => { obj[key] = +el.value; show(); };
+      show();
+    }
+    const meter = (id, label) => '<label>' + label + ' <b id="' + id + 'T"></b></label><div class="meter"><i id="' + id + '"></i></div>';
+    function setMeter(id, frac, txt) {
+      const el = $('#' + id); if (!el) return;
+      const f = Math.max(0, Math.min(1, frac));
+      el.style.width = f * 100 + '%';
+      el.style.background = f < 0.5 ? 'var(--ok)' : f < 0.8 ? 'var(--warn)' : 'var(--bad)';
+      $('#' + id + 'T').textContent = txt;
+    }
+    function renderInfo() {
+      const I = INFO[S.mode], li = (a) => '<ul>' + a.map((x) => '<li>' + x + '</li>').join('') + '</ul>';
+      $('#info').innerHTML = '<h4>สาเหตุ</h4>' + li(I.cause) + '<h4>สัญญาณเตือน</h4>' + li(I.sign) + '<h4>ปฏิบัติตนให้ปลอดภัย</h4>' + li(I.safe);
+    }
+    function renderCtl() {
+      const m = S.mode;
+      if (m === 'flood') {
+        ctl.innerHTML = slider('rain', 'ปริมาณฝน', 0, 300, 10, S.flood.rain, ' มม./วัน') + slider('cover', 'ป่าคลุมพื้นที่ต้นน้ำ', 0, 100, 5, S.flood.cover, '%') + meter('lvl', 'ระดับน้ำในแม่น้ำ');
+        bind('rain', S.flood, 'rain', ' มม./วัน'); bind('cover', S.flood, 'cover', '%');
+      } else if (m === 'coast') {
+        ctl.innerHTML = slider('wave', 'ความแรงของคลื่น', 1, 5, 1, S.coast.wave) +
+          '<label>การป้องกัน</label><div class="seg" id="prot"><button data-v="none">ไม่มี</button><button data-v="mangrove">ป่าชายเลน</button><button data-v="wall">กำแพงกันคลื่น</button></div>' +
+          '<div class="row"><button class="btn primary" id="yr">เวลาผ่านไป 5 ปี</button><button class="btn" id="cReset">เริ่มใหม่</button></div>' + meter('lost', 'ชายฝั่งถูกกัดเซาะไป');
+        bind('wave', S.coast, 'wave', '', (v) => ['', 'อ่อนมาก', 'อ่อน', 'ปานกลาง', 'แรง', 'แรงมาก (มรสุม)'][v]);
+        const p = $('#prot');
+        const sync = () => p.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.coast.prot));
+        p.onclick = (e) => { const b = e.target.closest('button'); if (b) { S.coast.prot = b.dataset.v; sync(); } };
+        sync();
+        $('#yr').onclick = () => { const c = S.coast; const rate = coastRate(); c.target = Math.min(W - 30, (c.anim ? c.target : c.shore) + rate * 5 * 2.2); c.years += 5; c.anim = true; };
+        $('#cReset').onclick = () => { Object.assign(S.coast, { years: 0, shore: 330, target: 330, anim: false }); };
+      } else if (m === 'slide') {
+        ctl.innerHTML = slider('slope', 'ความลาดชัน', 10, 45, 1, S.slide.slope, '°') + slider('srain', 'ปริมาณฝน', 0, 300, 10, S.slide.rain, ' มม./วัน') + slider('scover', 'ต้นไม้คลุมดิน', 0, 100, 5, S.slide.cover, '%') +
+          meter('risk', 'ความเสี่ยงดินถล่ม') + '<div class="row"><button class="btn" id="sReset">เริ่มใหม่</button></div>';
+        bind('slope', S.slide, 'slope', '°'); bind('srain', S.slide, 'rain', ' มม./วัน'); bind('scover', S.slide, 'cover', '%');
+        $('#sReset').onclick = () => Object.assign(S.slide, { sat: 0.2, over: 0, slid: 0 });
+      } else if (m === 'quake') {
+        ctl.innerHTML = slider('mag', 'ขนาดแผ่นดินไหว (แมกนิจูด)', 3, 8, 0.5, S.quake.M) + '<div class="row"><button class="btn primary" id="go">เกิดแผ่นดินไหว</button></div>';
+        bind('mag', S.quake, 'M', '', (v) => v.toFixed(1));
+        $('#go').onclick = () => { S.quake.t = 0; api.note(''); };
+      } else {
+        ctl.innerHTML = slider('tmag', 'ขนาดแผ่นดินไหวใต้ทะเล', 7, 9.5, 0.5, S.tsunami.M) +
+          '<label>ความเร็วภาพ</label><div class="seg" id="tsp"><button data-v="1">ปกติ</button><button data-v="0.4">ช้า</button></div>' +
+          '<div class="row"><button class="btn primary" id="tgo">เกิดแผ่นดินไหวใต้ทะเล</button></div>';
+        bind('tmag', S.tsunami, 'M', '', (v) => v.toFixed(1));
+        const p = $('#tsp'); const sync = () => p.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === S.tsunami.speed));
+        p.onclick = (e) => { const b = e.target.closest('button'); if (b) { S.tsunami.speed = +b.dataset.v; sync(); } }; sync();
+        $('#tgo').onclick = () => { S.tsunami.t = 0; S.tsunami.x = 120; api.note(''); };
+      }
+    }
+    function setMode(m) {
+      S.mode = m; api.note('');
+      $('#modes').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === m));
+      renderCtl(); renderInfo();
+    }
+    $('#modes').onclick = (e) => { const b = e.target.closest('button'); if (b) setMode(b.dataset.v); };
+    setMode('flood');
+
+    let view = { s: 1, ox: 0, oy: 0 };
+    function setView(ctx) {
+      const sc = Math.min(cv.w / W, cv.h / H);
+      view = { s: sc, ox: (cv.w - W * sc) / 2, oy: (cv.h - H * sc) / 2 };
+      ctx.setTransform(cv.dpr * sc, 0, 0, cv.dpr * sc, cv.dpr * view.ox, cv.dpr * view.oy);
+    }
+    const lerp = (a, b, k) => a + (b - a) * k, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    function label(ctx, txt, x, y, size, col, align) { ctx.font = '600 ' + (size || 18) + 'px Sarabun, sans-serif'; ctx.fillStyle = col || Lab.css('--ink'); ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x, y); }
+    function pill(ctx, txt, x, y, size, bg) {
+      ctx.font = '600 ' + size + 'px Sarabun, sans-serif'; const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = bg || 'rgba(20,24,32,.78)'; ctx.fillRect(x - tw / 2 - 9, y - size * 0.8, tw + 18, size * 1.6);
+      label(ctx, txt, x, y, size, '#fff');
+    }
+    const sky = () => (Lab.dark() ? '#1c2533' : '#cfe6f7');
+    function tree(ctx, x, y, h) {
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x - 2, y - h * 0.4, 4, h * 0.4);
+      ctx.fillStyle = '#3f8a3a'; ctx.beginPath(); ctx.arc(x, y - h * 0.6, h * 0.32, 0, 7); ctx.fill();
+    }
+    function house(ctx, x, y, w, col, tilt) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(tilt || 0);
+      ctx.fillStyle = col || '#f0e2c8'; ctx.fillRect(-w / 2, -w * 0.7, w, w * 0.7);
+      ctx.fillStyle = '#b6492f'; ctx.beginPath(); ctx.moveTo(-w / 2 - 6, -w * 0.7); ctx.lineTo(0, -w * 1.15); ctx.lineTo(w / 2 + 6, -w * 0.7); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#5b7fa8'; ctx.fillRect(-w * 0.3, -w * 0.5, w * 0.22, w * 0.22); ctx.fillStyle = '#7a5530'; ctx.fillRect(w * 0.08, -w * 0.42, w * 0.2, w * 0.42);
+      ctx.restore();
+    }
+    let rainDrops = []; for (let i = 0; i < 120; i++) rainDrops.push([Math.random() * W, Math.random() * H]);
+    function rain(ctx, amount, x0, x1, yMax) {
+      const n = Math.round(amount * 120);
+      ctx.strokeStyle = 'rgba(90,130,200,.6)'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < n; i++) { const [x, y] = rainDrops[i]; const yy = (y + performance.now() / 2.5) % yMax; const xx = x0 + (x / W) * (x1 - x0); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 3, yy + 12); ctx.stroke(); }
+    }
+
+    // ---------- น้ำท่วม ----------
+    function stepFlood(dt) {
+      const F = S.flood, runoff = (F.rain / 300) * (1.4 - 0.75 * F.cover / 100);
+      F.level += (runoff - F.level) * Math.min(1, dt * 0.5);
+      const f = F.level;
+      setMeter('lvl', f / 1.3, f < 0.7 ? 'ปกติ' : f < 1 ? 'เฝ้าระวัง' : 'ล้นตลิ่ง!');
+      api.note(f >= 1 ? '<b>น้ำล้นตลิ่งท่วมบ้านเรือน</b> ฝนตกหนักและป่าต้นน้ำน้อย น้ำไหลบ่าลงแม่น้ำเร็ว' : f > 0.7 ? 'ระดับน้ำสูงใกล้ล้นตลิ่ง ควรเฝ้าระวังและติดตามประกาศ' : '');
+    }
+    function drawFlood(ctx) {
+      const F = S.flood;
+      ctx.fillStyle = sky(); ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = F.rain > 0 ? 'rgba(90,100,120,' + (F.rain / 300) * 0.5 + ')' : 'transparent'; ctx.fillRect(0, 0, W, 120);
+      rain(ctx, F.rain / 300, 0, W, 420);
+      // ภูเขาต้นน้ำ
+      ctx.fillStyle = '#8a6a48'; ctx.beginPath(); ctx.moveTo(0, 420); ctx.lineTo(0, 170); ctx.quadraticCurveTo(160, 120, 380, 420); ctx.closePath(); ctx.fill();
+      const nT = Math.round(F.cover / 100 * 16);
+      for (let i = 0; i < nT; i++) { const x = 20 + i * 19, y = 175 + (x / 380) * (x / 380) * 245 * 0.9 + (x < 120 ? 0 : 10); tree(ctx, x, y, 42); }
+      // น้ำไหลบ่าผิวดิน และน้ำซึมลงดิน
+      const run = (F.rain / 300) * (1.4 - 0.75 * F.cover / 100);
+      ctx.strokeStyle = 'rgba(70,130,210,.85)'; ctx.lineWidth = 2 + run * 10; ctx.lineCap = 'round';
+      if (F.rain > 0) { ctx.beginPath(); ctx.moveTo(120, 240); ctx.quadraticCurveTo(250, 300, 370, 400); ctx.stroke(); label(ctx, 'น้ำไหลบ่า', 220, 260, 16, '#1d4f9a'); }
+      if (F.rain > 0 && F.cover > 10) { ctx.strokeStyle = 'rgba(70,130,210,.5)'; ctx.lineWidth = 3; for (let i = 0; i < Math.round(F.cover / 20); i++) { const x = 60 + i * 50; ctx.beginPath(); ctx.moveTo(x, 300); ctx.lineTo(x, 340); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x - 5, 333); ctx.lineTo(x, 342); ctx.lineTo(x + 5, 333); ctx.stroke(); } label(ctx, 'ดินดูดซับน้ำ', 130, 360, 15, '#fff'); }
+      // แผ่นดินและร่องแม่น้ำ
+      ctx.fillStyle = '#9b7b58'; ctx.fillRect(0, 420, W, H - 420);
+      ctx.fillStyle = Lab.dark() ? '#2b2420' : '#6f5338'; ctx.beginPath(); ctx.moveTo(380, 420); ctx.lineTo(400, 530); ctx.lineTo(500, 530); ctx.lineTo(520, 420); ctx.closePath(); ctx.fill();
+      // น้ำ
+      const lvl = F.level;
+      ctx.fillStyle = 'rgba(70,130,210,.85)';
+      const wy = 530 - Math.min(1, lvl) * 110;
+      ctx.beginPath(); ctx.moveTo(lerp(400, 380, (530 - wy) / 110), wy); ctx.lineTo(lerp(500, 520, (530 - wy) / 110), wy); ctx.lineTo(500, 530); ctx.lineTo(400, 530); ctx.closePath(); ctx.fill();
+      if (lvl > 1) { const fh = (lvl - 1) * 160; ctx.fillStyle = 'rgba(120,110,80,.75)'; ctx.fillRect(380, 420 - fh, W - 380, fh + 1); }
+      [600, 680, 760].forEach((x) => house(ctx, x, 420, 52));
+      if (lvl > 1) { const fh = (lvl - 1) * 160; ctx.fillStyle = 'rgba(120,110,80,.55)'; ctx.fillRect(380, 420 - fh, W - 380, fh + 1); }
+      label(ctx, 'แม่น้ำ', 450, 555, 17, '#fff'); label(ctx, 'หมู่บ้านริมแม่น้ำ', 680, 450, 17, '#fff');
+      label(ctx, 'ป่าต้นน้ำ', 100, 140, 18);
+    }
+
+    // ---------- การกัดเซาะชายฝั่ง ----------
+    // อัตรากัดเซาะ (เมตร/ปี): ชายฝั่งที่ถูกกัดเซาะเกิน 5 เมตรต่อปีถือว่ารุนแรง
+    function coastRate() { const c = S.coast; return 0.25 * c.wave * c.wave * { none: 1, mangrove: 0.15, wall: 0.03 }[c.prot]; }
+    function stepCoast(dt) {
+      const C = S.coast;
+      if (C.anim) { C.shore += (C.target - C.shore) * Math.min(1, dt * 1.5); if (Math.abs(C.target - C.shore) < 0.3) { C.shore = C.target; C.anim = false; } }
+      const lost = (C.shore - 330) / 2.2;
+      setMeter('lost', lost / 150, Math.round(lost) + ' เมตร ใน ' + C.years + ' ปี (' + coastRate().toFixed(1) + ' ม./ปี)');
+      api.note(C.prot === 'wall' && C.years > 0 ? 'กำแพงกันคลื่นช่วยพื้นที่ด้านหลังไว้ได้ แต่คลื่นที่สะท้อนอาจกัดเซาะหาดข้างเคียงมากขึ้น' :
+        C.prot === 'mangrove' && C.years > 0 ? 'รากป่าชายเลนช่วยลดแรงคลื่นและดักตะกอนไว้ ชายฝั่งถูกกัดเซาะน้อยมาก' : lost > 40 ? '<b>ชายฝั่งถอยร่นเข้ามามาก</b> บ้านริมทะเลเริ่มเสียหาย' : '');
+    }
+    function drawCoast(ctx) {
+      const C = S.coast, sea = 400, sx = C.shore;
+      ctx.fillStyle = sky(); ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = Lab.dark() ? '#1f4466' : '#4e93c9'; ctx.fillRect(0, sea, W, H - sea);
+      // แผ่นดิน
+      ctx.fillStyle = '#e3cf9a'; ctx.beginPath(); ctx.moveTo(sx, sea + 6); ctx.lineTo(sx + 50, 370); ctx.lineTo(W, 370); ctx.lineTo(W, H); ctx.lineTo(sx - 30, H); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#7c9a5a'; ctx.fillRect(sx + 50, 362, W - sx - 50, 10);
+      // คลื่น
+      const amp = 3 + C.wave * 4, ph = performance.now() / 500;
+      ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 3;
+      for (let k = 0; k < 4; k++) { const x0 = ((ph * 60 + k * 90) % 360) - 60 + sx - 330; ctx.beginPath(); for (let x = Math.max(0, x0); x < Math.min(sx, x0 + 70); x += 4) { const y = sea - amp * Math.sin(((x - x0) / 70) * Math.PI); x === Math.max(0, x0) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); }
+      // การป้องกัน
+      if (C.prot === 'mangrove') for (let i = 0; i < 9; i++) { const x = sx - 110 + i * 14; ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 2; for (let r = -2; r <= 2; r++) { ctx.beginPath(); ctx.moveTo(x, sea - 30); ctx.quadraticCurveTo(x + r * 6, sea - 8, x + r * 8, sea + 14); ctx.stroke(); } ctx.fillStyle = '#2f7a33'; ctx.beginPath(); ctx.arc(x, sea - 40, 14, 0, 7); ctx.fill(); }
+      if (C.prot === 'wall') { ctx.fillStyle = '#9aa0aa'; ctx.fillRect(sx - 6, 340, 22, 90); ctx.strokeStyle = '#6b7280'; ctx.strokeRect(sx - 6, 340, 22, 90); }
+      // บ้าน
+      [470, 560, 650, 740].forEach((x) => {
+        const gap = x - (sx + 40);
+        if (gap < -40) { ctx.fillStyle = '#7a5530'; for (let k = 0; k < 4; k++) ctx.fillRect(x - 30 + k * 16, sea - 3 + (k % 2) * 4, 12, 4); return; } // บ้านพังลงทะเล เหลือเศษลอยน้ำ
+        const tilt = gap < 0 ? Math.min(0.9, -gap / 40) : 0;
+        house(ctx, x + 10 * tilt, 370 + tilt * 22, 46, null, -tilt);
+      });
+      // เส้นชายฝั่งเดิม
+      ctx.setLineDash([8, 6]); ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(330, 280); ctx.lineTo(330, 470); ctx.stroke(); ctx.setLineDash([]);
+      label(ctx, 'แนวชายฝั่งเดิม', 330, 268, 15, '#c0392b');
+      label(ctx, 'ทะเล', 140, 480, 22, '#fff');
+      pill(ctx, 'ผ่านไป ' + C.years + ' ปี', 680, 40, 20);
+    }
+
+    // ---------- ดินถล่ม ----------
+    function slideRisk() {
+      const L = S.slide;
+      return (Math.tan(L.slope * Math.PI / 180) / Math.tan(Math.PI / 4)) * (0.45 + 0.95 * L.sat) * (1.25 - 0.65 * L.cover / 100);
+    }
+    function stepSlide(dt) {
+      const L = S.slide;
+      const target = L.rain / 300;
+      L.sat += (target - L.sat) * Math.min(1, dt * (target > L.sat ? 0.25 : 0.08));
+      const r = slideRisk();
+      if (r > 1 && !L.slid) { L.over += dt; if (L.over > 2) L.slid = 0.0001; } else L.over = 0;
+      if (L.slid) L.slid = Math.min(1, L.slid + dt * 0.35);
+      setMeter('risk', r / 1.2, r < 0.6 ? 'ต่ำ' : r < 1 ? 'สูง' : 'อันตราย!');
+      api.note(L.slid ? '<b>ดินถล่ม!</b> ดินที่อุ้มน้ำบนที่ลาดชันเลื่อนไหลลงมาทับหมู่บ้าน' : r > 0.8 ? '<b>สัญญาณเตือน:</b> น้ำในลำห้วยขุ่นข้น ดินแตกร้าว ต้นไม้เอียง ควรอพยพทันที' : '');
+    }
+    function drawSlide(ctx) {
+      const L = S.slide, a = L.slope * Math.PI / 180;
+      ctx.fillStyle = sky(); ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(90,100,120,' + (L.rain / 300) * 0.5 + ')'; ctx.fillRect(0, 0, W, 120);
+      rain(ctx, L.rain / 300, 0, W, 520);
+      // เนินเขา: จากเชิงเขา (560, 520) ขึ้นไปทางซ้ายตามความชัน
+      const footX = 560, footY = 520, len = 560;
+      const topX = footX - Math.cos(a) * len, topY = footY - Math.sin(a) * len;
+      ctx.fillStyle = '#7a6046'; ctx.beginPath(); ctx.moveTo(topX, topY); ctx.lineTo(footX, footY); ctx.lineTo(W, footY); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.lineTo(0, topY); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#9b7b58'; ctx.fillRect(footX, footY, W - footX, H - footY);
+      // ชั้นดินที่อุ้มน้ำ (สีเข้มตามความชื้น) วางบนผิวเนิน หนา th ตามแนวตั้งฉากกับผิว
+      const nx = Math.sin(a), ny = -Math.cos(a), th = 34;
+      const slideK = L.slid || 0, shiftX = Math.cos(a) * len * 0.25 * slideK, shiftY = Math.sin(a) * len * 0.25 * slideK; // ไถลลงจนปลายถึงเชิงเขา
+      const sc = 'rgb(' + Math.round(lerp(176, 96, L.sat)) + ',' + Math.round(lerp(132, 72, L.sat)) + ',' + Math.round(lerp(88, 48, L.sat)) + ')';
+      const p0x = lerp(topX, footX, 0.15), p0y = lerp(topY, footY, 0.15), p1x = lerp(topX, footX, 0.75), p1y = lerp(topY, footY, 0.75);
+      ctx.fillStyle = sc;
+      ctx.beginPath(); ctx.moveTo(p0x + shiftX, p0y + shiftY); ctx.lineTo(p1x + shiftX, p1y + shiftY);
+      ctx.lineTo(p1x + shiftX + nx * th, p1y + shiftY + ny * th); ctx.lineTo(p0x + shiftX + nx * th, p0y + shiftY + ny * th); ctx.closePath(); ctx.fill();
+      if (slideK) { ctx.fillStyle = '#5e4630'; ctx.beginPath(); ctx.moveTo(p0x, p0y); ctx.lineTo(p0x + shiftX, p0y + shiftY); ctx.lineTo(p0x + shiftX, p0y + shiftY + 4); ctx.lineTo(p0x, p0y + 4); ctx.closePath(); ctx.fill(); }
+      // ต้นไม้บนชั้นดิน
+      const nT = Math.round(L.cover / 100 * 10);
+      for (let i = 0; i < nT; i++) { const k = 0.18 + i * 0.055, onSoil = k < 0.75, x = lerp(topX, footX, k) + (onSoil ? shiftX + nx * th : 0), y = lerp(topY, footY, k) + (onSoil ? shiftY + ny * th : 0); tree(ctx, x, y, 40); }
+      // รอยแตกเมื่อเสี่ยงสูง
+      if (slideRisk() > 0.8 && !L.slid) { ctx.strokeStyle = '#2b1d12'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p0x, p0y - 20); ctx.lineTo(p0x + 12, p0y - 6); ctx.lineTo(p0x + 4, p0y + 6); ctx.stroke(); }
+      // ลำห้วยที่เชิงเขา (ขุ่นเมื่อเสี่ยง)
+      ctx.fillStyle = slideRisk() > 0.8 ? '#8a6a45' : 'rgba(80,140,210,.85)'; ctx.fillRect(footX + 8, footY - 4, 46, 10);
+      // หมู่บ้าน
+      [630, 700, 770].forEach((x, i) => house(ctx, x, footY, 44, null, L.slid > 0.6 && i < 2 ? (L.slid - 0.6) * 1.2 : 0));
+      if (L.slid > 0.3) { ctx.fillStyle = 'rgba(110,80,50,.85)'; ctx.beginPath(); ctx.moveTo(footX - 60, footY); ctx.quadraticCurveTo(footX + 120 * L.slid, footY - 60 * L.slid, footX + 230 * L.slid, footY); ctx.closePath(); ctx.fill(); }
+      label(ctx, 'ความลาดชัน ' + L.slope + '°', 140, 560, 18, '#fff');
+      label(ctx, 'ลำห้วย', footX + 31, footY + 22, 14, '#fff');
+    }
+
+    // ---------- แผ่นดินไหว ----------
+    const BLD = [{ x: 470, name: 'บ้านไม้', h: 70, w: 60, k: 1.0 }, { x: 610, name: 'อาคารทั่วไป', h: 120, w: 60, k: 0.8 }, { x: 740, name: 'อาคารออกแบบ\nต้านแผ่นดินไหว', h: 150, w: 56, k: 0.35 }];
+    function quakeAmp(d) { const Q = S.quake; return Math.pow(10, (Q.M - 5) / 2) / (1 + d / 220); }
+    function stepQuake(dt) {
+      const Q = S.quake; if (Q.t < 0) return;
+      Q.t += dt;
+      if (Q.t > 0.8 && Q.t - dt <= 0.8) {
+        const M = Q.M;
+        api.note(M < 4 ? 'แผ่นดินไหวขนาดเล็ก คนที่อยู่นิ่ง ๆ รู้สึกได้เล็กน้อย' : M < 5.5 ? 'รู้สึกได้ชัด ของบนชั้นสั่น บางชิ้นตกหล่น' : M < 7 ? '<b>แรงพอทำให้อาคารที่ไม่แข็งแรงเสียหาย</b> ผนังร้าว ของหล่น' : '<b>รุนแรงมาก</b> อาคารที่ไม่ได้ออกแบบให้ต้านแผ่นดินไหวพังเสียหาย');
+      }
+    }
+    function drawQuake(ctx) {
+      const Q = S.quake, surf = 300, fx = 380, fy = 500, t = Q.t;
+      ctx.fillStyle = sky(); ctx.fillRect(0, 0, W, surf);
+      // เปลือกโลกสองแผ่นและรอยเลื่อน
+      const slip = t >= 0 ? Math.min(1, t / 0.6) * (Q.M - 2) * 2 : 0;
+      ctx.fillStyle = '#8a6a48'; ctx.beginPath(); ctx.moveTo(0, surf); ctx.lineTo(fx - 60, surf); ctx.lineTo(fx + 60, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#9b7b58'; ctx.beginPath(); ctx.moveTo(fx - 60, surf - slip * 0.3); ctx.lineTo(W, surf - slip * 0.3); ctx.lineTo(W, H); ctx.lineTo(fx + 60, H); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 3; ctx.setLineDash([10, 6]); ctx.beginPath(); ctx.moveTo(fx - 60, surf); ctx.lineTo(fx + 60, H); ctx.stroke(); ctx.setLineDash([]);
+      label(ctx, 'รอยเลื่อน', fx - 40, 340, 15, '#fff', 'right');
+      // คลื่นไหวสะเทือน
+      if (t >= 0) for (let k = 0; k < 5; k++) { const r = (t * 260 - k * 70); if (r <= 0 || r > 900) continue; ctx.strokeStyle = 'rgba(255,220,80,' + Math.max(0, 0.8 - r / 900) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fx, fy, r, 0, 7); ctx.stroke(); }
+      // จุดศูนย์กลางและจุดเหนือศูนย์กลาง
+      ctx.fillStyle = '#e63b2e'; ctx.beginPath(); ctx.arc(fx, fy, 10, 0, 7); ctx.fill();
+      pill(ctx, 'จุดศูนย์กลางแผ่นดินไหว', fx - 120, fy + 34, 15, 'rgba(160,40,30,.85)');
+      const ex = fx + (fy - surf) * 0 ;
+      ctx.fillStyle = '#e63b2e'; ctx.beginPath(); ctx.moveTo(ex, surf - 2); ctx.lineTo(ex - 10, surf - 20); ctx.lineTo(ex + 10, surf - 20); ctx.closePath(); ctx.fill();
+      ctx.setLineDash([4, 5]); ctx.strokeStyle = '#e63b2e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ex, surf); ctx.lineTo(fx, fy); ctx.stroke(); ctx.setLineDash([]);
+      label(ctx, 'จุดเหนือศูนย์กลาง', ex - 14, surf - 32, 15, '#c0392b', 'right');
+      // อาคาร: สั่นเมื่อคลื่นมาถึง ความแรงลดตามระยะ
+      BLD.forEach((b) => {
+        const d = Math.hypot(b.x - fx, surf - fy), arrive = d / 260;
+        let shake = 0, A = quakeAmp(Math.abs(b.x - ex));
+        if (t > arrive) shake = A * Math.exp(-(t - arrive) / 2.2) * Math.sin((t - arrive) * 28);
+        const dmg = A * b.k;
+        const fall = t > arrive + 0.6 && dmg > 3 ? Math.min(0.5, (t - arrive - 0.6) * 0.5) : 0;
+        ctx.save(); ctx.translate(b.x + shake * 3, surf - slip * 0.3); ctx.rotate(fall * (b.x % 2 ? 1 : -1));
+        ctx.fillStyle = b.k < 0.5 ? '#c9d3df' : b.k < 0.9 ? '#e6d6b8' : '#c79a62'; ctx.fillRect(-b.w / 2, -b.h, b.w, b.h);
+        ctx.fillStyle = '#5b7fa8'; for (let r = 0; r < b.h / 30 - 0.5; r++) for (let c = 0; c < 2; c++) ctx.fillRect(-b.w / 2 + 10 + c * 26, -b.h + 10 + r * 30, 14, 14);
+        if (b.k < 0.5) { ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-b.w / 2, 0); ctx.lineTo(b.w / 2, -b.h); ctx.moveTo(b.w / 2, 0); ctx.lineTo(-b.w / 2, -b.h); ctx.stroke(); }
+        if (t > arrive + 0.3 && dmg > 1.5) { ctx.strokeStyle = '#2b1d12'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-b.w / 4, -b.h * 0.8); ctx.lineTo(0, -b.h * 0.6); ctx.lineTo(-b.w / 6, -b.h * 0.4); ctx.lineTo(b.w / 5, -b.h * 0.2); ctx.stroke(); }
+        ctx.restore();
+        b.name.split('\n').forEach((ln, i) => label(ctx, ln, b.x, surf + 22 + i * 18, 14, '#fff'));
+      });
+      // เครื่องวัดแผ่นดินไหว
+      ctx.fillStyle = Lab.dark() ? '#232934' : '#ffffff'; ctx.fillRect(20, 20, 300, 110); ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.strokeRect(20, 20, 300, 110);
+      label(ctx, 'เครื่องวัดแผ่นดินไหว', 170, 36, 14);
+      ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.6; ctx.beginPath();
+      for (let i = 0; i <= 280; i++) {
+        const tt = (t < 0 ? 0 : t) - (280 - i) * 0.025, A = t < 0 || tt < 0.3 ? 0 : Math.min(40, 4 * quakeAmp(0)) * Math.exp(-(tt - 0.3) / 2.4);
+        const y = 85 + A * Math.sin(tt * 40) * (0.6 + 0.4 * Math.sin(tt * 7.3)) + (Math.sin(i * 1.7) * 0.6);
+        i ? ctx.lineTo(30 + i, y) : ctx.moveTo(30 + i, y);
+      }
+      ctx.stroke();
+      if (Q.t < 0) pill(ctx, 'ปรับขนาดแล้วกด "เกิดแผ่นดินไหว"', 560, 60, 17);
+    }
+
+    // ---------- สึนามิ ----------
+    const SEA = 300, SHORE = 640;
+    const floorY = (x) => (x < 380 ? 560 : x < SHORE ? lerp(560, SEA + 4, Math.pow((x - 380) / (SHORE - 380), 0.6)) : SEA + 4);
+    const depthM = (x) => Math.max(1, (floorY(x) - SEA) / 260 * 4000);
+    // ตำแหน่งยอดคลื่น: ความเร็วขึ้นกับความลึก (c = √(g·h)) จึงเร็วในทะเลลึกและช้าลงใกล้ฝั่ง
+    function tsuState() { return S.tsunami.t < 0 ? null : S.tsunami.x; }
+    function drawTsunami(ctx) {
+      const T = S.tsunami;
+      ctx.fillStyle = sky(); ctx.fillRect(0, 0, W, H);
+      const xw = tsuState();
+      const A0 = 3 + (T.M - 7) * 3;
+      const ampAt = (x) => A0 * Math.min(9, Math.sqrt(4000 / depthM(Math.min(x, SHORE - 2))));
+      const wid = (x) => 60 * Math.sqrt(depthM(Math.min(x, SHORE - 2)) / 4000) + 22;
+      const surfY = (x) => {
+        if (xw == null) return SEA;
+        const w = wid(xw), A = ampAt(xw), u = x - xw;
+        return SEA - A * Math.exp(-(u * u) / (w * w)) + A * 0.7 * Math.exp(-((u - w * 1.6) ** 2) / (w * w));
+      };
+      // น้ำทะเล
+      ctx.fillStyle = Lab.dark() ? '#1f4466' : '#4e93c9';
+      ctx.beginPath(); ctx.moveTo(0, surfY(0));
+      for (let x = 0; x <= W; x += 4) { const y = surfY(x); ctx.lineTo(x, x > SHORE ? Math.min(y, floorY(x) + (y < SEA - 4 ? 0 : 0)) : y); }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+      // พื้นทะเลและแผ่นดิน
+      ctx.fillStyle = '#8a6a48'; ctx.beginPath(); ctx.moveTo(0, H); for (let x = 0; x <= SHORE; x += 10) ctx.lineTo(x, floorY(x)); ctx.lineTo(SHORE, SEA + 4); ctx.lineTo(720, SEA - 10); ctx.lineTo(W, 200); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#e3cf9a'; ctx.beginPath(); ctx.moveTo(SHORE - 40, floorY(SHORE - 40)); ctx.lineTo(SHORE, SEA + 4); ctx.lineTo(720, SEA - 10); ctx.lineTo(720, SEA + 4); ctx.closePath(); ctx.fill();
+      // พื้นทะเลยกตัว
+      if (T.t >= 0) { const k = Math.min(1, T.t); ctx.fillStyle = '#6f5338'; ctx.beginPath(); ctx.moveTo(60, 560); ctx.quadraticCurveTo(120, 560 - 30 * k, 180, 560); ctx.closePath(); ctx.fill(); }
+      // น้ำท่วมบนฝั่ง: ถ้ายอดคลื่นมาถึงฝั่งแล้ว
+      let inund = 0;
+      if (xw != null && xw > SHORE - 10) inund = Math.min(1, (xw - SHORE + 10) / 120) * ampAt(SHORE - 3) * 3.4;
+      const landY = (x) => (x < 720 ? lerp(SEA + 4, SEA - 10, (x - SHORE) / 80) : lerp(SEA - 10, 200, (x - 720) / 80));
+      if (inund > 0) {
+        const run = inund * 1.6, h0 = Math.min(40, inund * 0.5);
+        ctx.fillStyle = 'rgba(60,120,200,.85)'; ctx.beginPath(); ctx.moveTo(SHORE - 10, landY(SHORE));
+        for (let x = SHORE - 10; x <= Math.min(W, SHORE + run); x += 4) ctx.lineTo(x, landY(x) - h0 * (1 - (x - SHORE) / run));
+        for (let x = Math.min(W, SHORE + run); x >= SHORE - 10; x -= 4) ctx.lineTo(x, landY(x));
+        ctx.closePath(); ctx.fill();
+      }
+      // คนบนหาดและที่สูงปลอดภัย
+      const recede = xw != null && xw + wid(xw) * 1.6 > SHORE - 60 && xw < SHORE - 10;
+      const person = (x, y, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y - 22, 6, 0, 7); ctx.fill(); ctx.fillRect(x - 3, y - 16, 6, 16); };
+      person(670, SEA - 2, '#c0392b'); person(690, SEA - 5, '#2d5fb3');
+      ctx.fillStyle = '#2f7a33'; ctx.fillRect(768, 150, 4, 50); ctx.fillStyle = '#ffd34d'; ctx.fillRect(740, 140, 60, 22); label(ctx, 'จุดปลอดภัย', 770, 151, 12, '#222');
+      // ข้อมูลคลื่น
+      if (xw != null && xw < SHORE) {
+        const d = depthM(xw), v = Math.sqrt(9.8 * d) * 3.6, h = ampAt(xw) * 0.14;
+        pill(ctx, 'ความลึก ~' + Math.round(d) + ' ม. · คลื่นเร็ว ~' + Math.round(v) + ' กม./ชม. · สูง ~' + h.toFixed(1) + ' ม.', 400, 40, 17);
+      }
+      if (recede) pill(ctx, '⚠ น้ำทะเลลดลงผิดปกติ! รีบหนีขึ้นที่สูงทันที', 520, 220, 18, 'rgba(192,57,43,.92)');
+      if (inund > 0) pill(ctx, 'คลื่นซัดขึ้นฝั่ง สูงหลายเมตร คนที่ยังอยู่บนหาดตกอยู่ในอันตราย', 470, 110, 18, 'rgba(192,57,43,.92)');
+      label(ctx, 'ทะเลลึก', 200, 330, 18, '#fff'); label(ctx, 'ไหล่ทวีป (น้ำตื้น)', 500, 340, 16, '#fff');
+      if (T.t < 0) pill(ctx, 'กด "เกิดแผ่นดินไหวใต้ทะเล" เพื่อเริ่ม', 400, 110, 18);
+      if (T.t >= 0) { ctx.fillStyle = '#e63b2e'; ctx.beginPath(); ctx.arc(120, 575, 8, 0, 7); ctx.fill(); }
+    }
+    function stepTsunami(dt) {
+      const T = S.tsunami; if (T.t < 0) return;
+      T.t += dt * T.speed;
+      if (T.t < 1) return; // พื้นทะเลยกตัวก่อน แล้วคลื่นจึงเริ่มเคลื่อนที่
+      const v = Math.max(9, 70 * Math.sqrt(depthM(Math.min(T.x, SHORE - 2)) / 4000));
+      if (T.x < SHORE + 120) T.x += v * dt * T.speed;
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      ({ flood: stepFlood, coast: stepCoast, slide: stepSlide, quake: stepQuake, tsunami: stepTsunami })[S.mode](dt);
+      const ctx = cv.ctx;
+      ctx.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0); ctx.clearRect(0, 0, cv.w, cv.h);
+      setView(ctx);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+      ({ flood: drawFlood, coast: drawCoast, slide: drawSlide, quake: drawQuake, tsunami: drawTsunami })[S.mode](ctx);
+      ctx.restore();
+    });
+  },
+});
+</script>
+</body>
+</html>

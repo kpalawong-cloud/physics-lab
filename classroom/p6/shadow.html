@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เงามืดและเงามัว · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 560px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 620px; } }
+  .readout2 { background: var(--soft); border-radius: 10px; padding: 8px 12px; font-size: 15px; margin-top: 10px; line-height: 1.7; }
+  .readout2 b { font-variant-numeric: tabular-nums; }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// โลกจำลองเป็นเซนติเมตร: แกน x ตามแนวแสง (0–100), แกน y ขึ้น-ลง (−30 ถึง 30) และแกน z ลึกเข้าไปในฉาก (ใช้ในภาพหน้าฉาก)
+SimKit.page({
+  id: 'p6-shadow',
+  title: 'เงามืดและเงามัว',
+  level: 'ป.6',
+  subject: 'แรงและพลังงาน',
+  lead: 'ลากหลอดไฟ แผ่นกลม และฉากได้ ปรับขนาดหลอดไฟจากจุดเล็ก ๆ จนเป็นหลอดใหญ่ แล้วดูว่าเงาบนฉากมีเงามืดอย่างเดียว หรือมีเงามัวล้อมรอบด้วย',
+  about:
+    '<p><b>เงา</b>เกิดเมื่อแสงซึ่งเดินทางเป็นเส้นตรงถูกวัตถุ<b>ทึบแสง</b>กั้นไว้ บริเวณด้านหลังวัตถุจึงมืด รูปร่างของเงาคล้ายรูปร่างของวัตถุ</p>' +
+    '<p><b>เงามืด</b> คือบริเวณที่แสงจากแหล่งกำเนิดแสงส่องไปไม่ถึงเลย จึงมืดที่สุด <b>เงามัว</b> คือบริเวณที่แสงบางส่วนส่องไปถึง จึงมืดไม่มาก มักอยู่รอบเงามืด</p>' +
+    '<p>ถ้าแหล่งกำเนิดแสงเล็กมาก (เกือบเป็นจุด) จะเกิดเงามืดที่ขอบคมอย่างเดียว ถ้าแหล่งกำเนิดแสงใหญ่ จะเกิดทั้งเงามืดและเงามัว</p>' +
+    '<p><b>วัตถุทึบแสง</b> (ไม้ กระดาษแข็ง) แสงผ่านไม่ได้ เกิดเงาชัด <b>วัตถุโปร่งแสง</b> (กระดาษไข พลาสติกขุ่น) แสงผ่านได้บางส่วน เกิดเงาจาง <b>วัตถุโปร่งใส</b> (กระจกใส) แสงผ่านได้เกือบหมด แทบไม่เกิดเงา</p>' +
+    '<p>เงามืดและเงามัวของดวงจันทร์และโลกทำให้เกิด<b>สุริยุปราคา</b>และ<b>จันทรุปราคา</b></p>',
+  think: [
+    'เมื่อเลื่อนหลอดไฟเข้าใกล้แผ่นกลม เงาบนฉากใหญ่ขึ้นหรือเล็กลง เพราะอะไร',
+    'ถ้าใช้หลอดไฟเล็กมาก ๆ เงาบนฉากมีเงามัวหรือไม่ เพราะอะไร',
+    'ถ้าเลื่อนฉากออกห่างแผ่นกลมมาก ๆ ขณะใช้หลอดใหญ่ เงามืดจะเป็นอย่างไร',
+    'เมื่อมีหลอดไฟ 2 ดวง ทำไมจึงเห็นเงา 2 เงา และบริเวณที่เงาซ้อนกันเป็นอย่างไร',
+    'เงาของคนตอนเที่ยงวันกับตอนเย็นต่างกันอย่างไร เกี่ยวกับตำแหน่งของแหล่งกำเนิดแสงอย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    let dirty = true;
+    const cv = Lab.canvas(canvas, () => (dirty = true));
+    const s = {
+      src: [{ x: 14, y: 0 }, { x: 14, y: 13 }], two: false, R: 0, // R = รัศมีหลอด (cm)
+      obj: { x: 45, y: 0 }, h: 6, mat: 'O', scr: 92, rays: true, drag: null,
+    };
+    const OPA = { O: 0.97, T: 0.5, C: 0.06 };
+    const MAT = { O: 'ทึบแสง', T: 'โปร่งแสง', C: 'โปร่งใส' };
+
+    panel.innerHTML =
+      '<h3>หลอดไฟ</h3><div class="seg" id="nsrc"><button data-v="1">1 ดวง</button><button data-v="2">2 ดวง</button></div>' +
+      '<h3>ขนาดหลอดไฟ</h3><input type="range" id="rad" min="0" max="9" step="0.1" value="0">' +
+      '<div class="row" style="justify-content:space-between;font-size:13px;color:var(--muted);margin-top:-4px"><span>จุดเล็ก ๆ</span><span>หลอดใหญ่</span></div>' +
+      '<h3>แผ่นกลมทำจาก</h3><div class="seg" id="mat"><button data-v="O">ทึบแสง</button><button data-v="T">โปร่งแสง</button><button data-v="C">โปร่งใส</button></div>' +
+      '<h3>ขนาดแผ่นกลม</h3><input type="range" id="size" min="3" max="12" step="0.5" value="6">' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:10px 0 0"><input type="checkbox" id="rays" checked> แสดงเส้นแสงที่ขอบ</label>' +
+      '<div class="readout2" id="out"></div>' +
+      '<p class="muted" style="font-size:14px;margin-top:8px">ลากหลอดไฟ แผ่นกลม หรือฉากในภาพด้านข้าง เพื่อเปลี่ยนระยะ</p>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); dirty = true; } });
+      sync();
+    }
+    seg('nsrc', () => (s.two ? 2 : 1), (v) => (s.two = v === '2'));
+    seg('mat', () => s.mat, (v) => (s.mat = v));
+    $('#rad').oninput = () => { s.R = +$('#rad').value; dirty = true; };
+    $('#size').oninput = () => { s.h = +$('#size').value; dirty = true; };
+    $('#rays').onchange = () => { s.rays = $('#rays').checked; dirty = true; };
+    const sources = () => (s.two ? s.src : [s.src[0]]);
+
+    // ---------- คณิตของเงา ----------
+    // 1 มิติ (ภาพด้านข้าง): ส่วนของหลอด [ys−R, ys+R] ที่ถูกแผ่นบัง เมื่อมองจากจุด (x, y)
+    function blocked1(src, x, y) {
+      if (x <= s.obj.x) return 0;
+      const k = (x - src.x) / (x - s.obj.x);
+      const a = y + (s.obj.y - s.h - y) * k, b = y + (s.obj.y + s.h - y) * k;
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      if (s.R < 0.05) return src.y >= lo && src.y <= hi ? 1 : 0;
+      const ov = Math.max(0, Math.min(hi, src.y + s.R) - Math.max(lo, src.y - s.R));
+      return ov / (2 * s.R);
+    }
+    // พื้นที่ซ้อนกันของวงกลม 2 วง
+    function overlap(d, r1, r2) {
+      if (d >= r1 + r2) return 0;
+      if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+      const a1 = Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1)), a2 = Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
+      return r1 * r1 * (a1 - Math.sin(2 * a1) / 2) + r2 * r2 * (a2 - Math.sin(2 * a2) / 2);
+    }
+    // 2 มิติ (หน้าฉาก): หลอดเป็นทรงกลม แผ่นเป็นวงกลมตั้งฉากกับแนวแสง จุดบนฉาก (y, z)
+    function blocked2(src, y, z) {
+      const k = (s.scr - src.x) / (s.scr - s.obj.x);
+      const cy = y + (s.obj.y - y) * k, cz = z * (1 - k), r = s.h * k;
+      const d = Math.hypot(cy - src.y, cz);
+      if (s.R < 0.05) return d < r ? 1 : 0;
+      return overlap(d, s.R, r) / (Math.PI * s.R * s.R);
+    }
+    function light(fn, a, b) { // ความสว่าง 0–1 ที่จุดหนึ่ง (เฉลี่ยจากทุกหลอด)
+      const ss = sources(), op = OPA[s.mat];
+      let I = 0; ss.forEach((src) => (I += 1 - op * fn(src, a, b)));
+      return I / ss.length;
+    }
+
+    // ---------- เรขาคณิตบนจอ ----------
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.narrow = w < 640;
+      if (L.narrow) { L.sx = 0; L.sw = w; L.sh = h * 0.56; L.fy = L.sh + 28; L.fs = Math.min(w - 40, h - L.sh - 40); L.fx = (w - L.fs) / 2; }
+      else { L.sw = w * 0.66; L.sh = h; L.fs = Math.min(w - L.sw - 36, h - 80); L.fx = L.sw + 18; L.fy = (h - L.fs) / 2 + 8; }
+      L.ppc = Math.min(L.sw / 104, L.sh / 66); // px ต่อ cm ในภาพด้านข้าง
+      L.ox = (L.sw - 100 * L.ppc) / 2; L.oy = L.sh / 2 + 6;
+    }
+    const X = (x) => L.ox + x * L.ppc, Y = (y) => L.oy - y * L.ppc;
+    const ix = (px) => (px - L.ox) / L.ppc, iy = (py) => (L.oy - py) / L.ppc;
+
+    // ภาพความสว่างด้านข้างและหน้าฉาก (สร้างใหม่เมื่อค่าเปลี่ยน)
+    const side = document.createElement('canvas'), face = document.createElement('canvas');
+    function rebuild() {
+      const step = 3, W = Math.ceil(L.sw / step), H = Math.ceil(L.sh / step);
+      side.width = W; side.height = H;
+      const g = side.getContext('2d'), img = g.createImageData(W, H), dark = Lab.dark();
+      const bg = dark ? [16, 19, 27] : [38, 42, 54], lit = [255, 236, 175];
+      const minSrc = Math.min(...sources().map((q) => q.x));
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+        const x = ix(i * step + 1), y = iy(j * step + 1), o = 4 * (j * W + i);
+        let t = 0;
+        if (x > minSrc - 2 && x < s.scr && y > -32 && y < 32) t = 0.55 * light(blocked1, x, y);
+        img.data[o] = bg[0] + (lit[0] - bg[0]) * t; img.data[o + 1] = bg[1] + (lit[1] - bg[1]) * t; img.data[o + 2] = bg[2] + (lit[2] - bg[2]) * t; img.data[o + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      const N = 140; face.width = N; face.height = N;
+      const fg = face.getContext('2d'), fimg = fg.createImageData(N, N);
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        const z = -30 + (60 * (i + 0.5)) / N, y = 30 - (60 * (j + 0.5)) / N, o = 4 * (j * N + i);
+        const I = light(blocked2, y, z), v = 30 + 215 * I;
+        fimg.data[o] = v; fimg.data[o + 1] = v * 0.97; fimg.data[o + 2] = v * 0.86; fimg.data[o + 3] = 255;
+      }
+      fg.putImageData(fimg, 0, 0);
+      // ค่าขนาดเงาตามแนวตั้งกลางฉาก
+      let u0 = null, u1 = null, p0 = null, p1 = null;
+      for (let y = -30; y <= 30; y += 0.05) {
+        const I = light(blocked2, y, 0), full = 1 - OPA[s.mat];
+        if (I < full + 0.02) { if (u0 == null) u0 = y; u1 = y; }
+        if (I < 0.985) { if (p0 == null) p0 = y; p1 = y; }
+      }
+      const umb = u0 == null ? 0 : u1 - u0, all = p0 == null ? 0 : p1 - p0;
+      const pen = Math.max(0, all - umb);
+      const out = $('#out');
+      if (s.mat === 'C') out.innerHTML = 'แผ่นโปร่งใส: แสงผ่านได้เกือบหมด <b>แทบไม่เกิดเงา</b>';
+      else out.innerHTML =
+        '<span class="sw" style="background:#2a2a30"></span>เงามืดสูง <b>' + umb.toFixed(1) + ' cm</b><br>' +
+        '<span class="sw" style="background:#8c8a80"></span>เงามัว (ขอบรอบเงามืด) กว้างรวม <b>' + pen.toFixed(1) + ' cm</b><br>' +
+        '<span class="muted" style="font-size:13px">แผ่นกลมกว้าง ' + (2 * s.h).toFixed(0) + ' cm · หลอดถึงแผ่น ' + (s.obj.x - s.src[0].x).toFixed(0) + ' cm · แผ่นถึงฉาก ' + (s.scr - s.obj.x).toFixed(0) + ' cm</span>';
+      let msg;
+      if (s.mat === 'C') msg = 'วัตถุ<b>โปร่งใส</b> แสงผ่านไปได้เกือบหมด บนฉากจึงแทบไม่มีเงา';
+      else if (s.mat === 'T') msg = 'วัตถุ<b>โปร่งแสง</b> แสงผ่านได้บางส่วน เงาจึงจางกว่าวัตถุทึบแสง';
+      else if (s.R < 0.05 && !s.two) msg = 'หลอดไฟเป็น<b>จุดเล็ก ๆ</b> จึงเกิด<b>เงามืดอย่างเดียว</b> ขอบเงาคม';
+      else if (umb < 0.05) msg = 'ฉากอยู่ไกลเกินกว่าปลายเงามืด บนฉากจึงเหลือ<b>เงามัวอย่างเดียว</b> (คล้ายสุริยุปราคาวงแหวน)';
+      else if (s.two) msg = 'หลอดไฟ 2 ดวงทำให้เกิดเงา 2 เงา บริเวณที่เงาซ้อนกันไม่มีแสงจากดวงใดเลย จึงมืดที่สุด';
+      else msg = 'หลอดไฟ<b>ขนาดใหญ่</b> จึงเกิด<b>เงามืด</b>ตรงกลาง และ<b>เงามัว</b>ล้อมรอบ';
+      api.note(msg);
+      dirty = false;
+    }
+
+    function drawSource(ctx, src, i) {
+      const x = X(src.x), y = Y(src.y), r = Math.max(5, s.R * L.ppc);
+      const g = ctx.createRadialGradient(x, y, r * 0.3, x, y, r + 26);
+      g.addColorStop(0, 'rgba(255,240,180,.9)'); g.addColorStop(1, 'rgba(255,240,180,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r + 26, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff6d6'; ctx.strokeStyle = '#e0b74a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ddd'; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(s.two ? 'หลอด ' + (i + 1) : 'หลอดไฟ', x, y + r + 6);
+    }
+
+    function draw() {
+      const ctx = cv.ctx, w = cv.w, h = cv.h;
+      ctx.clearRect(0, 0, w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(side, 0, 0, L.sw, L.sh);
+      // เส้นแสงจากขอบหลอดผ่านขอบแผ่นถึงฉาก
+      if (s.rays && s.mat !== 'C') {
+        sources().forEach((src, k) => {
+          const edges = s.R < 0.05 ? [0] : [s.R, -s.R];
+          edges.forEach((e, j) => [s.h, -s.h].forEach((oh) => {
+            const x0 = src.x, y0 = src.y + e, x1 = s.obj.x, y1 = s.obj.y + oh;
+            const t = (s.scr - x0) / (x1 - x0), y2 = y0 + (y1 - y0) * t;
+            // เส้นที่ไขว้กัน (ขอบบนหลอด→ขอบล่างแผ่น) กำหนดเงามืด เส้นที่ไม่ไขว้กำหนดเงามัว
+            const umbra = (e > 0 && oh < 0) || (e < 0 && oh > 0) || s.R < 0.05;
+            ctx.strokeStyle = umbra ? 'rgba(255,120,90,.9)' : 'rgba(120,200,255,.85)';
+            ctx.lineWidth = 1.5; ctx.setLineDash(umbra ? [] : [6, 4]);
+            ctx.beginPath(); ctx.moveTo(X(x0), Y(y0)); ctx.lineTo(X(s.scr), Y(y2)); ctx.stroke();
+          }));
+        });
+        ctx.setLineDash([]);
+      }
+      // ฉาก
+      ctx.fillStyle = Lab.dark() ? '#d8dbe2' : '#f4f1e8';
+      ctx.fillRect(X(s.scr), Y(31), 6, 62 * L.ppc);
+      ctx.fillStyle = '#ccc'; ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ฉาก', X(s.scr) + 3, Y(31) - 4);
+      // แผ่นกลม (มองด้านข้างเป็นแผ่นบาง)
+      ctx.fillStyle = s.mat === 'O' ? '#7a4d24' : s.mat === 'T' ? 'rgba(235,235,220,.75)' : 'rgba(170,220,255,.45)';
+      ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+      ctx.fillRect(X(s.obj.x) - 3, Y(s.obj.y + s.h), 6, 2 * s.h * L.ppc); ctx.strokeRect(X(s.obj.x) - 3, Y(s.obj.y + s.h), 6, 2 * s.h * L.ppc);
+      ctx.fillStyle = '#ddd'; ctx.font = '13px Sarabun, sans-serif'; ctx.textBaseline = 'bottom';
+      ctx.fillText('แผ่นกลม' + MAT[s.mat], X(s.obj.x), Y(s.obj.y + s.h) - 4);
+      sources().forEach((src, i) => drawSource(ctx, src, i));
+      ctx.fillStyle = '#bbb'; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('มองจากด้านข้าง', 10, 8);
+      // ภาพหน้าฉาก
+      const fx = L.fx, fy = L.fy, fs = L.fs;
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ภาพบนฉาก (มองตรงไปที่ฉาก)', fx, fy - 6);
+      ctx.drawImage(face, fx, fy, fs, fs);
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1.5; ctx.strokeRect(fx, fy, fs, fs);
+    }
+
+    function hit(px, py) {
+      const cand = [];
+      sources().forEach((src, i) => cand.push({ k: 'src' + i, d: Math.hypot(px - X(src.x), py - Y(src.y)) - Math.max(5, s.R * L.ppc) }));
+      if (Math.abs(px - X(s.obj.x)) < 22 && py > Y(s.obj.y + s.h) - 12 && py < Y(s.obj.y - s.h) + 12) cand.push({ k: 'obj', d: 0 });
+      if (Math.abs(px - X(s.scr) - 3) < 20 && py < L.sh) cand.push({ k: 'scr', d: 1 });
+      cand.sort((a, b) => a.d - b.d);
+      return cand.length && cand[0].d < 26 ? cand[0].k : null;
+    }
+    function onPointer(e) {
+      const [px, py] = Lab.pos(canvas, e);
+      if (e.type === 'pointerdown') { s.drag = hit(px, py); if (s.drag) canvas.setPointerCapture(e.pointerId); }
+      if (s.drag && e.type === 'pointermove') {
+        const x = ix(px), y = Math.max(-24, Math.min(24, iy(py)));
+        if (s.drag.startsWith('src')) { const src = s.src[+s.drag[3]]; src.x = Math.max(2, Math.min(s.obj.x - 6, x)); src.y = y; }
+        else if (s.drag === 'obj') { s.obj.x = Math.max(Math.max(...sources().map((q) => q.x)) + 6, Math.min(s.scr - 6, x)); s.obj.y = Math.max(-18, Math.min(18, y)); }
+        else if (s.drag === 'scr') s.scr = Math.max(s.obj.x + 6, Math.min(100, x));
+        dirty = true;
+      }
+      if (e.type === 'pointerup' || e.type === 'pointercancel') s.drag = null;
+      canvas.style.cursor = s.drag ? 'grabbing' : hit(px, py) ? 'grab' : 'default';
+      e.preventDefault();
+    }
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, onPointer));
+    api.onPresent(() => (dirty = true));
+
+    Lab.loop(() => {
+      if (!cv.w) return;
+      layout();
+      if (dirty) rebuild();
+      draw();
+    });
+  },
+});
+</script>
+</body>
+</html>
