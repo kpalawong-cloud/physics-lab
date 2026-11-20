@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบลำเลียงในพืช · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .chk { display: flex; gap: 8px; align-items: center; margin: 6px 0; font-size: 15px; }
+  .ratebar { height: 16px; border-radius: 8px; background: var(--soft); overflow: hidden; margin: 6px 0 2px; }
+  .ratebar div { height: 100%; background: linear-gradient(90deg, #5aa9e6, #2f6fde); width: 0; transition: width .2s; }
+  .sl { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: -4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'transport',
+  title: 'ระบบลำเลียงในพืช',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'พืชมีท่อลำเลียงสองชนิด ไซเล็มลำเลียงน้ำและธาตุอาหารจากรากขึ้นสู่ใบ โฟลเอ็มลำเลียงอาหารจากใบไปยังส่วนต่าง ๆ ดูการลำเลียงในต้นพืช ต้นขึ้นฉ่ายในน้ำสี และการคายน้ำ',
+  about:
+    '<p><b>ไซเล็ม (xylem)</b> ลำเลียงน้ำและธาตุอาหารที่รากดูดขึ้นมา จากรากผ่านลำต้นขึ้นไปยังใบ <b>ทิศทางเดียว คือจากล่างขึ้นบน</b></p>' +
+    '<p><b>โฟลเอ็ม (phloem)</b> ลำเลียงอาหาร (น้ำตาล) ที่ใบสร้างจากการสังเคราะห์ด้วยแสง ไปยังส่วนต่าง ๆ ที่ต้องใช้หรือสะสมอาหาร เช่น ราก ยอดอ่อน ผล ได้<b>ทั้งขึ้นและลง</b></p>' +
+    '<p>รากดูดน้ำเข้าทาง<b>ขนราก</b> ซึ่งเพิ่มพื้นที่ผิวในการดูดน้ำ น้ำเคลื่อนที่ขึ้นตามไซเล็มได้เพราะ<b>การคายน้ำ</b>ที่ใบ ทำให้เกิดแรงดึงน้ำต่อเนื่องกันขึ้นมาเหมือนดูดผ่านหลอด ร่วมกับแรงยึดเหนี่ยวระหว่างโมเลกุลของน้ำ</p>' +
+    '<p><b>การคายน้ำ</b> คือการที่พืชปล่อยน้ำออกเป็นไอน้ำ ส่วนใหญ่ออกทาง<b>ปากใบ</b> ปากใบมีเซลล์คุมสองเซลล์ควบคุมการเปิด-ปิด ปากใบมักเปิดเมื่อได้รับแสง</p>' +
+    '<p>ปัจจัยที่ทำให้คายน้ำมากขึ้น: แสงมาก ลมแรง อุณหภูมิสูง และความชื้นในอากาศต่ำ วัดอัตราการคายน้ำได้ด้วย<b>โพโทมิเตอร์</b> ซึ่งดูจากระยะที่ฟองอากาศในหลอดเลื่อนไปในเวลาที่กำหนด</p>',
+  think: [
+    'ถ้าตัดลำต้นขึ้นฉ่ายตามขวางหลังแช่น้ำสี จะเห็นสีอยู่ที่ส่วนใด และส่วนนั้นคือท่อลำเลียงชนิดใด',
+    'เหตุใดการลำเลียงในโฟลเอ็มจึงต้องไปได้ทั้งขึ้นและลง แต่ไซเล็มลำเลียงขึ้นอย่างเดียว',
+    'วันที่อากาศร้อน แดดจัด และลมแรง พืชคายน้ำมากหรือน้อย และควรรดน้ำต้นไม้มากขึ้นหรือไม่',
+    'ถ้าปิดใบทั้งหมดด้วยวาสลีน ฟองอากาศในโพโทมิเตอร์จะเลื่อนเร็วขึ้นหรือช้าลง เพราะเหตุใด',
+    'ขนรากช่วยให้รากดูดน้ำได้ดีขึ้นอย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { mode: 'plant', light: 0.8, wind: 0.2, hum: 0.4, temp: 0.5, showX: true, showP: true,
+      parts: [], vapor: [], spX: 0, spP: 0, hours: 0, play: true, bubble: 0, tm: 0 };
+    panel.innerHTML =
+      '<h3>ดูเรื่อง</h3><div class="seg" id="mode"><button data-v="plant">ภาพรวม</button><button data-v="celery">ขึ้นฉ่ายในน้ำสี</button><button data-v="poto">โพโทมิเตอร์</button></div>' +
+      '<div id="pPlant"><label class="chk"><input type="checkbox" id="cx" checked> แสดงไซเล็ม (น้ำ, สีฟ้า)</label><label class="chk"><input type="checkbox" id="cp" checked> แสดงโฟลเอ็ม (อาหาร, สีส้ม)</label></div>' +
+      '<div id="pCel"><div class="row"><button class="btn primary" id="play">หยุดชั่วคราว</button><button class="btn" id="rst">เริ่มใหม่</button></div><p id="hrs" style="margin:4px 0;font-weight:600"></p></div>' +
+      '<div id="pPoto"><div class="row"><button class="btn" id="tap">เปิดก๊อก ดันฟองอากาศกลับจุดเริ่ม</button></div><p id="spd" style="margin:4px 0;font-weight:600"></p></div>' +
+      '<h3>สภาพแวดล้อม</h3>' +
+      '<label>แสง</label><input type="range" id="light" min="0" max="1" step="0.05"><div class="sl"><span>มืด</span><span>แดดจัด</span></div>' +
+      '<label>ลม</label><input type="range" id="wind" min="0" max="1" step="0.05"><div class="sl"><span>ลมสงบ</span><span>ลมแรง</span></div>' +
+      '<label>ความชื้นในอากาศ</label><input type="range" id="hum" min="0" max="1" step="0.05"><div class="sl"><span>แห้ง</span><span>ชื้นมาก</span></div>' +
+      '<label>อุณหภูมิ</label><input type="range" id="temp" min="0" max="1" step="0.05"><div class="sl"><span>เย็น</span><span>ร้อน</span></div>' +
+      '<h3>อัตราการคายน้ำ</h3><div class="ratebar"><div id="rbar"></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const modeEl = $('#mode');
+    const syncMode = () => modeEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.mode));
+    modeEl.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.mode = b.dataset.v; s.vapor = []; s.parts = []; syncMode(); update(); } });
+    syncMode();
+    ['light', 'wind', 'hum', 'temp'].forEach((k) => { const el = $('#' + k); el.value = s[k]; el.oninput = () => { s[k] = +el.value; update(); }; });
+    $('#cx').onchange = (e) => (s.showX = e.target.checked);
+    $('#cp').onchange = (e) => (s.showP = e.target.checked);
+    $('#play').onclick = () => { s.play = !s.play; update(); };
+    $('#rst').onclick = () => { s.hours = 0; s.play = true; update(); };
+    $('#tap').onclick = () => { s.bubble = 0; s.tm = 0; };
+
+    // อัตราการคายน้ำสัมพัทธ์ 0–1: ปากใบเปิดตามแสง คูณผลของลม อุณหภูมิ และความแห้งของอากาศ
+    const stomata = () => 0.12 + 0.88 * s.light;
+    function trans() {
+      const r = stomata() * (0.45 + 0.75 * s.temp) * (0.7 + 0.9 * s.wind) * (1.05 - 0.9 * s.hum);
+      return Math.max(0.02, Math.min(1, r / 1.6));
+    }
+    function update() {
+      $('#pPlant').style.display = s.mode === 'plant' ? '' : 'none';
+      $('#pCel').style.display = s.mode === 'celery' ? '' : 'none';
+      $('#pPoto').style.display = s.mode === 'poto' ? '' : 'none';
+      $('#play').textContent = s.play ? 'หยุดชั่วคราว' : 'เล่นต่อ';
+      $('#rbar').style.width = Math.round(trans() * 100) + '%';
+      const r = trans();
+      const tips = [];
+      if (s.light < 0.25) tips.push('มืด ปากใบปิดเกือบหมด คายน้ำน้อย');
+      if (s.wind > 0.6) tips.push('ลมแรงพัดไอน้ำรอบใบออกไป คายน้ำเร็วขึ้น');
+      if (s.hum > 0.7) tips.push('อากาศชื้นมาก ไอน้ำออกจากใบได้ช้า');
+      if (s.temp > 0.7) tips.push('อากาศร้อน น้ำระเหยเร็ว');
+      api.note((r > 0.6 ? '<b>คายน้ำมาก</b>' : r < 0.25 ? '<b>คายน้ำน้อย</b>' : '<b>คายน้ำปานกลาง</b>') + (tips.length ? ': ' + tips.join(' · ') : '') +
+        (s.mode === 'plant' ? '<br>ยิ่งคายน้ำมาก น้ำในไซเล็มยิ่งถูกดึงขึ้นเร็ว' : ''));
+    }
+
+    // ---------- ภาพรวม: เส้นทางของไซเล็มและโฟลเอ็ม ----------
+    let G = {};
+    function geom() {
+      const w = cv.w, h = cv.h;
+      const sx = Math.min(w * 0.45, w - 230), ground = h * 0.6, topY = 70;
+      const leaves = [
+        { y: ground - (ground - topY) * 0.25, dir: -1, len: Math.min(150, w * 0.22) },
+        { y: ground - (ground - topY) * 0.48, dir: 1, len: Math.min(160, w * 0.24) },
+        { y: ground - (ground - topY) * 0.7, dir: -1, len: Math.min(140, w * 0.2) },
+        { y: ground - (ground - topY) * 0.86, dir: 1, len: Math.min(120, w * 0.18) },
+      ];
+      const roots = [
+        [[sx, ground], [sx - 2, ground + 60], [sx - 50, ground + 110], [sx - 100, ground + 150]],
+        [[sx, ground], [sx + 4, ground + 70], [sx + 40, ground + 120], [sx + 90, ground + 160]],
+        [[sx, ground], [sx, ground + 90], [sx - 8, h - 20]],
+      ];
+      G = { w, h, sx, ground, topY, leaves, roots };
+    }
+    const off = (p, dx) => p.map(([x, y]) => [x + dx, y]);
+    function leafPath(L, k) {
+      const { sx } = G, x0 = sx, y0 = L.y;
+      return [[x0, y0], [x0 + L.dir * L.len * 0.5, y0 - 26 - k * 2], [x0 + L.dir * L.len, y0 - 40]];
+    }
+    function pathLen(p) { let d = 0; for (let i = 1; i < p.length; i++) d += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return d; }
+    function at(p, u) {
+      let d = u * pathLen(p);
+      for (let i = 1; i < p.length; i++) {
+        const seg = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+        if (d <= seg) { const f = seg ? d / seg : 0; return [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f]; }
+        d -= seg;
+      }
+      return p[p.length - 1];
+    }
+    // น้ำ: ปลายราก → โคนต้น → ข้อของใบ → ปลายใบ (ไซเล็มอยู่ด้านซ้ายของลำต้นเล็กน้อย)
+    function waterPath(ri, li) {
+      const r = G.roots[ri].slice().reverse(), L = G.leaves[li];
+      return off(r, -3).concat([[G.sx - 3, L.y]]).concat(leafPath(L, 0).slice(1));
+    }
+    // อาหาร: ปลายใบ → ข้อของใบ → ลงราก หรือขึ้นยอด
+    function sugarPath(li, dest) {
+      const L = G.leaves[li], lp = leafPath(L, 1).slice().reverse();
+      const base = lp.concat([[G.sx + 3, L.y]]);
+      if (dest === 'top') return base.concat([[G.sx + 3, G.topY + 6]]);
+      return base.concat(off(G.roots[dest], 3));
+    }
+    function drawLeaf(ctx, L) {
+      const p = leafPath(L, 0), [x0, y0] = p[0], [x1, y1] = p[2];
+      const ang = Math.atan2(y1 - y0, x1 - x0), len = Math.hypot(x1 - x0, y1 - y0);
+      ctx.save(); ctx.translate(x0, y0); ctx.rotate(ang);
+      ctx.fillStyle = '#4caf50'; ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(len * 0.5, -len * 0.32, len, 0); ctx.quadraticCurveTo(len * 0.5, len * 0.32, 0, 0); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+    function drawPlant(ctx, dt) {
+      const { w, h, sx, ground, topY, leaves, roots } = G, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      // ท้องฟ้าและดิน
+      ctx.fillStyle = 'rgba(255,230,120,' + (0.05 + 0.25 * s.light) + ')'; ctx.fillRect(0, 0, w, ground);
+      ctx.fillStyle = dark ? '#3b2e22' : '#8d6e4f'; ctx.fillRect(0, ground, w, h - ground);
+      ctx.fillStyle = '#ffcc33'; ctx.globalAlpha = 0.2 + 0.8 * s.light; ctx.beginPath(); ctx.arc(w - 40, 40, 22, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+      // ราก + ขนราก
+      ctx.strokeStyle = '#e8d9b5'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+      roots.forEach((r) => { ctx.beginPath(); r.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); });
+      ctx.lineWidth = 1; ctx.strokeStyle = '#f3ead2';
+      roots.forEach((r) => { for (let u = 0.45; u < 1; u += 0.04) { const [x, y] = at(r, u); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 7 * Math.cos(u * 40), y + 7 * Math.sin(u * 40)); ctx.stroke(); } });
+      // ลำต้น
+      ctx.strokeStyle = '#558b2f'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(sx, ground + 4); ctx.lineTo(sx, topY + 4); ctx.stroke();
+      ctx.fillStyle = '#8bc34a'; ctx.beginPath(); ctx.ellipse(sx, topY, 9, 14, 0, 0, 7); ctx.fill();
+      leaves.forEach((L) => drawLeaf(ctx, L));
+      // ท่อลำเลียง
+      ctx.lineWidth = 2.2;
+      if (s.showX) {
+        ctx.strokeStyle = 'rgba(40,120,230,.9)';
+        roots.forEach((r) => { ctx.beginPath(); off(r, -3).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); });
+        ctx.beginPath(); ctx.moveTo(sx - 3, ground); ctx.lineTo(sx - 3, leaves[3].y); ctx.stroke();
+        leaves.forEach((L) => { ctx.beginPath(); leafPath(L, 0).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); });
+      }
+      if (s.showP) {
+        ctx.strokeStyle = 'rgba(240,140,30,.9)';
+        roots.forEach((r) => { ctx.beginPath(); off(r, 3).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); });
+        ctx.beginPath(); ctx.moveTo(sx + 3, ground); ctx.lineTo(sx + 3, topY + 6); ctx.stroke();
+        leaves.forEach((L) => { ctx.beginPath(); leafPath(L, 1).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); });
+      }
+      // อนุภาค
+      const r = trans();
+      if (s.showX) { s.spX += dt * (2 + 14 * r); while (s.spX >= 1) { s.spX--; s.parts.push({ k: 'w', p: waterPath(Math.floor(Math.random() * 3), Math.floor(Math.random() * 4)), u: 0 }); } }
+      if (s.showP) {
+        s.spP += dt * (0.5 + 4 * s.light);
+        while (s.spP >= 1) { s.spP--; const d = Math.random(); s.parts.push({ k: 's', p: sugarPath(Math.floor(Math.random() * 4), d < 0.3 ? 'top' : Math.floor(Math.random() * 3)), u: 0 }); }
+      }
+      s.parts.forEach((q) => {
+        const L = q.len || (q.len = pathLen(q.p));
+        q.u += (dt * (q.k === 'w' ? 60 + 220 * r : 55)) / L;
+        if (q.k === 'w' && q.u >= 1) { const e = q.p[q.p.length - 1]; s.vapor.push({ x: e[0], y: e[1], a: 1 }); }
+      });
+      s.parts = s.parts.filter((q) => q.u < 1 && ((q.k === 'w' && s.showX) || (q.k === 's' && s.showP)));
+      s.parts.forEach((q) => {
+        const [x, y] = at(q.p, q.u);
+        ctx.fillStyle = q.k === 'w' ? '#1e6fe0' : '#ff9800';
+        ctx.beginPath(); ctx.arc(x, y, q.k === 'w' ? 3.2 : 3.6, 0, 7); ctx.fill();
+      });
+      // ไอน้ำออกจากปากใบ
+      s.vapor.forEach((v) => { v.x += (12 + 120 * s.wind) * dt; v.y -= 18 * dt; v.a -= dt * (0.6 + 0.8 * (1 - s.hum)) * 0.9; });
+      s.vapor = s.vapor.filter((v) => v.a > 0);
+      s.vapor.forEach((v) => { ctx.fillStyle = 'rgba(150,190,230,' + v.a * 0.8 + ')'; ctx.beginPath(); ctx.arc(v.x, v.y, 4 + (1 - v.a) * 5, 0, 7); ctx.fill(); });
+      // ป้าย
+      ctx.font = '600 14px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+      const lab = (t, x, y, c, al) => { ctx.fillStyle = c; ctx.textAlign = al || 'left'; ctx.fillText(t, x, y); };
+      if (s.showX) lab('ไซเล็ม: น้ำและธาตุอาหาร ขึ้นอย่างเดียว ↑', 14, 24, '#1e6fe0');
+      if (s.showP) lab('โฟลเอ็ม: อาหาร (น้ำตาล) ไปได้ทั้งขึ้นและลง ↕', 14, 46, '#e67e00');
+      lab('ขนราก', Math.max(6, roots[0][3][0] - 10), roots[0][3][1] + 16, dark ? '#f3ead2' : '#fff', 'left');
+      if (w >= 560) lab('ไอน้ำออกทางปากใบ', leaves[1].len + sx - 40, leaves[1].y - 72, ink, 'left');
+      // ภาพขยายปากใบ
+      const nar = w < 560, zr = nar ? 42 : 62, zx = w - zr - 24, zy = ground - zr - 30;
+      ctx.fillStyle = dark ? '#21262f' : '#ffffff'; ctx.strokeStyle = muted; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(zx, zy, zr, 0, 7); ctx.fill(); ctx.stroke();
+      const open = stomata(), gap = 3 + 14 * open;
+      ctx.fillStyle = '#7cb342'; ctx.strokeStyle = '#33691e'; ctx.lineWidth = 1.5;
+      [-1, 1].forEach((sd) => {
+        ctx.beginPath(); ctx.ellipse(zx + sd * (gap / 2 + 10), zy, 12, zr * 0.52, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#2e7d32'; for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.arc(zx + sd * (gap / 2 + 10), zy + k * 10, 2.4, 0, 7); ctx.fill(); } ctx.fillStyle = '#7cb342';
+      });
+      ctx.fillStyle = dark ? '#0d0f13' : '#2a2f36'; ctx.beginPath(); ctx.ellipse(zx, zy, gap / 2, 24 * Math.min(1, 0.3 + open), 0, 0, 7); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('ปากใบ (' + (open > 0.6 ? 'เปิดกว้าง' : open > 0.3 ? 'เปิดบางส่วน' : 'เกือบปิด') + ')', zx, zy + zr + 4);
+      ctx.fillText('เซลล์คุม', zx, zy - zr - 18);
+    }
+
+    // ---------- ต้นขึ้นฉ่ายในน้ำสี ----------
+    function drawCelery(ctx, dt) {
+      const w = cv.w, h = cv.h, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      if (s.play) s.hours = Math.min(8, s.hours + dt * 0.35 * (0.4 + 1.2 * trans()));
+      const narrow = w < 560;
+      const gx = narrow ? w * 0.33 : w * 0.3, gy = h - 24, gw = 110, gh = 150;
+      const stalkTop = 90, stalkBot = gy - 20, len = stalkBot - stalkTop;
+      const front = Math.min(1, s.hours / 4.5);                 // สัดส่วนความสูงที่น้ำสีขึ้นไปถึงในไซเล็ม
+      const leafRed = Math.max(0, Math.min(1, (s.hours - 4.5) / 2.5));
+      // แก้วและน้ำสี
+      ctx.fillStyle = 'rgba(220,40,60,.55)'; ctx.fillRect(gx - gw / 2, gy - gh * 0.62, gw, gh * 0.62);
+      // ก้านขึ้นฉ่าย
+      ctx.fillStyle = '#9ccc65'; ctx.strokeStyle = '#689f38'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(gx - 18, stalkBot); ctx.lineTo(gx - 13, stalkTop); ctx.lineTo(gx + 13, stalkTop); ctx.lineTo(gx + 18, stalkBot); ctx.closePath(); ctx.fill(); ctx.stroke();
+      for (let k = -2; k <= 2; k++) {
+        const x0 = gx + k * 6.5, x1 = gx + k * 5;
+        ctx.strokeStyle = '#7cb342'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x0, stalkBot); ctx.lineTo(x1, stalkTop); ctx.stroke();
+        ctx.strokeStyle = '#d81b3c'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x0, stalkBot); ctx.lineTo(x0 + (x1 - x0) * front, stalkBot - len * front); ctx.stroke();
+      }
+      // ใบ
+      const leafCol = 'rgb(' + Math.round(76 + 120 * leafRed) + ',' + Math.round(175 - 80 * leafRed) + ',' + Math.round(80 - 10 * leafRed) + ')';
+      [[-1, -40], [0, -60], [1, -38]].forEach(([d, dy]) => {
+        const lx = gx + d * 46, ly = stalkTop + dy;
+        ctx.strokeStyle = '#689f38'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx, stalkTop); ctx.lineTo(lx, ly + 16); ctx.stroke();
+        ctx.fillStyle = '#66bb6a'; ctx.beginPath(); ctx.ellipse(lx, ly, 26, 18, d * 0.5, 0, 7); ctx.fill();
+        ctx.strokeStyle = leafCol; ctx.lineWidth = 1.6;
+        for (let a = -1; a <= 1; a++) { ctx.beginPath(); ctx.moveTo(lx, ly + 14); ctx.lineTo(lx + a * 16, ly - 10); ctx.stroke(); }
+      });
+      // แก้ว
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(gx - gw / 2, gy - gh); ctx.lineTo(gx - gw / 2, gy); ctx.lineTo(gx + gw / 2, gy); ctx.lineTo(gx + gw / 2, gy - gh); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      if (narrow) { ctx.fillStyle = '#fff'; ctx.textBaseline = 'bottom'; ctx.fillText('น้ำสี', gx - 34, gy - 6); }
+      else { ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('น้ำผสม', gx - gw / 2 - 6, gy - gh * 0.4); ctx.fillText('สีผสมอาหาร', gx - gw / 2 - 6, gy - gh * 0.4 + 16); }
+      // ตำแหน่งตัดตามขวาง
+      const cutU = 0.55, cutY = stalkBot - len * cutU;
+      ctx.strokeStyle = ink; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(gx - 30, cutY); ctx.lineTo(gx + 40, cutY); ctx.stroke(); ctx.setLineDash([]);
+      // ภาพตัดตามขวาง
+      const cx = narrow ? w * 0.78 : w * 0.7, cy = narrow ? h * 0.3 : h * 0.42, R = Math.min(narrow ? 70 : 120, w * 0.22);
+      ctx.beginPath(); ctx.moveTo(gx + 40, cutY); ctx.lineTo(cx - R - 6, cy); ctx.strokeStyle = muted; ctx.stroke();
+      ctx.fillStyle = '#c5e1a5'; ctx.strokeStyle = '#689f38'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx - R, cy - R * 0.2); ctx.quadraticCurveTo(cx - R, cy + R * 0.8, cx, cy + R * 0.82); ctx.quadraticCurveTo(cx + R, cy + R * 0.8, cx + R, cy - R * 0.2);
+      ctx.quadraticCurveTo(cx + R * 0.55, cy - R * 0.55, cx, cy - R * 0.25); ctx.quadraticCurveTo(cx - R * 0.55, cy - R * 0.55, cx - R, cy - R * 0.2); ctx.fill(); ctx.stroke();
+      const dyed = front >= cutU;
+      for (let k = 0; k < 9; k++) {
+        const a = Math.PI * (0.08 + 0.84 * (k / 8)), bx = cx - Math.cos(a) * R * 0.72, by = cy + Math.sin(a) * R * 0.52 - R * 0.05;
+        ctx.fillStyle = '#e6ee9c'; ctx.beginPath(); ctx.ellipse(bx, by, R * 0.09, R * 0.12, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = dyed ? '#d81b3c' : '#aed581'; ctx.beginPath(); ctx.arc(bx, by - R * 0.03, R * 0.055, 0, 7); ctx.fill();  // ไซเล็ม (ด้านใน)
+        ctx.fillStyle = '#ffcc80'; ctx.beginPath(); ctx.arc(bx, by + R * 0.06, R * 0.035, 0, 7); ctx.fill();                       // โฟลเอ็ม (ด้านนอก)
+      }
+      ctx.fillStyle = ink; ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(narrow ? 'ภาพตัดขวาง (ขยาย)' : 'ภาพตัดตามขวางของก้าน (ขยาย)', cx, cy + R * 0.9);
+      ctx.font = '13px Sarabun, sans-serif';
+      ctx.fillStyle = '#d81b3c'; ctx.fillText('● ไซเล็ม ' + (dyed ? '(ติดสีแดง)' : '(ยังไม่ติดสี)'), narrow ? cx : cx - R * 0.45, cy + R * 0.9 + 20);
+      ctx.fillStyle = '#e69500'; ctx.fillText('● โฟลเอ็ม', narrow ? cx : cx + R * 0.5, cy + R * 0.9 + (narrow ? 38 : 20));
+      $('#hrs').textContent = 'เวลาผ่านไป ' + s.hours.toFixed(1) + ' ชั่วโมง' + (front >= 1 ? (leafRed > 0.2 ? ' · เส้นใบเริ่มเป็นสีแดง' : ' · น้ำสีถึงยอดแล้ว') : '');
+    }
+
+    // ---------- โพโทมิเตอร์ ----------
+    function drawPoto(ctx, dt) {
+      const w = cv.w, h = cv.h, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const narrow = w < 560;
+      const px = narrow ? 70 : 140, py = h * 0.5, capY = h - 70, x0 = px + 40, x1 = w - 30, scaleCm = 10, ppc = (x1 - x0 - 30) / scaleCm;
+      // อัตราการเลื่อนของฟองอากาศ (cm ต่อนาทีจำลอง) 1 วินาทีในภาพ = 1 นาที
+      const v = 0.15 + 1.9 * trans();
+      s.bubble += v * dt; s.tm += dt;
+      if (s.bubble > scaleCm - 0.3) s.bubble = scaleCm - 0.3;
+      // ยอดพืช
+      ctx.strokeStyle = '#558b2f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - 190); ctx.stroke();
+      for (let k = 0; k < 6; k++) {
+        const ly = py - 40 - k * 28, d = k % 2 ? 1 : -1;
+        ctx.fillStyle = '#4caf50'; ctx.beginPath(); ctx.ellipse(px + d * 32, ly - 10, 30, 12, d * -0.5, 0, 7); ctx.fill();
+      }
+      // ไอน้ำ
+      if (Math.random() < trans() * dt * 8) s.vapor.push({ x: px + (Math.random() - 0.5) * 80, y: py - 60 - Math.random() * 120, a: 1 });
+      s.vapor.forEach((q) => { q.x += (10 + 100 * s.wind) * dt; q.y -= 14 * dt; q.a -= dt * 0.8; });
+      s.vapor = s.vapor.filter((q) => q.a > 0);
+      s.vapor.forEach((q) => { ctx.fillStyle = 'rgba(150,190,230,' + q.a * 0.7 + ')'; ctx.beginPath(); ctx.arc(q.x, q.y, 5, 0, 7); ctx.fill(); });
+      // จุกยาง หลอดแก้ว และหลอดรูเล็กแนวนอน
+      ctx.fillStyle = '#6d4c41'; ctx.fillRect(px - 14, py, 28, 18);
+      ctx.fillStyle = 'rgba(120,190,235,.45)'; ctx.fillRect(px - 10, py + 18, 20, capY - py - 18);
+      ctx.fillRect(px - 10, capY - 8, x1 - px + 10, 16);
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2;
+      ctx.strokeRect(px - 10, py + 18, 20, capY - py - 18); ctx.strokeRect(px - 10, capY - 8, x1 - px + 10, 16);
+      // แหล่งน้ำพร้อมก๊อก
+      ctx.fillStyle = 'rgba(120,190,235,.45)'; ctx.fillRect(px + 40, py + 20, 50, 70); ctx.strokeRect(px + 40, py + 20, 50, 70);
+      ctx.strokeRect(px + 60, py + 90, 10, capY - 8 - py - 90); ctx.fillRect(px + 60, py + 90, 10, capY - 8 - py - 90);
+      ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('ที่เก็บน้ำ + ก๊อก', px + 65, py + 16);
+      // สเกล
+      ctx.strokeStyle = ink; ctx.fillStyle = ink;
+      for (let mm = 0; mm <= scaleCm * 10; mm++) {
+        const x = x1 - 15 - mm * ppc / 10, l = mm % 10 === 0 ? 12 : mm % 5 === 0 ? 8 : 4;
+        ctx.lineWidth = mm % 10 === 0 ? 1.2 : 0.6; ctx.beginPath(); ctx.moveTo(x, capY + 10); ctx.lineTo(x, capY + 10 + l); ctx.stroke();
+        if (mm % 10 === 0) { ctx.font = '12px Sarabun, sans-serif'; ctx.textBaseline = 'top'; ctx.fillText(mm / 10, x, capY + 24); }
+      }
+      ctx.textAlign = 'right'; ctx.fillText('ระยะที่ฟองอากาศเลื่อน (cm)', x1, capY + 42);
+      // ฟองอากาศ (เลื่อนเข้าหาพืช เพราะพืชดึงน้ำขึ้นไปคายออก)
+      const bx = x1 - 15 - s.bubble * ppc;
+      ctx.fillStyle = dark ? '#1b1f27' : '#ffffff'; ctx.strokeStyle = '#555'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.ellipse(bx, capY, 9, 6, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = ink; ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ฟองอากาศ ←', bx, capY - 12);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = '13px Sarabun, sans-serif'; ctx.fillStyle = muted;
+      ctx.fillText('1 วินาทีในภาพ = 1 นาที', narrow ? 14 : x0 + 80, 20);
+      $('#spd').textContent = 'ฟองอากาศเลื่อนประมาณ ' + v.toFixed(1) + ' cm ต่อนาที';
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      if (s.mode === 'plant') { geom(); drawPlant(ctx, dt); }
+      else if (s.mode === 'celery') drawCelery(ctx, dt);
+      else drawPoto(ctx, dt);
+    });
+    update();
+  },
+});
+</script>
+</body>
+</html>

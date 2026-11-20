@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การแพร่ · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.valrow { display: flex; justify-content: space-between; font-size: 15px; color: var(--muted); }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'diffusion',
+  title: 'การแพร่',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'ดูอนุภาคของสารเคลื่อนที่จากบริเวณที่มีความเข้มข้นสูงไปยังบริเวณที่มีความเข้มข้นต่ำ จนกระจายสม่ำเสมอ และเปรียบเทียบการแพร่ของด่างทับทิมในน้ำร้อนกับน้ำเย็น',
+  about:
+    '<p><b>การแพร่</b> คือการเคลื่อนที่ของอนุภาคของสารจากบริเวณที่มีความเข้มข้นของสารสูงไปยังบริเวณที่มีความเข้มข้นของสารต่ำ จนความเข้มข้นเท่ากันทุกบริเวณ (สมดุลของการแพร่)</p>' +
+    '<p>อนุภาคเคลื่อนที่แบบสุ่มตลอดเวลา เมื่อถึงสมดุลแล้วอนุภาคยังเคลื่อนที่อยู่ แต่จำนวนที่เคลื่อนที่ไปทางซ้ายและทางขวาเท่ากัน ความเข้มข้นจึงไม่เปลี่ยน</p>' +
+    '<p><b>ปัจจัยที่มีผลต่อการแพร่</b>: อุณหภูมิ (ร้อนแพร่เร็วกว่า) ความแตกต่างของความเข้มข้น ขนาดของอนุภาค และสถานะของตัวกลาง (แก๊สแพร่เร็วกว่าของเหลว)</p>' +
+    '<p><b>ตัวอย่างในชีวิตประจำวัน</b>: กลิ่นน้ำหอมหรือกลิ่นอาหารกระจายไปทั่วห้อง การชงชาหรือกาแฟ</p>' +
+    '<p><b>การแพร่ในสิ่งมีชีวิต</b>: แก๊สออกซิเจนแพร่จากถุงลมปอดเข้าสู่เลือดและเข้าสู่เซลล์ แก๊สคาร์บอนไดออกไซด์แพร่ออกจากเซลล์ ในพืช แก๊สคาร์บอนไดออกไซด์แพร่เข้าทางปากใบ</p>',
+  think: [
+    'ก่อนยกแผ่นกั้น ด้านไหนมีความเข้มข้นของอนุภาคสีม่วงสูงกว่า หลังยกแผ่นกั้นอนุภาคเคลื่อนที่ไปทางใดเป็นส่วนใหญ่',
+    'เมื่อถึงสมดุลแล้ว อนุภาคหยุดเคลื่อนที่หรือไม่ ดูได้จากอะไร',
+    'ทำไมด่างทับทิมในน้ำร้อนจึงกระจายเร็วกว่าในน้ำเย็น',
+    'ถ้าเปิดขวดน้ำหอมที่มุมห้อง ทำไมคนที่อยู่อีกมุมจึงได้กลิ่นภายหลัง',
+    'ถ้าเซลล์ใช้ออกซิเจนไปเรื่อย ๆ ออกซิเจนในเซลล์จะน้อยกว่าในเลือด ออกซิเจนจะแพร่ไปทางไหน',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const G = () => Lab.gauss(Math.random);
+    const s = { mode: 'box', T: 25, N: 200, divider: true, paused: false, t: 0, hist: [], P: [], beaker: null };
+
+    panel.innerHTML =
+      '<h3>เรื่องที่ดู</h3><div class="seg" id="mode"><button data-v="box">อนุภาคในกล่อง</button><button data-v="kmno4">ด่างทับทิม ร้อน-เย็น</button></div>' +
+      '<div id="pBox">' +
+      '<h3>อุณหภูมิของน้ำ</h3><input type="range" id="T" min="5" max="80" step="1" value="25"><div class="valrow"><span>เย็น</span><b id="Tv"></b><span>ร้อน</span></div>' +
+      '<h3>จำนวนอนุภาคของสาร</h3><input type="range" id="N" min="40" max="400" step="10" value="200"><div class="valrow"><span>น้อย</span><b id="Nv"></b><span>มาก</span></div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" id="lift">ยกแผ่นกั้นออก</button></div>' +
+      '<div class="row"><button class="btn" id="reset">ใส่แผ่นกั้นแล้วเริ่มใหม่</button><button class="btn" id="pause">หยุดชั่วคราว</button></div></div>' +
+      '<div id="pK"><div class="row" style="margin-top:6px"><button class="btn primary" id="drop">หย่อนด่างทับทิม</button></div><div class="row"><button class="btn" id="kreset">เริ่มใหม่</button></div>' +
+      '<p class="muted" style="font-size:14px">บีกเกอร์ซ้ายเป็นน้ำร้อนประมาณ 80 °C บีกเกอร์ขวาเป็นน้ำเย็นประมาณ 10 °C หย่อนผลึกด่างทับทิมขนาดเท่ากันพร้อมกัน</p></div>';
+    const $ = (q) => panel.querySelector(q);
+    const modeEl = $('#mode');
+    const syncMode = () => modeEl.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === s.mode));
+    modeEl.addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { s.mode = b.dataset.v; syncMode(); show(); } });
+    syncMode();
+    $('#T').oninput = (e) => { s.T = +e.target.value; show(); };
+    $('#N').oninput = (e) => { s.N = +e.target.value; resetBox(); };
+    $('#lift').onclick = () => { s.divider = false; s.paused = false; show(); };
+    $('#reset').onclick = () => resetBox();
+    $('#pause').onclick = () => { s.paused = !s.paused; show(); };
+    $('#drop').onclick = () => dropK();
+    $('#kreset').onclick = () => { s.beaker = null; show(); };
+
+    // สัมประสิทธิ์การแพร่สัมพัทธ์: แปรตามอุณหภูมิสัมบูรณ์ หารด้วยความหนืดของน้ำ (น้ำร้อนหนืดน้อยกว่า)
+    const Dfac = (T) => { const K = T + 273; return (K / 298) / Math.exp(1900 * (1 / K - 1 / 298)); };
+    const TAU = 0.15;
+
+    let L = {};
+    function layout() {
+      const w = cv.w, h = cv.h;
+      L.bx = 20; L.by = 34; L.bw = w - 40; L.bh = Math.max(180, h * 0.55);
+      L.gy = L.by + L.bh + 30; L.gh = h - L.gy - 26;
+    }
+    function resetBox() {
+      layout();
+      s.P = []; s.divider = true; s.t = 0; s.hist = [];
+      for (let i = 0; i < s.N; i++) s.P.push({ x: L.bx + 6 + Math.random() * (L.bw / 2 - 12), y: L.by + 6 + Math.random() * (L.bh - 12), vx: 0, vy: 0 });
+      show();
+    }
+    function counts() {
+      const mid = L.bx + L.bw / 2; let left = 0;
+      s.P.forEach((p) => { if (p.x < mid) left++; });
+      return [left, s.P.length - left];
+    }
+    function show() {
+      $('#pBox').style.display = s.mode === 'box' ? '' : 'none';
+      $('#pK').style.display = s.mode === 'kmno4' ? '' : 'none';
+      $('#Tv').textContent = s.T + ' °C';
+      $('#Nv').textContent = s.N + ' อนุภาค';
+      $('#pause').textContent = s.paused ? 'เล่นต่อ' : 'หยุดชั่วคราว';
+      $('#lift').disabled = !s.divider;
+      if (s.mode === 'box') {
+        if (!cv.w) return;
+        const [l, r] = counts();
+        if (s.divider) api.note('แผ่นกั้นยังอยู่: อนุภาคอยู่ด้านซ้ายทั้งหมด (ความเข้มข้นสูง) ด้านขวาไม่มีเลย กด "ยกแผ่นกั้นออก" เพื่อเริ่มการแพร่');
+        else if (Math.abs(l - r) < Math.max(6, s.P.length * 0.08)) api.note('ซ้าย ' + l + ' · ขวา ' + r + ' อนุภาค: ความเข้มข้นใกล้เท่ากันแล้ว (สมดุลของการแพร่) อนุภาคยังเคลื่อนที่อยู่ แต่ไปทางซ้ายและขวาพอ ๆ กัน');
+        else api.note('ซ้าย ' + l + ' · ขวา ' + r + ' อนุภาค: อนุภาคแพร่จากด้านซ้าย (เข้มข้นสูง) ไปด้านขวา (เข้มข้นต่ำ)');
+      } else {
+        api.note(s.beaker ? 'ด่างทับทิมแพร่ออกจากผลึกไปทุกทิศทาง ในน้ำร้อนอนุภาคเคลื่อนที่เร็วกว่า สีจึงกระจายไปทั่วบีกเกอร์เร็วกว่า' : 'กด "หย่อนด่างทับทิม" แล้วสังเกตว่าบีกเกอร์ใดสีม่วงกระจายทั่วเร็วกว่า');
+      }
+    }
+
+    // ---------- ด่างทับทิมในน้ำร้อนกับน้ำเย็น ----------
+    function kLayout() {
+      const w = cv.w, h = cv.h, narrow = w < 560;
+      const bw = narrow ? w * 0.42 : Math.min(260, w * 0.34), bh = Math.min(h * 0.62, bw * 1.25);
+      return [{ T: 80, x: w * 0.27 - bw / 2, y: h * 0.18, w: bw, h: bh, name: 'น้ำร้อน 80 °C' }, { T: 10, x: w * 0.73 - bw / 2, y: h * 0.18, w: bw, h: bh, name: 'น้ำเย็น 10 °C' }];
+    }
+    function dropK() {
+      const bs = kLayout();
+      s.beaker = { t: 0, B: bs.map((b) => ({ ...b, P: [], left: 420 })) };
+      show();
+    }
+    function stepK(dt) {
+      const k = s.beaker; if (!k) return;
+      k.t += dt;
+      const bs = kLayout();
+      k.B.forEach((b, i) => {
+        Object.assign(b, { x: bs[i].x, y: bs[i].y, w: bs[i].w, h: bs[i].h });
+        const wy = b.y + b.h * 0.12; // ผิวน้ำ
+        const cx = b.x + b.w / 2, cy = b.y + b.h - 14;
+        // ผลึกละลายปล่อยอนุภาคออกมาเรื่อย ๆ (น้ำร้อนละลายเร็วกว่า)
+        const rate = 60 * Dfac(b.T);
+        let n = Math.min(b.left, Math.round(rate * dt + Math.random()));
+        b.left -= n;
+        while (n-- > 0) b.P.push({ x: cx + G() * 4, y: cy + G() * 3, vx: 0, vy: 0 });
+        const D = 0.0016 * b.w * b.w * Dfac(b.T), sv = Math.sqrt(D / TAU);
+        b.P.forEach((p) => {
+          p.vx += (-p.vx / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+          p.vy += (-p.vy / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          if (p.x < b.x + 4) { p.x = b.x + 4; p.vx = Math.abs(p.vx); } if (p.x > b.x + b.w - 4) { p.x = b.x + b.w - 4; p.vx = -Math.abs(p.vx); }
+          if (p.y < wy + 3) { p.y = wy + 3; p.vy = Math.abs(p.vy); } if (p.y > b.y + b.h - 4) { p.y = b.y + b.h - 4; p.vy = -Math.abs(p.vy); }
+        });
+      });
+    }
+    function drawK(ctx) {
+      const bs = kLayout(), k = s.beaker;
+      bs.forEach((b, i) => {
+        const wy = b.y + b.h * 0.12;
+        ctx.fillStyle = b.T > 50 ? 'rgba(255,190,150,.25)' : 'rgba(150,200,255,.3)';
+        ctx.fillRect(b.x, wy, b.w, b.y + b.h - wy);
+        if (k) {
+          const B = k.B[i];
+          ctx.fillStyle = 'rgba(128,20,150,0.22)';
+          B.P.forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 7); ctx.fill(); });
+          if (B.left > 0) { ctx.fillStyle = '#4a0a5a'; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h - 10, 3 + 5 * (B.left / 420), 0, 7); ctx.fill(); }
+        }
+        ctx.strokeStyle = Lab.dark() ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(b.x - 8, b.y); ctx.lineTo(b.x, b.y + 6); ctx.lineTo(b.x, b.y + b.h); ctx.lineTo(b.x + b.w, b.y + b.h); ctx.lineTo(b.x + b.w, b.y + 6); ctx.stroke();
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 18px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(b.name, b.x + b.w / 2, b.y + b.h + 12);
+        if (b.T > 50) { ctx.fillStyle = 'rgba(220,225,235,.5)'; for (let j = 0; j < 3; j++) { const tt = performance.now() / 1250 + j * 1.3; ctx.beginPath(); ctx.arc(b.x + b.w * (0.3 + 0.2 * j) + 5 * Math.sin(tt * 2), b.y - 10 - ((tt * 25) % 40), 8, 0, 7); ctx.fill(); } }
+      });
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(k ? 'เวลาหลังหย่อน ' + k.t.toFixed(0) + ' วินาที (ภาพเร่งเวลา)' : 'ยังไม่ได้หย่อนด่างทับทิม', 12, 10);
+    }
+
+    // ---------- อนุภาคในกล่อง ----------
+    function stepBox(dt) {
+      const D = 0.0075 * L.bw * L.bw * Dfac(s.T) * 0.9, sv = Math.sqrt(D / TAU), mid = L.bx + L.bw / 2;
+      const x0 = L.bx + 4, x1 = L.bx + L.bw - 4, y0 = L.by + 4, y1 = L.by + L.bh - 4;
+      s.P.forEach((p) => {
+        p.vx += (-p.vx / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+        p.vy += (-p.vy / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+        const ox = p.x;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.x < x0) { p.x = 2 * x0 - p.x; p.vx = -p.vx; } if (p.x > x1) { p.x = 2 * x1 - p.x; p.vx = -p.vx; }
+        if (p.y < y0) { p.y = 2 * y0 - p.y; p.vy = -p.vy; } if (p.y > y1) { p.y = 2 * y1 - p.y; p.vy = -p.vy; }
+        if (s.divider && ox < mid && p.x >= mid - 4) { p.x = mid - 4 - (p.x - (mid - 4)); p.vx = -Math.abs(p.vx); }
+      });
+      if (!s.divider) {
+        s.t += dt;
+        if (!s.hist.length || s.t - s.hist[s.hist.length - 1][0] > 0.25) { const [l, r] = counts(); s.hist.push([s.t, l, r]); if (s.hist.length > 400) s.hist.shift(); }
+      }
+    }
+    function drawBox(ctx) {
+      const { bx, by, bw, bh } = L, mid = bx + bw / 2;
+      ctx.fillStyle = Lab.dark() ? 'rgba(90,140,200,.15)' : 'rgba(150,200,255,.25)'; ctx.fillRect(bx, by, bw, bh);
+      ctx.strokeStyle = Lab.css('--ink'); ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, bh);
+      ctx.fillStyle = '#8a1fa0';
+      s.P.forEach((p) => { ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, 7); ctx.fill(); });
+      if (s.divider) { ctx.fillStyle = Lab.dark() ? '#c9ced8' : '#4a505b'; ctx.fillRect(mid - 3, by - 10, 6, bh + 10); }
+      else { ctx.strokeStyle = Lab.css('--muted'); ctx.setLineDash([6, 6]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(mid, by); ctx.lineTo(mid, by + bh); ctx.stroke(); ctx.setLineDash([]); }
+      const [l, r] = counts();
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 17px Sarabun, sans-serif'; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
+      ctx.fillText('ด้านซ้าย: ' + l, bx + bw / 4, by - 6); ctx.fillText('ด้านขวา: ' + r, bx + (3 * bw) / 4, by - 6);
+      // กราฟจำนวนอนุภาคตามเวลา + แท่งความเข้มข้น
+      const narrowG = bw < 500, gx = bx + 54, gw = bw - 54 - (narrowG ? 86 : 110), gy = L.gy, gh = L.gh;
+      if (gh < 50) return;
+      ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1; ctx.strokeRect(gx, gy, gw, gh);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(s.P.length), gx - 6, gy); ctx.fillText('0', gx - 6, gy + gh);
+      ctx.save(); ctx.translate(bx + 12, gy + gh / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.fillText('จำนวนอนุภาค', 0, 0); ctx.restore();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('เวลา (วินาที)', gx + gw / 2, gy + gh + 4);
+      const tmax = Math.max(30, s.t), X = (t) => gx + (t / tmax) * gw, Y = (n) => gy + gh - (n / Math.max(1, s.P.length)) * gh;
+      ctx.strokeStyle = Lab.css('--muted'); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(gx, Y(s.P.length / 2)); ctx.lineTo(gx + gw, Y(s.P.length / 2)); ctx.stroke(); ctx.setLineDash([]);
+      [[1, '#8a1fa0'], [2, '#2f6fde']].forEach(([k, col]) => {
+        ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath();
+        s.hist.forEach((hh, j) => (j ? ctx.lineTo(X(hh[0]), Y(hh[k])) : ctx.moveTo(X(hh[0]), Y(hh[k]))));
+        ctx.stroke();
+      });
+      if (!narrowG) { ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillStyle = '#8a1fa0'; ctx.fillText('— ด้านซ้าย', gx + gw - 170, gy + gh * 0.5 - 22); ctx.fillStyle = '#2f6fde'; ctx.fillText('— ด้านขวา', gx + gw - 85, gy + gh * 0.5 - 22); }
+      const bxx = gx + gw + (narrowG ? 14 : 26), bwid = narrowG ? 26 : 30;
+      [[l, '#8a1fa0', 'ซ้าย'], [r, '#2f6fde', 'ขวา']].forEach(([n, col, name], j) => {
+        const hh = (n / Math.max(1, s.P.length)) * gh;
+        ctx.fillStyle = col; ctx.fillRect(bxx + j * (bwid + 12), gy + gh - hh, bwid, hh);
+        ctx.fillStyle = Lab.css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(name, bxx + j * (bwid + 12) + bwid / 2, gy + gh + 4);
+      });
+    }
+
+    let lastNote = 0;
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (!s.P.length) resetBox();
+      if (s.mode === 'box') { if (!s.paused) stepBox(dt); }
+      else stepK(dt * 2);
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      if (s.mode === 'box') drawBox(ctx); else drawK(ctx);
+      lastNote += dt; if (lastNote > 0.5) { lastNote = 0; show(); }
+    }, 0.05);
+  },
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เซลล์พืชและเซลล์สัตว์ · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .partlist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+  .partlist .btn { padding: 6px 6px; font-size: 14.5px; }
+  .vbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0 4px; }
+  .vbtns .btn { padding: 8px 6px; }
+  table.cmp { border-collapse: collapse; width: 100%; font-size: 15px; margin-top: 8px; }
+  table.cmp th, table.cmp td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+  table.cmp th { background: var(--soft); }
+  table.cmp td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ข้อมูลส่วนประกอบของเซลล์: ชื่อ, หน้าที่, มีในเซลล์พืช/สัตว์
+const PARTS = {
+  wall: { name: 'ผนังเซลล์', fn: 'อยู่นอกสุดของเซลล์พืช ทำจากเซลลูโลส ช่วยให้เซลล์คงรูปร่างและแข็งแรง สารผ่านเข้าออกได้ง่าย', plant: 'มี', animal: 'ไม่มี' },
+  membrane: { name: 'เยื่อหุ้มเซลล์', fn: 'ห่อหุ้มไซโทพลาซึม ควบคุมการผ่านเข้าออกของสาร ยอมให้สารบางชนิดผ่านได้ (เยื่อเลือกผ่าน)', plant: 'มี', animal: 'มี' },
+  cyto: { name: 'ไซโทพลาซึม', fn: 'ของเหลวภายในเซลล์ที่อยู่ระหว่างเยื่อหุ้มเซลล์กับนิวเคลียส มีออร์แกเนลล์ต่าง ๆ และเป็นที่เกิดปฏิกิริยาเคมีของเซลล์', plant: 'มี', animal: 'มี' },
+  nucleus: { name: 'นิวเคลียส', fn: 'ควบคุมการทำงานของเซลล์ และเก็บสารพันธุกรรม (DNA) ที่ถ่ายทอดลักษณะทางพันธุกรรม', plant: 'มี', animal: 'มี' },
+  chloro: { name: 'คลอโรพลาสต์', fn: 'มีคลอโรฟิลล์ซึ่งเป็นสารสีเขียว ใช้รับพลังงานแสงในการสังเคราะห์ด้วยแสงเพื่อสร้างอาหาร (น้ำตาล)', plant: 'มี (เซลล์สีเขียว)', animal: 'ไม่มี' },
+  vacuole: { name: 'แวคิวโอล', fn: 'ถุงเก็บน้ำ อาหาร และของเสีย เซลล์พืชมีแวคิวโอลขนาดใหญ่ช่วยให้เซลล์เต่ง เซลล์สัตว์มีขนาดเล็กหรือไม่มี', plant: 'มี ขนาดใหญ่', animal: 'เล็กหรือไม่มี' },
+  mito: { name: 'ไมโทคอนเดรีย', fn: 'สลายสารอาหาร (กลูโคส) เพื่อปล่อยพลังงานให้เซลล์นำไปใช้ เรียกว่าการหายใจระดับเซลล์', plant: 'มี', animal: 'มี' },
+};
+const ORDER = ['wall', 'membrane', 'cyto', 'nucleus', 'chloro', 'vacuole', 'mito'];
+
+SimKit.page({
+  id: 'cell',
+  title: 'เซลล์พืชและเซลล์สัตว์',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'แตะส่วนต่าง ๆ ของเซลล์เพื่อดูชื่อและหน้าที่ เปรียบเทียบเซลล์พืชกับเซลล์สัตว์ ดูเซลล์ผ่านกล้องจุลทรรศน์ ระดับโครงสร้างของสิ่งมีชีวิต และสิ่งมีชีวิตเซลล์เดียว',
+  about:
+    '<p><b>เซลล์</b>เป็นหน่วยพื้นฐานที่เล็กที่สุดของสิ่งมีชีวิต สิ่งมีชีวิตบางชนิดมีเซลล์เดียว (อะมีบา พารามีเซียม ยีสต์) บางชนิดมีหลายเซลล์ (พืช สัตว์ คน)</p>' +
+    '<table class="cmp"><tr><th>ส่วนประกอบ</th><th>เซลล์พืช</th><th>เซลล์สัตว์</th></tr>' +
+    ORDER.map((k) => '<tr><td>' + PARTS[k].name + '</td><td>' + PARTS[k].plant + '</td><td>' + PARTS[k].animal + '</td></tr>').join('') + '</table>' +
+    '<p style="margin-top:10px"><b>กำลังขยายของกล้องจุลทรรศน์</b> = กำลังขยายของเลนส์ใกล้ตา × กำลังขยายของเลนส์ใกล้วัตถุ เช่น 10 × 40 = 400 เท่า ภาพที่เห็นเป็นภาพเสมือนหัวกลับ (กลับบน-ล่างและซ้าย-ขวา)</p>' +
+    '<p><b>ระดับโครงสร้างของสิ่งมีชีวิตหลายเซลล์</b>: เซลล์ → เนื้อเยื่อ → อวัยวะ → ระบบอวัยวะ → สิ่งมีชีวิต</p>',
+  think: [
+    'ถ้าส่องเซลล์ชนิดหนึ่งแล้วพบผนังเซลล์และคลอโรพลาสต์ เซลล์นั้นน่าจะเป็นเซลล์ของอะไร',
+    'เซลล์รากพืชไม่มีสีเขียว จะมีคลอโรพลาสต์หรือไม่ เพราะเหตุใด',
+    'ถ้าเลนส์ใกล้ตา 10× และเลนส์ใกล้วัตถุ 40× เซลล์ยาว 0.05 mm จะเห็นยาวเท่าใด',
+    'เมื่อเปลี่ยนจากเลนส์ใกล้วัตถุ 10× เป็น 40× จำนวนเซลล์ที่เห็นในวงภาพมากขึ้นหรือน้อยลง',
+    'อะมีบามีเซลล์เดียว แต่ทำหน้าที่ทุกอย่างของชีวิตได้ เช่น กินอาหาร เคลื่อนที่ ขับถ่าย ต่างจากเซลล์ในร่างกายเราอย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { view: 'parts', cell: 'both', labels: true, sel: null, obj: 10, spec: 'onion', lvKind: 'animal', lv: 0, uni: null, t: 0 };
+
+    panel.innerHTML =
+      '<h3>เลือกเรื่อง</h3><div class="vbtns" id="view">' +
+      '<button class="btn" data-v="parts">ส่วนประกอบเซลล์</button><button class="btn" data-v="scope">กล้องจุลทรรศน์</button>' +
+      '<button class="btn" data-v="levels">ระดับโครงสร้าง</button><button class="btn" data-v="uni">สิ่งมีชีวิตเซลล์เดียว</button></div>' +
+      '<div id="pParts"><h3>เซลล์</h3><div class="seg" id="cell"><button data-v="plant">พืช</button><button data-v="animal">สัตว์</button><button data-v="both">เทียบกัน</button></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="lbl" checked> แสดงชื่อส่วนประกอบ</label>' +
+      '<h3>แตะชื่อหรือแตะที่ภาพ</h3><div class="partlist" id="plist">' + ORDER.map((k) => '<button class="btn" data-p="' + k + '">' + PARTS[k].name + '</button>').join('') + '</div></div>' +
+      '<div id="pScope"><h3>สิ่งที่ส่อง</h3><div class="seg" id="spec"><button data-v="onion">เยื่อหอม</button><button data-v="cheek">เยื่อบุแก้ม</button><button data-v="letter">ตัวอักษร ก</button></div>' +
+      '<h3>เลนส์ใกล้วัตถุ (เลนส์ใกล้ตา 10×)</h3><div class="seg" id="obj"><button data-v="4">4×</button><button data-v="10">10×</button><button data-v="40">40×</button></div></div>' +
+      '<div id="pLevels"><h3>สิ่งมีชีวิต</h3><div class="seg" id="lvk"><button data-v="animal">คน</button><button data-v="plant">พืช</button></div>' +
+      '<h3>ระดับ</h3><div class="row"><button class="btn" id="lvm">◀ เล็กลง</button><button class="btn" id="lvp">ใหญ่ขึ้น ▶</button></div></div>' +
+      '<div id="pUni"><h3>แตะที่ภาพหรือเลือก</h3><div class="seg" id="uni"><button data-v="amoeba">อะมีบา</button><button data-v="para">พารามีเซียม</button><button data-v="yeast">ยีสต์</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { set(b.dataset.v); sync(); update(); } });
+      sync(); return sync;
+    }
+    const syncView = seg('view', () => s.view, (v) => (s.view = v));
+    seg('cell', () => s.cell, (v) => { s.cell = v; if (v === 'animal' && (s.sel === 'wall' || s.sel === 'chloro')) select(s.sel); });
+    seg('spec', () => s.spec, (v) => (s.spec = v));
+    seg('obj', () => s.obj, (v) => (s.obj = +v));
+    seg('lvk', () => s.lvKind, (v) => (s.lvKind = v));
+    const syncUni = seg('uni', () => s.uni, (v) => (s.uni = v));
+    $('#lbl').onchange = (e) => (s.labels = e.target.checked);
+    $('#lvm').onclick = () => { s.lv = Math.max(0, s.lv - 1); update(); };
+    $('#lvp').onclick = () => { s.lv = Math.min(4, s.lv + 1); update(); };
+    $('#plist').addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (b) select(b.dataset.p); });
+    function select(k) {
+      s.sel = k;
+      $('#plist').querySelectorAll('[data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === k));
+      update();
+    }
+
+    const LV = {
+      animal: [['เซลล์', 'เซลล์กล้ามเนื้อเรียบ ทำหน้าที่หดตัว'], ['เนื้อเยื่อ', 'เนื้อเยื่อกล้ามเนื้อ: เซลล์ชนิดเดียวกันหลายเซลล์มารวมกันทำหน้าที่เดียวกัน'],
+        ['อวัยวะ', 'กระเพาะอาหาร: เนื้อเยื่อหลายชนิดรวมกัน ทำหน้าที่ย่อยอาหาร'], ['ระบบอวัยวะ', 'ระบบย่อยอาหาร: อวัยวะหลายอย่างทำงานร่วมกัน ปาก หลอดอาหาร กระเพาะอาหาร ลำไส้'],
+        ['สิ่งมีชีวิต', 'คน: ระบบอวัยวะหลายระบบทำงานร่วมกันจนดำรงชีวิตได้']],
+      plant: [['เซลล์', 'เซลล์ในใบที่มีคลอโรพลาสต์ ทำหน้าที่สังเคราะห์ด้วยแสง'], ['เนื้อเยื่อ', 'เนื้อเยื่อในใบ: เซลล์ที่มีคลอโรพลาสต์เรียงตัวกันเป็นชั้น'],
+        ['อวัยวะ', 'ใบ: อวัยวะที่สร้างอาหารของพืช'], ['ระบบอวัยวะ', 'ระบบยอด: ลำต้น กิ่ง ใบ ดอก ทำงานร่วมกัน (อีกระบบคือระบบราก)'],
+        ['สิ่งมีชีวิต', 'ต้นพืช: ระบบยอดและระบบรากทำงานร่วมกัน']],
+    };
+    const UNI = {
+      amoeba: 'อะมีบา: อาศัยในน้ำ เคลื่อนที่โดยยื่นไซโทพลาซึมออกไปเป็นเท้าเทียม (ซูโดโพเดียม) และใช้เท้าเทียมโอบล้อมอาหาร',
+      para: 'พารามีเซียม: อาศัยในน้ำ รูปร่างคล้ายรองเท้าแตะ มีขนเล็ก ๆ (ซิเลีย) รอบเซลล์โบกพัดเพื่อเคลื่อนที่และพัดอาหารเข้าร่องปาก',
+      yeast: 'ยีสต์: เป็นเชื้อรา (ฟังไจ) เซลล์เดียว ใช้ทำขนมปังและหมัก สืบพันธุ์โดยการแตกหน่อ เซลล์ลูกงอกออกจากเซลล์แม่',
+    };
+    function update() {
+      $('#pParts').style.display = s.view === 'parts' ? '' : 'none';
+      $('#pScope').style.display = s.view === 'scope' ? '' : 'none';
+      $('#pLevels').style.display = s.view === 'levels' ? '' : 'none';
+      $('#pUni').style.display = s.view === 'uni' ? '' : 'none';
+      if (s.view === 'parts') {
+        if (!s.sel) api.note('แตะส่วนใดส่วนหนึ่งของเซลล์ในภาพ หรือกดชื่อด้านบน');
+        else {
+          const p = PARTS[s.sel];
+          const miss = s.cell === 'animal' && p.animal === 'ไม่มี' ? '<br><b style="color:var(--bad)">เซลล์สัตว์ไม่มีส่วนนี้</b>' : '';
+          api.note('<b>' + p.name + '</b>: ' + p.fn + '<br>เซลล์พืช: ' + p.plant + ' · เซลล์สัตว์: ' + p.animal + miss);
+        }
+      } else if (s.view === 'scope') {
+        const M = 10 * s.obj, fov = { 4: 4.5, 10: 1.8, 40: 0.45 }[s.obj];
+        const sz = { onion: ['เซลล์เยื่อหอมยาวประมาณ', 0.25], cheek: ['เซลล์เยื่อบุข้างแก้มกว้างประมาณ', 0.06], letter: ['ตัวอักษร ก สูงประมาณ', 2] }[s.spec];
+        api.note('กำลังขยาย = 10 × ' + s.obj + ' = <b>' + M + ' เท่า</b><br>วงภาพกว้างจริงประมาณ ' + fov + ' mm<br>' + sz[0] + ' ' + sz[1] + ' mm จึงเห็นเหมือนยาว ' + +(sz[1] * M).toFixed(1) + ' mm' +
+          (s.spec === 'letter' ? '<br>สังเกต: ภาพกลับหัวและกลับซ้ายขวา' : ''));
+      } else if (s.view === 'levels') {
+        const L = LV[s.lvKind][s.lv];
+        api.note('ระดับที่ ' + (s.lv + 1) + ' <b>' + L[0] + '</b>: ' + L[1]);
+      } else {
+        api.note(s.uni ? UNI[s.uni] : 'สิ่งมีชีวิตเซลล์เดียวทำกิจกรรมทุกอย่างของชีวิตได้ภายในเซลล์เดียว แตะที่ภาพเพื่อดูรายละเอียด');
+      }
+    }
+    update();
+
+    // ---------- วาดเซลล์ ----------
+    let hits = []; // [{key, test(x,y)}] เรียงจากบนสุด
+    const glow = (ctx, k, draw) => {
+      if (s.sel !== k) return;
+      ctx.save(); ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 4; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 14; draw(); ctx.restore();
+    };
+    function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    const inRR = (px, py, x, y, w, h) => px >= x && px <= x + w && py >= y && py <= y + h;
+    const LBL = [];
+    function label(x, y, tx, ty, text) { LBL.push([x, y, tx, ty, text]); }
+    // จัดป้ายชื่อเป็นคอลัมน์ด้านข้างเซลล์ (side: 'L', 'R' หรือ 'both') เรียงตามความสูงของจุดที่ชี้ ไม่ให้ทับกัน
+    function placeLabels(anchors, x, y, w, h, side) {
+      const groups = side === 'both' ? [anchors.filter((a) => a[0] < x + w / 2), anchors.filter((a) => a[0] >= x + w / 2)] : side === 'L' ? [anchors, []] : [[], anchors];
+      groups.forEach((g, gi) => {
+        g.sort((a, b) => a[1] - b[1]);
+        g.forEach((a, i) => label(a[0], a[1], gi === 0 ? x - 14 : x + w + 14, y + ((i + 0.5) * h) / g.length, a[2]));
+      });
+    }
+    function drawLabels(ctx) {
+      if (!s.labels) return;
+      ctx.font = '600 ' + (cv.w < 560 ? 13 : 14) + 'px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+      LBL.forEach(([x, y, tx, ty, t]) => {
+        ctx.strokeStyle = Lab.css('--ink'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
+        ctx.fillStyle = Lab.css('--ink'); ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 7); ctx.fill();
+        const w = ctx.measureText(t).width + 10, left = tx < x;
+        ctx.fillStyle = Lab.css('--panel'); ctx.globalAlpha = 0.9; ctx.fillRect(left ? tx - w : tx, ty - 11, w, 22); ctx.globalAlpha = 1;
+        ctx.fillStyle = Lab.css('--ink'); ctx.textAlign = left ? 'right' : 'left'; ctx.fillText(t, left ? tx - 5 : tx + 5, ty);
+      });
+    }
+    function mito(ctx, x, y, a, sc) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+      ctx.fillStyle = '#e8875a'; ctx.strokeStyle = '#a24a24'; ctx.lineWidth = 1.2;
+      rr(ctx, -13 * sc, -6 * sc, 26 * sc, 12 * sc, 6 * sc); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); for (let i = -9; i <= 9; i += 4.5) { ctx.moveTo(i * sc, -4 * sc); ctx.lineTo((i + 2) * sc, 4 * sc); } ctx.stroke();
+      ctx.restore();
+    }
+    function plantCell(ctx, x, y, w, h, lab) {
+      const t = Math.max(7, Math.min(w, h) * 0.035), sc = Math.min(w, h) / 300;
+      const mx = x + t + 2, my = y + t + 2, mw = w - 2 * t - 4, mh = h - 2 * t - 4;
+      // ผนังเซลล์
+      ctx.fillStyle = '#9ccf7a'; rr(ctx, x, y, w, h, 16); ctx.fill(); ctx.strokeStyle = '#4d7f2f'; ctx.lineWidth = 2; ctx.stroke();
+      glow(ctx, 'wall', () => { rr(ctx, x, y, w, h, 16); ctx.stroke(); });
+      // ไซโทพลาซึมและเยื่อหุ้มเซลล์
+      ctx.fillStyle = '#e6f5d5'; rr(ctx, mx, my, mw, mh, 12); ctx.fill();
+      ctx.strokeStyle = '#3d6b25'; ctx.lineWidth = 1.6; ctx.stroke();
+      glow(ctx, 'membrane', () => { rr(ctx, mx, my, mw, mh, 12); ctx.stroke(); });
+      if (s.sel === 'cyto') { ctx.save(); ctx.fillStyle = 'rgba(255,176,0,.28)'; rr(ctx, mx, my, mw, mh, 12); ctx.fill(); ctx.restore(); }
+      // แวคิวโอลใหญ่
+      const vx = x + w * 0.36, vy = y + h * 0.2, vw = w * 0.5, vh = h * 0.6;
+      ctx.fillStyle = 'rgba(150,200,240,.75)'; rr(ctx, vx, vy, vw, vh, 26); ctx.fill(); ctx.strokeStyle = '#4a86b8'; ctx.lineWidth = 1.4; ctx.stroke();
+      glow(ctx, 'vacuole', () => { rr(ctx, vx, vy, vw, vh, 26); ctx.stroke(); });
+      // นิวเคลียส
+      const nx = x + w * 0.2, ny = y + h * 0.3, nr = Math.min(w, h) * 0.1;
+      ctx.fillStyle = '#b48ad8'; ctx.beginPath(); ctx.arc(nx, ny, nr, 0, 7); ctx.fill(); ctx.strokeStyle = '#6b3f99'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#6b3f99'; ctx.beginPath(); ctx.arc(nx + nr * 0.2, ny - nr * 0.1, nr * 0.32, 0, 7); ctx.fill();
+      glow(ctx, 'nucleus', () => { ctx.beginPath(); ctx.arc(nx, ny, nr, 0, 7); ctx.stroke(); });
+      // คลอโรพลาสต์รอบขอบ
+      const CH = [[0.12, 0.62], [0.2, 0.82], [0.32, 0.12], [0.55, 0.1], [0.78, 0.12], [0.92, 0.3], [0.92, 0.6], [0.8, 0.88], [0.55, 0.9], [0.13, 0.48]];
+      const chs = [];
+      CH.forEach(([fx, fy], i) => {
+        const cx = x + w * fx, cy = y + h * fy, a = i * 0.9;
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+        ctx.fillStyle = '#2f9a3a'; ctx.beginPath(); ctx.ellipse(0, 0, 15 * sc + 4, 8 * sc + 2, 0, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#1c6b25'; ctx.lineWidth = 1; ctx.beginPath(); for (let k = -1; k <= 1; k++) { ctx.moveTo(-9 * sc, k * 3 * sc); ctx.lineTo(9 * sc, k * 3 * sc); } ctx.stroke();
+        if (s.sel === 'chloro') { ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 3; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.ellipse(0, 0, 15 * sc + 4, 8 * sc + 2, 0, 0, 7); ctx.stroke(); }
+        ctx.restore();
+        chs.push([cx, cy, 15 * sc + 6]);
+      });
+      // ไมโทคอนเดรีย
+      const MI = [[0.28, 0.55, 0.6], [0.24, 0.12, -0.3], [0.7, 0.86, 0.2]];
+      const mis = [];
+      MI.forEach(([fx, fy, a]) => {
+        const mx2 = x + w * fx, my2 = y + h * fy; mito(ctx, mx2, my2, a, sc + 0.25);
+        if (s.sel === 'mito') { ctx.save(); ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 3; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(mx2, my2, 16 * (sc + 0.25), 0, 7); ctx.stroke(); ctx.restore(); }
+        mis.push([mx2, my2, 16 * (sc + 0.25)]);
+      });
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 17px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('เซลล์พืช', x + w / 2, y - 8);
+      hits.push({ key: 'nucleus', test: (px, py) => Math.hypot(px - nx, py - ny) < nr });
+      hits.push({ key: 'chloro', test: (px, py) => chs.some(([a, b, r]) => Math.hypot(px - a, py - b) < r) });
+      hits.push({ key: 'mito', test: (px, py) => mis.some(([a, b, r]) => Math.hypot(px - a, py - b) < r) });
+      hits.push({ key: 'vacuole', test: (px, py) => inRR(px, py, vx, vy, vw, vh) });
+      hits.push({ key: 'membrane', test: (px, py) => inRR(px, py, mx - 5, my - 5, mw + 10, mh + 10) && !inRR(px, py, mx + 6, my + 6, mw - 12, mh - 12) });
+      hits.push({ key: 'wall', test: (px, py) => inRR(px, py, x, y, w, h) && !inRR(px, py, mx, my, mw, mh) });
+      hits.push({ key: 'cyto', test: (px, py) => inRR(px, py, mx, my, mw, mh) });
+      // ป้ายด้านซ้ายอย่างเดียว: ชี้ไปที่ส่วนที่อยู่ทางซ้ายของเซลล์ เส้นจะได้ไม่ไขว้กัน
+      if (lab === 'L') placeLabels([[x + 3, y + h * 0.72, 'ผนังเซลล์'], [mx + 1, y + h * 0.86, 'เยื่อหุ้มเซลล์'], [nx - nr * 0.9, ny, 'นิวเคลียส'],
+        [x + w * 0.13, y + h * 0.48, 'คลอโรพลาสต์'], [vx + 5, vy + vh * 0.62, 'แวคิวโอล'], [x + w * 0.28 - 8, y + h * 0.55, 'ไมโทคอนเดรีย'], [x + w * 0.12, y + h * 0.17, 'ไซโทพลาซึม']], x, y, w, h, 'L');
+      else if (lab) placeLabels([[x + 3, y + h * 0.66, 'ผนังเซลล์'], [mx + 1, y + h * 0.8, 'เยื่อหุ้มเซลล์'], [nx - nr * 0.6, ny - nr * 0.6, 'นิวเคลียส'],
+        [x + w * 0.2, y + h * 0.82, 'คลอโรพลาสต์'], [vx + vw * 0.8, vy + vh * 0.3, 'แวคิวโอล'], [x + w * 0.7 + 10, y + h * 0.86, 'ไมโทคอนเดรีย'], [x + w * 0.3, y + h * 0.42, 'ไซโทพลาซึม']], x, y, w, h, lab);
+    }
+    function animalCell(ctx, x, y, w, h, lab) {
+      const cx = x + w / 2, cy = y + h / 2, R = Math.min(w, h) / 2 - 4, sc = Math.min(w, h) / 300;
+      const rad = (a) => R * (1 + 0.05 * Math.sin(3 * a + 0.5) + 0.035 * Math.cos(5 * a));
+      const path = (k) => { ctx.beginPath(); for (let i = 0; i <= 72; i++) { const a = (i / 72) * Math.PI * 2, r = rad(a) * k; i ? ctx.lineTo(cx + r * Math.cos(a), cy + r * 0.9 * Math.sin(a)) : ctx.moveTo(cx + r * Math.cos(a), cy + r * 0.9 * Math.sin(a)); } ctx.closePath(); };
+      ctx.fillStyle = '#fbe0dc'; path(1); ctx.fill(); ctx.strokeStyle = '#b4544a'; ctx.lineWidth = 2.2; ctx.stroke();
+      glow(ctx, 'membrane', () => { path(1); ctx.stroke(); });
+      if (s.sel === 'cyto') { ctx.save(); ctx.fillStyle = 'rgba(255,176,0,.28)'; path(1); ctx.fill(); ctx.restore(); }
+      const nx = cx - R * 0.05, ny = cy - R * 0.05, nr = R * 0.25;
+      ctx.fillStyle = '#b48ad8'; ctx.beginPath(); ctx.arc(nx, ny, nr, 0, 7); ctx.fill(); ctx.strokeStyle = '#6b3f99'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#6b3f99'; ctx.beginPath(); ctx.arc(nx + nr * 0.2, ny - nr * 0.1, nr * 0.32, 0, 7); ctx.fill();
+      glow(ctx, 'nucleus', () => { ctx.beginPath(); ctx.arc(nx, ny, nr, 0, 7); ctx.stroke(); });
+      const VA = [[0.48, -0.42, 0.09], [-0.5, 0.38, 0.07]];
+      const vas = [];
+      VA.forEach(([fx, fy, fr]) => {
+        const vx = cx + R * fx, vy = cy + R * fy, vr = R * fr;
+        ctx.fillStyle = 'rgba(150,200,240,.85)'; ctx.beginPath(); ctx.arc(vx, vy, vr, 0, 7); ctx.fill(); ctx.strokeStyle = '#4a86b8'; ctx.lineWidth = 1.2; ctx.stroke();
+        glow(ctx, 'vacuole', () => { ctx.beginPath(); ctx.arc(vx, vy, vr, 0, 7); ctx.stroke(); });
+        vas.push([vx, vy, vr + 4]);
+      });
+      const MI = [[0.5, 0.25, 0.4], [-0.45, -0.35, -0.6], [0.05, 0.6, 0.1], [-0.6, 0.05, 1.3]];
+      const mis = [];
+      MI.forEach(([fx, fy, a]) => {
+        const mx2 = cx + R * fx, my2 = cy + R * fy; mito(ctx, mx2, my2, a, sc + 0.25);
+        if (s.sel === 'mito') { ctx.save(); ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 3; ctx.shadowColor = '#ffb000'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(mx2, my2, 16 * (sc + 0.25), 0, 7); ctx.stroke(); ctx.restore(); }
+        mis.push([mx2, my2, 16 * (sc + 0.25)]);
+      });
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 17px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('เซลล์สัตว์', cx, y - 8);
+      const inside = (px, py, k) => { const a = Math.atan2((py - cy) / 0.9, px - cx); const r = Math.hypot(px - cx, (py - cy) / 0.9); return r < rad(a) * k; };
+      hits.push({ key: 'nucleus', test: (px, py) => Math.hypot(px - nx, py - ny) < nr });
+      hits.push({ key: 'mito', test: (px, py) => mis.some(([a, b, r]) => Math.hypot(px - a, py - b) < r) });
+      hits.push({ key: 'vacuole', test: (px, py) => vas.some(([a, b, r]) => Math.hypot(px - a, py - b) < r) });
+      hits.push({ key: 'membrane', test: (px, py) => inside(px, py, 1.06) && !inside(px, py, 0.93) });
+      hits.push({ key: 'cyto', test: (px, py) => inside(px, py, 1) });
+      if (lab === 'R') placeLabels([[cx + rad(0) - 2, cy + 4, 'เยื่อหุ้มเซลล์'], [nx + nr * 0.9, ny - nr * 0.2, 'นิวเคลียส'], [cx + R * 0.3, cy + R * 0.6, 'ไซโทพลาซึม'],
+        [cx + R * 0.48, cy - R * 0.42, 'แวคิวโอล'], [cx + R * 0.5 + 8, cy + R * 0.25, 'ไมโทคอนเดรีย']], cx - R, cy - R * 0.9, 2 * R, 1.8 * R, 'R');
+      else if (lab) placeLabels([[cx - rad(Math.PI) + 2, cy + 6, 'เยื่อหุ้มเซลล์'], [nx - nr * 0.5, ny - nr * 0.7, 'นิวเคลียส'], [cx - R * 0.25, cy + R * 0.35, 'ไซโทพลาซึม'],
+        [cx + R * 0.48, cy - R * 0.42, 'แวคิวโอล'], [cx + R * 0.5 + 8, cy + R * 0.25, 'ไมโทคอนเดรีย']], cx - R, cy - R * 0.9, 2 * R, 1.8 * R, lab);
+    }
+
+    // ---------- กล้องจุลทรรศน์ ----------
+    function seeded(seed) { let a = seed; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; }
+    function scope(ctx) {
+      const w = cv.w, h = cv.h, R = Math.min(w * 0.42, h * 0.44), cx = w * 0.5, cy = h * 0.5;
+      const fov = { 4: 4.5, 10: 1.8, 40: 0.45 }[s.obj], ppm = (2 * R) / fov; // px ต่อ mm
+      ctx.fillStyle = '#111'; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+      ctx.fillStyle = s.spec === 'cheek' ? '#e9f1fb' : s.spec === 'onion' ? '#fbf3dc' : '#fdfdf7'; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      if (s.spec === 'onion') {
+        // เซลล์รูปสี่เหลี่ยมยาวเรียงต่อกัน 0.25 × 0.06 mm (ย้อมไอโอดีน)
+        const L = 0.25 * ppm, H = 0.06 * ppm, rnd = seeded(7);
+        ctx.strokeStyle = '#9a6a1d'; ctx.lineWidth = Math.max(0.6, Math.min(3, H * 0.06));
+        for (let row = -Math.ceil(R / H) - 1; row <= Math.ceil(R / H) + 1; row++) {
+          const off = (row % 2) * L * 0.5 + (row * 37 % 11) * L * 0.03;
+          for (let col = -Math.ceil(R / L) - 2; col <= Math.ceil(R / L) + 2; col++) {
+            const x0 = cx + col * L + off, y0 = cy + row * H;
+            ctx.strokeRect(x0, y0, L, H);
+            if (H > 6) { ctx.fillStyle = '#a5741f'; ctx.beginPath(); ctx.ellipse(x0 + L * (0.3 + 0.4 * rnd()), y0 + H * 0.5, H * 0.18, H * 0.14, 0, 0, 7); ctx.fill(); }
+          }
+        }
+      } else if (s.spec === 'cheek') {
+        const rnd = seeded(11), D = 0.06 * ppm;
+        const n = Math.min(400, Math.round(((fov * fov) / (0.12 * 0.12)) * 0.6));
+        for (let i = 0; i < n; i++) {
+          const ang = rnd() * 7, rr2 = Math.sqrt(rnd()) * (fov / 2) * ppm * 1.05;
+          const x0 = cx + Math.cos(ang) * rr2, y0 = cy + Math.sin(ang) * rr2, r0 = (D / 2) * (0.8 + 0.4 * rnd());
+          ctx.fillStyle = 'rgba(90,140,210,.25)'; ctx.strokeStyle = 'rgba(40,90,170,.7)'; ctx.lineWidth = Math.max(0.5, r0 * 0.04);
+          ctx.beginPath();
+          for (let k = 0; k <= 8; k++) { const a = (k / 8) * 7, q = r0 * (0.85 + 0.25 * Math.sin(a * 3 + i)); k ? ctx.lineTo(x0 + q * Math.cos(a), y0 + q * Math.sin(a)) : ctx.moveTo(x0 + q * Math.cos(a), y0 + q * Math.sin(a)); }
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          if (r0 > 3) { ctx.fillStyle = 'rgba(30,60,140,.85)'; ctx.beginPath(); ctx.arc(x0, y0, r0 * 0.2, 0, 7); ctx.fill(); }
+        }
+      } else {
+        // ตัวอักษร ก สูง 2 mm พิมพ์บนกระดาษ ภาพที่เห็นกลับหัวและกลับซ้ายขวา (หมุน 180°)
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(Math.PI);
+        const fs = 2 * ppm;
+        ctx.fillStyle = '#222'; ctx.font = '700 ' + fs + 'px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('ก', 0, 0);
+        // เส้นใยกระดาษ
+        const rnd = seeded(5); ctx.strokeStyle = 'rgba(0,0,0,.05)'; ctx.lineWidth = Math.max(0.5, 0.004 * ppm);
+        for (let i = 0; i < 120; i++) { const a = rnd() * 7, x0 = (rnd() - 0.5) * 2 * R, y0 = (rnd() - 0.5) * 2 * R, l = 0.05 * ppm; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l); ctx.stroke(); }
+        ctx.restore();
+      }
+      ctx.restore();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, 7); ctx.stroke();
+      // แถบสเกล
+      const bar = s.obj === 40 ? 0.1 : s.obj === 10 ? 0.5 : 1, bpx = bar * ppm;
+      ctx.fillStyle = '#fff'; ctx.fillRect(w - 16 - bpx, h - 34, bpx, 5);
+      ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('แถบสเกล ' + bar + ' mm', w - 16, h - 24);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#ddd'; ctx.font = '600 16px Sarabun, sans-serif';
+      ctx.fillText('กำลังขยาย ' + 10 * s.obj + ' เท่า', 14, 14);
+    }
+
+    // ---------- ระดับโครงสร้าง ----------
+    function lvDraw(ctx, kind, lv, x, y, w, h) {
+      const cx = x + w / 2, cy = y + h / 2, m = Math.min(w, h);
+      ctx.save(); ctx.lineWidth = Math.max(1, m / 120);
+      if (kind === 'animal') {
+        if (lv === 0) {
+          ctx.fillStyle = '#f4a7a0'; ctx.strokeStyle = '#a2453d';
+          ctx.beginPath(); ctx.ellipse(cx, cy, m * 0.4, m * 0.09, 0, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#8a4aa8'; ctx.beginPath(); ctx.ellipse(cx, cy, m * 0.07, m * 0.035, 0, 0, 7); ctx.fill();
+        } else if (lv === 1) {
+          ctx.strokeStyle = '#a2453d';
+          for (let r = 0; r < 6; r++) for (let c = 0; c < 3; c++) {
+            const ex = cx + (c - 1) * m * 0.28 + (r % 2) * m * 0.14 - m * 0.07, ey = cy + (r - 2.5) * m * 0.11;
+            ctx.fillStyle = '#f4a7a0'; ctx.beginPath(); ctx.ellipse(ex, ey, m * 0.15, m * 0.045, 0, 0, 7); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#8a4aa8'; ctx.beginPath(); ctx.ellipse(ex, ey, m * 0.03, m * 0.015, 0, 0, 7); ctx.fill();
+          }
+        } else if (lv === 2) {
+          ctx.fillStyle = '#ef9a8f'; ctx.strokeStyle = '#a2453d';
+          ctx.beginPath(); ctx.moveTo(cx - m * 0.12, cy - m * 0.38); ctx.bezierCurveTo(cx - m * 0.05, cy - m * 0.2, cx - m * 0.42, cy - m * 0.2, cx - m * 0.3, cy + m * 0.15);
+          ctx.bezierCurveTo(cx - m * 0.2, cy + m * 0.42, cx + m * 0.25, cy + m * 0.4, cx + m * 0.32, cy + m * 0.12);
+          ctx.bezierCurveTo(cx + m * 0.36, cy - m * 0.05, cx + m * 0.15, cy + m * 0.05, cx + m * 0.05, cy - m * 0.1);
+          ctx.lineTo(cx - m * 0.02, cy - m * 0.38); ctx.closePath(); ctx.fill(); ctx.stroke();
+        } else if (lv === 3) {
+          ctx.strokeStyle = '#a2453d'; ctx.lineWidth = m / 30; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(cx, cy - m * 0.42); ctx.lineTo(cx, cy - m * 0.1); ctx.stroke();
+          ctx.fillStyle = '#ef9a8f'; ctx.lineWidth = m / 120; ctx.beginPath(); ctx.ellipse(cx + m * 0.06, cy - m * 0.05, m * 0.12, m * 0.08, 0.4, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#9b5a3c'; ctx.beginPath(); ctx.moveTo(cx - m * 0.18, cy - m * 0.12); ctx.lineTo(cx - m * 0.02, cy - m * 0.12); ctx.lineTo(cx - m * 0.1, cy + m * 0.08); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = '#d47a64'; ctx.lineWidth = m / 25;
+          ctx.beginPath(); for (let i = 0; i < 5; i++) { const yy = cy + m * 0.1 + i * m * 0.05; ctx.moveTo(cx - m * 0.16, yy); ctx.quadraticCurveTo(cx, yy + m * 0.04, cx + m * 0.16, yy); } ctx.stroke();
+          ctx.strokeStyle = '#b06a50'; ctx.lineWidth = m / 18; ctx.beginPath(); ctx.moveTo(cx - m * 0.24, cy + m * 0.4); ctx.lineTo(cx - m * 0.24, cy + m * 0.05); ctx.lineTo(cx + m * 0.24, cy + m * 0.05); ctx.lineTo(cx + m * 0.24, cy + m * 0.42); ctx.stroke();
+        } else {
+          ctx.fillStyle = Lab.dark() ? '#7b8494' : '#c9ced8';
+          ctx.beginPath(); ctx.arc(cx, cy - m * 0.34, m * 0.09, 0, 7); ctx.fill();
+          rr(ctx, cx - m * 0.13, cy - m * 0.24, m * 0.26, m * 0.36, m * 0.06); ctx.fill();
+          ctx.fillRect(cx - m * 0.12, cy + m * 0.1, m * 0.09, m * 0.34); ctx.fillRect(cx + m * 0.03, cy + m * 0.1, m * 0.09, m * 0.34);
+          ctx.fillRect(cx - m * 0.22, cy - m * 0.22, m * 0.08, m * 0.3); ctx.fillRect(cx + m * 0.14, cy - m * 0.22, m * 0.08, m * 0.3);
+          ctx.strokeStyle = '#c0503a'; ctx.lineWidth = m / 60; ctx.beginPath(); ctx.moveTo(cx, cy - m * 0.27); ctx.lineTo(cx, cy - m * 0.12); ctx.stroke();
+          ctx.fillStyle = '#e57b62'; ctx.beginPath(); ctx.ellipse(cx + m * 0.03, cy - m * 0.08, m * 0.05, m * 0.03, 0.4, 0, 7); ctx.fill();
+          ctx.beginPath(); for (let i = 0; i < 3; i++) { const yy = cy - m * 0.02 + i * m * 0.035; ctx.moveTo(cx - m * 0.07, yy); ctx.quadraticCurveTo(cx, yy + m * 0.02, cx + m * 0.07, yy); } ctx.stroke();
+        }
+      } else {
+        if (lv === 0) {
+          ctx.fillStyle = '#9ccf7a'; ctx.strokeStyle = '#4d7f2f'; rr(ctx, cx - m * 0.18, cy - m * 0.36, m * 0.36, m * 0.72, m * 0.04); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#e6f5d5'; rr(ctx, cx - m * 0.15, cy - m * 0.33, m * 0.3, m * 0.66, m * 0.03); ctx.fill();
+          ctx.fillStyle = '#2f9a3a'; for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.ellipse(cx + (i % 2 ? 0.1 : -0.1) * m, cy + (i / 8 - 0.45) * m * 0.7 + m * 0.03, m * 0.04, m * 0.022, 0, 0, 7); ctx.fill(); }
+        } else if (lv === 1) {
+          for (let c = 0; c < 6; c++) {
+            const x0 = cx + (c - 3) * m * 0.14;
+            ctx.fillStyle = '#9ccf7a'; ctx.strokeStyle = '#4d7f2f'; rr(ctx, x0, cy - m * 0.3, m * 0.13, m * 0.6, m * 0.02); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#2f9a3a'; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.ellipse(x0 + m * 0.065, cy - m * 0.24 + i * m * 0.12, m * 0.025, m * 0.015, 0, 0, 7); ctx.fill(); }
+          }
+        } else if (lv === 2) {
+          ctx.fillStyle = '#3fa64a'; ctx.strokeStyle = '#1f6b28';
+          ctx.beginPath(); ctx.moveTo(cx - m * 0.4, cy + m * 0.1); ctx.quadraticCurveTo(cx - m * 0.05, cy - m * 0.42, cx + m * 0.38, cy - m * 0.2); ctx.quadraticCurveTo(cx + m * 0.1, cy + m * 0.32, cx - m * 0.4, cy + m * 0.1); ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx - m * 0.45, cy + m * 0.16); ctx.lineTo(cx + m * 0.3, cy - m * 0.17); ctx.stroke();
+        } else {
+          const full = lv === 4;
+          const gy = full ? cy + m * 0.12 : cy + m * 0.42;
+          ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = m / 30; ctx.beginPath(); ctx.moveTo(cx, gy); ctx.lineTo(cx, cy - m * 0.38); ctx.stroke();
+          ctx.fillStyle = '#3fa64a';
+          [[-1, -0.25], [1, -0.12], [-1, 0.02], [1, 0.16]].forEach(([d, fy]) => { ctx.beginPath(); ctx.ellipse(cx + d * m * 0.13, cy + fy * m, m * 0.13, m * 0.05, d * -0.5, 0, 7); ctx.fill(); });
+          ctx.fillStyle = '#f2c94c'; ctx.beginPath(); ctx.arc(cx, cy - m * 0.4, m * 0.05, 0, 7); ctx.fill();
+          if (full) {
+            ctx.fillStyle = '#b8895a'; ctx.fillRect(x + w * 0.1, gy, w * 0.8, m * 0.02);
+            ctx.strokeStyle = '#8a6a3b'; ctx.lineWidth = m / 90; ctx.beginPath();
+            [[-0.18, 0.4], [0, 0.42], [0.18, 0.38], [-0.08, 0.3], [0.1, 0.3]].forEach(([dx, dy]) => { ctx.moveTo(cx, gy); ctx.quadraticCurveTo(cx + dx * m * 0.5, gy + dy * m * 0.4, cx + dx * m, gy + dy * m * 0.75); });
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    }
+    function levels(ctx) {
+      const w = cv.w, h = cv.h, n = 5, sw = (w - 24) / n, sh = Math.min(110, h * 0.22);
+      for (let i = 0; i < n; i++) {
+        const x = 12 + i * sw, on = i === s.lv;
+        ctx.fillStyle = on ? Lab.css('--accent-soft') : Lab.css('--panel'); ctx.strokeStyle = on ? Lab.css('--accent') : Lab.css('--line'); ctx.lineWidth = on ? 2.5 : 1;
+        rr(ctx, x + 4, 10, sw - 8, sh, 10); ctx.fill(); ctx.stroke();
+        lvDraw(ctx, s.lvKind, i, x + 4, 14, sw - 8, sh - 26);
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = (on ? '700 ' : '') + '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(LV[s.lvKind][i][0], x + sw / 2, 8 + sh);
+        if (i < n - 1) { ctx.fillStyle = Lab.css('--muted'); ctx.font = '16px Sarabun, sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('→', x + sw, 10 + sh / 2); }
+      }
+      const by = sh + 26, bh = h - by - 10;
+      ctx.fillStyle = Lab.css('--panel'); ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1; rr(ctx, 12, by, w - 24, bh, 14); ctx.fill(); ctx.stroke();
+      lvDraw(ctx, s.lvKind, s.lv, 12, by + 30, w - 24, bh - 40);
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 20px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText((s.lv + 1) + '. ' + LV[s.lvKind][s.lv][0], 26, by + 10);
+      hits = [];
+      for (let i = 0; i < n; i++) { const x = 12 + i * sw; hits.push({ key: 'lv' + i, test: (px, py) => px > x && px < x + sw && py > 10 && py < 10 + sh }); }
+    }
+
+    // ---------- สิ่งมีชีวิตเซลล์เดียว ----------
+    function uni(ctx) {
+      const w = cv.w, h = cv.h, t = s.t, narrow = w < 560;
+      const boxes = narrow ? [[0, 0, w, h / 3], [0, h / 3, w, h / 3], [0, (2 * h) / 3, w, h / 3]] : [[0, 0, w / 3, h], [w / 3, 0, w / 3, h], [(2 * w) / 3, 0, w / 3, h]];
+      const keys = ['amoeba', 'para', 'yeast'], names = ['อะมีบา', 'พารามีเซียม', 'ยีสต์'];
+      hits = [];
+      boxes.forEach(([x, y, bw, bh], i) => {
+        const on = s.uni === keys[i];
+        ctx.fillStyle = on ? Lab.css('--accent-soft') : (Lab.dark() ? '#1d2530' : '#eef6fb');
+        ctx.strokeStyle = on ? Lab.css('--accent') : Lab.css('--line'); ctx.lineWidth = on ? 2.5 : 1;
+        rr(ctx, x + 6, y + 6, bw - 12, bh - 12, 14); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 17px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(names[i], x + 18, y + 14);
+        const cx = x + bw / 2, cy = y + bh / 2 + 10, m = Math.min(bw, bh) * 0.36;
+        ctx.save(); ctx.beginPath(); rr(ctx, x + 6, y + 6, bw - 12, bh - 12, 14); ctx.clip();
+        if (i === 0) {
+          const ox = cx + Math.sin(t * 0.3) * m * 0.3;
+          ctx.fillStyle = 'rgba(200,190,170,.85)'; ctx.strokeStyle = '#7a6a4e'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let k = 0; k <= 80; k++) {
+            const a = (k / 80) * 7;
+            const r = m * (0.7 + 0.22 * Math.sin(3 * a + t * 0.9) + 0.18 * Math.max(0, Math.sin(a - t * 0.3)) ** 6 + 0.08 * Math.sin(7 * a - t * 1.3));
+            k ? ctx.lineTo(ox + r * Math.cos(a), cy + r * Math.sin(a)) : ctx.moveTo(ox + r * Math.cos(a), cy + r * Math.sin(a));
+          }
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#8a6aa8'; ctx.beginPath(); ctx.arc(ox - m * 0.1, cy, m * 0.16, 0, 7); ctx.fill();
+          ctx.fillStyle = 'rgba(120,180,90,.8)'; ctx.beginPath(); ctx.arc(ox + m * 0.3, cy + m * 0.2, m * 0.09, 0, 7); ctx.fill();
+          ctx.strokeStyle = 'rgba(80,140,200,.9)'; ctx.beginPath(); ctx.arc(ox + m * 0.1, cy - m * 0.3, m * 0.08 * (0.6 + 0.4 * Math.sin(t * 2)), 0, 7); ctx.stroke();
+          ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText('เท้าเทียม · นิวเคลียส · แวคิวโอลอาหาร', cx, y + bh - 14);
+        } else if (i === 1) {
+          const L = Math.min(m * 1.25, bw * 0.3), H = L * 0.38, amp = Math.max(0, bw / 2 - L - 22);
+          const ox = cx + Math.sin(t * 0.35) * amp, dirR = Math.cos(t * 0.35) >= 0;
+          ctx.save(); ctx.translate(ox, cy); ctx.rotate(Math.sin(t * 0.8) * 0.08 + (dirR ? 0 : Math.PI));
+          ctx.fillStyle = 'rgba(190,215,180,.9)'; ctx.strokeStyle = '#4c7a46'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(0, 0, L, H, 0, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = 'rgba(60,110,60,.8)'; ctx.lineWidth = 1;
+          for (let k = 0; k < 60; k++) {
+            const a = (k / 60) * 7, px = L * Math.cos(a), py = H * Math.sin(a), nx = Math.cos(a) / L, ny = Math.sin(a) / H, nn = Math.hypot(nx, ny);
+            const wv = Math.sin(t * 9 + k * 0.8) * 0.5;
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + (nx / nn) * 7 + wv * (ny / nn) * 4, py + (ny / nn) * 7 - wv * (nx / nn) * 4); ctx.stroke();
+          }
+          ctx.fillStyle = '#8a6aa8'; ctx.beginPath(); ctx.ellipse(-L * 0.05, H * 0.05, L * 0.18, H * 0.3, 0, 0, 7); ctx.fill();
+          ctx.strokeStyle = '#4c7a46'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L * 0.6, -H * 0.6); ctx.quadraticCurveTo(L * 0.2, 0, L * 0.25, H * 0.2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(80,140,200,.9)'; [-0.55, 0.55].forEach((f, j) => { ctx.beginPath(); ctx.arc(L * f, -H * 0.2, H * 0.17 * (0.6 + 0.4 * Math.sin(t * 2.5 + j * 3)), 0, 7); ctx.stroke(); });
+          ctx.restore();
+          ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText('ซิเลีย · ร่องปาก · แวคิวโอลหดตัว', cx, y + bh - 14);
+        } else {
+          const ph = (t * 0.25) % 1, r = m * 0.55;
+          const cell = (px, py, rr0) => { ctx.fillStyle = 'rgba(245,225,170,.95)'; ctx.strokeStyle = '#a07a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(px, py, rr0, rr0 * 0.82, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(160,120,60,.5)'; ctx.beginPath(); ctx.arc(px - rr0 * 0.15, py, rr0 * 0.25, 0, 7); ctx.fill(); };
+          cell(cx - r * 0.6, cy, r);
+          const br = r * Math.min(1, 0.15 + ph * 1.1), sep = ph > 0.8 ? (ph - 0.8) * 5 * r * 0.6 : 0;
+          cell(cx - r * 0.6 + r + br * 0.8 + sep, cy - br * 0.1, br);
+          cell(cx - r * 1.4, cy + r * 1.05, r * 0.7);
+          ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText('การแตกหน่อ (เซลล์ลูกงอกจากเซลล์แม่)', cx, y + bh - 14);
+        }
+        ctx.restore();
+        hits.push({ key: keys[i], test: (px, py) => px > x && px < x + bw && py > y && py < y + bh });
+      });
+    }
+
+    function onPointer(e) {
+      if (e.type !== 'pointerdown') return;
+      const [x, y] = Lab.pos(canvas, e);
+      const hit = hits.find((hh) => hh.test(x, y));
+      if (!hit) return;
+      if (s.view === 'parts') select(hit.key);
+      else if (s.view === 'levels') { s.lv = +hit.key.slice(2); update(); }
+      else if (s.view === 'uni') { s.uni = hit.key; syncUni(); update(); }
+    }
+    canvas.addEventListener('pointerdown', onPointer);
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      s.t += dt;
+      const ctx = cv.ctx, w = cv.w, h = cv.h;
+      ctx.clearRect(0, 0, w, h);
+      LBL.length = 0;
+      if (s.view === 'parts') {
+        hits = [];
+        const narrow = w < 560, lab = s.labels, P = narrow ? 112 : 128;
+        if (s.cell === 'both') {
+          if (narrow) {
+            const cw = w - 2 * P, ch = (h - 90) / 2;
+            plantCell(ctx, P, 34, cw, ch - 10, lab && 'both');
+            animalCell(ctx, P, ch + 70, cw, ch - 10, lab && 'both');
+          } else {
+            const cw = (w - 2 * P - 50) / 2, ch = Math.min(h - 80, cw * 1.4);
+            plantCell(ctx, P, (h - ch) / 2 + 14, cw, ch, lab && 'L');
+            animalCell(ctx, P + cw + 50, (h - ch) / 2 + 14, cw, ch, lab && 'R');
+          }
+        } else {
+          const cw = Math.min(w - 2 * P - 20, (h - 70) * 1.3), ch = Math.min(h - 70, cw * 0.8);
+          (s.cell === 'plant' ? plantCell : animalCell)(ctx, (w - cw) / 2, (h - ch) / 2 + 14, cw, ch, lab && 'both');
+        }
+        drawLabels(ctx);
+      } else if (s.view === 'scope') { hits = []; scope(ctx); }
+      else if (s.view === 'levels') levels(ctx);
+      else uni(ctx);
+    });
+  },
+});
+</script>
+</body>
+</html>

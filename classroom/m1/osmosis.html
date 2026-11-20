@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ออสโมซิส · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>.valrow { display: flex; justify-content: space-between; font-size: 15px; color: var(--muted); }</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'osmosis',
+  title: 'ออสโมซิส',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'ดูโมเลกุลของน้ำเคลื่อนที่ผ่านเยื่อเลือกผ่าน จากด้านที่มีน้ำมาก (สารละลายเจือจาง) ไปด้านที่มีน้ำน้อย (สารละลายเข้มข้น) และดูว่าเซลล์พืชกับเซลล์เม็ดเลือดแดงเปลี่ยนไปอย่างไรในน้ำกลั่นและน้ำเกลือ',
+  about:
+    '<p><b>ออสโมซิส</b> คือการแพร่ของน้ำผ่านเยื่อเลือกผ่าน จากบริเวณที่มีน้ำมาก (สารละลายความเข้มข้นต่ำ) ไปยังบริเวณที่มีน้ำน้อย (สารละลายความเข้มข้นสูง)</p>' +
+    '<p><b>เยื่อเลือกผ่าน</b> ยอมให้อนุภาคขนาดเล็กอย่างน้ำผ่านได้ แต่อนุภาคขนาดใหญ่อย่างน้ำตาลผ่านไม่ได้ เยื่อหุ้มเซลล์ก็เป็นเยื่อเลือกผ่าน</p>' +
+    '<p><b>เซลล์ในสารละลายต่าง ๆ</b></p><ul>' +
+    '<li>สารละลายเจือจางกว่าในเซลล์ (เช่น น้ำกลั่น): น้ำเข้าเซลล์ เซลล์พืชเต่ง (ผนังเซลล์กันไม่ให้แตก) เซลล์เม็ดเลือดแดงบวมจนอาจแตก</li>' +
+    '<li>สารละลายเข้มข้นเท่ากับในเซลล์: น้ำเข้าและออกเท่ากัน เซลล์มีรูปร่างปกติ (เซลล์เม็ดเลือดแดงในน้ำเกลือ 0.9%)</li>' +
+    '<li>สารละลายเข้มข้นกว่าในเซลล์ (เช่น น้ำเกลือเข้มข้น): น้ำออกจากเซลล์ เซลล์พืชเหี่ยว เยื่อหุ้มเซลล์หดแยกจากผนังเซลล์ (พลาสโมไลซิส) เซลล์เม็ดเลือดแดงเหี่ยวย่น</li></ul>' +
+    '<p><b>ตัวอย่างในชีวิตประจำวัน</b>: ผักกาดที่แช่น้ำเกลือจะนิ่มและเหี่ยว (ทำผักดอง) ผักที่เหี่ยวเมื่อแช่น้ำสะอาดจะกลับมากรอบ การโรยเกลือบนทากทำให้ตัวทากเหี่ยว และน้ำเกลือที่ให้ทางหลอดเลือดต้องมีความเข้มข้นเท่ากับในเลือด</p>',
+  think: [
+    'ในหลอดรูปตัวยู ระดับสารละลายด้านไหนสูงขึ้น เพราะเหตุใด',
+    'ถ้าใส่น้ำตาลเข้มข้นเท่ากันทั้งสองด้าน ระดับจะเปลี่ยนหรือไม่',
+    'ทำไมเซลล์พืชในน้ำกลั่นจึงไม่แตก แต่เซลล์เม็ดเลือดแดงในน้ำกลั่นแตกได้',
+    'ผักกาดที่แช่น้ำเกลือนิ่มลง เกิดอะไรขึ้นกับเซลล์ของผักกาด',
+    'ทำไมน้ำเกลือที่หยดเข้าเส้นเลือดของผู้ป่วยจึงต้องมีความเข้มข้นประมาณ 0.9% ไม่ใช่น้ำกลั่น',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const G = () => Lab.gauss(Math.random);
+    const s = { mode: 'tube', cL: 0, cR: 10, h: 0, run: false, P: [], flux: [0, 0], fluxHist: [], cell: 'plant', sol: 'dilute', v: 0, burstT: 0 };
+
+    panel.innerHTML =
+      '<h3>เรื่องที่ดู</h3><div class="seg" id="mode"><button data-v="tube">หลอดรูปตัวยู</button><button data-v="cells">เซลล์ในสารละลาย</button></div>' +
+      '<div id="pTube">' +
+      '<h3>น้ำตาลด้านซ้าย</h3><input type="range" id="cL" min="0" max="20" step="1" value="0"><div class="valrow"><span>น้ำเปล่า</span><b id="cLv"></b><span>เข้มข้น</span></div>' +
+      '<h3>น้ำตาลด้านขวา</h3><input type="range" id="cR" min="0" max="20" step="1" value="10"><div class="valrow"><span>น้ำเปล่า</span><b id="cRv"></b><span>เข้มข้น</span></div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" id="go">เริ่ม</button><button class="btn" id="treset">เริ่มใหม่</button></div></div>' +
+      '<div id="pCells"><h3>เซลล์</h3><div class="seg" id="cell"><button data-v="plant">เซลล์พืช</button><button data-v="rbc">เม็ดเลือดแดง</button></div>' +
+      '<h3>ใส่ลงใน</h3><div class="seg" id="sol" style="flex-direction:column"><button data-v="water">น้ำกลั่น</button><button data-v="dilute">น้ำเกลือเจือจาง (0.9%)</button><button data-v="strong">น้ำเกลือเข้มข้น (5%)</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === get()));
+      el.addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { set(b.dataset.v); sync(); show(); } });
+      sync();
+    }
+    seg('mode', () => s.mode, (v) => (s.mode = v));
+    seg('cell', () => s.cell, (v) => { s.cell = v; s.v = 0; s.burstT = 0; });
+    seg('sol', () => s.sol, (v) => { s.sol = v; if (s.cell === 'rbc' && s.burstT > 1) { s.v = 0; s.burstT = 0; } });
+    $('#cL').oninput = (e) => { s.cL = +e.target.value; resetTube(); };
+    $('#cR').oninput = (e) => { s.cR = +e.target.value; resetTube(); };
+    $('#go').onclick = () => { s.run = !s.run; show(); };
+    $('#treset').onclick = () => resetTube();
+
+    // ---------- หลอดรูปตัวยู ----------
+    const HMAX = 0.5; // ผลต่างระดับสูงสุด (สัดส่วนของความสูงแขน) เมื่อความเข้มข้นต่างกัน 20%
+    const heq = () => HMAX * (s.cR - s.cL) / 20;
+    let Z = {}; // หน้าต่างขยายเยื่อเลือกผ่าน
+    function layout() {
+      const w = cv.w, h = cv.h, narrow = w < 620;
+      if (narrow) { Z = { x: 16, y: h * 0.5 + 46, w: w - 32, h: h * 0.5 - 46 - 30 }; s.tubeBox = { x: 0, y: 0, w: w, h: h * 0.47 }; }
+      else { Z = { x: w * 0.52, y: 50, w: w * 0.46, h: h - 100 }; s.tubeBox = { x: 0, y: 0, w: w * 0.5, h: h }; }
+    }
+    function resetTube() {
+      layout();
+      s.h = 0; s.run = false; s.flux = [0, 0]; s.fluxHist = [];
+      s.P = [];
+      const slots = 90;
+      [['L', s.cL], ['R', s.cR]].forEach(([side, c]) => {
+        const nSugar = Math.round(c * 1.2), nWater = slots - Math.round(nSugar * 1.5);
+        for (let i = 0; i < nWater; i++) s.P.push(newP(side, 'w'));
+        for (let i = 0; i < nSugar; i++) s.P.push(newP(side, 's'));
+      });
+      show();
+    }
+    function newP(side, kind) {
+      const mid = Z.x + Z.w / 2, x0 = side === 'L' ? Z.x + 8 : mid + 8, x1 = side === 'L' ? mid - 8 : Z.x + Z.w - 8;
+      return { x: x0 + Math.random() * (x1 - x0), y: Z.y + 8 + Math.random() * (Z.h - 16), vx: 0, vy: 0, k: kind };
+    }
+    // โอกาสที่โมเลกุลน้ำผ่านรูของเยื่อได้ ลดลงเมื่อด้านนั้นมีน้ำตาลมาก (น้ำตาลจับโมเลกุลน้ำไว้รอบตัว)
+    const pass = (c) => 1 - c / 22;
+    function stepZoom(dt) {
+      const mid = Z.x + Z.w / 2, TAU = 0.12;
+      const pores = 6, ph = Z.h / pores;
+      const inPore = (y) => ((y - Z.y) % ph) > ph * 0.35 && ((y - Z.y) % ph) < ph * 0.75;
+      s.P.forEach((p) => {
+        const D = (p.k === 'w' ? 0.02 : 0.006) * Z.w * Z.w, sv = Math.sqrt(D / TAU);
+        p.vx += (-p.vx / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+        p.vy += (-p.vy / TAU) * dt + sv * Math.sqrt((2 * dt) / TAU) * G();
+        const ox = p.x;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.y < Z.y + 5) { p.y = 2 * (Z.y + 5) - p.y; p.vy = -p.vy; } if (p.y > Z.y + Z.h - 5) { p.y = 2 * (Z.y + Z.h - 5) - p.y; p.vy = -p.vy; }
+        if (p.x < Z.x + 5) { p.x = 2 * (Z.x + 5) - p.x; p.vx = -p.vx; } if (p.x > Z.x + Z.w - 5) { p.x = 2 * (Z.x + Z.w - 5) - p.x; p.vx = -p.vx; }
+        const crossed = (ox < mid) !== (p.x < mid);
+        if (crossed) {
+          const from = ox < mid ? 0 : 1, c = from === 0 ? s.cL : s.cR;
+          const ok = p.k === 'w' && inPore(p.y) && Math.random() < pass(c);
+          if (!ok) { p.x = ox; p.vx = -p.vx; }
+          else if (s.run) s.flux[from]++;
+        }
+      });
+    }
+    function drawTube(ctx) {
+      const B = s.tubeBox, narrow = cv.w < 620;
+      const aw = Math.min(70, B.w * 0.16), gap = Math.min(110, B.w * 0.26), cx = B.x + B.w / 2;
+      const top = B.y + (narrow ? 30 : 60), bot = B.y + B.h - (narrow ? 20 : 50), armH = bot - top - aw;
+      const lx = cx - gap / 2 - aw, rx = cx + gap / 2, base = top + armH * 0.45;
+      const hL = base + (s.h * armH) / 2, hR = base - (s.h * armH) / 2; // y ของผิวสารละลาย
+      const col = (c) => (c === 0 ? 'rgba(120,180,240,.55)' : 'rgba(' + (230) + ',' + (190 - c * 3) + ',' + (110 - c * 3) + ',.65)');
+      // ของเหลว
+      ctx.fillStyle = col(s.cL); ctx.fillRect(lx, hL, aw, bot - aw - hL); ctx.fillRect(lx, bot - aw, cx - lx, aw);
+      ctx.fillStyle = col(s.cR); ctx.fillRect(rx, hR, aw, bot - aw - hR); ctx.fillRect(cx, bot - aw, rx + aw - cx, aw);
+      // ตัวหลอด
+      ctx.strokeStyle = Lab.dark() ? '#c9d6e3' : '#4a5a6a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.lineTo(rx + aw, bot); ctx.lineTo(rx + aw, top);
+      ctx.moveTo(lx + aw, top); ctx.lineTo(lx + aw, bot - aw); ctx.lineTo(rx, bot - aw); ctx.lineTo(rx, top); ctx.stroke();
+      // เยื่อเลือกผ่าน
+      ctx.strokeStyle = '#d23a2a'; ctx.lineWidth = 3; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(cx, bot - aw); ctx.lineTo(cx, bot); ctx.stroke(); ctx.setLineDash([]);
+      // ระดับเริ่มต้น
+      ctx.strokeStyle = Lab.css('--muted'); ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(lx - 14, base); ctx.lineTo(rx + aw + 14, base); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ระดับเริ่มต้น', rx + aw + 4, base - 2);
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 16px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      const nm = (c) => (c === 0 ? 'น้ำเปล่า' : 'น้ำตาล ' + c + '%');
+      ctx.fillText(nm(s.cL), lx + aw / 2, top - 6); ctx.fillText(nm(s.cR), rx + aw / 2, top - 6);
+      ctx.font = '13px Sarabun, sans-serif'; ctx.fillStyle = '#d23a2a'; ctx.textBaseline = 'top'; ctx.fillText('เยื่อเลือกผ่าน', cx, bot + 4);
+      // ลูกศรทิศของน้ำ
+      const net = heq() - s.h;
+      if (s.run && Math.abs(net) > 0.01) {
+        const dir = net > 0 ? 1 : -1, ay = bot - aw / 2;
+        ctx.strokeStyle = '#2f6fde'; ctx.fillStyle = '#2f6fde'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(cx - dir * 34, ay); ctx.lineTo(cx + dir * 30, ay); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + dir * 40, ay); ctx.lineTo(cx + dir * 26, ay - 9); ctx.lineTo(cx + dir * 26, ay + 9); ctx.closePath(); ctx.fill();
+      }
+      // กรอบชี้ไปที่หน้าต่างขยาย
+      ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 1.5; ctx.strokeRect(cx - 14, bot - aw - 4, 28, aw + 8);
+    }
+    function drawZoom(ctx) {
+      const mid = Z.x + Z.w / 2, pores = 6, ph = Z.h / pores;
+      ctx.fillStyle = Lab.dark() ? '#18202b' : '#f3f8fd'; ctx.fillRect(Z.x, Z.y, Z.w, Z.h);
+      ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 2; ctx.strokeRect(Z.x, Z.y, Z.w, Z.h);
+      ctx.fillStyle = '#d23a2a';
+      for (let i = 0; i < pores; i++) {
+        const y0 = Z.y + i * ph;
+        ctx.fillRect(mid - 4, y0, 8, ph * 0.35); ctx.fillRect(mid - 4, y0 + ph * 0.75, 8, ph * 0.25);
+      }
+      s.P.forEach((p) => {
+        if (p.k === 'w') { ctx.fillStyle = '#2f8fe0'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 7); ctx.fill(); }
+        else {
+          ctx.fillStyle = '#f0a020'; ctx.strokeStyle = '#a0600a'; ctx.lineWidth = 1.2; ctx.beginPath();
+          for (let k = 0; k < 6; k++) { const a = (k / 6) * 7 + 0.5; k ? ctx.lineTo(p.x + 10 * Math.cos(a), p.y + 10 * Math.sin(a)) : ctx.moveTo(p.x + 10 * Math.cos(a), p.y + 10 * Math.sin(a)); }
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+      });
+      ctx.fillStyle = Lab.css('--ink'); ctx.font = '700 15px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('ภาพขยายที่เยื่อเลือกผ่าน', Z.x, Z.y - 24);
+      ctx.font = '14px Sarabun, sans-serif'; ctx.fillStyle = '#2f8fe0'; ctx.fillText('● โมเลกุลน้ำ', Z.x, Z.y - 4);
+      ctx.fillStyle = '#c07a10'; ctx.fillText('⬢ โมเลกุลน้ำตาล', Z.x + 110, Z.y - 4);
+      ctx.fillStyle = Lab.css('--ink'); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+      ctx.fillText('น้ำผ่านไปทางขวา ' + s.flux[0], Z.x, Z.y + Z.h + 6);
+      ctx.textAlign = 'right'; ctx.fillText('น้ำผ่านไปทางซ้าย ' + s.flux[1], Z.x + Z.w, Z.y + Z.h + 6);
+    }
+
+    // ---------- เซลล์ในสารละลาย ----------
+    const TARGET = { plant: { water: 1, dilute: 0, strong: -1 }, rbc: { water: 1, dilute: 0, strong: -1 } };
+    function stepCells(dt) {
+      const tv = TARGET[s.cell][s.sol];
+      const d = tv - s.v;
+      s.v += Math.sign(d) * Math.min(Math.abs(d), dt * 0.35);
+      if (s.cell === 'rbc' && s.sol === 'water' && s.v >= 0.999) s.burstT += dt; else if (s.burstT < 1) s.burstT = 0;
+    }
+    function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    function drawCells(ctx) {
+      const w = cv.w, h = cv.h, R = Math.min(w * 0.44, h * 0.42), cx = w / 2, cy = h / 2 + 8;
+      const solCol = { water: 'rgba(200,225,250,1)', dilute: 'rgba(225,235,240,1)', strong: 'rgba(240,236,220,1)' }[s.sol];
+      ctx.fillStyle = '#111'; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.clip();
+      ctx.fillStyle = solCol; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      const tv = TARGET[s.cell][s.sol], moving = Math.abs(tv - s.v) > 0.01, inward = tv > s.v;
+      if (s.cell === 'plant') {
+        const cw = R * 0.62, ch = R * 0.32;
+        for (let row = -3; row <= 3; row++) for (let col = -2; col <= 2; col++) {
+          const x0 = cx + col * cw - cw / 2 + (row % 2 ? cw / 2 : 0), y0 = cy + row * ch - ch / 2;
+          ctx.fillStyle = 'rgba(200,215,170,.35)'; ctx.fillRect(x0, y0, cw, ch);
+          ctx.strokeStyle = '#6b7f3b'; ctx.lineWidth = 3; ctx.strokeRect(x0, y0, cw, ch);
+          // โพรโทพลาสต์ (เยื่อหุ้มเซลล์ + ไซโทพลาซึม + แวคิวโอลสีม่วงของว่านกาบหอยแครง)
+          const k = s.v >= 0 ? 0.94 + 0.05 * s.v : 0.94 + 0.42 * s.v;
+          const pw = (cw - 6) * k, phh = (ch - 6) * (s.v >= 0 ? k : 0.94 + 0.3 * s.v);
+          const px = x0 + cw / 2 - pw / 2, py = y0 + ch / 2 - phh / 2;
+          const shade = s.v < 0 ? 0.55 + 0.35 * -s.v : 0.55 - 0.15 * s.v;
+          ctx.fillStyle = 'rgba(150,40,160,' + shade + ')'; ctx.strokeStyle = 'rgba(90,20,110,.9)'; ctx.lineWidth = 1.5;
+          rr(ctx, px, py, pw, phh, Math.min(pw, phh) * (s.v < 0 ? 0.45 * -s.v + 0.1 : 0.1)); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = 'rgba(60,20,70,.6)'; ctx.beginPath(); ctx.arc(px + pw * 0.25, py + phh * 0.5, Math.min(pw, phh) * 0.13, 0, 7); ctx.fill();
+          if (moving && row === 0 && col === 0) arrows(ctx, x0 + cw / 2, y0 + ch / 2, cw * 0.55, ch * 0.55, inward);
+        }
+      } else {
+        const r0 = R * 0.13, pos = [];
+        for (let i = 0; i < 9; i++) { const a = i * 2.4, rr2 = R * 0.55 * Math.sqrt((i + 0.5) / 9); pos.push([cx + Math.cos(a) * rr2, cy + Math.sin(a) * rr2]); }
+        pos.forEach(([x0, y0], i) => {
+          if (s.burstT > 1) {
+            const f = Math.min(1, (s.burstT - 1) / 2);
+            const g = ctx.createRadialGradient(x0, y0, 1, x0, y0, r0 * (1.3 + f * 1.5));
+            g.addColorStop(0, 'rgba(220,60,60,' + 0.35 * (1 - f * 0.6) + ')'); g.addColorStop(1, 'rgba(220,60,60,0)');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x0, y0, r0 * (1.3 + f * 1.5), 0, 7); ctx.fill();
+            ctx.strokeStyle = 'rgba(180,60,60,.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(x0, y0, r0 * 1.3, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+            return;
+          }
+          const sc = s.v >= 0 ? 1 + 0.3 * s.v : 1 + 0.18 * s.v, r = r0 * sc;
+          ctx.beginPath();
+          const spikes = s.v < 0 ? -s.v : 0;
+          for (let k = 0; k <= 48; k++) {
+            const a = (k / 48) * 7, q = r * (1 + spikes * 0.16 * Math.max(0, Math.sin(a * 9 + i)) ** 2 - spikes * 0.05);
+            k ? ctx.lineTo(x0 + q * Math.cos(a), y0 + q * Math.sin(a)) : ctx.moveTo(x0 + q * Math.cos(a), y0 + q * Math.sin(a));
+          }
+          ctx.closePath();
+          const g = ctx.createRadialGradient(x0, y0, 0, x0, y0, r);
+          const pale = s.v > 0 ? 0.55 * (1 - s.v) : 0.55;
+          g.addColorStop(0, 'rgba(240,' + Math.round(140 + 80 * pale) + ',' + Math.round(140 + 80 * pale) + ',1)');
+          g.addColorStop(0.55, 'rgba(225,70,70,1)'); g.addColorStop(1, 'rgba(190,40,45,1)');
+          ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(140,20,25,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+          if (moving && i === 0) arrows(ctx, x0, y0, r * 1.25, r * 1.25, inward);
+        });
+      }
+      ctx.restore();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, 7); ctx.stroke();
+      ctx.fillStyle = '#ddd'; ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText((s.cell === 'plant' ? 'เซลล์ผิวใบว่านกาบหอยแครง' : 'เซลล์เม็ดเลือดแดง') + ' ใน' + { water: 'น้ำกลั่น', dilute: 'น้ำเกลือเจือจาง 0.9%', strong: 'น้ำเกลือเข้มข้น 5%' }[s.sol], 12, 10);
+    }
+    function arrows(ctx, x, y, ax, ay, inward) {
+      ctx.strokeStyle = '#2f6fde'; ctx.fillStyle = '#2f6fde'; ctx.lineWidth = 3;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+        const ox = x + dx * ax * 1.25, oy = y + dy * ay * 1.25, ix = x + dx * ax * 0.85, iy = y + dy * ay * 0.85;
+        const [sx, sy, ex, ey] = inward ? [ox, oy, ix, iy] : [ix, iy, ox, oy];
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+        const a = Math.atan2(ey - sy, ex - sx);
+        ctx.beginPath(); ctx.moveTo(ex + 7 * Math.cos(a), ey + 7 * Math.sin(a)); ctx.lineTo(ex - 6 * Math.cos(a) - 6 * Math.sin(a), ey - 6 * Math.sin(a) + 6 * Math.cos(a)); ctx.lineTo(ex - 6 * Math.cos(a) + 6 * Math.sin(a), ey - 6 * Math.sin(a) - 6 * Math.cos(a)); ctx.closePath(); ctx.fill();
+      });
+    }
+
+    function show() {
+      $('#pTube').style.display = s.mode === 'tube' ? '' : 'none';
+      $('#pCells').style.display = s.mode === 'cells' ? '' : 'none';
+      $('#cLv').textContent = s.cL ? 'น้ำตาล ' + s.cL + '%' : 'น้ำเปล่า';
+      $('#cRv').textContent = s.cR ? 'น้ำตาล ' + s.cR + '%' : 'น้ำเปล่า';
+      $('#go').textContent = s.run ? 'หยุดชั่วคราว' : 'เริ่ม';
+      if (s.mode === 'tube') {
+        if (s.cL === s.cR) api.note('ความเข้มข้นเท่ากันทั้งสองด้าน: น้ำผ่านเยื่อไปทั้งสองทางเท่า ๆ กัน ระดับไม่เปลี่ยน');
+        else {
+          const hi = s.cR > s.cL ? 'ขวา' : 'ซ้าย', lo = s.cR > s.cL ? 'ซ้าย' : 'ขวา';
+          api.note(s.run ? 'น้ำออสโมซิสจากด้าน' + lo + ' (น้ำมาก) ไปด้าน' + hi + ' (น้ำตาลเข้มข้นกว่า) ระดับด้าน' + hi + 'จึงสูงขึ้น โมเลกุลน้ำตาลผ่านเยื่อไม่ได้'
+            : 'ด้าน' + hi + 'มีน้ำตาลเข้มข้นกว่า กด "เริ่ม" แล้วทายว่าระดับด้านไหนจะสูงขึ้น');
+        }
+      } else {
+        const t = { plant: { water: 'น้ำเข้าเซลล์ แวคิวโอลขยาย เซลล์เต่ง ผนังเซลล์ช่วยไม่ให้เซลล์แตก', dilute: 'น้ำเข้าและออกจากเซลล์พอ ๆ กัน เซลล์มีรูปร่างปกติ', strong: 'น้ำออกจากเซลล์ แวคิวโอลเล็กลง สีเข้มขึ้น เยื่อหุ้มเซลล์หดแยกจากผนังเซลล์ (พลาสโมไลซิส)' },
+          rbc: { water: 'น้ำเข้าเซลล์ เซลล์บวมเป็นทรงกลม ไม่มีผนังเซลล์ จึงแตกได้ในที่สุด', dilute: 'น้ำเกลือ 0.9% เข้มข้นเท่ากับของเหลวในเซลล์ เซลล์เป็นรูปจานเว้ากลางตามปกติ', strong: 'น้ำออกจากเซลล์ เซลล์เหี่ยว ผิวขรุขระเป็นหนาม' } };
+        api.note(t[s.cell][s.sol] + (s.cell === 'rbc' && s.burstT > 1 ? '<br><b style="color:var(--bad)">เซลล์เม็ดเลือดแดงแตกแล้ว</b> เลือกสารละลายใหม่เพื่อเริ่มกับเซลล์ชุดใหม่' : ''));
+      }
+    }
+
+    let tn = 0;
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      layout();
+      if (!s.P.length) resetTube();
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      if (s.mode === 'tube') {
+        stepZoom(dt);
+        if (s.run) s.h += (heq() - s.h) * Math.min(1, dt / 6);
+        drawTube(ctx); drawZoom(ctx);
+      } else { stepCells(dt); drawCells(ctx); }
+      tn += dt; if (tn > 0.5) { tn = 0; show(); }
+    }, 0.05);
+  },
+});
+</script>
+</body>
+</html>

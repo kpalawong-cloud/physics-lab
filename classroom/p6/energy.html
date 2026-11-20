@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>พลังงานจากอาหาร · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .en { display: grid; gap: 12px; user-select: none; -webkit-user-select: none; }
+  .tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .food { position: relative; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 6px 4px 8px; text-align: center;
+    font-size: 14px; line-height: 1.25; cursor: pointer; touch-action: manipulation; }
+  .food b { display: block; font-size: 34px; line-height: 1.15; font-weight: 400; }
+  .food small { display: block; color: var(--muted); font-size: 12px; }
+  .food .kc { display: block; color: var(--warn); font-size: 12.5px; font-weight: 600; }
+  .food.on { border-color: var(--accent); background: var(--accent-soft); }
+  .food .cnt { position: absolute; top: 4px; right: 4px; min-width: 24px; height: 24px; border-radius: 12px; background: var(--accent); color: var(--accent-ink);
+    font-weight: 700; font-size: 14px; display: grid; place-items: center; padding: 0 6px; }
+  .food .minus { position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 13px; border: 1px solid var(--line); background: var(--panel);
+    font-size: 18px; line-height: 22px; padding: 0; cursor: pointer; }
+  .sec { font-weight: 700; margin: 4px 0 0; font-size: 16px; color: var(--muted); }
+  .total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .total .big { font-size: 46px; font-weight: 700; color: var(--warn); font-variant-numeric: tabular-nums; }
+  .meter { position: relative; height: 36px; border-radius: 9px; background: var(--soft); border: 1px solid var(--line); overflow: visible; }
+  .meter .seg { position: absolute; top: 0; bottom: 0; transition: width .3s, left .3s; }
+  .meter .need { position: absolute; top: -6px; bottom: -6px; border-left: 3px dashed var(--ink); }
+  .meter .need span { position: absolute; top: -22px; left: -40px; width: 80px; text-align: center; font-size: 12.5px; font-weight: 600; }
+  .ticks { position: relative; height: 18px; font-size: 12px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); }
+  .calc { font-size: 15.5px; display: grid; grid-template-columns: 16px 1fr auto; gap: 2px 8px; align-items: center; }
+  .calc i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .act { display: grid; grid-template-columns: 150px 1fr 110px; gap: 6px 10px; align-items: center; font-size: 15px; }
+  .act .bar { height: 20px; border-radius: 6px; background: var(--ok); transition: width .3s; min-width: 2px; }
+  .act .t { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  @media (max-width: 560px) { .act { grid-template-columns: 112px 1fr 84px; font-size: 13.5px; } .total .big { font-size: 36px; } }
+  body.present .food { font-size: 16px; } body.present .food b { font-size: 44px; } body.present .total .big { font-size: 64px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ค่าประมาณต่อ 1 ส่วน (กรัม) ชุดเดียวกับ nutrients.html และ plate.html เพิ่มอาหารจานเดียวและขนม
+const FOODS = [
+  { id: 'rice', name: 'ข้าวสวย', emo: '🍚', serve: '1 ทัพพี', carb: 17, prot: 1.5, fat: 0.2 },
+  { id: 'bread', name: 'ขนมปัง', emo: '🍞', serve: '1 แผ่น', carb: 15, prot: 2.5, fat: 1 },
+  { id: 'egg', name: 'ไข่ต้ม', emo: '🥚', serve: '1 ฟอง', carb: 0.5, prot: 6.5, fat: 5 },
+  { id: 'milk', name: 'นมจืด', emo: '🥛', serve: '1 แก้ว', carb: 10, prot: 6.5, fat: 7 },
+  { id: 'chicken', name: 'เนื้อไก่', emo: '🍗', serve: '2 ช้อนกินข้าว', carb: 0, prot: 7, fat: 1.5 },
+  { id: 'fish', name: 'ปลาทู', emo: '🐟', serve: '1 ตัว', carb: 0, prot: 11, fat: 3 },
+  { id: 'kale', name: 'คะน้า', emo: '🥦', serve: '1 ทัพพี', carb: 2, prot: 1.5, fat: 0.2 },
+  { id: 'banana', name: 'กล้วยน้ำว้า', emo: '🍌', serve: '1 ผล', carb: 13, prot: 0.6, fat: 0.1 },
+  { id: 'orange', name: 'ส้ม', emo: '🍊', serve: '1 ผล', carb: 12, prot: 1, fat: 0.1 },
+  { id: 'oil', name: 'น้ำมันพืช', emo: '🫗', serve: '1 ช้อนชา', carb: 0, prot: 0, fat: 5 },
+  { id: 'sugar', name: 'น้ำตาลทราย', emo: '🧂', serve: '1 ช้อนชา', carb: 4, prot: 0, fat: 0 },
+  { id: 'cmk', name: 'ข้าวมันไก่', emo: '🍛', serve: '1 จาน', carb: 70, prot: 22, fat: 22, dish: 1 },
+  { id: 'noodle', name: 'ก๋วยเตี๋ยวน้ำใส', emo: '🍜', serve: '1 ชาม', carb: 40, prot: 14, fat: 7, dish: 1 },
+  { id: 'omelet', name: 'ข้าวไข่เจียว', emo: '🍳', serve: '1 จาน', carb: 52, prot: 12, fat: 20, dish: 1 },
+  { id: 'soda', name: 'น้ำอัดลม', emo: '🥤', serve: '1 กระป๋อง', carb: 35, prot: 0, fat: 0, snack: 1 },
+  { id: 'chips', name: 'มันฝรั่งทอด', emo: '🍟', serve: '1 ถุงเล็ก (30 g)', carb: 16, prot: 2, fat: 10, snack: 1 },
+  { id: 'boba', name: 'ชานมไข่มุก', emo: '🧋', serve: '1 แก้ว', carb: 60, prot: 3, fat: 9, snack: 1 },
+  { id: 'sausage', name: 'ไส้กรอกทอด', emo: '🌭', serve: '1 ไม้', carb: 4, prot: 5, fat: 9, snack: 1 },
+];
+const KCAL = { carb: 4, prot: 4, fat: 9 };
+const COL = { carb: '#e3b505', prot: '#d0612b', fat: '#7a55c9' };
+const NAME = { carb: 'คาร์โบไฮเดรต', prot: 'โปรตีน', fat: 'ไขมัน' };
+// พลังงานที่ใช้ต่อนาทีของเด็กหนัก 40 kg (ค่าประมาณจาก MET × น้ำหนัก × 3.5 ÷ 200)
+const ACTS = [
+  { name: '😴 นอนหลับ', kpm: 0.7 },
+  { name: '📖 นั่งเรียน อ่านหนังสือ', kpm: 0.9 },
+  { name: '🚶 เดิน', kpm: 2.5 },
+  { name: '🚲 ปั่นจักรยาน', kpm: 4.1 },
+  { name: '🏊 ว่ายน้ำ', kpm: 4.2 },
+  { name: '⚽ เตะฟุตบอล', kpm: 4.9 },
+  { name: '🏃 วิ่ง', kpm: 5.6 },
+];
+const NEED = 1650, SCALE = 2200;
+const kcalOf = (f) => f.carb * 4 + f.prot * 4 + f.fat * 9;
+
+SimKit.page({
+  id: 'energy',
+  title: 'พลังงานจากอาหาร',
+  level: 'ป.6',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'แตะอาหารเพื่อเพิ่มลงในมื้อ ดูว่าได้พลังงานเท่าไร และต้องทำกิจกรรมนานเท่าไรจึงใช้พลังงานนั้นหมด',
+  about:
+    '<p>สารอาหารที่ให้พลังงานมี 3 ประเภท</p>' +
+    '<div class="eq">คาร์โบไฮเดรต 1 g ให้ 4 kcal · โปรตีน 1 g ให้ 4 kcal · ไขมัน 1 g ให้ 9 kcal</div>' +
+    '<p>วิตามิน แร่ธาตุ และน้ำ <b>ไม่ให้พลังงาน</b> แต่จำเป็นต่อการทำงานของร่างกาย</p>' +
+    '<p>เด็กอายุ 10–12 ปีต้องการพลังงานวันละประมาณ <b>1,600–1,700 kcal</b> ขึ้นกับเพศ น้ำหนัก และกิจกรรม ถ้าได้รับพลังงานมากกว่าที่ใช้เป็นประจำ ร่างกายจะเก็บส่วนที่เกินไว้เป็นไขมัน ทำให้น้ำหนักเพิ่ม</p>' +
+    '<p class="muted" style="font-size:14px">ปริมาณสารอาหารและพลังงานที่ใช้ในกิจกรรมเป็นค่าประมาณ สำหรับเด็กน้ำหนักประมาณ 40 kg</p>',
+  think: [
+    'ข้าวสวย 1 ทัพพีกับน้ำมัน 1 ช้อนชา อย่างไหนหนักกว่า และอย่างไหนให้พลังงานต่อกรัมมากกว่า',
+    'ชานมไข่มุก 1 แก้วต้องวิ่งนานกี่นาทีจึงใช้พลังงานหมด',
+    'ถ้ากินขนมและเครื่องดื่มหวานทุกวันแต่ไม่ออกกำลังกาย จะเกิดอะไรขึ้น',
+    'ทำไมนักกีฬาจึงต้องกินอาหารที่ให้พลังงานมากกว่าคนทั่วไป',
+  ],
+  build(stage, panel, api) {
+    const cnt = {}; FOODS.forEach((f) => (cnt[f.id] = 0));
+    let showK = false;
+    stage.innerHTML =
+      '<div class="en">' +
+      '<p class="sec">อาหารหลัก</p><div class="tray" id="t1"></div>' +
+      '<p class="sec">อาหารจานเดียว ขนม และเครื่องดื่ม</p><div class="tray" id="t2"></div>' +
+      '<div class="total"><span class="big" id="tot">0</span><span style="font-size:20px">kcal</span><span class="muted" id="pct"></span></div>' +
+      '<div class="meter" id="meter"></div><div class="ticks" id="ticks"></div>' +
+      '<div class="calc" id="calc"></div>' +
+      '<p class="sec">ต้องทำกิจกรรมนานเท่าไรจึงใช้พลังงานนี้หมด</p><div class="act" id="act"></div>' +
+      '</div>';
+    const $ = (q) => stage.querySelector(q);
+    function cardHtml(f) {
+      return '<div class="food" data-id="' + f.id + '"><b>' + f.emo + '</b>' + f.name + '<small>' + f.serve + '</small>' +
+        (showK ? '<span class="kc">' + Math.round(kcalOf(f)) + ' kcal</span>' : '') + '</div>';
+    }
+    function renderTray() {
+      $('#t1').innerHTML = FOODS.filter((f) => !f.dish && !f.snack).map(cardHtml).join('');
+      $('#t2').innerHTML = FOODS.filter((f) => f.dish || f.snack).map(cardHtml).join('');
+      update();
+    }
+    stage.addEventListener('click', (e) => {
+      const m = e.target.closest('.minus');
+      const c = e.target.closest('.food'); if (!c) return;
+      const id = c.dataset.id;
+      if (m) cnt[id] = Math.max(0, cnt[id] - 1); else cnt[id] = Math.min(9, cnt[id] + 1);
+      update();
+    });
+    $('#ticks').innerHTML = [0, 500, 1000, 1500, 2000].map((v) => '<span style="left:' + (100 * v) / SCALE + '%">' + v.toLocaleString() + '</span>').join('');
+
+    function update() {
+      const sum = { carb: 0, prot: 0, fat: 0 };
+      FOODS.forEach((f) => ['carb', 'prot', 'fat'].forEach((k) => (sum[k] += f[k] * cnt[f.id])));
+      const e = { carb: sum.carb * 4, prot: sum.prot * 4, fat: sum.fat * 9 };
+      const tot = e.carb + e.prot + e.fat;
+      stage.querySelectorAll('.food').forEach((c) => {
+        const n = cnt[c.dataset.id];
+        c.classList.toggle('on', n > 0);
+        c.querySelectorAll('.cnt,.minus').forEach((x) => x.remove());
+        if (n > 0) c.insertAdjacentHTML('beforeend', '<span class="cnt">×' + n + '</span><button class="minus" aria-label="ลดลง">−</button>');
+      });
+      $('#tot').textContent = Math.round(tot).toLocaleString();
+      $('#pct').textContent = tot > 0 ? '(' + Math.round((100 * tot) / NEED) + '% ของพลังงานที่ควรได้ทั้งวัน)' : '';
+      let left = 0, html = '';
+      ['carb', 'prot', 'fat'].forEach((k) => {
+        const w = Math.min(100 - left, (100 * e[k]) / SCALE);
+        html += '<div class="seg" style="left:' + left + '%;width:' + w + '%;background:' + COL[k] + '"></div>'; left += w;
+      });
+      html += '<div class="need" style="left:' + (100 * NEED) / SCALE + '%"><span>ทั้งวัน ≈ 1,650</span></div>';
+      $('#meter').innerHTML = html;
+      $('#calc').innerHTML = ['carb', 'prot', 'fat'].map((k) =>
+        '<i style="background:' + COL[k] + '"></i><span>' + NAME[k] + ' ' + (Math.round(sum[k] * 10) / 10) + ' g × ' + KCAL[k] + '</span><b>= ' + Math.round(e[k]) + ' kcal</b>').join('') +
+        '<i></i><span><b>รวม</b></span><b>' + Math.round(tot) + ' kcal</b>';
+      const maxMin = Math.max(1, ...ACTS.map((a) => tot / a.kpm));
+      $('#act').innerHTML = ACTS.map((a) => {
+        const m = tot / a.kpm;
+        const t = m >= 60 ? Math.floor(m / 60) + ' ชม. ' + Math.round(m % 60) + ' นาที' : Math.round(m) + ' นาที';
+        return '<span>' + a.name + '</span><div class="bar" style="width:' + (100 * m) / maxMin + '%"></div><span class="t">' + (tot > 0 ? t : '–') + '</span>';
+      }).join('');
+      const fatPct = tot > 0 ? Math.round((100 * e.fat) / tot) : 0;
+      api.note(tot > 0
+        ? 'พลังงานรวม <b>' + Math.round(tot) + ' kcal</b> มาจากไขมัน ' + fatPct + '% ' + (fatPct > 35 ? '(สัดส่วนไขมันค่อนข้างสูง)' : '') +
+          (tot > NEED ? '<br><b style="color:var(--bad)">เกินพลังงานที่ควรได้ทั้งวันแล้ว</b>' : '')
+        : 'ยังไม่ได้เลือกอาหาร แตะบัตรอาหารเพื่อเพิ่ม แตะปุ่ม − เพื่อลด');
+    }
+
+    panel.innerHTML =
+      '<h3>ตัวอย่างมื้ออาหาร</h3>' +
+      '<div class="row"><button class="btn" data-p="bf">มื้อเช้าที่ดี</button><button class="btn" data-p="lunch">มื้อกลางวัน</button></div>' +
+      '<div class="row"><button class="btn" data-p="snack">ขนมหลังเลิกเรียน</button><button class="btn" data-p="clear">ล้างทั้งหมด</button></div>' +
+      '<h3>บัตรอาหาร</h3><label style="display:flex;gap:8px;align-items:center;font-size:15px"><input type="checkbox" id="showK"> แสดงพลังงานบนบัตร (ปิดไว้ให้นักเรียนทายก่อน)</label>' +
+      '<h3>ทายก่อนเฉลย</h3><p class="muted" style="font-size:14.5px;margin:0">ให้นักเรียนทายว่าอาหารชนิดใดให้พลังงานมากที่สุดต่อ 1 ส่วน แล้วค่อยเปิดพลังงานบนบัตร</p>';
+    const PRE = {
+      bf: { rice: 2, egg: 1, kale: 1, milk: 1, banana: 1 },
+      lunch: { noodle: 1, orange: 1 },
+      snack: { soda: 1, chips: 1, sausage: 1 },
+      clear: {},
+    };
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-p]'); if (!b) return;
+      FOODS.forEach((f) => (cnt[f.id] = PRE[b.dataset.p][f.id] || 0)); update();
+    });
+    panel.querySelector('#showK').onchange = (e) => { showK = e.target.checked; renderTray(); };
+    renderTray();
+  },
+});
+</script>
+</body>
+</html>

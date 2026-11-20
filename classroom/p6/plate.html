@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>จัดอาหารให้ได้สัดส่วน · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .pl { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 14px; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 760px) { .pl { grid-template-columns: 1fr; } }
+  .pl .simpage .stage canvas, .pl canvas { height: 500px !important; }
+  @media (max-width: 760px) { .pl canvas { height: 420px !important; } }
+  .meals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  @media (max-width: 560px) { .meals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .meal { border: 2px solid var(--line); border-radius: 12px; padding: 6px; min-height: 92px; background: var(--panel); cursor: pointer; }
+  .meal.on { border-color: var(--accent); background: var(--accent-soft); }
+  .meal h4 { margin: 0 0 4px; font-size: 15.5px; }
+  .meal .in { display: flex; flex-wrap: wrap; gap: 3px; }
+  .meal .in span { font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; cursor: pointer; }
+  .meal .in span:hover { border-color: var(--bad); }
+  .cat { font-weight: 700; font-size: 14.5px; color: var(--muted); margin: 8px 0 4px; }
+  .tray { display: flex; flex-wrap: wrap; gap: 6px; }
+  .food { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 4px 8px; font-size: 14.5px; cursor: pointer; touch-action: manipulation;
+    display: inline-flex; align-items: center; gap: 4px; }
+  .food b { font-size: 24px; font-weight: 400; }
+  .food small { color: var(--muted); font-size: 12px; }
+  .food:active { transform: scale(.96); }
+  .sum { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; font-size: 15px; }
+  .sum .st { font-weight: 700; text-align: right; }
+  .st.ok { color: var(--ok); } .st.low { color: var(--warn); } .st.hi { color: var(--bad); }
+  body.present .food { font-size: 17px; } body.present .food b { font-size: 30px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ธงโภชนาการสำหรับเด็กอายุ 6–13 ปี (พลังงานประมาณ 1,600 kcal ต่อวัน)
+const TARGET = { rice: 8, veg: 4, fruit: 3, meat: 6, milk: 2 };
+const UNIT = { rice: 'ทัพพี', veg: 'ทัพพี', fruit: 'ส่วน', meat: 'ช้อนกินข้าว', milk: 'แก้ว' };
+const CNAME = { rice: 'ข้าว-แป้ง', veg: 'ผัก', fruit: 'ผลไม้', meat: 'เนื้อสัตว์ ถั่ว ไข่', milk: 'นม' };
+// ข้อแนะนำแบบประมาณ: น้ำมัน น้ำตาล ใช้น้อยเท่าที่จำเป็น
+const LIMIT = { oil: 5, sugar: 4, na: 1500 };
+// อาหาร (ชุดเดียวกับ nutrients.html และ energy.html) และส่วนที่นับในธงโภชนาการ
+// rice/veg/fruit/meat/milk = จำนวนหน่วยของธง, oil/sugar = ช้อนชา, na = โซเดียม (มก.) ค่าประมาณ
+const FOODS = [
+  { id: 'rice', name: 'ข้าวสวย', emo: '🍚', serve: '1 ทัพพี', c: 'rice', f: { rice: 1 } },
+  { id: 'bread', name: 'ขนมปัง', emo: '🍞', serve: '1 แผ่น', c: 'rice', f: { rice: 1, na: 120 } },
+  { id: 'taro', name: 'เผือกนึ่ง', emo: '🥔', serve: '1 ทัพพี', c: 'rice', f: { rice: 1 } },
+  { id: 'spinach', name: 'ผักบุ้ง', emo: '🥬', serve: '1 ทัพพี', c: 'veg', f: { veg: 1, na: 40 } },
+  { id: 'kale', name: 'คะน้า', emo: '🥦', serve: '1 ทัพพี', c: 'veg', f: { veg: 1, na: 20 } },
+  { id: 'carrot', name: 'แครอท', emo: '🥕', serve: '1 ทัพพี', c: 'veg', f: { veg: 1, na: 30 } },
+  { id: 'banana', name: 'กล้วยน้ำว้า', emo: '🍌', serve: '1 ผล', c: 'fruit', f: { fruit: 1 } },
+  { id: 'orange', name: 'ส้ม', emo: '🍊', serve: '1 ผล', c: 'fruit', f: { fruit: 1 } },
+  { id: 'papaya', name: 'มะละกอสุก', emo: '🥭', serve: '6 ชิ้นคำ', c: 'fruit', f: { fruit: 1 } },
+  { id: 'guava', name: 'ฝรั่ง', emo: '🍐', serve: '½ ผล', c: 'fruit', f: { fruit: 1 } },
+  { id: 'egg', name: 'ไข่ต้ม', emo: '🥚', serve: '1 ฟอง', c: 'meat', f: { meat: 2, na: 60 } },
+  { id: 'chicken', name: 'เนื้อไก่', emo: '🍗', serve: '2 ช้อนกินข้าว', c: 'meat', f: { meat: 2, na: 30 } },
+  { id: 'fish', name: 'ปลาทู', emo: '🐟', serve: '1 ตัว', c: 'meat', f: { meat: 2, na: 300 } },
+  { id: 'bean', name: 'ถั่วเขียวต้ม', emo: '🫘', serve: '2 ช้อนกินข้าว', c: 'meat', f: { meat: 1 } },
+  { id: 'milk', name: 'นมจืด', emo: '🥛', serve: '1 แก้ว', c: 'milk', f: { milk: 1, na: 100 } },
+  { id: 'smilk', name: 'นมรสหวาน', emo: '🧃', serve: '1 กล่อง', c: 'milk', f: { milk: 1, sugar: 3, na: 100 } },
+  { id: 'oil', name: 'น้ำมันพืช', emo: '🫗', serve: '1 ช้อนชา', c: 'extra', f: { oil: 1 } },
+  { id: 'sugar', name: 'น้ำตาลทราย', emo: '🧂', serve: '1 ช้อนชา', c: 'extra', f: { sugar: 1 } },
+  { id: 'cmk', name: 'ข้าวมันไก่', emo: '🍛', serve: '1 จาน', c: 'dish', f: { rice: 2.5, meat: 2, oil: 3, na: 900 } },
+  { id: 'noodle', name: 'ก๋วยเตี๋ยวน้ำใส', emo: '🍜', serve: '1 ชาม', c: 'dish', f: { rice: 2, meat: 1, veg: 0.5, oil: 1, na: 1300 } },
+  { id: 'kaprao', name: 'ข้าวกะเพราไก่', emo: '🍲', serve: '1 จาน', c: 'dish', f: { rice: 2.5, meat: 2, veg: 0.5, oil: 3, sugar: 1, na: 1000 } },
+  { id: 'mama', name: 'บะหมี่กึ่งสำเร็จรูป', emo: '🍥', serve: '1 ซอง', c: 'dish', f: { rice: 2, oil: 3, na: 1500 } },
+  { id: 'soda', name: 'น้ำอัดลม', emo: '🥤', serve: '1 กระป๋อง', c: 'snack', f: { sugar: 9, na: 30 } },
+  { id: 'chips', name: 'มันฝรั่งทอด', emo: '🍟', serve: '1 ถุงเล็ก', c: 'snack', f: { oil: 2, na: 200 } },
+  { id: 'boba', name: 'ชานมไข่มุก', emo: '🧋', serve: '1 แก้ว', c: 'snack', f: { sugar: 10, oil: 1, na: 80 } },
+  { id: 'sausage', name: 'ไส้กรอกทอด', emo: '🌭', serve: '1 ไม้', c: 'snack', f: { meat: 1, oil: 1, na: 400 } },
+];
+const CATS = [['rice', 'ข้าว-แป้ง'], ['veg', 'ผัก'], ['fruit', 'ผลไม้'], ['meat', 'เนื้อสัตว์ ถั่ว ไข่'], ['milk', 'นม'], ['extra', 'น้ำมัน น้ำตาล'], ['dish', 'อาหารจานเดียว'], ['snack', 'ขนมและเครื่องดื่ม']];
+const MEALS = [['bf', '🌅 เช้า'], ['lunch', '☀️ กลางวัน'], ['dinner', '🌙 เย็น'], ['snack', '🍪 อาหารว่าง']];
+
+SimKit.page({
+  id: 'plate',
+  title: 'จัดอาหารให้ได้สัดส่วน',
+  level: 'ป.6',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'เลือกมื้อ แล้วแตะอาหารเพื่อใส่ลงในมื้อนั้น ธงโภชนาการจะเติมสีตามปริมาณที่กินทั้งวัน (แตะชื่ออาหารในมื้อเพื่อเอาออก)',
+  about:
+    '<p><b>ธงโภชนาการ</b> บอกสัดส่วนอาหารที่ควรกินใน 1 วัน กลุ่มที่อยู่ด้านบน (ส่วนกว้าง) ควรกินมาก กลุ่มที่ปลายธงควรกินน้อย</p>' +
+    '<p>สำหรับเด็กอายุ 6–13 ปี (พลังงานประมาณ 1,600 kcal ต่อวัน)</p><ul>' +
+    '<li>ข้าว-แป้ง <b>8 ทัพพี</b></li><li>ผัก <b>4 ทัพพี</b> · ผลไม้ <b>3 ส่วน</b></li>' +
+    '<li>เนื้อสัตว์ ถั่ว ไข่ <b>6 ช้อนกินข้าว</b> (ไข่ 1 ฟอง = 2 ช้อนกินข้าว) · นม <b>2 แก้ว</b></li>' +
+    '<li>น้ำมัน น้ำตาล เกลือ <b>ใช้แต่น้อยเท่าที่จำเป็น</b></li></ul>' +
+    '<p>อาหารที่ได้สัดส่วน คือกินอาหารครบ 5 หมู่ ในปริมาณที่เหมาะกับวัยและกิจกรรม</p>' +
+    '<p class="muted" style="font-size:14px">เกณฑ์น้ำมัน (5 ช้อนชา) น้ำตาล (4 ช้อนชา) และโซเดียม (1,500 มก.) ต่อวัน และปริมาณโซเดียมในอาหาร เป็นค่าประมาณเพื่อใช้เปรียบเทียบในห้องเรียน</p>',
+  think: [
+    'กลุ่มอาหารใดที่ควรกินมากที่สุด และกลุ่มใดควรกินน้อยที่สุด',
+    'วันกินขนมเยอะ ขาดอาหารกลุ่มใด และเกินอะไร',
+    'บะหมี่กึ่งสำเร็จรูป 1 ซองมีโซเดียมเท่าไร เทียบกับที่ควรได้ทั้งวัน',
+    'ถ้าไม่ชอบกินผัก ร่างกายอาจขาดสารอาหารประเภทใด',
+    'ลองจัดอาหาร 1 วันของตัวเองตามที่กินจริงเมื่อวาน ได้สัดส่วนหรือไม่',
+  ],
+  build(stage, panel, api) {
+    const plan = { bf: [], lunch: [], dinner: [], snack: [] };
+    let active = 'bf';
+    stage.innerHTML =
+      '<div class="pl"><div>' +
+      '<div class="meals" id="meals"></div>' +
+      '<div id="tray"></div></div>' +
+      '<div><canvas id="flag"></canvas></div></div>';
+    const $ = (q) => stage.querySelector(q);
+    $('#tray').innerHTML = CATS.map(([k, n]) =>
+      '<div class="cat">' + n + '</div><div class="tray">' +
+      FOODS.filter((f) => f.c === k).map((f) => '<span class="food" data-id="' + f.id + '"><b>' + f.emo + '</b>' + f.name + ' <small>' + f.serve + '</small></span>').join('') +
+      '</div>').join('');
+    $('#tray').addEventListener('click', (e) => {
+      const c = e.target.closest('.food'); if (!c) return;
+      plan[active].push(c.dataset.id); update();
+    });
+    $('#meals').addEventListener('click', (e) => {
+      const s = e.target.closest('.in span');
+      const m = e.target.closest('.meal'); if (!m) return;
+      if (s) { plan[m.dataset.m].splice(+s.dataset.i, 1); }
+      active = m.dataset.m; update();
+    });
+    const cv = Lab.canvas($('#flag'));
+    cv.onResize = () => draw(); // กำหนดหลังสร้าง เพราะ Lab.canvas เรียก onResize ทันทีตอนสร้าง
+
+    function totals() {
+      const t = { rice: 0, veg: 0, fruit: 0, meat: 0, milk: 0, oil: 0, sugar: 0, na: 0 };
+      Object.values(plan).forEach((list) => list.forEach((id) => {
+        const f = FOODS.find((x) => x.id === id);
+        Object.entries(f.f).forEach(([k, v]) => (t[k] += v));
+      }));
+      return t;
+    }
+    // สถานะเทียบกับเป้าหมาย: low ขาด, ok พอดี, hi เกิน
+    const status = (have, need) => (have < need * 0.8 ? 'low' : have > need * 1.3 ? 'hi' : 'ok');
+    const fmt = (v) => (Math.round(v * 10) / 10).toString();
+
+    function draw() {
+      if (!cv.w) return;
+      const ctx = cv.ctx, W = cv.w, H = cv.h, t = totals();
+      ctx.clearRect(0, 0, W, H);
+      const top = 34, tip = H - 16, cx = W / 2, half = W / 2 - 6;
+      const hw = (y) => half * (1 - 0.86 * (y - top) / (tip - top)); // ปลายธงไม่แหลมสุด ให้มีที่เขียนป้าย
+      const ys = [top, top + (tip - top) * 0.32, top + (tip - top) * 0.57, top + (tip - top) * 0.8, tip];
+      const ink = Lab.css('--ink'), soft = Lab.css('--soft'), line = Lab.css('--line');
+      const COLORS = { ok: '#2fa36b', low: '#e3a21a', hi: '#d9452e' };
+      ctx.font = '700 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = ink; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('ธงโภชนาการ 1 วัน', cx, 20);
+      function region(y0, y1, side) {
+        const p = [[cx - hw(y0), y0], [cx + hw(y0), y0], [cx + hw(y1), y1], [cx - hw(y1), y1]];
+        if (side === 'L') { p[1] = [cx, y0]; p[2] = [cx, y1]; }
+        if (side === 'R') { p[0] = [cx, y0]; p[3] = [cx, y1]; }
+        return p;
+      }
+      function zone(p, y0, y1, frac, col, label, value) {
+        ctx.save();
+        ctx.beginPath(); p.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
+        ctx.fillStyle = soft; ctx.fill(); ctx.clip();
+        const fy = y1 - (y1 - y0) * Math.min(1, frac);
+        ctx.fillStyle = col; ctx.globalAlpha = 0.85; ctx.fillRect(0, fy, W, y1 - fy); ctx.globalAlpha = 1;
+        ctx.restore();
+        ctx.strokeStyle = line; ctx.lineWidth = 2;
+        ctx.beginPath(); p.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.stroke();
+        const mx = p.reduce((a, q) => a + q[0], 0) / 4, my = (y0 + y1) / 2;
+        ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '700 ' + (W < 260 ? 12.5 : 14) + 'px Sarabun, sans-serif'; ctx.fillText(label, mx, my - 9);
+        ctx.font = (W < 260 ? 12 : 13.5) + 'px Sarabun, sans-serif'; ctx.fillText(value, mx, my + 10);
+      }
+      const SHORT = { rice: ['ข้าว-แป้ง', 'ทัพพี'], veg: ['ผัก', 'ทัพพี'], fruit: ['ผลไม้', 'ส่วน'], meat: ['เนื้อสัตว์', 'ช้อน'], milk: ['นม', 'แก้ว'] };
+      const z = (k, p, y0, y1) => { const st = status(t[k], TARGET[k]); zone(p, y0, y1, t[k] / TARGET[k], COLORS[st], SHORT[k][0], fmt(t[k]) + '/' + TARGET[k] + ' ' + SHORT[k][1]); };
+      z('rice', region(ys[0], ys[1]), ys[0], ys[1]);
+      z('veg', region(ys[1], ys[2], 'L'), ys[1], ys[2]);
+      z('fruit', region(ys[1], ys[2], 'R'), ys[1], ys[2]);
+      z('meat', region(ys[2], ys[3], 'L'), ys[2], ys[3]);
+      z('milk', region(ys[2], ys[3], 'R'), ys[2], ys[3]);
+      const worst = Math.max(t.oil / LIMIT.oil, t.sugar / LIMIT.sugar, t.na / LIMIT.na);
+      zone(region(ys[3], ys[4]), ys[3], ys[4], worst, worst > 1 ? COLORS.hi : COLORS.ok, 'ใช้น้อย', worst > 1 ? 'เกิน!' : '');
+    }
+
+    function update() {
+      $('#meals').innerHTML = MEALS.map(([k, n]) =>
+        '<div class="meal' + (k === active ? ' on' : '') + '" data-m="' + k + '"><h4>' + n + '</h4><div class="in">' +
+        plan[k].map((id, i) => { const f = FOODS.find((x) => x.id === id); return '<span data-i="' + i + '" title="แตะเพื่อเอาออก">' + f.emo + ' ' + f.name + ' ✕</span>'; }).join('') +
+        '</div></div>').join('');
+      draw();
+      const t = totals();
+      const rows = Object.keys(TARGET).map((k) => {
+        const st = status(t[k], TARGET[k]), d = t[k] - TARGET[k];
+        const txt = st === 'ok' ? 'พอดี' : st === 'low' ? 'ขาด ' + fmt(-d) : 'เกิน ' + fmt(d);
+        return '<span>' + CNAME[k] + ' ' + fmt(t[k]) + '/' + TARGET[k] + ' ' + UNIT[k] + '</span><span class="st ' + st + '">' + txt + '</span>';
+      });
+      const lim = [['oil', 'น้ำมัน', 'ช้อนชา'], ['sugar', 'น้ำตาล', 'ช้อนชา'], ['na', 'โซเดียม (เกลือ)', 'มก.']].map(([k, n, u]) => {
+        const hi = t[k] > LIMIT[k];
+        return '<span>' + n + ' ' + fmt(t[k]) + ' ' + u + ' <small class="muted">(ไม่ควรเกิน ' + LIMIT[k].toLocaleString() + ')</small></span><span class="st ' + (hi ? 'hi' : 'ok') + '">' + (hi ? 'เกิน' : 'ไม่เกิน') + '</span>';
+      });
+      sumEl.innerHTML = rows.concat(lim).join('');
+      const warn = [];
+      if (t.sugar > LIMIT.sugar) warn.push('น้ำตาลเกิน: ระวังฟันผุและน้ำหนักเกิน ลดเครื่องดื่มหวาน');
+      if (t.na > LIMIT.na) warn.push('โซเดียมเกิน: อาหารเค็มจัด บะหมี่กึ่งสำเร็จรูป และขนมกรุบกรอบมีโซเดียมมาก');
+      if (t.oil > LIMIT.oil) warn.push('น้ำมันเกิน: ลดของทอดและอาหารมัน');
+      const total = Object.values(plan).reduce((a, l) => a + l.length, 0);
+      if (total >= 4 && t.veg < TARGET.veg * 0.5) warn.push('ผักน้อยมาก: เสี่ยงขาดแร่ธาตุ วิตามิน และใยอาหาร');
+      if (total >= 4 && t.fruit < TARGET.fruit * 0.5) warn.push('ผลไม้น้อยมาก: เสี่ยงขาดวิตามิน');
+      const allOk = Object.keys(TARGET).every((k) => status(t[k], TARGET[k]) === 'ok') && t.sugar <= LIMIT.sugar && t.na <= LIMIT.na && t.oil <= LIMIT.oil;
+      api.note(!total ? 'เลือกมื้อด้านบน แล้วแตะอาหารเพื่อใส่ลงในมื้อ'
+        : allOk ? '<b style="color:var(--ok)">ได้สัดส่วนตามธงโภชนาการแล้ว เยี่ยมมาก!</b>'
+        : warn.length ? warn.map((w) => '⚠️ ' + w).join('<br>') : 'ดูกลุ่มที่ยังขาดหรือเกินในธง แล้วปรับอาหาร');
+    }
+
+    panel.innerHTML =
+      '<h3>ตัวอย่าง</h3>' +
+      '<div class="row"><button class="btn" data-p="good">วันที่ได้สัดส่วน</button><button class="btn" data-p="junk">วันกินขนมเยอะ</button></div>' +
+      '<div class="row"><button class="btn" data-p="clear">ล้างทั้งหมด</button></div>' +
+      '<h3>สรุปทั้งวัน</h3><div class="sum" id="sum"></div>';
+    const sumEl = panel.querySelector('#sum');
+    const PRE = {
+      good: { bf: ['rice', 'rice', 'egg', 'kale', 'milk'], lunch: ['rice', 'rice', 'rice', 'chicken', 'spinach', 'carrot', 'orange'],
+        dinner: ['rice', 'rice', 'rice', 'fish', 'spinach', 'oil', 'oil', 'papaya'], snack: ['milk', 'banana'] },
+      junk: { bf: ['bread', 'bread', 'sausage', 'smilk'], lunch: ['mama', 'soda'], dinner: ['cmk'], snack: ['chips', 'boba'] },
+      clear: { bf: [], lunch: [], dinner: [], snack: [] },
+    };
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-p]'); if (!b) return;
+      Object.keys(plan).forEach((k) => (plan[k] = PRE[b.dataset.p][k].slice())); update();
+    });
+    api.onPresent(() => setTimeout(() => { cv.fit(); draw(); }, 60));
+    update();
+  },
+});
+</script>
+</body>
+</html>

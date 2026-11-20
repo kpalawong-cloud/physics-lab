@@ -180,3 +180,17 @@ body.kid { font-size: 17px; }
 .qa input.why { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); padding: 8px 10px; margin-top: 4px; }
 table.res.plan td:last-child { white-space: nowrap; font-weight: 400; color: var(--muted); }
 table.data input.txt { text-align: left; padding-left: 8px; min-width: 120px; }
+
+/* ---------- ห้องเรียนจำลอง (simkit.js) ---------- */
+.simpage .exp-head { align-items: center; }
+.simpage .presbtn { margin-left: auto; }
+.simpage .lead { color: var(--muted); margin: 2px 0 12px; max-width: 860px; }
+.simpage .stage canvas { height: 520px; }
+@media (max-width: 900px) { .simpage .stage canvas { height: 440px; } }
+.simpage .simfoot { margin-bottom: 30px; }
+.simnote { font-size: 15px; }
+body.present .crumbs, body.present .lead, body.present .simfoot { display: none; }
+body.present .wrap { max-width: none; padding: 0 18px; }
+body.present .stage canvas { height: calc(100vh - 110px); min-height: 420px; }
+body.present .bench { grid-template-columns: minmax(0, 1fr) 320px; }
+@media (max-width: 900px) { body.present .bench { grid-template-columns: 1fr; } }

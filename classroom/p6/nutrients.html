@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>อาหารหลัก 5 หมู่และสารอาหาร · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .nt { display: grid; gap: 12px; user-select: none; -webkit-user-select: none; }
+  .bins { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 700px) { .bins { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .bin { border: 2px dashed var(--bc); border-radius: 14px; padding: 8px; min-height: 150px; background: color-mix(in srgb, var(--bc) 8%, var(--panel)); transition: background .15s; }
+  .bin.hover { background: color-mix(in srgb, var(--bc) 25%, var(--panel)); }
+  .bin h4 { margin: 0; font-size: 17px; color: var(--bc); line-height: 1.25; }
+  .bin small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.3; margin: 2px 0 6px; }
+  .bin .in { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bin .in span { font-size: 13.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; cursor: pointer; }
+  .tray { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; padding: 10px; border-radius: 14px; background: var(--soft); }
+  .food { touch-action: none; cursor: grab; width: 104px; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 6px 4px;
+    text-align: center; font-size: 14.5px; line-height: 1.25; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .food b { display: block; font-size: 38px; line-height: 1.15; font-weight: 400; }
+  .food.sel { outline: 3px solid var(--accent); }
+  .food.shake { animation: shake .45s; border-color: var(--bad); }
+  @keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+  .ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+  .msg { font-size: 16px; min-height: 26px; }
+  .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+  .comp { height: 34px; display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); margin: 6px 0; }
+  .comp div { height: 100%; }
+  .leg { display: grid; grid-template-columns: 16px 1fr auto; gap: 4px 8px; align-items: center; font-size: 15px; }
+  .leg i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .chips2 span { display: inline-block; font-size: 13.5px; border-radius: 999px; padding: 1px 9px; margin: 2px 3px 2px 0; background: var(--soft); }
+  .fn { font-size: 14.5px; margin: 4px 0; padding-left: 18px; }
+  .fn li { margin: 3px 0; }
+  body.present .food { width: 130px; font-size: 17px; } body.present .food b { font-size: 50px; }
+  body.present .bin h4 { font-size: 21px; } body.present .bin { min-height: 200px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ข้อมูลอาหาร (ค่าประมาณต่อ 1 ส่วนที่กินจริง) ใช้ชุดเดียวกันใน nutrients / energy / plate
+// carb, prot, fat, water เป็นกรัม; mass มวลทั้งส่วน (g); vit, min วิตามินและแร่ธาตุเด่น
+const GROUPS = {
+  1: { name: 'หมู่ 1 โปรตีน', short: 'เนื้อสัตว์ นม ไข่ ถั่วเมล็ดแห้ง', color: '#d0612b', job: 'ช่วยให้ร่างกายเจริญเติบโต และซ่อมแซมส่วนที่สึกหรอ' },
+  2: { name: 'หมู่ 2 คาร์โบไฮเดรต', short: 'ข้าว แป้ง เผือก มัน น้ำตาล', color: '#c99a00', job: 'ให้พลังงานแก่ร่างกาย' },
+  3: { name: 'หมู่ 3 แร่ธาตุ', short: 'ผักต่าง ๆ', color: '#2b9a5a', job: 'ช่วยเสริมสร้างและทำให้อวัยวะทำงานได้ปกติ' },
+  4: { name: 'หมู่ 4 วิตามิน', short: 'ผลไม้ต่าง ๆ', color: '#e0452e', job: 'ช่วยให้ร่างกายแข็งแรง ทำงานได้ปกติ ต้านทานโรค' },
+  5: { name: 'หมู่ 5 ไขมัน', short: 'ไขมันจากพืชและสัตว์', color: '#7a55c9', job: 'ให้พลังงานและความอบอุ่น ช่วยละลายวิตามิน A D E K' },
+};
+const FOODS = [
+  { id: 'rice', name: 'ข้าวสวย', emo: '🍚', g: 2, serve: '1 ทัพพี', mass: 60, carb: 17, prot: 1.5, fat: 0.2, water: 40, vit: 'วิตามินบี 1 เล็กน้อย', min: 'ฟอสฟอรัส เล็กน้อย' },
+  { id: 'bread', name: 'ขนมปัง', emo: '🍞', g: 2, serve: '1 แผ่น', mass: 30, carb: 15, prot: 2.5, fat: 1, water: 11, vit: 'วิตามินบี เล็กน้อย', min: 'เหล็ก เล็กน้อย' },
+  { id: 'taro', name: 'เผือกนึ่ง', emo: '🥔', g: 2, serve: '1 ทัพพี', mass: 60, carb: 16, prot: 1, fat: 0.1, water: 42, vit: 'วิตามินบี 6', min: 'โพแทสเซียม' },
+  { id: 'potato', name: 'มันเทศต้ม', emo: '🍠', g: 2, serve: '1 ทัพพี', mass: 60, carb: 12, prot: 1, fat: 0.1, water: 45, vit: 'วิตามินเอ (มันสีส้ม)', min: 'โพแทสเซียม' },
+  { id: 'sugar', name: 'น้ำตาลทราย', emo: '🧂', g: 2, serve: '1 ช้อนชา', mass: 4, carb: 4, prot: 0, fat: 0, water: 0, vit: '–', min: '–' },
+  { id: 'egg', name: 'ไข่ต้ม', emo: '🥚', g: 1, serve: '1 ฟอง', mass: 50, carb: 0.5, prot: 6.5, fat: 5, water: 37, vit: 'วิตามินเอ วิตามินบี 2', min: 'เหล็ก ฟอสฟอรัส' },
+  { id: 'milk', name: 'นมจืด', emo: '🥛', g: 1, serve: '1 แก้ว (200 มล.)', mass: 200, carb: 10, prot: 6.5, fat: 7, water: 175, vit: 'วิตามินบี 2 วิตามินดี', min: 'แคลเซียม ฟอสฟอรัส' },
+  { id: 'chicken', name: 'เนื้อไก่', emo: '🍗', g: 1, serve: '2 ช้อนกินข้าว', mass: 30, carb: 0, prot: 7, fat: 1.5, water: 20, vit: 'วิตามินบี 3', min: 'ฟอสฟอรัส สังกะสี' },
+  { id: 'fish', name: 'ปลาทู', emo: '🐟', g: 1, serve: '1 ตัว', mass: 50, carb: 0, prot: 11, fat: 3, water: 33, vit: 'วิตามินดี วิตามินบี 12', min: 'แคลเซียม (กินก้าง) ไอโอดีน' },
+  { id: 'bean', name: 'ถั่วเขียวต้ม', emo: '🫘', g: 1, serve: '2 ช้อนกินข้าว', mass: 30, carb: 6, prot: 2.5, fat: 0.1, water: 20, vit: 'วิตามินบี 1', min: 'เหล็ก แมกนีเซียม' },
+  { id: 'spinach', name: 'ผักบุ้ง', emo: '🥬', g: 3, serve: '1 ทัพพี', mass: 50, carb: 2, prot: 1.5, fat: 0.1, water: 46, vit: 'วิตามินเอ วิตามินซี', min: 'เหล็ก แคลเซียม' },
+  { id: 'kale', name: 'คะน้า', emo: '🥦', g: 3, serve: '1 ทัพพี', mass: 50, carb: 2, prot: 1.5, fat: 0.2, water: 45, vit: 'วิตามินเอ วิตามินซี', min: 'แคลเซียม เหล็ก' },
+  { id: 'carrot', name: 'แครอท', emo: '🥕', g: 3, serve: '1 ทัพพี', mass: 50, carb: 5, prot: 0.5, fat: 0.1, water: 44, vit: 'วิตามินเอ (มาก)', min: 'โพแทสเซียม' },
+  { id: 'banana', name: 'กล้วยน้ำว้า', emo: '🍌', g: 4, serve: '1 ผล', mass: 50, carb: 13, prot: 0.6, fat: 0.1, water: 35, vit: 'วิตามินบี 6 วิตามินซี', min: 'โพแทสเซียม' },
+  { id: 'orange', name: 'ส้ม', emo: '🍊', g: 4, serve: '1 ผล', mass: 100, carb: 12, prot: 1, fat: 0.1, water: 86, vit: 'วิตามินซี (มาก)', min: 'โพแทสเซียม' },
+  { id: 'papaya', name: 'มะละกอสุก', emo: '🥭', g: 4, serve: '6 ชิ้นคำ', mass: 100, carb: 11, prot: 0.5, fat: 0.1, water: 88, vit: 'วิตามินเอ วิตามินซี', min: 'โพแทสเซียม' },
+  { id: 'guava', name: 'ฝรั่ง', emo: '🍐', g: 4, serve: '½ ผล', mass: 100, carb: 14, prot: 2.5, fat: 1, water: 80, vit: 'วิตามินซี (มากที่สุด)', min: 'โพแทสเซียม' },
+  { id: 'oil', name: 'น้ำมันพืช', emo: '🫗', g: 5, serve: '1 ช้อนชา', mass: 5, carb: 0, prot: 0, fat: 5, water: 0, vit: 'วิตามินอี', min: '–' },
+  { id: 'butter', name: 'เนย', emo: '🧈', g: 5, serve: '1 ช้อนชา', mass: 5, carb: 0, prot: 0, fat: 4, water: 0.8, vit: 'วิตามินเอ', min: '–' },
+  { id: 'coco', name: 'กะทิ', emo: '🥥', g: 5, serve: '2 ช้อนโต๊ะ', mass: 30, carb: 1, prot: 0.7, fat: 7, water: 20, vit: '–', min: 'แมกนีเซียม เล็กน้อย' },
+];
+// เหตุผลที่อาหารอยู่ในหมู่นั้น (ใช้ตอบกลับเมื่อวางผิด)
+const WHY = {
+  1: 'มีโปรตีนมาก', 2: 'มีคาร์โบไฮเดรต (แป้งและน้ำตาล) มาก', 3: 'เป็นผักที่ให้แร่ธาตุ', 4: 'เป็นผลไม้ที่ให้วิตามิน', 5: 'เป็นไขมันจากพืชหรือสัตว์',
+};
+const NUT = [
+  { k: 'carb', name: 'คาร์โบไฮเดรต', col: '#e3b505' },
+  { k: 'prot', name: 'โปรตีน', col: '#d0612b' },
+  { k: 'fat', name: 'ไขมัน', col: '#7a55c9' },
+  { k: 'water', name: 'น้ำ', col: '#4aa3df' },
+  { k: 'other', name: 'อื่น ๆ (ใยอาหาร วิตามิน แร่ธาตุ)', col: '#9aa3b0' },
+];
+
+SimKit.page({
+  id: 'nutrients',
+  title: 'อาหารหลัก 5 หมู่และสารอาหาร',
+  level: 'ป.6',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'ลากบัตรอาหารไปใส่หมู่ที่ถูกต้อง (หรือแตะบัตรแล้วแตะหมู่) แตะบัตรอาหารเพื่อดูว่ามีสารอาหารอะไรบ้าง',
+  about:
+    '<p><b>อาหารหลัก 5 หมู่</b> แบ่งตามสารอาหารที่มีมากในอาหารนั้น</p><ul>' +
+    Object.values(GROUPS).map((g) => '<li><b style="color:' + g.color + '">' + g.name + '</b> ' + g.short + ' · ' + g.job + '</li>').join('') + '</ul>' +
+    '<p><b>สารอาหาร 6 ประเภท</b></p><ul>' +
+    '<li><b>คาร์โบไฮเดรต</b> ให้พลังงาน</li><li><b>โปรตีน</b> ช่วยการเจริญเติบโต ซ่อมแซมส่วนที่สึกหรอ และให้พลังงานได้</li>' +
+    '<li><b>ไขมัน</b> ให้พลังงานและความอบอุ่น ช่วยละลายวิตามินบางชนิด</li><li><b>วิตามิน</b> ช่วยให้ร่างกายทำงานปกติ ไม่ให้พลังงาน</li>' +
+    '<li><b>แร่ธาตุ</b> เป็นส่วนประกอบของกระดูก ฟัน และเลือด ไม่ให้พลังงาน</li><li><b>น้ำ</b> ช่วยลำเลียงสาร ช่วยย่อยอาหาร และควบคุมอุณหภูมิร่างกาย</li></ul>' +
+    '<p class="muted" style="font-size:14px">ปริมาณสารอาหารในภาพจำลองเป็นค่าประมาณต่อ 1 ส่วนที่กิน ใช้เพื่อเปรียบเทียบ</p>',
+  think: [
+    'อาหารชนิดหนึ่งมีสารอาหารหลายประเภท เหตุใดจึงจัดอยู่ในหมู่เดียว',
+    'นมมีน้ำมากที่สุด แต่ทำไมจึงจัดอยู่ในหมู่ 1',
+    'สารอาหารประเภทใดบ้างที่ให้พลังงาน และประเภทใดไม่ให้พลังงาน',
+    'ถ้ากินแต่หมู่ 2 และหมู่ 5 เป็นเวลานาน ร่างกายจะเป็นอย่างไร',
+    'มื้อเช้าของนักเรียนวันนี้มีอาหารครบกี่หมู่',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML =
+      '<div class="nt"><div class="bins" id="bins"></div>' +
+      '<div class="msg" id="msg">ลากบัตรอาหารด้านล่างไปวางในหมู่ที่ถูกต้อง</div>' +
+      '<div class="tray" id="tray"></div></div>';
+    const bins = stage.querySelector('#bins'), tray = stage.querySelector('#tray'), msg = stage.querySelector('#msg');
+    bins.innerHTML = Object.entries(GROUPS).map(([k, g]) =>
+      '<div class="bin" data-g="' + k + '" style="--bc:' + g.color + '"><h4>' + g.name + '</h4><small>' + g.short + '</small><div class="in"></div></div>').join('');
+
+    panel.innerHTML =
+      '<h3>คะแนน</h3><p id="score" style="font-size:18px;margin:0 0 6px"></p>' +
+      '<div class="row"><button class="btn" id="reset">เริ่มใหม่</button><button class="btn" id="answer">เฉลยทั้งหมด</button></div>' +
+      '<h3>สารอาหารในอาหารที่เลือก</h3><div id="info"><p class="muted" style="font-size:15px">แตะบัตรอาหาร (ทั้งในถาดหรือที่วางแล้ว) เพื่อดูสารอาหาร</p></div>';
+    const info = panel.querySelector('#info'), scoreEl = panel.querySelector('#score');
+    let placed = 0, tried = new Set(), firstOk = new Set();
+    const showScore = () => (scoreEl.innerHTML = 'วางแล้ว <b>' + placed + '/' + FOODS.length + '</b> · ถูกตั้งแต่ครั้งแรก <b>' + firstOk.size + '</b>');
+
+    function card(f) {
+      return '<div class="food" data-id="' + f.id + '"><b>' + f.emo + '</b>' + f.name + '</div>';
+    }
+    function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    function reset() {
+      tray.innerHTML = shuffle(FOODS.slice()).map(card).join('');
+      bins.querySelectorAll('.in').forEach((d) => (d.innerHTML = ''));
+      placed = 0; tried = new Set(); firstOk = new Set();
+      msg.className = 'msg'; msg.textContent = 'ลากบัตรอาหารด้านล่างไปวางในหมู่ที่ถูกต้อง';
+      showScore();
+    }
+    reset();
+    panel.querySelector('#reset').onclick = reset;
+    panel.querySelector('#answer').onclick = () => {
+      tray.querySelectorAll('.food').forEach((c) => place(c, FOODS.find((f) => f.id === c.dataset.id), true));
+      msg.className = 'msg ok'; msg.textContent = 'เฉลยแล้ว: อาหารทุกชนิดอยู่ในหมู่ของตัวเอง';
+    };
+
+    function showInfo(f) {
+      tray.querySelectorAll('.food').forEach((c) => c.classList.toggle('sel', c.dataset.id === f.id));
+      const other = Math.max(0, f.mass - f.carb - f.prot - f.fat - f.water);
+      const vals = { carb: f.carb, prot: f.prot, fat: f.fat, water: f.water, other };
+      const g = GROUPS[f.g];
+      info.innerHTML =
+        '<p style="margin:0;font-size:20px"><span style="font-size:32px">' + f.emo + '</span> <b>' + f.name + '</b></p><p class="muted" style="font-size:15px;margin:0">' + f.serve + ' ≈ ' + f.mass + ' g</p>' +
+        '<p style="margin:2px 0;color:' + g.color + ';font-weight:600">' + g.name + '</p>' +
+        '<div class="comp">' + NUT.map((n) => '<div style="width:' + (100 * vals[n.k]) / f.mass + '%;background:' + n.col + '"></div>').join('') + '</div>' +
+        '<div class="leg">' + NUT.map((n) => '<i style="background:' + n.col + '"></i><span>' + n.name + '</span><b>' + (Math.round(vals[n.k] * 10) / 10) + ' g</b>').join('') + '</div>' +
+        '<div class="chips2" style="margin-top:8px"><span>วิตามินเด่น: ' + f.vit + '</span><span>แร่ธาตุเด่น: ' + f.min + '</span></div>' +
+        '<p class="muted" style="font-size:14px;margin-top:6px">สังเกตว่าอาหารชนิดเดียวมีสารอาหารหลายประเภท แต่จัดหมู่ตามสารอาหารที่มีมากหรือเด่นที่สุด</p>';
+    }
+
+    function place(c, f, silent) {
+      const bin = bins.querySelector('.bin[data-g="' + f.g + '"] .in');
+      const s = document.createElement('span');
+      s.textContent = f.emo + ' ' + f.name; s.dataset.id = f.id;
+      s.onclick = () => showInfo(f);
+      bin.appendChild(s);
+      c.remove(); placed++;
+      if (!silent && !tried.has(f.id)) firstOk.add(f.id);
+      tried.add(f.id);
+      showScore();
+      if (placed === FOODS.length && !silent) { msg.className = 'msg ok'; msg.textContent = 'ครบทุกชนิดแล้ว เก่งมาก!'; }
+    }
+
+    // ลากด้วย pointer events ใช้ได้ทั้งเมาส์และนิ้ว
+    let drag = null;
+    tray.addEventListener('pointerdown', (e) => {
+      const c = e.target.closest('.food'); if (!c) return;
+      e.preventDefault();
+      drag = { c, f: FOODS.find((f) => f.id === c.dataset.id), x0: e.clientX, y0: e.clientY, ghost: null, over: null };
+    });
+    document.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      if (!drag.ghost && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 8) {
+        drag.ghost = drag.c.cloneNode(true); drag.ghost.classList.add('ghost'); document.body.appendChild(drag.ghost);
+        drag.c.style.opacity = 0.35;
+      }
+      if (drag.ghost) {
+        drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+        const el = document.elementFromPoint(e.clientX, e.clientY), b = el && el.closest('.bin');
+        if (drag.over !== b) { if (drag.over) drag.over.classList.remove('hover'); if (b) b.classList.add('hover'); drag.over = b; }
+      }
+    });
+    function endDrag(e) {
+      if (!drag) return;
+      const d = drag; drag = null;
+      if (d.over) d.over.classList.remove('hover');
+      if (!d.ghost) { selected = d; showInfo(d.f); return; } // แตะเฉย ๆ = เลือกบัตรและดูข้อมูล (แล้วแตะหมู่เพื่อวางได้)
+      d.ghost.remove(); d.c.style.opacity = '';
+      const el = document.elementFromPoint(e.clientX, e.clientY), b = el && el.closest('.bin');
+      if (!b) return;
+      judge(d, +b.dataset.g);
+    }
+    // แตะบัตรแล้วแตะหมู่ (สะดวกบนจอเล็กที่ลากไกลไม่ถนัด)
+    let selected = null;
+    bins.addEventListener('click', (e) => {
+      const b = e.target.closest('.bin'); if (!b || e.target.closest('.in span')) return;
+      if (!selected || !selected.c.isConnected) { msg.className = 'msg'; msg.textContent = 'แตะบัตรอาหารก่อน แล้วจึงแตะหมู่ที่ต้องการวาง'; return; }
+      const d = selected; selected = null; judge(d, +b.dataset.g);
+    });
+    function judge(d, g) {
+      if (g === d.f.g) {
+        place(d.c, d.f);
+        msg.className = 'msg ok';
+        msg.textContent = '✓ ถูกต้อง: ' + d.f.name + ' อยู่' + GROUPS[g].name + ' เพราะ' + WHY[g];
+        showInfo(d.f);
+      } else {
+        tried.add(d.f.id);
+        d.c.classList.remove('shake'); void d.c.offsetWidth; d.c.classList.add('shake');
+        msg.className = 'msg bad';
+        msg.textContent = '✗ ' + d.f.name + ' ไม่ได้อยู่' + GROUPS[g].name + ' ลองดูว่า' + d.f.name + 'มีสารอาหารอะไรมากที่สุด (แตะบัตรเพื่อดู)';
+      }
+    }
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', () => { if (drag) { if (drag.ghost) drag.ghost.remove(); drag.c.style.opacity = ''; drag = null; } });
+  },
+});
+</script>
+</body>
+</html>

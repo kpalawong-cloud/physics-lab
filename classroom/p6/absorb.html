@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การดูดซึมสารอาหารและการดูแลระบบย่อยอาหาร · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .area { margin: 8px 0; font-size: 14.5px; }
+  .area div { display: grid; grid-template-columns: 92px 1fr 52px; gap: 6px; align-items: center; margin: 3px 0; }
+  .area b { display: block; height: 14px; border-radius: 4px; background: var(--ok); }
+  .habit { margin: 8px 0 2px; font-size: 15px; font-weight: 600; }
+  .habit + .seg button { font-size: 14.5px; padding: 6px 3px; }
+  .mode-a, .mode-b { display: none; }
+  .show-a .mode-a, .show-b .mode-b { display: block; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+const MOL = {
+  glu: { col: '#3fae5a', name: 'กลูโคส (จากแป้ง)', to: 'blood' },
+  amino: { col: '#e0607a', name: 'กรดอะมิโน (จากโปรตีน)', to: 'blood' },
+  fatty: { col: '#e8b62c', name: 'กรดไขมันและกลีเซอรอล (จากไขมัน)', to: 'lymph' },
+};
+const HABITS = [
+  { key: 'water', name: 'ดื่มน้ำต่อวัน', opts: ['น้อยกว่า 4 แก้ว', '6–8 แก้ว'] },
+  { key: 'fiber', name: 'กินผักและผลไม้', opts: ['น้อย', 'ทุกมื้อ'] },
+  { key: 'chew', name: 'การเคี้ยวอาหาร', opts: ['รีบกลืน', 'เคี้ยวละเอียด'] },
+  { key: 'spicy', name: 'อาหารรสจัด มันจัด', opts: ['กินบ่อย', 'นาน ๆ ครั้ง'] },
+  { key: 'meal', name: 'กินอาหารตรงเวลา', opts: ['ไม่ตรงเวลา', 'ตรงเวลา'] },
+  { key: 'toilet', name: 'ขับถ่าย', opts: ['ไม่เป็นเวลา / กลั้นไว้', 'เป็นเวลาทุกวัน'] },
+  { key: 'exercise', name: 'ออกกำลังกาย', opts: ['น้อย', 'สม่ำเสมอ'] },
+];
+
+SimKit.page({
+  id: 'absorb',
+  title: 'การดูดซึมสารอาหารและการดูแลระบบย่อยอาหาร',
+  level: 'ป.6',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'ส่องผนังลำไส้เล็กจากภาพใหญ่ลงไปถึงวิลไล เปรียบเทียบการดูดซึมของผนังเรียบกับผนังที่มีวิลไล แล้วลองเปลี่ยนพฤติกรรมการกินและการขับถ่าย ดูผลต่อระบบย่อยอาหาร',
+  about:
+    '<p>สารอาหารที่ย่อยสมบูรณ์แล้วมีขนาดเล็ก ได้แก่ <b>กลูโคส</b> (จากแป้ง) <b>กรดอะมิโน</b> (จากโปรตีน) และ<b>กรดไขมันกับกลีเซอรอล</b> (จากไขมัน) ถูกดูดซึมผ่านผนัง<b>ลำไส้เล็ก</b>เข้าสู่หลอดเลือด แล้วลำเลียงไปทั่วร่างกาย</p>' +
+    '<p>ผนังลำไส้เล็กมี<b>รอยพับ</b> บนรอยพับมีส่วนยื่นเล็ก ๆ คล้ายนิ้วมือจำนวนมากเรียกว่า<b>วิลไล</b> และผิวของเซลล์บนวิลไลยังมีส่วนยื่นเล็กกว่านั้นอีก ทำให้<b>พื้นที่ผิว</b>ในการดูดซึมเพิ่มขึ้นหลายร้อยเท่า</p>' +
+    '<p>กลูโคสและกรดอะมิโนเข้าสู่<b>หลอดเลือดฝอย</b>ในวิลไล ส่วนกรดไขมันส่วนใหญ่เข้าสู่<b>ท่อน้ำเหลือง</b>ตรงกลางวิลไล ก่อนเข้าสู่กระแสเลือด</p>' +
+    '<p><b>การดูแลระบบย่อยอาหาร</b>: เคี้ยวอาหารให้ละเอียด กินอาหารให้ตรงเวลา ดื่มน้ำสะอาดให้เพียงพอ กินผักผลไม้ที่มีใยอาหาร หลีกเลี่ยงอาหารรสจัด ออกกำลังกาย และขับถ่ายให้เป็นเวลา</p>' +
+    '<p class="muted" style="font-size:14px">ระดับความเสี่ยงในภาพเป็นแบบจำลองอย่างง่ายเพื่อการเรียนรู้ ไม่ใช่การวินิจฉัยโรค</p>',
+  think: [
+    'ถ้าผนังลำไส้เล็กเรียบไม่มีวิลไล การดูดซึมสารอาหารจะเป็นอย่างไร',
+    'ทำไมสารอาหารต้องถูกย่อยให้เล็กก่อน จึงจะดูดซึมได้',
+    'พฤติกรรมใดบ้างที่ช่วยป้องกันท้องผูก เพราะเหตุใด',
+    'ทำไมการกินอาหารไม่ตรงเวลาและกินอาหารรสจัดบ่อย ๆ อาจทำให้ปวดท้อง',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const cv = Lab.canvas(stage.querySelector('canvas'));
+    panel.innerHTML =
+      '<h3>เลือกเรื่อง</h3><div class="seg" id="mode"><button data-v="a">การดูดซึม</button><button data-v="b">ดูแลระบบย่อยอาหาร</button></div>' +
+      '<div class="mode-a"><h3>ขยายดู</h3><div class="seg" id="view"><button data-v="0">ลำไส้เล็ก</button><button data-v="1">รอยพับ</button><button data-v="2">วิลไล</button><button data-v="3">เปรียบเทียบ</button></div>' +
+      '<div class="area" id="area"><div><span>ผนังเรียบ</span><b style="width:1%"></b><span>1 เท่า</span></div>' +
+      '<div><span>มีรอยพับ</span><b style="width:4%"></b><span>~3 เท่า</span></div>' +
+      '<div><span>มีวิลไล</span><b style="width:22%"></b><span>~30 เท่า</span></div>' +
+      '<div><span>ผิวเซลล์ยื่น</span><b style="width:100%"></b><span>~600 เท่า</span></div>' +
+      '<p class="muted" style="margin:2px 0 0;font-size:13px">พื้นที่ผิวโดยประมาณเมื่อเทียบกับผนังเรียบ</p></div>' +
+      '<div class="row"><button class="btn" id="feed">เติมสารอาหารที่ย่อยแล้ว</button></div></div>' +
+      '<div class="mode-b">' + HABITS.map((h) => '<div class="habit">' + h.name + '</div><div class="seg" data-h="' + h.key + '">' + h.opts.map((o, i) => '<button data-v="' + i + '">' + o + '</button>').join('') + '</div>').join('') + '</div>';
+    const $ = (q) => panel.querySelector(q);
+    const s = { mode: 'a', view: 2, hab: { water: 0, fiber: 0, chew: 0, spicy: 0, meal: 0, toilet: 0, exercise: 0 }, mols: [], cmp: null, t: 0 };
+    function sync() {
+      panel.classList.toggle('show-a', s.mode === 'a'); panel.classList.toggle('show-b', s.mode === 'b');
+      $('#mode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.mode));
+      $('#view').querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s.view));
+      panel.querySelectorAll('[data-h]').forEach((sg) => sg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === s.hab[sg.dataset.h])));
+      if (s.mode === 'a') {
+        api.note(['ลำไส้เล็กยาวหลายเมตร ขดอยู่ในช่องท้อง กรอบสีฟ้าคือบริเวณที่จะขยายดู',
+          'ผนังด้านในของลำไส้เล็กพับไปมาเป็นรอยพับ ช่วยเพิ่มพื้นที่ผิว',
+          'บนรอยพับมีวิลไลจำนวนมาก สารอาหารผ่านผนังวิลไล กลูโคสและกรดอะมิโนเข้าหลอดเลือดฝอย (สีแดง) กรดไขมันเข้าท่อน้ำเหลือง (สีขาวตรงกลาง)',
+          'ปล่อยสารอาหารจำนวนเท่ากันลงทั้งสองฝั่ง แล้วนับว่าฝั่งไหนดูดซึมได้มากกว่าในเวลาเท่ากัน'][s.view]);
+      } else advise();
+    }
+    $('#mode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.mode = b.dataset.v; sync(); } });
+    $('#view').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.view = +b.dataset.v; if (s.view === 3) resetCmp(); sync(); } });
+    panel.querySelectorAll('[data-h]').forEach((sg) => sg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { s.hab[sg.dataset.h] = +b.dataset.v; sync(); } }));
+    $('#feed').onclick = () => { if (s.view === 3) resetCmp(); else addMols(18); };
+
+    // ---------- โมเลกุลในวิลไล ----------
+    const kinds = Object.keys(MOL);
+    function addMols(n) { for (let i = 0; i < n; i++) s.mols.push({ k: kinds[i % 3], x: Math.random(), y: Math.random() * 0.25, st: 0, tx: 0, ty: 0, t: 0 }); }
+    addMols(24);
+
+    // ---------- เปรียบเทียบผนังเรียบกับวิลไล ----------
+    function resetCmp() {
+      const mk = () => Array.from({ length: 70 }, (_, i) => ({ x: Math.random(), y: Math.random() * 0.55, k: kinds[i % 3], dead: 0 }));
+      s.cmp = { L: mk(), R: mk(), nL: 0, nR: 0, t: 0 };
+    }
+    resetCmp();
+
+    function risk() {
+      const h = s.hab, bad = (k) => (h[k] === 0 ? 1 : 0);
+      return {
+        con: 0.3 * bad('water') + 0.3 * bad('fiber') + 0.22 * bad('toilet') + 0.18 * bad('exercise'),
+        acid: 0.4 * bad('spicy') + 0.4 * bad('meal') + 0.2 * bad('chew'),
+        dys: 0.5 * bad('chew') + 0.3 * bad('spicy') + 0.2 * bad('meal'),
+      };
+    }
+    function advise() {
+      const r = risk(), tips = [];
+      if (s.hab.water === 0) tips.push('ดื่มน้ำให้มากขึ้น ลำไส้ใหญ่ดูดน้ำกลับมาก กากอาหารจึงแข็ง');
+      if (s.hab.fiber === 0) tips.push('กินผักผลไม้ ใยอาหารช่วยให้กากอาหารนุ่มและเคลื่อนที่ได้ดี');
+      if (s.hab.toilet === 0) tips.push('ขับถ่ายให้เป็นเวลา ไม่กลั้นอุจจาระ');
+      if (s.hab.chew === 0) tips.push('เคี้ยวให้ละเอียด ช่วยการย่อยเชิงกลและลดงานของกระเพาะ');
+      if (s.hab.spicy === 0) tips.push('ลดอาหารรสจัด มันจัด ที่ระคายเคืองกระเพาะ');
+      if (s.hab.meal === 0) tips.push('กินอาหารให้ตรงเวลา');
+      if (s.hab.exercise === 0) tips.push('ออกกำลังกายช่วยให้ลำไส้เคลื่อนไหวดี');
+      api.note(tips.length ? '<b>ควรปรับ:</b><ul style="margin:4px 0 0;padding-left:20px">' + tips.map((t) => '<li>' + t + '</li>').join('') + '</ul>' : '<b>เยี่ยมมาก</b> พฤติกรรมทุกข้อช่วยดูแลระบบย่อยอาหาร');
+      return r;
+    }
+    sync();
+
+    // ---------- วาดภาพ ----------
+    function title(ctx, t) { ctx.fillStyle = Lab.css('--ink'); ctx.font = '600 ' + (cv.w < 560 ? 15 : 19) + 'px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(t, 14, 12); }
+    function label(ctx, t, x, y, al) { ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = al || 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 4; ctx.strokeStyle = Lab.dark() ? 'rgba(20,24,30,.85)' : 'rgba(255,255,255,.9)'; ctx.strokeText(t, x, y); ctx.fillStyle = Lab.css('--ink'); ctx.fillText(t, x, y); }
+
+    function viewOverview(ctx, w, h) {
+      title(ctx, 'ลำไส้เล็กในช่องท้อง');
+      const cx = w / 2, cy = h * 0.55, sc = Math.min(w / 420, h / 520);
+      ctx.fillStyle = Lab.dark() ? '#3a3226' : '#f6dcc4';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - 130 * sc, cy - 200 * sc, 260 * sc, 380 * sc, 70 * sc) : ctx.rect(cx - 130 * sc, cy - 200 * sc, 260 * sc, 380 * sc); ctx.fill();
+      ctx.strokeStyle = 'rgba(190,140,110,.95)'; ctx.lineWidth = 26 * sc; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(cx - 90 * sc, cy + 130 * sc); ctx.lineTo(cx - 92 * sc, cy - 100 * sc); ctx.lineTo(cx + 92 * sc, cy - 100 * sc); ctx.lineTo(cx + 92 * sc, cy + 130 * sc); ctx.stroke();
+      ctx.strokeStyle = 'rgba(240,160,150,1)'; ctx.lineWidth = 14 * sc; ctx.beginPath();
+      for (let i = 0; i < 8; i++) { const y = cy - 60 * sc + i * 24 * sc; ctx[i ? 'lineTo' : 'moveTo'](cx + (i % 2 ? 60 : -60) * sc, y); }
+      ctx.stroke();
+      ctx.strokeStyle = '#2f9be0'; ctx.lineWidth = 3; ctx.strokeRect(cx + 20 * sc, cy - 10 * sc, 50 * sc, 40 * sc);
+      label(ctx, 'ลำไส้เล็ก', cx, cy + 150 * sc); label(ctx, 'ลำไส้ใหญ่', cx - 150 * sc, cy - 120 * sc, 'left');
+      label(ctx, 'บริเวณที่ขยาย', cx + 75 * sc, cy - 25 * sc, 'left');
+    }
+    function viewFolds(ctx, w, h, t) {
+      title(ctx, 'ภาพตัดขวางของลำไส้เล็ก: ผนังด้านในมีรอยพับ');
+      const cx = w / 2, cy = h * 0.55, R = Math.min(w, h) * 0.36;
+      ctx.fillStyle = 'rgba(240,160,150,1)'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+      ctx.fillStyle = Lab.dark() ? '#1f2530' : '#fff8ec';
+      ctx.beginPath();
+      for (let i = 0; i <= 360; i += 2) { const a = (i * Math.PI) / 180, r = R * 0.62 + R * 0.12 * Math.sin(a * 14 + t * 0.4); ctx[i ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#c0504d'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = 'rgba(230,200,120,.6)'; ctx.beginPath(); ctx.arc(cx, cy, R * 0.25, 0, 7); ctx.fill();
+      label(ctx, 'รอยพับ', cx + R * 0.66, cy - R * 0.55, 'left'); label(ctx, 'ช่องกลางลำไส้ (อาหารที่ย่อยแล้ว)', cx, cy);
+      label(ctx, 'ผนังลำไส้', cx - R * 0.9, cy + R * 0.95, 'left');
+    }
+    // วิลไล: นิ้วยื่นขึ้นจากฐาน
+    function villusShape(ctx, x, base, vw, vh) {
+      ctx.beginPath(); ctx.moveTo(x - vw / 2, base); ctx.lineTo(x - vw / 2, base - vh + vw / 2); ctx.arc(x, base - vh + vw / 2, vw / 2, Math.PI, 0); ctx.lineTo(x + vw / 2, base); ctx.closePath();
+    }
+    function drawVilli(ctx, x0, x1, base, n, vh, t) {
+      const pitch = (x1 - x0) / n, vw = pitch * 0.62;
+      ctx.fillStyle = 'rgba(232,150,140,1)'; ctx.fillRect(x0, base, x1 - x0, 40);
+      for (let i = 0; i < n; i++) {
+        const x = x0 + pitch * (i + 0.5);
+        villusShape(ctx, x, base, vw, vh); ctx.fillStyle = 'rgba(245,175,165,1)'; ctx.fill(); ctx.strokeStyle = '#c0504d'; ctx.lineWidth = 1.5; ctx.stroke();
+        // หลอดเลือดฝอยและท่อน้ำเหลือง
+        ctx.strokeStyle = 'rgba(205,40,40,.85)'; ctx.lineWidth = 2;
+        ctx.beginPath(); for (let k = 0; k <= 12; k++) { const yy = base - (vh - vw * 0.3) * (k / 12), xx = x + Math.sin(k * 1.4) * vw * 0.3; ctx[k ? 'lineTo' : 'moveTo'](xx, yy); } ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,240,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, base - vh * 0.7); ctx.stroke();
+      }
+      return { pitch, vw };
+    }
+    function viewVilli(ctx, w, h, dt) {
+      title(ctx, 'วิลไล: ทางเข้าของสารอาหารสู่ร่างกาย');
+      const base = h - 70, vh = h * 0.42, x0 = 20, x1 = w - 20, n = Math.max(4, Math.round((x1 - x0) / 110));
+      const { pitch, vw } = drawVilli(ctx, x0, x1, base, n, vh);
+      ctx.fillStyle = 'rgba(205,40,40,.85)'; ctx.fillRect(x0, base + 14, x1 - x0, 9);
+      ctx.fillStyle = 'rgba(255,255,240,.95)'; ctx.fillRect(x0, base + 28, x1 - x0, 7);
+      label(ctx, 'หลอดเลือดฝอย → ไปทั่วร่างกาย', x0 + 6, base + 18, 'left'); label(ctx, 'ท่อน้ำเหลือง', x1 - 6, base + 31, 'right');
+      const top = 50, lum = base - vh - 10;
+      const narrow = w < 560;
+      label(ctx, 'ช่องกลางลำไส้เล็ก (สารอาหารที่ย่อยแล้ว)', w / 2, narrow ? top + 96 : top + 10);
+      // เคลื่อนโมเลกุล: ลอยลงมา เข้าวิลไลที่ใกล้ที่สุด แล้วไหลลงหลอดเลือดหรือท่อน้ำเหลือง
+      s.mols.forEach((m) => {
+        const px = x0 + m.x * (x1 - x0);
+        if (m.st === 0) {
+          m.y += dt * 0.08; m.x += (Math.random() - 0.5) * dt * 0.05;
+          const yy = top + 30 + m.y * (lum - top);
+          if (yy >= lum + vh * 0.3) {
+            const i = Math.max(0, Math.min(n - 1, Math.floor((px - x0) / pitch)));
+            m.st = 1; m.t = 0; m.vx = x0 + pitch * (i + 0.5);
+          }
+          m.px = px; m.py = yy;
+        } else if (m.st === 1) {
+          m.t += dt * 0.5;
+          const tox = m.vx + (MOL[m.k].to === 'lymph' ? 0 : vw * 0.25), toy = base - vh * 0.5 + m.t * vh * 0.5;
+          m.px += (tox - m.px) * Math.min(1, dt * 3); m.py = toy;
+          if (m.t >= 1) { m.st = 2; m.t = 0; }
+        } else { m.t += dt; m.px += dt * 60; m.py = base + (MOL[m.k].to === 'lymph' ? 31 : 18); if (m.t > 3) m.st = 3; }
+        if (m.st === 3) return;
+        ctx.fillStyle = MOL[m.k].col; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (m.k === 'glu') { for (let j = 0; j < 6; j++) { const a = j * 1.047; ctx[j ? 'lineTo' : 'moveTo'](m.px + Math.cos(a) * 7, m.py + Math.sin(a) * 7); } ctx.closePath(); }
+        else if (m.k === 'amino') ctx.arc(m.px, m.py, 6, 0, 7);
+        else { ctx.ellipse(m.px, m.py, 9, 4, 0.4, 0, 7); }
+        ctx.fill(); ctx.stroke();
+      });
+      s.mols = s.mols.filter((m) => m.st !== 3);
+      if (s.mols.length < 8) addMols(12);
+      // คำอธิบายสี
+      let ly = narrow ? 30 : 46; ctx.textBaseline = 'middle'; ctx.textAlign = narrow ? 'left' : 'right'; ctx.font = (narrow ? 13 : 14) + 'px Sarabun, sans-serif';
+      Object.values(MOL).forEach((m) => {
+        const cx0 = narrow ? 20 : w - 18;
+        ctx.fillStyle = m.col; ctx.beginPath(); ctx.arc(cx0, ly + 22, 6, 0, 7); ctx.fill();
+        ctx.fillStyle = Lab.css('--ink'); ctx.fillText(m.name, narrow ? 32 : w - 30, ly + 22); ly += narrow ? 19 : 22;
+      });
+    }
+    function viewCompare(ctx, w, h, dt) {
+      title(ctx, 'เปรียบเทียบ: ผนังเรียบ กับ ผนังที่มีวิลไล (สารอาหารเริ่มต้นเท่ากัน)');
+      const c = s.cmp; c.t += dt;
+      const top = 70, base = h - 60, mid = w / 2, gap = 10;
+      const sides = [[c.L, 20, mid - gap, false], [c.R, mid + gap, w - 20, true]];
+      sides.forEach(([arr, x0, x1, villi], si) => {
+        ctx.fillStyle = Lab.dark() ? '#1f2530' : '#fff8ec'; ctx.fillRect(x0, top, x1 - x0, base - top);
+        const n = Math.max(3, Math.round((x1 - x0) / 60)), vh = (base - top) * 0.4;
+        let pitch = 0, vw = 0;
+        if (villi) ({ pitch, vw } = drawVilli(ctx, x0, x1, base, n, vh));
+        else { ctx.fillStyle = 'rgba(232,150,140,1)'; ctx.fillRect(x0, base, x1 - x0, 40); }
+        // สารอาหารเคลื่อนที่แบบสุ่ม ถ้าแตะผิวผนังจะถูกดูดซึม
+        arr.forEach((m) => {
+          if (m.dead) { m.dead += dt; return; }
+          // การแพร่: เดินสุ่มแบบเกาส์ ระยะต่อเฟรมแปรตาม √dt
+          const sd = Math.sqrt(dt) * 0.22;
+          m.x += Lab.gauss(Math.random) * sd; m.y += Lab.gauss(Math.random) * sd;
+          if (m.x < 0.01) m.x = 0.02 - m.x; if (m.x > 0.99) m.x = 1.98 - m.x; if (m.y < 0) m.y = -m.y;
+          const px = x0 + m.x * (x1 - x0), py = top + m.y * (base - top);
+          let hit = py >= base;
+          if (villi) {
+            const i = Math.floor((px - x0) / pitch), cxv = x0 + pitch * (i + 0.5);
+            if (Math.abs(px - cxv) <= vw / 2 + 3 && py >= base - vh) hit = true;
+          }
+          if (hit) { m.dead = 0.001; if (si) c.nR++; else c.nL++; }
+          m.px = px; m.py = Math.min(py, base);
+        });
+        arr.forEach((m) => {
+          if (m.dead > 0.6) return;
+          ctx.globalAlpha = m.dead ? 1 - m.dead / 0.6 : 1;
+          ctx.fillStyle = MOL[m.k].col; ctx.beginPath(); ctx.arc(m.px, m.py, 5, 0, 7); ctx.fill();
+          ctx.globalAlpha = 1;
+        });
+        label(ctx, (villi ? 'มีวิลไล' : 'ผนังเรียบ') + ' · ดูดซึมแล้ว ' + (si ? c.nR : c.nL) + ' / 70', (x0 + x1) / 2, top - 14);
+      });
+      ctx.fillStyle = Lab.css('--muted'); ctx.font = '14px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('เวลา ' + c.t.toFixed(0) + ' วินาที · กด "เติมสารอาหารที่ย่อยแล้ว" เพื่อเริ่มใหม่', w / 2, base + 44);
+    }
+
+    // ---------- โหมดดูแลระบบย่อยอาหาร ----------
+    const stool = Array.from({ length: 14 }, (_, i) => ({ u: i / 14 }));
+    function viewCare(ctx, w, h, dt) {
+      const r = risk();
+      title(ctx, 'พฤติกรรมของเรา มีผลต่อระบบย่อยอาหาร');
+      const narrow = w < 560;
+      const sc = narrow ? Math.min(w / 360, (h * 0.6 - 60) / 380) : Math.min(w * 0.6 / 360, h / 480);
+      const cx = narrow ? w / 2 : w * 0.36, cy = narrow ? 50 + 190 * sc : h * 0.55;
+      ctx.fillStyle = Lab.dark() ? '#3a3226' : '#f6dcc4';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - 140 * sc, cy - 190 * sc, 280 * sc, 370 * sc, 70 * sc) : ctx.rect(cx - 140 * sc, cy - 190 * sc, 280 * sc, 370 * sc); ctx.fill();
+      // กระเพาะ: สีแดงขึ้นและมีฟองกรดเมื่อเสี่ยงกรดเกิน
+      const sx = cx + 30 * sc, sy = cy - 110 * sc;
+      ctx.fillStyle = 'rgb(' + Math.round(225 + 30 * r.acid) + ',' + Math.round(150 - 90 * r.acid) + ',' + Math.round(140 - 90 * r.acid) + ')';
+      ctx.beginPath(); ctx.ellipse(sx, sy, 62 * sc, 42 * sc, -0.3, 0, 7); ctx.fill();
+      for (let i = 0; i < Math.round(r.acid * 10); i++) { const a = performance.now() / 700 + i; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(sx + Math.cos(a * 1.3 + i) * 34 * sc, sy + Math.sin(a + i * 2) * 20 * sc, 4 * sc, 0, 7); ctx.stroke(); }
+      label(ctx, 'กระเพาะอาหาร', sx, sy - 54 * sc);
+      // ลำไส้ใหญ่: กรอบ U กลับหัว กากอาหารเคลื่อนช้าลงและแข็งเมื่อเสี่ยงท้องผูก
+      const L = cx - 100 * sc, R = cx + 100 * sc, T = cy - 40 * sc, B = cy + 150 * sc;
+      const path = [[L, B], [L, T], [R, T], [R, B], [cx + 20 * sc, B + 20 * sc]];
+      ctx.strokeStyle = 'rgba(190,140,110,.95)'; ctx.lineWidth = 34 * sc; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); path.forEach(([x, y], i) => ctx[i ? 'lineTo' : 'moveTo'](x, y)); ctx.stroke();
+      const lens = []; let tot = 0; for (let i = 1; i < path.length; i++) { const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); lens.push(d); tot += d; }
+      const at = (u) => { let d = u * tot; for (let i = 0; i < lens.length; i++) { if (d <= lens[i]) { const k = d / lens[i]; return [path[i][0] + (path[i + 1][0] - path[i][0]) * k, path[i][1] + (path[i + 1][1] - path[i][1]) * k]; } d -= lens[i]; } return path[path.length - 1]; };
+      const speed = 0.06 * (1 - 0.85 * r.con);
+      stool.forEach((p, i) => {
+        p.u = (p.u + dt * speed) % 1;
+        const [x, y] = at(p.u), hard = r.con;
+        ctx.fillStyle = 'rgb(' + Math.round(150 - 60 * hard) + ',' + Math.round(105 - 55 * hard) + ',' + Math.round(60 - 30 * hard) + ')';
+        ctx.beginPath(); ctx.arc(x, y, (hard > 0.5 ? 6 : 10) * sc, 0, 7); ctx.fill();
+      });
+      label(ctx, 'ลำไส้ใหญ่', L - 4 * sc, T - 26 * sc, 'left');
+      // มาตรวัดความเสี่ยง
+      const gx = narrow ? 20 : w * 0.66, gy = narrow ? h * 0.66 : h * 0.22, gw = narrow ? w - 40 : w * 0.3;
+      [['ความเสี่ยงท้องผูก', r.con], ['ความเสี่ยงปวดท้อง กรดเกิน', r.acid], ['ความเสี่ยงอาหารไม่ย่อย ท้องอืด', r.dys]].forEach(([t, v], i) => {
+        const y = gy + i * (narrow ? 50 : 70);
+        ctx.fillStyle = Lab.css('--ink'); ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(t, gx, y);
+        ctx.fillStyle = Lab.css('--soft'); ctx.fillRect(gx, y + 4, gw, 16);
+        ctx.fillStyle = v < 0.34 ? Lab.css('--ok') : v < 0.67 ? Lab.css('--warn') : Lab.css('--bad'); ctx.fillRect(gx, y + 4, gw * Math.max(0.03, v), 16);
+        ctx.fillStyle = v < 0.34 ? Lab.css('--ok') : v < 0.67 ? Lab.css('--warn') : Lab.css('--bad'); ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText(v < 0.34 ? 'ต่ำ' : v < 0.67 ? 'ปานกลาง' : 'สูง', gx + gw, y);
+      });
+      const avg = (r.con + r.acid + r.dys) / 3, fx = narrow ? w - 40 : gx + gw / 2, fy = narrow ? 76 : gy + 250;
+      ctx.fillStyle = avg < 0.34 ? '#ffd54a' : avg < 0.67 ? '#ffc04a' : '#ff9a6a'; ctx.beginPath(); ctx.arc(fx, fy, 30, 0, 7); ctx.fill();
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(fx - 10, fy - 6, 3.5, 0, 7); ctx.arc(fx + 10, fy - 6, 3.5, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.beginPath();
+      if (avg < 0.34) ctx.arc(fx, fy + 2, 13, 0.2, Math.PI - 0.2); else if (avg < 0.67) { ctx.moveTo(fx - 11, fy + 12); ctx.lineTo(fx + 11, fy + 12); } else ctx.arc(fx, fy + 22, 12, Math.PI + 0.4, -0.4);
+      ctx.stroke();
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      s.t += dt;
+      const ctx = cv.ctx, w = cv.w, h = cv.h;
+      ctx.clearRect(0, 0, w, h);
+      if (s.mode === 'b') return viewCare(ctx, w, h, dt);
+      [() => viewOverview(ctx, w, h), () => viewFolds(ctx, w, h, s.t), () => viewVilli(ctx, w, h, dt), () => viewCompare(ctx, w, h, dt)][s.view]();
+    });
+  },
+});
+</script>
+</body>
+</html>

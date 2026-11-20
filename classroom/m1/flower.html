@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การสืบพันธุ์ของพืชดอก · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .chk { display: flex; gap: 8px; align-items: center; margin: 6px 0; font-size: 15px; }
+  .stepno { font-weight: 600; margin: 6px 0; }
+  .sl { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: -4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'flower',
+  title: 'การสืบพันธุ์ของพืชดอก',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'ดอกเป็นอวัยวะสืบพันธุ์ของพืชดอก ดูส่วนประกอบของดอก การถ่ายเรณู การปฏิสนธิซ้อน การเกิดผลและเมล็ด การกระจายเมล็ด และการงอกของเมล็ด',
+  about:
+    '<p><b>ส่วนประกอบของดอก</b> จากนอกเข้าใน: กลีบเลี้ยง กลีบดอก เกสรเพศผู้ (อับเรณู + ก้านชูอับเรณู) และเกสรเพศเมีย (ยอดเกสรเพศเมีย + ก้านเกสรเพศเมีย + รังไข่ที่มีออวุล) ทั้งหมดติดอยู่บนฐานรองดอก</p>' +
+    '<p><b>ดอกสมบูรณ์</b> มีครบทั้ง 4 ส่วน เช่น ชบา · <b>ดอกไม่สมบูรณ์</b> ขาดส่วนใดส่วนหนึ่ง เช่น ดอกฟักทองที่มีเฉพาะเกสรเพศผู้หรือเฉพาะเกสรเพศเมีย (เป็นดอกไม่สมบูรณ์เพศด้วย)</p>' +
+    '<p><b>การถ่ายเรณู</b> คือการที่ละอองเรณูไปตกบนยอดเกสรเพศเมีย อาศัยแมลง ลม น้ำ หรือสัตว์อื่น เกิดได้ทั้งภายในดอกเดียวกันหรือข้ามดอก</p>' +
+    '<p><b>การปฏิสนธิซ้อน</b>: ละอองเรณูงอกหลอดละอองเรณูลงไปตามก้านเกสรเพศเมียถึงออวุล ปล่อยสเปิร์ม 2 เซลล์ สเปิร์มเซลล์ที่ 1 ผสมกับเซลล์ไข่ ได้<b>ไซโกต</b> ซึ่งเจริญเป็นเอ็มบริโอ สเปิร์มเซลล์ที่ 2 ผสมกับโพลาร์นิวคลีไอ 2 นิวเคลียส ได้<b>เอนโดสเปิร์ม</b> ซึ่งเป็นเนื้อเยื่อสะสมอาหาร</p>' +
+    '<p>หลังการปฏิสนธิ <b>ออวุลเจริญเป็นเมล็ด</b> และ<b>รังไข่เจริญเป็นผล</b> เมล็ดกระจายได้ด้วยลม น้ำ สัตว์ หรือแรงดีดของผลเอง</p>' +
+    '<p><b>การงอกของเมล็ด</b> ต้องมีน้ำ อากาศ (ออกซิเจน) และอุณหภูมิที่เหมาะสม แสงไม่จำเป็นต่อการงอก แต่ต้นอ่อนที่โตในที่มืดจะซีดเหลืองและยืดยาว</p>',
+  think: [
+    'ดอกที่ใช้ลมช่วยถ่ายเรณู มักมีกลีบดอกเล็ก ไม่มีสีสันและกลิ่น เพราะเหตุใด',
+    'เหตุใดเรียกการปฏิสนธิของพืชดอกว่า "การปฏิสนธิซ้อน"',
+    'เมล็ดในผลมะเขือเทศหนึ่งผลมีจำนวนมาก บอกอะไรเกี่ยวกับจำนวนออวุลในรังไข่',
+    'ผลที่มีปีกหรือมีขนปุย มักกระจายด้วยวิธีใด ผลที่มีหนามเกาะ มักกระจายด้วยวิธีใด',
+    'ถ้านำเมล็ดถั่วเขียวไปเพาะในที่มืดแต่มีน้ำ อากาศ และอุณหภูมิเหมาะสม เมล็ดจะงอกหรือไม่ และต้นอ่อนจะมีลักษณะอย่างไร',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = { mode: 'parts', ftype: 'full', showAll: false, sel: null, agent: 'insect', how: 'cross', step: 0, t: 0,
+      age: 0, agePlay: false, day: 0, dayPlay: false, water: true, air: true, warm: true, light: true };
+    panel.innerHTML =
+      '<h3>ดูเรื่อง</h3><div class="seg" id="mode" style="flex-wrap:wrap"><button data-v="parts">ส่วนของดอก</button><button data-v="poll">การถ่ายเรณู</button></div>' +
+      '<div class="seg" id="mode2"><button data-v="fruit">ผลและเมล็ด</button><button data-v="germ">การงอกของเมล็ด</button></div>' +
+      '<div id="pParts"><h3>ชนิดของดอก</h3><div class="seg" id="ftype"><button data-v="full">ดอกสมบูรณ์</button><button data-v="male">ดอกเพศผู้</button><button data-v="female">ดอกเพศเมีย</button></div>' +
+      '<label class="chk"><input type="checkbox" id="all"> แสดงชื่อทุกส่วน</label><p class="muted" style="font-size:14px;margin:4px 0">แตะส่วนต่าง ๆ ของดอกในภาพเพื่อดูชื่อและหน้าที่</p></div>' +
+      '<div id="pPoll"><h3>ตัวช่วยถ่ายเรณู</h3><div class="seg" id="agent"><button data-v="insect">แมลง</button><button data-v="wind">ลม</button></div>' +
+      '<h3>แบบการถ่ายเรณู</h3><div class="seg" id="how"><button data-v="self">ในดอกเดียวกัน</button><button data-v="cross">ข้ามดอก</button></div>' +
+      '<p class="stepno" id="stepNo"></p><div class="row"><button class="btn" id="prev">◀ ย้อน</button><button class="btn primary" id="next">ขั้นต่อไป ▶</button></div>' +
+      '<div class="row"><button class="btn" id="replay">เล่นขั้นนี้อีกครั้ง</button></div></div>' +
+      '<div id="pFruit"><h3>เวลาหลังการปฏิสนธิ</h3><input type="range" id="age" min="0" max="1" step="0.01"><div class="sl"><span>ดอกบาน</span><span>ผลแก่</span></div>' +
+      '<div class="row"><button class="btn primary" id="agePlay">เล่น</button></div></div>' +
+      '<div id="pGerm"><h3>สภาพที่ให้เมล็ด</h3>' +
+      '<label class="chk"><input type="checkbox" id="water" checked> มีน้ำ (สำลีชื้น)</label>' +
+      '<label class="chk"><input type="checkbox" id="air" checked> มีอากาศ (ไม่จมน้ำ)</label>' +
+      '<label class="chk"><input type="checkbox" id="warm" checked> อุณหภูมิเหมาะสม (ไม่ใช่ในตู้เย็น)</label>' +
+      '<label class="chk"><input type="checkbox" id="light" checked> มีแสง</label>' +
+      '<h3 id="dayLbl">วันที่ 0</h3><input type="range" id="day" min="0" max="7" step="0.05">' +
+      '<div class="row"><button class="btn primary" id="dayPlay">เล่น 7 วัน</button></div></div>';
+    const $ = (q) => panel.querySelector(q);
+    const segs = {};
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); Object.values(segs).forEach((f) => f()); update(); } });
+      segs[id] = sync; sync();
+    }
+    seg('mode', () => s.mode, (v) => (s.mode = v));
+    seg('mode2', () => s.mode, (v) => (s.mode = v));
+    seg('ftype', () => s.ftype, (v) => { s.ftype = v; s.sel = null; });
+    seg('agent', () => s.agent, (v) => { s.agent = v; s.t = 0; });
+    seg('how', () => s.how, (v) => { s.how = v; s.t = 0; });
+    $('#all').onchange = (e) => { s.showAll = e.target.checked; };
+    $('#prev').onclick = () => { s.step = Math.max(0, s.step - 1); s.t = 0; update(); };
+    $('#next').onclick = () => { s.step = Math.min(5, s.step + 1); s.t = 0; update(); };
+    $('#replay').onclick = () => { s.t = 0; };
+    const age = $('#age'); age.value = 0;
+    age.oninput = () => { s.age = +age.value; s.agePlay = false; update(); };
+    $('#agePlay').onclick = () => { if (s.age >= 1) s.age = 0; s.agePlay = !s.agePlay; update(); };
+    ['water', 'air', 'warm', 'light'].forEach((k) => ($('#' + k).onchange = (e) => { s[k] = e.target.checked; update(); }));
+    const day = $('#day'); day.value = 0;
+    day.oninput = () => { s.day = +day.value; s.dayPlay = false; update(); };
+    $('#dayPlay').onclick = () => { if (s.day >= 7) s.day = 0; s.dayPlay = !s.dayPlay; update(); };
+
+    // ---------- ข้อมูลส่วนของดอก ----------
+    const INFO = {
+      sepal: ['กลีบเลี้ยง', 'อยู่ชั้นนอกสุด มักมีสีเขียว ห่อหุ้มและป้องกันดอกขณะยังเป็นดอกตูม'],
+      petal: ['กลีบดอก', 'มักมีสีสันสดใสและมีกลิ่น ช่วยล่อแมลงให้มาช่วยถ่ายเรณู'],
+      anther: ['อับเรณู (เกสรเพศผู้)', 'สร้างละอองเรณู ภายในละอองเรณูมีเซลล์สืบพันธุ์เพศผู้ (สเปิร์ม)'],
+      filament: ['ก้านชูอับเรณู (เกสรเพศผู้)', 'ชูอับเรณูให้อยู่ในตำแหน่งที่ละอองเรณูกระจายออกไปได้ง่าย'],
+      stigma: ['ยอดเกสรเพศเมีย', 'มีน้ำเหนียว ๆ หรือขน ช่วยจับละอองเรณูที่ตกลงมา'],
+      style: ['ก้านเกสรเพศเมีย', 'ชูยอดเกสรเพศเมีย และเป็นทางที่หลอดละอองเรณูงอกผ่านลงไปยังรังไข่'],
+      ovary: ['รังไข่ (เกสรเพศเมีย)', 'ภายในมีออวุล หลังการปฏิสนธิรังไข่เจริญเป็นผล'],
+      ovule: ['ออวุล', 'ภายในมีเซลล์ไข่ (เซลล์สืบพันธุ์เพศเมีย) หลังการปฏิสนธิออวุลเจริญเป็นเมล็ด'],
+      recept: ['ฐานรองดอก', 'ส่วนปลายของก้านดอกที่ขยายออก เป็นที่ติดของส่วนต่าง ๆ ของดอก'],
+      pedicel: ['ก้านดอก', 'ชูดอกและต่อกับลำต้นหรือกิ่ง'],
+    };
+    // วาดดอกผ่าตามยาว: คืนรายการ Path2D สำหรับแตะเลือก
+    function flowerParts(ox, oy, u, type, opt) {
+      opt = opt || {};
+      const P = (fn) => { const p = new Path2D(); fn(p, (x, y) => [ox + x * u, oy + y * u]); return p; };
+      const parts = [];
+      const fall = opt.fall || 0, swell = opt.swell || 0;
+      parts.push({ k: 'pedicel', fill: '#6a9f3a', p: P((p, T) => { p.moveTo(...T(-8, 0)); p.lineTo(...T(8, 0)); p.lineTo(...T(10, 170)); p.lineTo(...T(-10, 170)); p.closePath(); }) });
+      [-1, 1].forEach((d) => parts.push({ k: 'sepal', fill: '#66a33a', p: P((p, T) => { p.moveTo(...T(d * 28, -8)); p.quadraticCurveTo(...T(d * 95, -10), ...T(d * 125, -55)); p.quadraticCurveTo(...T(d * 80, 10), ...T(d * 18, 6)); p.closePath(); }) }));
+      parts.push({ k: 'recept', fill: '#8bc34a', p: P((p, T) => { p.ellipse(...T(0, -4), 42 * u, 16 * u, 0, 0, Math.PI * 2); }) });
+      if (fall < 1) [-1, 1].forEach((d) => parts.push({ k: 'petal', fill: '#f48fb1', alpha: 1 - fall, dy: fall * 160, p: P((p, T) => {
+        const dy = fall * 160;
+        p.moveTo(...T(d * 34, -14 + dy)); p.bezierCurveTo(...T(d * 140, -60 + dy), ...T(d * 200, -200 + dy), ...T(d * 165, -250 + dy)); p.bezierCurveTo(...T(d * 120, -200 + dy), ...T(d * 60, -110 + dy), ...T(d * 20, -34 + dy)); p.closePath(); }) }));
+      if (type !== 'female' && fall < 1) {
+        [[20, 55, -205], [42, 88, -175]].forEach(([bx, tx, ty]) => [-1, 1].forEach((d) => {
+          const dy = fall * 170;
+          parts.push({ k: 'filament', stroke: '#e0c97a', w: 4, alpha: 1 - fall, p: P((p, T) => { p.moveTo(...T(d * bx, -18 + dy)); p.quadraticCurveTo(...T(d * (bx + 10), (ty - 18) / 2 + dy), ...T(d * tx, ty + 14 + dy)); }) });
+          parts.push({ k: 'anther', fill: '#ffb300', alpha: 1 - fall, p: P((p, T) => { p.ellipse(...T(d * tx, ty + dy), 10 * u, 17 * u, d * 0.25, 0, Math.PI * 2); }) });
+        }));
+      }
+      if (type !== 'male') {
+        const r = 1 + swell * 1.6;
+        parts.push({ k: 'ovary', fill: swell > 0.3 ? 'rgb(' + Math.round(170 + 60 * swell) + ',' + Math.round(220 - 150 * swell) + ',90)' : '#c5e1a5', p: P((p, T) => { p.ellipse(...T(0, -55 * r), 34 * u * r, 38 * u * r, 0, 0, Math.PI * 2); }) });
+        [[-12, -66], [12, -66], [-12, -43], [12, -43]].forEach(([x, y]) => parts.push({ k: 'ovule', fill: swell > 0.4 ? '#8d6e63' : '#fff3c4', p: P((p, T) => { p.ellipse(...T(x * r, y * r), 7 * u * (1 + swell * 0.6), 8 * u * (1 + swell * 0.6), 0, 0, Math.PI * 2); }) }));
+        if (swell < 0.5) {
+          const a = 1 - swell * 2;
+          parts.push({ k: 'style', fill: '#aed581', alpha: a, p: P((p, T) => { p.rect(...T(-5, -235), 10 * u, 140 * u); }) });
+          parts.push({ k: 'stigma', fill: '#9ccc65', alpha: a, p: P((p, T) => { [[-9, -240], [9, -240], [0, -250]].forEach(([x, y]) => { const [X, Y] = T(x, y); p.moveTo(X + 10 * u, Y); p.arc(X, Y, 10 * u, 0, Math.PI * 2); }); }) });
+        }
+      }
+      return parts;
+    }
+    function paint(ctx, parts, hi) {
+      parts.forEach((q) => {
+        ctx.globalAlpha = q.alpha == null ? 1 : Math.max(0, q.alpha);
+        if (q.stroke) { ctx.strokeStyle = q.stroke; ctx.lineWidth = q.w; ctx.stroke(q.p); }
+        else { ctx.fillStyle = q.fill; ctx.fill(q.p); ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.stroke(q.p); }
+        if (hi && q.k === hi) { ctx.globalAlpha = 1; ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 4; ctx.stroke(q.p); }
+      });
+      ctx.globalAlpha = 1;
+    }
+    // ตำแหน่งป้ายชื่อของแต่ละส่วน (หน่วยของภาพดอก) และฝั่งที่วางป้าย
+    const LABELS = { stigma: [0, -248, 1], style: [5, -170, 1], ovary: [30, -55, 1], ovule: [-16, -45, -1], anther: [-88, -175, -1], filament: [-60, -110, -1],
+      petal: [150, -200, 1], sepal: [-110, -40, -1], recept: [40, -2, 1], pedicel: [9, 120, 1] };
+    let PARTS = [], LAY = {};
+
+    function drawParts(ctx) {
+      const w = cv.w, h = cv.h, ink = Lab.css('--ink');
+      const u = Math.min(w / (w < 600 ? 440 : 620), h / 470), ox = w / 2, oy = h * 0.66;
+      LAY = { ox, oy, u };
+      PARTS = flowerParts(ox, oy, u, s.ftype);
+      paint(ctx, PARTS, s.sel);
+      const keys = s.showAll ? Object.keys(LABELS).filter((k) => PARTS.some((q) => q.k === k)) : s.sel ? [s.sel] : [];
+      ctx.font = '600 ' + Math.max(13, 15 * Math.min(1.3, u)) + 'px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+      keys.forEach((k) => {
+        const [x, y, side] = LABELS[k], px = ox + x * u, py = oy + y * u, lx = side > 0 ? Math.min(w - 8, ox + 210 * u) : Math.max(8, ox - 210 * u);
+        ctx.strokeStyle = ink; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(lx + (side > 0 ? -4 : 4), py); ctx.stroke();
+        ctx.fillStyle = ink; ctx.textAlign = side > 0 ? 'right' : 'left';
+        const name = INFO[k][0];
+        const tw = ctx.measureText(name).width;
+        ctx.fillStyle = Lab.css('--panel'); ctx.globalAlpha = 0.85; ctx.fillRect(side > 0 ? lx - tw - 2 : lx - 2, py - 11, tw + 4, 22); ctx.globalAlpha = 1;
+        ctx.fillStyle = ink; ctx.fillText(name, lx, py - 0);
+      });
+      ctx.fillStyle = ink; ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText({ full: 'ดอกสมบูรณ์ (เช่น ชบา) · ผ่าตามยาว', male: 'ดอกเพศผู้ของฟักทอง: ไม่มีเกสรเพศเมีย → ดอกไม่สมบูรณ์', female: 'ดอกเพศเมียของฟักทอง: ไม่มีเกสรเพศผู้ → ดอกไม่สมบูรณ์' }[s.ftype], 14, 14);
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      if (s.mode !== 'parts') return;
+      const [x, y] = Lab.pos(canvas, e), ctx = cv.ctx;
+      let hit = null;
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const X = x * cv.dpr, Y = y * cv.dpr; ctx.scale(cv.dpr, cv.dpr);
+      for (let i = PARTS.length - 1; i >= 0; i--) {
+        const q = PARTS[i];
+        if (q.stroke) { ctx.lineWidth = 14; if (ctx.isPointInStroke(q.p, X, Y)) { hit = q.k; break; } }
+        else if (ctx.isPointInPath(q.p, X, Y)) { hit = q.k; break; }
+      }
+      ctx.restore();
+      s.sel = hit; update();
+      e.preventDefault();
+    });
+
+    // ---------- การถ่ายเรณูและการปฏิสนธิ ----------
+    const STEP_TXT = [
+      'อับเรณูแก่และแตกออก ปล่อยละอองเรณูจำนวนมาก',
+      'การถ่ายเรณู: ละอองเรณูไปตกบนยอดเกสรเพศเมีย',
+      'ละอองเรณูงอก<b>หลอดละอองเรณู</b>ลงไปตามก้านเกสรเพศเมีย ภายในมีสเปิร์ม 2 เซลล์',
+      'หลอดละอองเรณูเข้าสู่ออวุลทางช่องเล็ก ๆ แล้วปล่อยสเปิร์ม 2 เซลล์',
+      '<b>การปฏิสนธิซ้อน</b>: สเปิร์ม 1 + เซลล์ไข่ → <b>ไซโกต</b> · สเปิร์ม 1 + โพลาร์นิวคลีไอ 2 นิวเคลียส → <b>เอนโดสเปิร์ม</b>',
+      'ไซโกตเจริญเป็น<b>เอ็มบริโอ</b> เอนโดสเปิร์มเป็นอาหารสะสม ออวุลทั้งหมดเจริญเป็น<b>เมล็ด</b> รังไข่เจริญเป็น<b>ผล</b>',
+    ];
+    const pollen = [];
+    for (let i = 0; i < 40; i++) pollen.push({ a: Math.random(), b: Math.random(), c: Math.random() });
+    function drawPoll(ctx, dt) {
+      const w = cv.w, h = cv.h, ink = Lab.css('--ink'), muted = Lab.css('--muted'), dark = Lab.dark();
+      const t = Math.min(1, s.t);
+      ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = ink;
+      ctx.fillText('ขั้นที่ ' + (s.step + 1) + ' / 6', 14, 14);
+      if (s.step <= 1) {
+        const two = s.how === 'cross';
+        const u = Math.min(w / (two ? 900 : 560), h / 520), oy = h * 0.74;
+        const A = two ? w * 0.28 : w / 2, B = two ? w * 0.72 : w / 2;
+        paint(ctx, flowerParts(A, oy, u, 'full'));
+        if (two) paint(ctx, flowerParts(B, oy, u, 'full'));
+        const anther = [A - 88 * u, oy - 175 * u], stig = [B, oy - 245 * u];
+        ctx.fillStyle = '#ffd54f';
+        if (s.step === 0) {
+          pollen.forEach((p, i) => { const r = 6 + t * 30 * p.a; const an = p.b * 6.28; ctx.beginPath(); ctx.arc(anther[0] + Math.cos(an) * r, anther[1] + Math.sin(an) * r + t * 10 * p.c, 2.6, 0, 7); ctx.fill(); });
+        } else if (s.agent === 'insect') {
+          // แมลงบินจากอับเรณูไปยังยอดเกสรเพศเมีย พาละอองเรณูติดตัวไป
+          const k = Math.min(1, t * 1.2), bx = anther[0] + (stig[0] - anther[0]) * k, by = anther[1] + (stig[1] - anther[1]) * k - Math.sin(k * Math.PI) * 120 * u;
+          ctx.fillStyle = '#ffca28'; ctx.beginPath(); ctx.ellipse(bx, by, 16, 10, 0, 0, 7); ctx.fill();
+          ctx.fillStyle = '#333'; for (let q = -1; q <= 1; q++) ctx.fillRect(bx + q * 6 - 1.5, by - 9, 3, 18);
+          ctx.fillStyle = 'rgba(200,230,255,.8)'; const fl = Math.sin(performance.now() / 30) * 4;
+          ctx.beginPath(); ctx.ellipse(bx - 4, by - 12 - fl, 8, 12, -0.4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(bx + 6, by - 12 - fl, 8, 12, 0.4, 0, 7); ctx.fill();
+          ctx.fillStyle = '#ffd54f'; for (let q = 0; q < 6; q++) { ctx.beginPath(); ctx.arc(bx - 8 + q * 3, by + 9, 2.4, 0, 7); ctx.fill(); }
+          if (k >= 1) for (let q = 0; q < 5; q++) { ctx.beginPath(); ctx.arc(stig[0] - 8 + q * 4, stig[1] - 8, 2.6, 0, 7); ctx.fill(); }
+        } else {
+          // ลมพัดละอองเรณูจำนวนมาก บางส่วนตกบนยอดเกสรเพศเมีย
+          pollen.forEach((p, i) => {
+            const k = Math.min(1, t * 1.3 * (0.7 + 0.5 * p.a));
+            const x = anther[0] + (stig[0] - anther[0] + (p.b - 0.5) * 260 * u) * k, y = anther[1] + (stig[1] - anther[1] + (p.c - 0.3) * 200 * u) * k - Math.sin(k * 3.1) * 40 * u;
+            ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 7); ctx.fill();
+          });
+          if (t > 0.8) for (let q = 0; q < 3; q++) { ctx.beginPath(); ctx.arc(stig[0] - 6 + q * 6, stig[1] - 8, 2.6, 0, 7); ctx.fill(); }
+          ctx.strokeStyle = muted; ctx.lineWidth = 2; for (let q = 0; q < 3; q++) { const yy = 70 + q * 22, xx = (performance.now() / 6 + q * 90) % (w + 80) - 80; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + 60, yy); ctx.stroke(); }
+        }
+        ctx.fillStyle = ink; ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        if (two) { ctx.fillText('ดอกที่ 1', A, oy + 40 * u + 10); ctx.fillText('ดอกที่ 2', B, oy + 40 * u + 10); }
+        ctx.fillText(s.step === 0 ? 'ละอองเรณูหลุดออกจากอับเรณู' : (two ? 'ถ่ายเรณูข้ามดอก' : 'ถ่ายเรณูภายในดอกเดียวกัน') + ' โดย' + (s.agent === 'insect' ? 'แมลง' : 'ลม'), w / 2, 44);
+        return;
+      }
+      if (s.step <= 3) {
+        // ภาพขยายเกสรเพศเมีย: ยอดเกสร → ก้านเกสร → รังไข่ที่มีออวุล 1 เม็ด
+        const cx = w / 2, top = 70, styleBot = h * 0.5, oyc = h * 0.72, ovR = Math.min(w * 0.26, h * 0.24);
+        ctx.fillStyle = '#c5e1a5'; ctx.beginPath(); ctx.ellipse(cx, oyc, ovR * 1.25, ovR * 1.05, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#aed581'; ctx.fillRect(cx - 16, top + 20, 32, styleBot - top);
+        ctx.fillStyle = '#9ccc65'; [[cx - 22, top + 18], [cx + 22, top + 18], [cx, top]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 22, 0, 7); ctx.fill(); });
+        // ออวุล
+        const ovx = cx, ovy = oyc + ovR * 0.1, orx = ovR * 0.6, ory = ovR * 0.75;
+        ctx.fillStyle = '#fff3c4'; ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(ovx, ovy, orx, ory, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fce4ec'; ctx.beginPath(); ctx.ellipse(ovx, ovy, orx * 0.6, ory * 0.7, 0, 0, 7); ctx.fill();
+        // เซลล์ไข่ใกล้ช่องเปิด (ด้านบน) และโพลาร์นิวคลีไอตรงกลาง
+        ctx.fillStyle = '#ec407a'; ctx.beginPath(); ctx.arc(ovx, ovy - ory * 0.45, 9, 0, 7); ctx.fill();
+        ctx.fillStyle = '#7e57c2'; ctx.beginPath(); ctx.arc(ovx - 9, ovy, 6, 0, 7); ctx.arc(ovx + 9, ovy, 6, 0, 7); ctx.fill();
+        // ละอองเรณูบนยอดเกสร + หลอดละอองเรณู
+        ctx.fillStyle = '#ffca28'; ctx.beginPath(); ctx.arc(cx + 8, top - 18, 10, 0, 7); ctx.fill();
+        const k = s.step === 2 ? t : 1, k2 = s.step === 3 ? t : 0;
+        const path = [[cx + 8, top - 10], [cx + 4, top + 30], [cx, styleBot], [cx + 4, oyc - ovR * 0.95], [ovx, ovy - ory - 6]];
+        const endIdx = s.step === 2 ? 3 : 4, prog = s.step === 2 ? k : k2;
+        ctx.strokeStyle = '#ffb300'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...path[0]);
+        let tip = path[0];
+        const segsN = endIdx, tot = s.step === 2 ? k * 3 : 3 + k2;
+        for (let i = 1; i <= 4; i++) {
+          const f = Math.max(0, Math.min(1, tot - (i - 1)));
+          if (f <= 0) break;
+          tip = [path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f, path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f];
+          ctx.lineTo(...tip);
+        }
+        ctx.stroke();
+        // สเปิร์ม 2 เซลล์ที่ปลายหลอด
+        ctx.fillStyle = '#1565c0';
+        if (s.step === 3 && k2 > 0.9) { ctx.beginPath(); ctx.arc(ovx - 6, ovy - ory * 0.7, 5, 0, 7); ctx.arc(ovx + 6, ovy - ory * 0.7, 5, 0, 7); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(tip[0] - 5, tip[1] - 8, 4.5, 0, 7); ctx.arc(tip[0] + 5, tip[1] - 14, 4.5, 0, 7); ctx.fill(); }
+        // ป้าย
+        ctx.font = '600 14px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+        const lab = (txt, x, y, al, c) => { ctx.fillStyle = c || ink; ctx.textAlign = al; ctx.fillText(txt, x, y); };
+        const R = cx + ovR * 1.3 + 10, Lx = cx - ovR * 1.3 - 10;
+        lab('ยอดเกสรเพศเมีย', cx + 52, top, 'left'); lab('ละอองเรณู', cx + 22, top - 22, 'left', '#c77800');
+        lab('ก้านเกสรเพศเมีย', cx + 26, (top + styleBot) / 2, 'left'); lab('หลอดละอองเรณู', cx - 26, (top + styleBot) / 2 + 30, 'right', '#c77800');
+        lab('รังไข่', Lx, oyc + ovR * 0.7, 'right'); lab('ออวุล', R, ovy + ory * 0.6, 'left', '#a07d10');
+        lab('เซลล์ไข่', R, ovy - ory * 0.45, 'left', '#c2185b'); lab('โพลาร์นิวคลีไอ', R, ovy, 'left', '#5e35b1');
+        lab('สเปิร์ม 2 เซลล์', Lx, ovy - ory * 0.9, 'right', '#1565c0');
+        return;
+      }
+      // ขั้น 4–5: ภาพขยายออวุล การปฏิสนธิซ้อน → เมล็ด
+      const cx = w / 2, cy = h * 0.55, R = Math.min(w * 0.3, h * 0.36);
+      const toSeed = s.step === 5 ? t : 0;
+      ctx.fillStyle = toSeed > 0 ? 'rgb(' + Math.round(255 - 110 * toSeed) + ',' + Math.round(243 - 130 * toSeed) + ',' + Math.round(196 - 120 * toSeed) + ')' : '#fff3c4';
+      ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 3 + toSeed * 6;
+      ctx.beginPath(); ctx.ellipse(cx, cy, R * 0.8, R, 0, 0, 7); ctx.fill(); ctx.stroke();
+      const f = s.step === 4 ? t : 1;
+      // เอนโดสเปิร์ม (ขยายเต็มเมล็ดเมื่อเป็นเมล็ด)
+      ctx.fillStyle = f > 0.7 ? 'rgba(255,224,130,' + (0.6 + 0.4 * toSeed) + ')' : '#fce4ec';
+      ctx.beginPath(); ctx.ellipse(cx, cy + R * 0.05, R * (0.5 + 0.22 * toSeed), R * (0.62 + 0.25 * toSeed), 0, 0, 7); ctx.fill();
+      // เซลล์ไข่ / ไซโกต / เอ็มบริโอ
+      const ex = cx, ey = cy - R * 0.55 + toSeed * R * 0.15;
+      ctx.fillStyle = f > 0.7 ? '#43a047' : '#ec407a';
+      if (toSeed > 0.2) { ctx.beginPath(); ctx.ellipse(ex, ey + R * 0.1, R * 0.12 + toSeed * R * 0.08, R * 0.22 + toSeed * R * 0.12, 0, 0, 7); ctx.fill(); }
+      else { ctx.beginPath(); ctx.arc(ex, ey, R * 0.1, 0, 7); ctx.fill(); }
+      // นิวเคลียสกลาง
+      if (f <= 0.7) { ctx.fillStyle = '#7e57c2'; ctx.beginPath(); ctx.arc(cx - R * 0.08, cy, R * 0.06, 0, 7); ctx.arc(cx + R * 0.08, cy, R * 0.06, 0, 7); ctx.fill(); }
+      else if (toSeed < 0.2) { ctx.fillStyle = '#ff8f00'; ctx.beginPath(); ctx.arc(cx, cy, R * 0.09, 0, 7); ctx.fill(); }
+      // สเปิร์มเคลื่อนที่ไปผสม
+      if (s.step === 4 && f < 0.7) {
+        const k = f / 0.7;
+        ctx.fillStyle = '#1565c0';
+        ctx.beginPath(); ctx.arc(cx - 20 + 20 * k, cy - R * 0.95 + (ey - (cy - R * 0.95)) * k, R * 0.05, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 20 - 20 * k, cy - R * 0.95 + (cy - (cy - R * 0.95)) * k, R * 0.05, 0, 7); ctx.fill();
+      }
+      ctx.font = '600 15px Sarabun, sans-serif'; ctx.textBaseline = 'middle';
+      const lab = (txt, x, y, al, c) => { ctx.fillStyle = c || ink; ctx.textAlign = al; ctx.fillText(txt, x, y); };
+      const Rx = cx + R * 0.85, Lx = cx - R * 0.85;
+      if (s.step === 4) {
+        lab(f > 0.7 ? 'ไซโกต (สเปิร์ม + เซลล์ไข่)' : 'เซลล์ไข่', Rx, ey, 'left', f > 0.7 ? '#2e7d32' : '#c2185b');
+        lab(f > 0.7 ? 'เอนโดสเปิร์ม (สเปิร์ม + โพลาร์นิวคลีไอ 2)' : 'โพลาร์นิวคลีไอ 2 นิวเคลียส', Rx, cy + R * 0.2, 'left', f > 0.7 ? '#e65100' : '#5e35b1');
+        if (f < 0.7) lab('สเปิร์ม 2 เซลล์', Lx, cy - R * 0.85, 'right', '#1565c0');
+        lab('ออวุล', Lx, cy + R * 0.6, 'right', '#a07d10');
+      } else {
+        lab(toSeed > 0.5 ? 'เอ็มบริโอ (ต้นอ่อน)' : 'ไซโกต', Rx, ey + R * 0.1, 'left', '#2e7d32');
+        lab('เอนโดสเปิร์ม (อาหารสะสม)', Rx, cy + R * 0.35, 'left', '#e65100');
+        lab(toSeed > 0.5 ? 'เปลือกหุ้มเมล็ด' : 'ผนังออวุล', Lx, cy + R * 0.7, 'right', '#8d6e63');
+        ctx.font = '600 18px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = ink;
+        ctx.fillText(toSeed > 0.5 ? 'ออวุล → เมล็ด · รังไข่ → ผล' : 'ออวุลกำลังเจริญเป็นเมล็ด', cx, 44);
+      }
+    }
+
+    // ---------- ผลและการกระจายเมล็ด ----------
+    function drawFruit(ctx, dt) {
+      const w = cv.w, h = cv.h, ink = Lab.css('--ink'), muted = Lab.css('--muted'), dark = Lab.dark();
+      if (s.agePlay) { s.age = Math.min(1, s.age + dt * 0.15); age.value = s.age; if (s.age >= 1) { s.agePlay = false; update(); } }
+      const narrow = w < 600;
+      const ax = narrow ? w / 2 : w * 0.27, ay = narrow ? h * 0.45 : h * 0.7, u = narrow ? Math.min(w / 560, h / 900) : Math.min(w / 1100, h / 560);
+      const fall = Math.min(1, s.age * 2.2), swell = Math.max(0, (s.age - 0.25) / 0.75);
+      paint(ctx, flowerParts(ax, ay, u, 'full', { fall, swell }));
+      ctx.fillStyle = ink; ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(s.age < 0.15 ? 'ดอกได้รับการปฏิสนธิแล้ว' : s.age < 0.5 ? 'กลีบดอกและเกสรเพศผู้ร่วงไป' : s.age < 0.9 ? 'รังไข่ขยายเป็นผล ออวุลเป็นเมล็ด' : 'ผลแก่ (ผ่าให้เห็นเมล็ดข้างใน)', ax, 14);
+      if (swell > 0.5) {
+        ctx.font = '600 14px Sarabun, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+        const r = 1 + swell * 1.6;
+        ctx.fillText('ผล (มาจากรังไข่)', ax + 40 * u * r, ay - 60 * u * r);
+        ctx.fillText('เมล็ด (มาจากออวุล)', ax + 40 * u * r, ay - 20 * u * r);
+        ctx.fillText('กลีบเลี้ยงยังติดอยู่', ax + 60 * u, ay + 20 * u);
+      }
+      // การกระจายเมล็ด 4 แบบ
+      const tiles = [['ลม', 'ยางนา มีปีก หมุนลอยไปไกล'], ['น้ำ', 'มะพร้าว ลอยน้ำไปได้'], ['สัตว์', 'หญ้าเจ้าชู้ ติดขนสัตว์'], ['แรงดีดของผล', 'ต้อยติ่ง ฝักแตกดีดเมล็ด']];
+      const tx0 = narrow ? 10 : w * 0.52, ty0 = narrow ? h * 0.62 : 40, tw = narrow ? (w - 30) / 2 : (w * 0.46 - 10) / 2, th = narrow ? (h * 0.36 - 10) / 2 : (h - 60) / 2;
+      const T = performance.now() / 1000;
+      tiles.forEach(([name, eg], i) => {
+        const x = tx0 + (i % 2) * (tw + 10), y = ty0 + Math.floor(i / 2) * (th + 10);
+        ctx.fillStyle = dark ? '#232934' : '#ffffff'; ctx.strokeStyle = Lab.css('--line'); ctx.lineWidth = 1;
+        ctx.fillRect(x, y, tw, th); ctx.strokeRect(x, y, tw, th);
+        ctx.fillStyle = ink; ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(name, x + 8, y + 6);
+        ctx.fillStyle = muted; ctx.font = '12px Sarabun, sans-serif'; ctx.fillText(eg, x + 8, y + 24);
+        const cx = x + tw / 2, cy = y + th * 0.62;
+        ctx.save(); ctx.beginPath(); ctx.rect(x, y + 40, tw, th - 40); ctx.clip();
+        if (i === 0) {
+          const k = (T * 0.25) % 1, px = x + 20 + k * (tw - 40), py = y + 50 + k * (th - 70);
+          ctx.translate(px, py); ctx.rotate(T * 8);
+          ctx.fillStyle = '#8d6e63'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, 7); ctx.fill();
+          ctx.fillStyle = '#d7b98e'; ctx.beginPath(); ctx.ellipse(16, 0, 16, 5, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(-16, 0, 16, 5, 0, 0, 7); ctx.fill();
+        } else if (i === 1) {
+          ctx.fillStyle = 'rgba(80,160,230,.5)'; ctx.fillRect(x, cy, tw, th);
+          ctx.strokeStyle = 'rgba(40,120,200,.7)'; ctx.lineWidth = 2; ctx.beginPath();
+          for (let xx = x; xx <= x + tw; xx += 6) ctx.lineTo(xx, cy + Math.sin(xx / 14 + T * 3) * 3); ctx.stroke();
+          const px = x + 20 + ((T * 20) % (tw - 40));
+          ctx.fillStyle = '#795548'; ctx.beginPath(); ctx.ellipse(px, cy - 4 + Math.sin(T * 3) * 2, 18, 14, 0, 0, 7); ctx.fill();
+        } else if (i === 2) {
+          const px = x + ((T * 40) % (tw + 80)) - 40;
+          ctx.fillStyle = '#a1887f'; ctx.beginPath(); ctx.ellipse(px, cy + 10, 34, 16, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(px + 34, cy, 11, 0, 7); ctx.fill();
+          ctx.fillStyle = '#6d4c41'; for (let q = 0; q < 4; q++) ctx.fillRect(px - 22 + q * 13, cy + 22, 4, 14);
+          ctx.fillStyle = '#c0ca33'; for (let q = 0; q < 5; q++) { ctx.beginPath(); ctx.arc(px - 18 + q * 9, cy + 1, 3, 0, 7); ctx.fill(); }
+        } else {
+          const k = (T * 0.5) % 1;
+          ctx.strokeStyle = '#558b2f'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(cx - 30, cy + 20); ctx.quadraticCurveTo(cx - 40 - 20 * k, cy - 10, cx - 10 - 30 * k, cy - 25 + 10 * k); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx - 30, cy + 20); ctx.quadraticCurveTo(cx - 10 + 20 * k, cy - 10, cx - 20 + 40 * k, cy - 25 + 10 * k); ctx.stroke();
+          ctx.fillStyle = '#4e342e';
+          for (let q = 0; q < 4; q++) { const sx = cx - 25 + q * 12 * k * 4, sy = cy - 15 - 40 * Math.sin(k * Math.PI) + q * 3 + 60 * k * k; ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, 7); ctx.fill(); }
+        }
+        ctx.restore();
+      });
+    }
+
+    // ---------- การงอกของเมล็ด ----------
+    function germProgress() {
+      if (!s.water) return 0;
+      if (!s.air) return Math.min(0.12, s.day / 7 * 0.12); // เมล็ดดูดน้ำพองได้ แต่ไม่งอก
+      return Math.min(1, (s.day / 7) * (s.warm ? 1 : 0.08));
+    }
+    function drawGerm(ctx, dt) {
+      const w = cv.w, h = cv.h, ink = Lab.css('--ink'), muted = Lab.css('--muted'), dark = Lab.dark();
+      if (s.dayPlay) { s.day = Math.min(7, s.day + dt * 0.9); day.value = s.day; $('#dayLbl').textContent = 'วันที่ ' + Math.floor(s.day); if (s.day >= 7) { s.dayPlay = false; update(); } }
+      const g = germProgress(), etiol = !s.light;
+      const cx = w / 2, by = h * 0.82, jw = Math.min(360, w * 0.7), jh = h * 0.7;
+      // สภาพแวดล้อม
+      if (!s.warm) { ctx.fillStyle = dark ? 'rgba(80,140,220,.12)' : 'rgba(150,200,255,.25)'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = muted; ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ในตู้เย็น ~5 °C', 14, 44); }
+      if (!s.light) { ctx.fillStyle = 'rgba(10,12,20,.55)'; ctx.fillRect(0, 0, w, h); }
+      // ภาชนะ
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx - jw / 2, by - jh); ctx.lineTo(cx - jw / 2, by); ctx.lineTo(cx + jw / 2, by); ctx.lineTo(cx + jw / 2, by - jh); ctx.stroke();
+      // สำลี / น้ำ
+      const cottonY = by - 40;
+      if (!s.air) {
+        ctx.fillStyle = 'rgba(120,190,235,.5)'; ctx.fillRect(cx - jw / 2 + 2, by - jh * 0.75, jw - 4, jh * 0.75 - 2);
+        ctx.fillStyle = 'rgba(230,200,80,.8)'; ctx.fillRect(cx - jw / 2 + 2, by - jh * 0.75 - 8, jw - 4, 8);
+        ctx.fillStyle = ink; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('น้ำต้มสุกที่เย็นแล้ว + น้ำมันปิดผิวน้ำ (ไม่มีอากาศ)', cx + jw / 2 - 6, by - jh * 0.75 - 10);
+      }
+      ctx.fillStyle = s.water ? (dark ? '#c8d2dc' : '#e3e9ef') : '#ffffff';
+      ctx.beginPath(); for (let i = 0; i <= 20; i++) { const x = cx - jw / 2 + 4 + (i / 20) * (jw - 8); ctx.lineTo(x, cottonY + Math.sin(i * 1.7) * 4); } ctx.lineTo(cx + jw / 2 - 4, by - 3); ctx.lineTo(cx - jw / 2 + 4, by - 3); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(s.water ? 'สำลีชื้น' : 'สำลีแห้ง', cx - jw / 2 + 8, by - 30);
+      // เมล็ด 3 เมล็ด
+      const green = etiol ? '#d8d36a' : '#43a047', stem = etiol ? '#e6dfa0' : '#7cb342';
+      [-1, 0, 1].forEach((k, i) => {
+        const sx = cx + k * jw * 0.28, sy = cottonY - 6, sw = 1 + Math.min(0.35, g * 2.5);
+        const gi = Math.max(0, g - i * 0.04);
+        // รากแรกเกิด
+        if (gi > 0.15) { const rl = Math.min(1, (gi - 0.15) / 0.3) * 32; ctx.strokeStyle = '#efe6cf'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy + 4); ctx.quadraticCurveTo(sx + 6, sy + 20, sx + 2, sy + 4 + rl); ctx.stroke(); }
+        // ลำต้นและใบเลี้ยง
+        let topY = sy;
+        if (gi > 0.35) {
+          const sl = Math.min(1, (gi - 0.35) / 0.4) * (etiol ? jh * 0.62 : jh * 0.38);
+          topY = sy - sl;
+          ctx.strokeStyle = stem; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 10, sy - sl * 0.5, sx, topY); ctx.stroke();
+          const open = Math.min(1, (gi - 0.6) / 0.25);
+          if (gi > 0.6) {
+            ctx.fillStyle = etiol ? '#efe08a' : '#8bc34a';
+            ctx.beginPath(); ctx.ellipse(sx - 9 * open, topY, 9, 6, -open * 0.6, 0, 7); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(sx + 9 * open, topY, 9, 6, open * 0.6, 0, 7); ctx.fill();
+          }
+          if (gi > 0.85) {
+            const lf = (gi - 0.85) / 0.15;
+            ctx.fillStyle = green;
+            ctx.beginPath(); ctx.ellipse(sx - 14 * lf, topY - 14 * lf, 14 * lf + 1, 7 * lf + 1, -0.6, 0, 7); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(sx + 14 * lf, topY - 14 * lf, 14 * lf + 1, 7 * lf + 1, 0.6, 0, 7); ctx.fill();
+          }
+        }
+        if (gi <= 0.6) { ctx.fillStyle = '#7cb342'; ctx.strokeStyle = '#33691e'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx, gi > 0.35 ? topY : sy, 8 * sw, 6 * sw, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+      });
+      // สรุป
+      ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = s.light ? ink : '#eee';
+      ctx.fillText('เมล็ดถั่วเขียว · วันที่ ' + Math.floor(s.day), cx, 14);
+    }
+    function germNote() {
+      if (s.day < 0.5) return 'กด "เล่น 7 วัน" หรือเลื่อนวัน เพื่อดูว่าเมล็ดงอกหรือไม่';
+      if (!s.water) return '<b>ไม่งอก</b>: ขาดน้ำ เมล็ดยังแห้ง ไม่ดูดน้ำ จึงไม่เริ่มงอก';
+      if (!s.air) return '<b>ไม่งอก</b>: เมล็ดดูดน้ำพองขึ้น แต่ขาดอากาศ (แก๊สออกซิเจน) ที่ต้องใช้ในการหายใจเพื่อนำพลังงานมาใช้ในการงอก';
+      if (!s.warm) return '<b>แทบไม่งอก</b>: อุณหภูมิต่ำเกินไป กระบวนการต่าง ๆ ในเมล็ดเกิดช้ามาก';
+      if (!s.light) return '<b>งอกได้</b> แม้ไม่มีแสง เพราะแสงไม่จำเป็นต่อการงอก แต่ต้นอ่อน<b>ซีดเหลืองและยืดยาว</b> เพราะไม่ได้รับแสงจึงสร้างคลอโรฟิลล์ไม่ได้';
+      return s.day < 2 ? 'เมล็ดดูดน้ำและพองขึ้น' : '<b>งอก</b>: มีน้ำ อากาศ และอุณหภูมิเหมาะสม รากแรกเกิดงอกออกมาก่อน ตามด้วยลำต้นและใบเลี้ยง';
+    }
+
+    function update() {
+      ['parts', 'poll', 'fruit', 'germ'].forEach((m) => ($('#p' + m[0].toUpperCase() + m.slice(1)).style.display = s.mode === m ? '' : 'none'));
+      $('#stepNo').textContent = 'ขั้นที่ ' + (s.step + 1) + ' จาก 6';
+      $('#prev').disabled = s.step === 0; $('#next').disabled = s.step === 5;
+      $('#agePlay').textContent = s.agePlay ? 'หยุด' : 'เล่น';
+      $('#dayPlay').textContent = s.dayPlay ? 'หยุด' : 'เล่น 7 วัน';
+      $('#dayLbl').textContent = 'วันที่ ' + Math.floor(s.day);
+      if (s.mode === 'parts') api.note(s.sel ? '<b>' + INFO[s.sel][0] + '</b>: ' + INFO[s.sel][1] : s.ftype === 'full' ? 'ดอกสมบูรณ์มีครบ 4 ส่วน: กลีบเลี้ยง กลีบดอก เกสรเพศผู้ และเกสรเพศเมีย' : s.ftype === 'male' ? 'ดอกเพศผู้ไม่มีเกสรเพศเมีย จึงเป็น<b>ดอกไม่สมบูรณ์</b> และเป็นดอกไม่สมบูรณ์เพศ' : 'ดอกเพศเมียไม่มีเกสรเพศผู้ จึงเป็น<b>ดอกไม่สมบูรณ์</b> และเป็นดอกไม่สมบูรณ์เพศ');
+      else if (s.mode === 'poll') api.note(STEP_TXT[s.step]);
+      else if (s.mode === 'fruit') api.note('หลังการปฏิสนธิ กลีบดอกและเกสรเพศผู้ร่วงไป <b>รังไข่เจริญเป็นผล</b> และ<b>ออวุลเจริญเป็นเมล็ด</b> จำนวนเมล็ดจึงเท่ากับจำนวนออวุลที่ได้รับการปฏิสนธิ');
+      else api.note(germNote());
+    }
+
+    let lastNote = '';
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      s.t = Math.min(1.2, s.t + dt * 0.45);
+      if (s.mode === 'parts') drawParts(ctx);
+      else if (s.mode === 'poll') drawPoll(ctx, dt);
+      else if (s.mode === 'fruit') drawFruit(ctx, dt);
+      else { drawGerm(ctx, dt); const n = germNote(); if (n !== lastNote) { lastNote = n; api.note(n); } }
+    });
+    update();
+  },
+});
+</script>
+</body>
+</html>

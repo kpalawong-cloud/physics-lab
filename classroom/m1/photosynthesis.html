@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การสังเคราะห์ด้วยแสง · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .bigread { font: 600 30px/1.1 "Consolas", "SF Mono", ui-monospace, monospace; text-align: center; background: #10141b; color: #8ff0b0;
+    border-radius: 12px; padding: 10px; margin: 8px 0; }
+  .bigread small { display: block; font: 400 13px/1.4 Sarabun, sans-serif; color: #7f9a8a; }
+  .steps-list { margin: 6px 0; padding-left: 22px; font-size: 15px; }
+  .steps-list li { margin: 4px 0; color: var(--muted); }
+  .steps-list li.done { color: var(--ink); }
+  .steps-list li.now { color: var(--accent); font-weight: 600; }
+  #miniGraph { width: 100%; height: 170px; display: block; background: var(--soft); border-radius: 8px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+SimKit.page({
+  id: 'photosynthesis',
+  title: 'การสังเคราะห์ด้วยแสง',
+  level: 'ม.1',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'พืชสร้างอาหารเองได้จากแก๊สคาร์บอนไดออกไซด์และน้ำ โดยใช้พลังงานแสงและคลอโรฟิลล์ ได้น้ำตาลกลูโคสและแก๊สออกซิเจน ดูฟองแก๊สจากสาหร่ายหางกระรอก และทดสอบแป้งในใบ',
+  about:
+    '<div class="eq">คาร์บอนไดออกไซด์ + น้ำ <span style="font-size:13px">(แสง, คลอโรฟิลล์)</span> → น้ำตาลกลูโคส + ออกซิเจน</div>' +
+    '<div class="eq" style="font-size:15px">6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</div>' +
+    '<p><b>ปัจจัยที่จำเป็น</b>: แสง คลอโรฟิลล์ (ในคลอโรพลาสต์ของเซลล์ใบ) แก๊สคาร์บอนไดออกไซด์ และน้ำ ถ้าขาดอย่างใดอย่างหนึ่ง การสังเคราะห์ด้วยแสงจะไม่เกิดหรือเกิดช้าลง</p>' +
+    '<p>แก๊สคาร์บอนไดออกไซด์เข้าสู่ใบทาง<b>ปากใบ</b> น้ำมาจากรากผ่านไซเล็ม ส่วนแก๊สออกซิเจนที่เกิดขึ้นออกทางปากใบ ในสาหร่ายหางกระรอกที่อยู่ในน้ำ จะเห็นเป็นฟองแก๊สผุดออกมา</p>' +
+    '<p>น้ำตาลกลูโคสที่สร้างได้ พืชนำไปใช้และเปลี่ยนเป็น<b>แป้ง</b>เก็บไว้ จึงทดสอบได้ด้วย<b>สารละลายไอโอดีน</b> ซึ่งเปลี่ยนจากสีน้ำตาลเป็นสีน้ำเงินเข้มเกือบดำเมื่อมีแป้ง</p>' +
+    '<p>โซเดียมไฮโดรเจนคาร์บอเนต (เบกกิ้งโซดา) ที่ละลายในน้ำ ให้แก๊สคาร์บอนไดออกไซด์แก่สาหร่าย แก๊สที่เก็บได้ทำให้ก้านธูปที่มีถ่านแดงลุกเป็นเปลวไฟ แสดงว่าเป็นแก๊สออกซิเจน</p>',
+  think: [
+    'เมื่อเลื่อนหลอดไฟเข้าใกล้สาหร่าย จำนวนฟองแก๊สต่อนาทีเปลี่ยนไปอย่างไร และเมื่อใกล้มาก ๆ ยังเพิ่มขึ้นเรื่อย ๆ หรือไม่',
+    'ถ้าไม่ใส่โซเดียมไฮโดรเจนคาร์บอเนตเลย ฟองแก๊สเกิดน้อยลงเพราะขาดสารใด',
+    'เหตุใดต้องนำต้นไม้ไปไว้ในที่มืด 1–2 วันก่อนการทดลองทดสอบแป้งในใบ',
+    'เหตุใดต้องต้มใบในแอลกอฮอล์ก่อนหยดไอโอดีน และทำไมต้องอุ่นแอลกอฮอล์ในน้ำร้อนแทนการตั้งบนไฟโดยตรง',
+    'ส่วนสีขาวของใบด่างไม่พบแป้ง บอกอะไรเกี่ยวกับความสำคัญของคลอโรฟิลล์',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas>';
+    const canvas = stage.querySelector('canvas');
+    const cv = Lab.canvas(canvas);
+    const s = {
+      mode: 'gas', lamp: true, d: 20, soda: 2, bubbles: [], spawn: 0, gas: 0, splint: 0, splintOk: false,
+      pts: [], leaf: 'foil', step: 0, prevStep: 0, tStep: 1,
+    };
+    panel.innerHTML =
+      '<h3>เรื่องที่จะดู</h3><div class="seg" id="mode"><button data-v="gas">ฟองแก๊สจากสาหร่าย</button><button data-v="leaf">ทดสอบแป้งในใบ</button></div>' +
+      '<div id="pGas">' +
+      '<h3>หลอดไฟ</h3><div class="seg" id="lamp"><button data-v="1">เปิด</button><button data-v="0">ปิด (มืด)</button></div>' +
+      '<h3 id="dLbl">ระยะหลอดไฟถึงสาหร่าย</h3><input type="range" id="dist" min="10" max="60" step="1">' +
+      '<h3 id="cLbl">โซเดียมไฮโดรเจนคาร์บอเนต</h3><input type="range" id="soda" min="0" max="4" step="1">' +
+      '<div class="bigread"><span id="rate">0</span><small>ฟองแก๊สต่อนาที (โดยประมาณ)</small></div>' +
+      '<div class="row"><button class="btn" id="rec">บันทึกจุดลงกราฟ</button><button class="btn" id="clr">ล้างกราฟ</button></div>' +
+      '<canvas id="miniGraph"></canvas>' +
+      '<div class="row" style="margin-top:8px"><button class="btn primary" id="splint">ทดสอบแก๊สด้วยก้านธูปที่มีถ่านแดง</button></div>' +
+      '</div>' +
+      '<div id="pLeaf">' +
+      '<h3>ใบที่ใช้ทดลอง</h3><div class="seg" id="leafT"><button data-v="foil">ใบเขียว + แผ่นฟอยล์</button><button data-v="var">ใบด่าง</button></div>' +
+      '<ol class="steps-list" id="stepList" start="0"></ol>' +
+      '<div class="row"><button class="btn" id="back">◀ ย้อน</button><button class="btn primary" id="next">ขั้นต่อไป ▶</button></div>' +
+      '<div class="row"><button class="btn" id="restart">เริ่มใหม่</button></div>' +
+      '</div>';
+    const $ = (q) => panel.querySelector(q);
+    function seg(id, get, set) {
+      const el = $('#' + id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
+      el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { set(b.dataset.v); sync(); update(); } });
+      sync();
+    }
+    seg('mode', () => s.mode, (v) => (s.mode = v));
+    seg('lamp', () => (s.lamp ? '1' : '0'), (v) => (s.lamp = v === '1'));
+    seg('leafT', () => s.leaf, (v) => { s.leaf = v; s.step = 0; s.prevStep = 0; s.tStep = 1; });
+    const dist = $('#dist'), soda = $('#soda');
+    dist.value = s.d; soda.value = s.soda;
+    dist.oninput = () => { s.d = +dist.value; update(); };
+    soda.oninput = () => { s.soda = +soda.value; update(); };
+
+    // อัตราการสังเคราะห์ด้วยแสง (ฟอง/นาที): ขึ้นกับแสงและแก๊ส CO2 แบบอิ่มตัว (ปัจจัยจำกัด)
+    function rate() {
+      const I = s.lamp ? Math.pow(15 / s.d, 2) : 0;
+      const C = 0.08 + 0.5 * s.soda;
+      return 75 * (I / (I + 0.35)) * (C / (C + 0.45));
+    }
+
+    // ---------- ขั้นตอนทดสอบแป้งในใบ ----------
+    const STEPS = {
+      foil: [
+        'นำต้นไม้ไปไว้ในที่มืด 1–2 วัน ให้แป้งเดิมในใบถูกใช้ไปจนหมด',
+        'ใช้แผ่นฟอยล์ปิดใบบางส่วนทั้งด้านบนและด้านล่าง แล้ววางต้นไม้กลางแดด 4–6 ชั่วโมง',
+        'เด็ดใบออกมา แล้วแกะแผ่นฟอยล์ออก',
+        'ต้มใบในน้ำเดือด 1–2 นาที ให้เซลล์ตายและใบนิ่ม',
+        'แช่ใบในแอลกอฮอล์ที่อุ่นในน้ำร้อน (ห้ามตั้งบนไฟโดยตรง เพราะแอลกอฮอล์ติดไฟง่าย) คลอโรฟิลล์ละลายออกมา ใบซีดขาว',
+        'ล้างใบในน้ำอุ่นให้นิ่มและหมดแอลกอฮอล์',
+        'หยดสารละลายไอโอดีนลงบนใบ ส่วนที่มีแป้งเปลี่ยนเป็นสีน้ำเงินเข้มเกือบดำ',
+      ],
+      var: [
+        'นำต้นไม้ใบด่างไปไว้ในที่มืด 1–2 วัน ให้แป้งเดิมในใบถูกใช้ไปจนหมด',
+        'วางต้นไม้กลางแดด 4–6 ชั่วโมง (ส่วนสีขาวของใบไม่มีคลอโรฟิลล์)',
+        'เด็ดใบออกมา วาดภาพตำแหน่งส่วนสีเขียวและสีขาวไว้',
+        'ต้มใบในน้ำเดือด 1–2 นาที ให้เซลล์ตายและใบนิ่ม',
+        'แช่ใบในแอลกอฮอล์ที่อุ่นในน้ำร้อน (ห้ามตั้งบนไฟโดยตรง) คลอโรฟิลล์ละลายออกมา ใบซีดขาวทั้งใบ',
+        'ล้างใบในน้ำอุ่นให้นิ่มและหมดแอลกอฮอล์',
+        'หยดสารละลายไอโอดีน เฉพาะส่วนที่เคยเป็นสีเขียวเปลี่ยนเป็นสีน้ำเงินเข้มเกือบดำ',
+      ],
+    };
+    const NOTES = {
+      foil: ['', '', 'ส่วนที่ถูกฟอยล์ปิดไม่ได้รับแสง', '', 'แอลกอฮอล์เปลี่ยนเป็นสีเขียวเพราะคลอโรฟิลล์ละลายออกมา', '',
+        '<b>ผล</b>: ส่วนที่ได้รับแสงมีแป้ง (สีน้ำเงินดำ) ส่วนที่ถูกฟอยล์ปิดไม่มีแป้ง (สีน้ำตาลของไอโอดีน) แสดงว่า<b>แสงจำเป็น</b>ต่อการสังเคราะห์ด้วยแสง'],
+      var: ['', '', '', '', 'แอลกอฮอล์เปลี่ยนเป็นสีเขียวเพราะคลอโรฟิลล์ละลายออกมา', '',
+        '<b>ผล</b>: ส่วนที่เคยเป็นสีเขียวมีแป้ง ส่วนสีขาวไม่มีแป้ง แสดงว่า<b>คลอโรฟิลล์จำเป็น</b>ต่อการสังเคราะห์ด้วยแสง'],
+    };
+    function renderSteps() {
+      $('#stepList').innerHTML = STEPS[s.leaf].map((t, i) => '<li class="' + (i < s.step ? 'done' : i === s.step ? 'now' : '') + '">' + t + '</li>').join('');
+      $('#back').disabled = s.step === 0; $('#next').disabled = s.step === 6;
+    }
+    const go = (n) => { s.prevStep = s.step; s.step = Math.max(0, Math.min(6, n)); s.tStep = 0; update(); };
+    $('#next').onclick = () => go(s.step + 1);
+    $('#back').onclick = () => go(s.step - 1);
+    $('#restart').onclick = () => { s.step = 0; s.prevStep = 0; s.tStep = 1; update(); };
+
+    // ---------- กราฟเล็ก: อัตรากับระยะหลอดไฟ ----------
+    const gcv = Lab.canvas($('#miniGraph'));
+    function drawMini() {
+      const { ctx, w, h } = gcv; if (!w) return;
+      ctx.clearRect(0, 0, w, h);
+      const ml = 34, mb = 26, mt = 8, mr = 8, X = (d) => ml + ((d - 10) / 50) * (w - ml - mr), Y = (r) => h - mb - (r / 80) * (h - mt - mb);
+      ctx.strokeStyle = Lab.css('--line'); ctx.fillStyle = Lab.css('--muted'); ctx.font = '11px Sarabun, sans-serif'; ctx.lineWidth = 1;
+      for (let d = 10; d <= 60; d += 10) { ctx.beginPath(); ctx.moveTo(X(d), Y(0)); ctx.lineTo(X(d), Y(80)); ctx.stroke(); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(d, X(d), Y(0) + 3); }
+      for (let r = 0; r <= 80; r += 20) { ctx.beginPath(); ctx.moveTo(X(10), Y(r)); ctx.lineTo(X(60), Y(r)); ctx.stroke(); ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(r, X(10) - 4, Y(r)); }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('ระยะหลอดไฟ (cm)', (ml + w) / 2, h);
+      const sp = s.pts.slice().sort((a, b) => a[0] - b[0]);
+      ctx.strokeStyle = Lab.css('--accent'); ctx.lineWidth = 1.6; ctx.beginPath();
+      sp.forEach((p, i) => (i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])))); ctx.stroke();
+      ctx.fillStyle = Lab.css('--bad'); sp.forEach((p) => { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 3.5, 0, 7); ctx.fill(); });
+      if (!sp.length) { ctx.fillStyle = Lab.css('--muted'); ctx.textBaseline = 'middle'; ctx.fillText('กด "บันทึกจุดลงกราฟ" ที่ระยะต่าง ๆ', (ml + w) / 2, h / 2 - 8); }
+    }
+    $('#rec').onclick = () => { s.pts = s.pts.filter((p) => p[0] !== s.d); s.pts.push([s.d, rate()]); drawMini(); };
+    $('#clr').onclick = () => { s.pts = []; drawMini(); };
+    gcv.onResize = drawMini;
+    $('#splint').onclick = () => { if (s.splint > 0) return; s.splint = 3.2; s.splintOk = s.gas > 0.25; };
+
+    function update() {
+      $('#pGas').style.display = s.mode === 'gas' ? '' : 'none';
+      $('#pLeaf').style.display = s.mode === 'leaf' ? '' : 'none';
+      $('#dLbl').textContent = 'ระยะหลอดไฟถึงสาหร่าย: ' + s.d + ' cm';
+      $('#cLbl').textContent = 'โซเดียมไฮโดรเจนคาร์บอเนต: ' + (s.soda ? s.soda + ' ช้อนชา' : 'ไม่ใส่');
+      $('#rate').textContent = Math.round(rate());
+      renderSteps();
+      if (s.mode === 'gas') {
+        const r = rate();
+        api.note(!s.lamp ? 'ในที่มืดไม่มีแสง สาหร่ายสังเคราะห์ด้วยแสงไม่ได้ จึงไม่มีฟองแก๊สออกซิเจน'
+          : r > 55 ? 'แสงมากและมีแก๊สคาร์บอนไดออกไซด์พอ ฟองแก๊สเกิดเร็ว ถ้าเพิ่มอีก อัตราจะเพิ่มขึ้นช้าลงเพราะมีปัจจัยอื่นจำกัด'
+          : s.soda === 0 ? 'น้ำมีแก๊สคาร์บอนไดออกไซด์น้อย แม้มีแสง ฟองแก๊สก็เกิดช้า'
+          : 'ยิ่งหลอดไฟอยู่ใกล้ แสงที่สาหร่ายได้รับยิ่งมาก ฟองแก๊สยิ่งเกิดเร็ว');
+        drawMini();
+      } else api.note(NOTES[s.leaf][s.step] || '');
+    }
+
+    // ---------- วาด: ฟองแก๊สจากสาหร่าย ----------
+    let L = {};
+    function layoutGas() {
+      const w = cv.w, h = cv.h;
+      L.bw = Math.min(260, w * 0.42); L.bh = Math.min(290, h * 0.52);
+      L.bx = Math.min(w - L.bw / 2 - 20, w * 0.62); L.by = h - 30; // ก้นบีกเกอร์
+      L.ppc = Math.max(0.8, (L.bx - L.bw / 2 - 50) / 62);              // px ต่อ cm สำหรับระยะหลอดไฟ
+    }
+    function drawGas(ctx, dt) {
+      const w = cv.w, h = cv.h, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const { bw, bh, bx, by } = L, top = by - bh, wl = top + 24;
+      const cx = bx, stemTop = wl - 26;
+      // สมการบนสุด
+      ctx.fillStyle = ink; ctx.font = '600 16px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.textAlign = 'left'; ctx.fillText(w < 600 ? 'CO₂ + น้ำ → กลูโคส + O₂' : 'คาร์บอนไดออกไซด์ + น้ำ → น้ำตาลกลูโคส + ออกซิเจน', 16, 30);
+      ctx.font = '13px Sarabun, sans-serif'; ctx.fillStyle = muted; ctx.fillText('(ใช้พลังงานแสง และคลอโรฟิลล์)', 16, 52);
+      // หลอดไฟ
+      const lx = bx - bw / 2 - 10 - s.d * L.ppc, ly = by - bh * 0.45;
+      if (s.lamp) {
+        const g = ctx.createRadialGradient(lx, ly, 4, lx, ly, 70 + 240 * (15 / s.d));
+        g.addColorStop(0, 'rgba(255,240,170,.85)'); g.addColorStop(1, 'rgba(255,240,170,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 70, w, h - 70);
+      }
+      ctx.fillStyle = dark ? '#5d6575' : '#4a505b'; ctx.fillRect(lx - 34, ly - 20, 18, 40); ctx.fillRect(lx - 60, ly - 4, 30, 8); ctx.fillRect(lx - 64, ly - 4, 6, by - ly + 4); ctx.fillRect(lx - 84, by - 6, 46, 6);
+      ctx.fillStyle = s.lamp ? '#fff6c8' : (dark ? '#3a404b' : '#d7dbe2'); ctx.strokeStyle = muted; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(lx, ly, 17, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = muted; ctx.font = '13px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('หลอดไฟ', lx - 20, ly - 26);
+      // เส้นบอกระยะ
+      ctx.strokeStyle = muted; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(lx, by + 14); ctx.lineTo(cx, by + 14); ctx.stroke(); ctx.setLineDash([]);
+      ctx.textBaseline = 'top'; ctx.fillText(s.d + ' cm', (lx + cx) / 2, by + 16);
+      // น้ำในบีกเกอร์
+      const tint = 0.18 + 0.05 * s.soda;
+      ctx.fillStyle = 'rgba(120,190,235,' + tint + ')'; ctx.fillRect(bx - bw / 2, wl, bw, by - wl);
+      // กรวยคว่ำและหลอดทดลองคว่ำ
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(200,225,245,.25)';
+      ctx.beginPath(); ctx.moveTo(cx - bw * 0.36, by - 14); ctx.lineTo(cx - 9, stemTop + 70); ctx.lineTo(cx - 9, stemTop); ctx.lineTo(cx + 9, stemTop); ctx.lineTo(cx + 9, stemTop + 70); ctx.lineTo(cx + bw * 0.36, by - 14); ctx.stroke();
+      // หลอดทดลองคว่ำ: แก๊สสะสมด้านบน
+      const tw = 30, mouth = stemTop + 44, th = Math.max(90, Math.min(160, mouth - 84)), tY0 = mouth - th;
+      ctx.fillStyle = 'rgba(120,190,235,.35)'; ctx.fillRect(cx - tw / 2, tY0, tw, th);
+      const gasH = Math.min(th - 20, s.gas * (th - 20));
+      ctx.fillStyle = dark ? 'rgba(25,30,38,.95)' : 'rgba(245,247,250,.98)'; ctx.fillRect(cx - tw / 2 + 1, tY0 + 1, tw - 2, gasH);
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296';
+      ctx.beginPath(); ctx.moveTo(cx - tw / 2, tY0 + th); ctx.lineTo(cx - tw / 2, tY0 + 10); ctx.arc(cx, tY0 + 10, tw / 2, Math.PI, 0); ctx.lineTo(cx + tw / 2, tY0 + th); ctx.stroke();
+      ctx.fillStyle = muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('แก๊สที่เก็บได้', cx + tw / 2 + 8, tY0 + Math.max(14, gasH / 2));
+      // สาหร่ายหางกระรอก: วางคว่ำ ปลายที่ตัดอยู่ด้านบนในกรวย
+      const pTop = stemTop + 74, pBot = by - 22;
+      ctx.strokeStyle = '#2f7d3a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx, pTop); ctx.quadraticCurveTo(cx + 10, (pTop + pBot) / 2, cx - 6, pBot); ctx.stroke();
+      for (let y = pTop + 10; y < pBot; y += 14) {
+        const sx = cx + 10 * Math.sin((y - pTop) / 50) - 2;
+        for (let k = 0; k < 4; k++) {
+          const a = k * 1.57 + y * 0.05, lx2 = sx + Math.cos(a) * 16, ly2 = y + Math.sin(a) * 6;
+          ctx.strokeStyle = k % 2 ? '#3d9a49' : '#2f8a3d'; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.moveTo(sx, y); ctx.lineTo(lx2, ly2); ctx.stroke();
+        }
+      }
+      // ฟองแก๊ส
+      const r = rate();
+      s.spawn += (r / 60) * dt;
+      while (s.spawn >= 1) { s.spawn -= 1; s.bubbles.push({ x: cx + (Math.random() - 0.5) * 6, y: pTop, r: 2.5 + Math.random() * 2.5, v: 50 + Math.random() * 30 }); }
+      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.2;
+      s.bubbles.forEach((b) => {
+        b.y -= b.v * dt; b.x += Math.sin(b.y / 9) * 0.2;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill(); ctx.stroke();
+      });
+      const topGas = tY0 + gasH;
+      s.bubbles = s.bubbles.filter((b) => { if (b.y < topGas + 2) { s.gas = Math.min(1, s.gas + 0.012); return false; } return true; });
+      // บีกเกอร์
+      ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(bx - bw / 2 - 6, top); ctx.lineTo(bx - bw / 2, top + 6); ctx.lineTo(bx - bw / 2, by); ctx.lineTo(bx + bw / 2, by); ctx.lineTo(bx + bw / 2, top + 6); ctx.stroke();
+      ctx.fillStyle = muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '13px Sarabun, sans-serif';
+      ctx.textAlign = 'left'; ctx.fillText('สาหร่ายหางกระรอก', bx - bw / 2 + 6, by - 24);
+      // ทดสอบด้วยก้านธูป
+      if (s.splint > 0) {
+        s.splint -= dt;
+        const sy = tY0 - 8, ex = cx + 4;
+        ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(ex + 60, sy - 70); ctx.lineTo(ex, sy); ctx.stroke();
+        if (s.splintOk && s.splint < 2.6) {
+          const f = 1 + 0.15 * Math.sin(performance.now() / 60);
+          const g = ctx.createRadialGradient(ex, sy - 4, 1, ex, sy - 8, 26 * f);
+          g.addColorStop(0, 'rgba(255,255,220,1)'); g.addColorStop(0.4, 'rgba(255,170,40,.9)'); g.addColorStop(1, 'rgba(255,90,20,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(ex, sy - 10, 12 * f, 26 * f, 0, 0, 7); ctx.fill();
+        } else { ctx.fillStyle = '#ff5a1f'; ctx.beginPath(); ctx.arc(ex, sy, 4, 0, 7); ctx.fill(); }
+        ctx.fillStyle = ink; ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        const mx = cx - tw / 2 - 12, my = tY0 + 30;
+        ctx.fillText(s.splintOk ? 'ก้านธูปลุกเป็นเปลวไฟ' : 'แก๊สยังน้อยเกินไป', mx, my);
+        ctx.fillText(s.splintOk ? '→ แก๊สออกซิเจน' : 'รอให้เก็บแก๊สมากขึ้นก่อน', mx, my + 22);
+        if (s.splint <= 0 && s.splintOk) s.gas = 0;
+      }
+    }
+
+    // ---------- วาด: ทดสอบแป้งในใบ ----------
+    function leafPath(ctx, cx, cy, W, H) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - H / 2);
+      ctx.bezierCurveTo(cx + W * 0.62, cy - H * 0.38, cx + W * 0.6, cy + H * 0.3, cx, cy + H / 2);
+      ctx.bezierCurveTo(cx - W * 0.6, cy + H * 0.3, cx - W * 0.62, cy - H * 0.38, cx, cy - H / 2);
+      ctx.closePath();
+    }
+    // สีของใบในแต่ละขั้น: region = 'starch' (ได้รับแสงและมีคลอโรฟิลล์) หรือ 'none'
+    function leafColor(region, step) {
+      const white = s.leaf === 'var' && region === 'none';
+      if (step <= 2) return white ? [236, 236, 214] : [62, 150, 66];
+      if (step === 3) return white ? [222, 222, 196] : [78, 128, 60];
+      if (step <= 5) return [238, 230, 196];
+      return region === 'starch' ? [28, 34, 70] : [200, 140, 58];
+    }
+    const mix = (a, b, t) => 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',') + ')';
+    function drawLeaf(ctx) {
+      const w = cv.w, h = cv.h, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      const narrow = w < 600;
+      const cx = narrow ? w / 2 : w * 0.36, cy = narrow ? h * 0.36 : h / 2, H = Math.min(h * (narrow ? 0.56 : 0.78), w * 0.62), W = H * 0.62;
+      const t = Math.min(1, s.tStep), ps = s.prevStep, cs = s.step;
+      // ก้านใบ (ขั้น 0–1 ยังติดต้น)
+      ctx.strokeStyle = '#5a7f3a'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(cx, cy + H / 2 - 4); ctx.lineTo(cx, cy + H / 2 + (cs <= 1 ? 70 : 30)); ctx.stroke();
+      if (cs <= 1) { ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(cx - 120, cy + H / 2 + 70); ctx.lineTo(cx + 120, cy + H / 2 + 70); ctx.stroke(); }
+      // ส่วนต่าง ๆ ของใบ: วาดทั้งใบเป็นส่วน none แล้ววาดส่วน starch ทับด้วย clip
+      const band = [cy - H * 0.1, cy + H * 0.16]; // แถบฟอยล์
+      ctx.save(); leafPath(ctx, cx, cy, W, H); ctx.clip();
+      ctx.fillStyle = mix(leafColor('none', ps), leafColor('none', cs), t); ctx.fillRect(cx - W, cy - H, 2 * W, 2 * H);
+      ctx.fillStyle = mix(leafColor('starch', ps), leafColor('starch', cs), t);
+      if (s.leaf === 'foil') { ctx.fillRect(cx - W, cy - H, 2 * W, band[0] - (cy - H)); ctx.fillRect(cx - W, band[1], 2 * W, cy + H - band[1]); }
+      else {
+        // ใบด่าง: ตรงกลางเขียว ขอบขาวเป็นคลื่น
+        ctx.beginPath();
+        for (let i = 0; i <= 60; i++) {
+          const a = (i / 60) * Math.PI * 2, rr = 0.62 + 0.08 * Math.sin(a * 5) + 0.05 * Math.sin(a * 11);
+          const x = cx + Math.sin(a) * W * 0.5 * rr, y = cy - Math.cos(a) * H * 0.5 * rr;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.closePath(); ctx.fill();
+      }
+      // เส้นใบ
+      ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy - H / 2); ctx.lineTo(cx, cy + H / 2); ctx.stroke();
+      ctx.lineWidth = 1.3;
+      for (let k = -4; k <= 4; k++) {
+        const y0 = cy + k * H * 0.09;
+        ctx.beginPath(); ctx.moveTo(cx, y0); ctx.quadraticCurveTo(cx + W * 0.2, y0 - H * 0.04, cx + W * 0.42, y0 - H * 0.09); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, y0); ctx.quadraticCurveTo(cx - W * 0.2, y0 - H * 0.04, cx - W * 0.42, y0 - H * 0.09); ctx.stroke();
+      }
+      ctx.restore();
+      ctx.strokeStyle = dark ? '#9aa3b4' : '#4a5a3a'; ctx.lineWidth = 1.5; leafPath(ctx, cx, cy, W, H); ctx.stroke();
+      // แผ่นฟอยล์ (ขั้น 1 ปิดอยู่, ขั้น 2 กำลังแกะออก)
+      if (s.leaf === 'foil' && (cs === 1 || (cs === 2 && t < 1) || (ps === 1 && cs === 0 && t < 1))) {
+        const a = cs === 1 ? Math.min(1, t * 2) : 1 - t;
+        ctx.globalAlpha = a;
+        const g = ctx.createLinearGradient(0, band[0], 0, band[1]);
+        g.addColorStop(0, '#e9edf2'); g.addColorStop(0.5, '#b9c1cc'); g.addColorStop(1, '#dde2e8');
+        ctx.fillStyle = g; ctx.fillRect(cx - W * 0.62, band[0], W * 1.24, band[1] - band[0]);
+        ctx.strokeStyle = '#8a93a3'; ctx.strokeRect(cx - W * 0.62, band[0], W * 1.24, band[1] - band[0]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = ink; ctx.font = '600 14px Sarabun, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('แผ่นฟอยล์', cx + W * 0.66, (band[0] + band[1]) / 2);
+      }
+      // ภาพประกอบของขั้นปัจจุบัน
+      const ix = narrow ? w / 2 : w * 0.78, iy = narrow ? h * 0.82 : h * 0.45;
+      ctx.font = '600 15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = ink;
+      const cap = ['ที่มืด 1–2 วัน', 'วางกลางแดด', 'เด็ดใบ', 'ต้มในน้ำเดือด', 'แอลกอฮอล์อุ่นในน้ำร้อน', 'ล้างน้ำอุ่น', 'หยดไอโอดีน'][cs];
+      ctx.fillText('ขั้นที่ ' + cs + ': ' + cap, ix, iy + 64);
+      if (cs === 0) { ctx.fillStyle = dark ? '#0d0f14' : '#2b2f38'; ctx.beginPath(); ctx.arc(ix, iy, 46, 0, 7); ctx.fill(); ctx.fillStyle = '#ffffffaa'; ctx.font = '26px Sarabun'; ctx.fillText('☾', ix, iy - 16); }
+      else if (cs === 1) {
+        ctx.fillStyle = '#ffcc33'; ctx.beginPath(); ctx.arc(ix, iy, 30, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#ffcc33'; ctx.lineWidth = 4;
+        for (let k = 0; k < 12; k++) { const a = k * 0.5236 + performance.now() / 3000; ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * 38, iy + Math.sin(a) * 38); ctx.lineTo(ix + Math.cos(a) * 52, iy + Math.sin(a) * 52); ctx.stroke(); }
+      } else if (cs === 3 || cs === 4 || cs === 5) {
+        // บีกเกอร์น้ำร้อน (ขั้น 4 มีหลอดแอลกอฮอล์สีเขียวอยู่ข้างใน)
+        ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5;
+        ctx.fillStyle = 'rgba(140,200,240,.4)'; ctx.fillRect(ix - 50, iy - 20, 100, 70);
+        ctx.beginPath(); ctx.moveTo(ix - 50, iy - 50); ctx.lineTo(ix - 50, iy + 50); ctx.lineTo(ix + 50, iy + 50); ctx.lineTo(ix + 50, iy - 50); ctx.stroke();
+        if (cs === 4) {
+          const gr = Math.min(1, t * 1.5);
+          ctx.fillStyle = 'rgba(' + Math.round(230 - 150 * gr) + ',' + Math.round(235 - 40 * gr) + ',' + Math.round(220 - 150 * gr) + ',.9)';
+          ctx.fillRect(ix - 14, iy - 10, 28, 55); ctx.strokeRect(ix - 14, iy - 50, 28, 95);
+        }
+        if (cs !== 5) for (let k = 0; k < 6; k++) { const yy = iy + 40 - ((performance.now() / 12 + k * 17) % 60); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ix - 35 + k * 14, yy, 2.5, 0, 7); ctx.stroke(); }
+        if (cs === 3 || cs === 4) { ctx.fillStyle = '#5a8cff'; ctx.beginPath(); ctx.ellipse(ix, iy + 66 + 10, 16, 8, 0, 0, 7); ctx.fill(); }
+      } else if (cs === 6) {
+        ctx.fillStyle = '#7b4a1e'; ctx.fillRect(ix - 6, iy - 50, 12, 60);
+        ctx.fillStyle = '#333'; ctx.beginPath(); ctx.ellipse(ix, iy - 56, 12, 14, 0, 0, 7); ctx.fill();
+        const dy = (performance.now() / 8) % 40;
+        ctx.fillStyle = '#9a5a1a'; ctx.beginPath(); ctx.arc(ix, iy + 16 + dy, 5, 0, 7); ctx.fill();
+      } else if (cs === 2) { ctx.fillStyle = muted; ctx.font = '40px Sarabun'; ctx.textBaseline = 'middle'; ctx.fillText('✂', ix, iy); }
+      // ป้ายผล
+      if (cs === 6 && t > 0.6) {
+        ctx.font = '600 15px Sarabun, sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+        const lx = narrow ? 14 : cx + W * 0.66, l1 = narrow ? h * 0.66 : cy - 30;
+        ctx.fillStyle = '#1c2246'; ctx.fillRect(lx, l1 - 9, 18, 18); ctx.fillStyle = ink; ctx.fillText('มีแป้ง', lx + 26, l1);
+        ctx.fillStyle = '#c88c3a'; ctx.fillRect(lx, l1 + 18, 18, 18); ctx.fillStyle = ink; ctx.fillText('ไม่มีแป้ง (สีของไอโอดีน)', lx + 26, l1 + 27);
+      }
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      const ctx = cv.ctx;
+      ctx.clearRect(0, 0, cv.w, cv.h);
+      s.tStep = Math.min(1, s.tStep + dt * 0.9);
+      if (s.mode === 'gas') { layoutGas(); drawGas(ctx, dt); }
+      else drawLeaf(ctx);
+    });
+    update();
+  },
+});
+</script>
+</body>
+</html>

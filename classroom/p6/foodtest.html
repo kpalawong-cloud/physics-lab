@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ทดสอบสารอาหาร · ห้องเรียนจำลอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/lab.css">
+<style>
+  .simpage .stage canvas { height: 430px; }
+  @media (max-width: 900px) { .simpage .stage canvas { height: 360px; } }
+  .pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+  .pick .btn { padding: 6px 4px; font-size: 15px; line-height: 1.25; }
+  .pick.t2 { grid-template-columns: repeat(2, 1fr); }
+  table.ft { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 14.5px; }
+  table.ft th, table.ft td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+  table.ft th { background: var(--soft); font-weight: 600; }
+  table.ft td.food { text-align: left; font-weight: 600; white-space: nowrap; }
+  table.ft td.cur { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .sw { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: -3px; margin-right: 4px; border: 1px solid rgba(0,0,0,.25); }
+  .ftwrap { overflow-x: auto; }
+  body.present .ftwrap { display: none; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="../../assets/lab.js"></script>
+<script src="../../assets/simkit.js"></script>
+<script>
+// ปริมาณสารอาหารโดยประมาณ (0–1) ใช้กำหนดความเข้มของสีที่เห็นในการทดสอบ
+const FOODS = [
+  { key: 'rice', name: 'ข้าว / ขนมปัง', starch: 1, sugar: 0.08, protein: 0.15, fat: 0.03, look: [238, 236, 226], solid: true },
+  { key: 'juice', name: 'น้ำตาล / น้ำผลไม้', starch: 0, sugar: 1, protein: 0, fat: 0, look: [246, 214, 120] },
+  { key: 'egg', name: 'ไข่ขาว', starch: 0, sugar: 0, protein: 1, fat: 0, look: [236, 238, 228] },
+  { key: 'milk', name: 'นม', starch: 0, sugar: 0.5, protein: 0.45, fat: 0.4, look: [250, 248, 240] },
+  { key: 'oil', name: 'น้ำมันพืช', starch: 0, sugar: 0, protein: 0, fat: 1, look: [240, 205, 90] },
+  { key: 'pork', name: 'เนื้อหมู', starch: 0, sugar: 0, protein: 0.85, fat: 0.5, look: [222, 170, 160], solid: true },
+  { key: 'banana', name: 'กล้วยสุก', starch: 0.35, sugar: 0.75, protein: 0.05, fat: 0, look: [240, 226, 170], solid: true },
+  { key: 'peanut', name: 'ถั่วลิสง', starch: 0.2, sugar: 0.05, protein: 0.6, fat: 0.9, look: [214, 180, 130], solid: true },
+  { key: 'water', name: 'น้ำเปล่า', starch: 0, sugar: 0, protein: 0, fat: 0, look: [225, 238, 248] },
+];
+const TESTS = [
+  { key: 'starch', name: 'แป้ง', reagent: 'สารละลายไอโอดีน', drop: [160, 95, 30] },
+  { key: 'sugar', name: 'น้ำตาล', reagent: 'สารละลายเบเนดิกต์ แล้วต้ม', drop: [60, 120, 225] },
+  { key: 'protein', name: 'โปรตีน', reagent: 'คอปเปอร์ซัลเฟต + โซเดียมไฮดรอกไซด์', drop: [110, 165, 230] },
+  { key: 'fat', name: 'ไขมัน', reagent: 'ถูบนกระดาษ แล้วทิ้งให้แห้ง', drop: null },
+];
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t))));
+const rgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (a == null ? 1 : a) + ')';
+
+// สีผลการทดสอบ (สีสุดท้าย) และคำอธิบาย
+function outcome(food, test) {
+  const v = food[test.key];
+  if (test.key === 'starch') {
+    return v > 0.1 ? { col: mix([175, 115, 40], [38, 28, 80], 0.35 + 0.65 * v), pos: true, text: 'น้ำเงินอมม่วง (มีแป้ง)' }
+      : { col: [190, 130, 50], pos: false, text: 'สีน้ำตาลของไอโอดีน (ไม่มีแป้ง)' };
+  }
+  if (test.key === 'sugar') {
+    const steps = [[60, 120, 225], [70, 160, 80], [220, 200, 50], [230, 130, 40], [170, 50, 30]];
+    if (v < 0.04) return { col: steps[0], pos: false, text: 'ยังเป็นสีฟ้า (ไม่มีน้ำตาล)' };
+    const i = v < 0.2 ? 1 : v < 0.45 ? 2 : v < 0.7 ? 3 : 4;
+    const names = ['', 'เขียว (น้ำตาลน้อย)', 'เหลือง (น้ำตาลปานกลาง)', 'ส้ม (น้ำตาลค่อนข้างมาก)', 'แดงอิฐ (น้ำตาลมาก)'];
+    return { col: steps[i], pos: true, text: names[i], steps: steps.slice(0, i + 1) };
+  }
+  if (test.key === 'protein') {
+    return v > 0.1 ? { col: mix([120, 165, 225], [120, 50, 160], 0.4 + 0.6 * v), pos: true, text: 'ม่วง (มีโปรตีน)' }
+      : { col: [120, 165, 225], pos: false, text: 'สีฟ้า (ไม่มีโปรตีน)' };
+  }
+  return v > 0.1 ? { col: [250, 236, 190], pos: true, text: 'กระดาษโปร่งแสง (มีไขมัน)' }
+    : { col: [190, 160, 120], pos: false, text: 'กระดาษไม่โปร่งแสง (ไม่มีไขมัน)' };
+}
+
+SimKit.page({
+  id: 'foodtest',
+  title: 'ทดสอบสารอาหาร',
+  level: 'ป.6',
+  subject: 'สิ่งมีชีวิต',
+  lead: 'เลือกอาหารและวิธีทดสอบ แล้วดูการเปลี่ยนสี เพื่อบอกว่าอาหารชนิดนั้นมีแป้ง น้ำตาล โปรตีน หรือไขมัน ผลจะบันทึกลงตารางให้เปรียบเทียบ',
+  about:
+    '<p><b>แป้ง</b> + สารละลายไอโอดีน → เปลี่ยนจากสีน้ำตาลเป็น<b>สีน้ำเงินอมม่วง</b></p>' +
+    '<p><b>น้ำตาล</b> + สารละลายเบเนดิกต์ (สีฟ้า) แล้วนำไปต้ม → ตะกอนสี<b>เขียว เหลือง ส้ม หรือแดงอิฐ</b> ยิ่งมีน้ำตาลมาก สียิ่งเข้มไปทางแดงอิฐ</p>' +
+    '<p><b>โปรตีน</b> + สารละลายคอปเปอร์ซัลเฟตและโซเดียมไฮดรอกไซด์ → <b>สีม่วง</b></p>' +
+    '<p><b>ไขมัน</b> ถูอาหารบนกระดาษ ทิ้งให้แห้ง แล้วยกขึ้นส่องแสง ถ้ากระดาษ<b>โปร่งแสง</b> แสดงว่ามีไขมัน (น้ำก็ทำให้กระดาษโปร่งแสงได้ แต่หายไปเมื่อแห้ง)</p>' +
+    '<p class="muted" style="font-size:14px">ความปลอดภัย: สารทดสอบบางชนิดเป็นอันตราย การทดลองจริงต้องสวมแว่นและถุงมือ และต้มด้วยการใช้น้ำร้อนในบีกเกอร์ ไม่ต้มหลอดทดลองบนไฟโดยตรง</p>',
+  think: [
+    'ทำไมต้องทดสอบน้ำเปล่าด้วย (น้ำเปล่าทำหน้าที่อะไรในการทดลอง)',
+    'นมให้ผลบวกกับการทดสอบใดบ้าง แปลว่านมมีสารอาหารอะไร',
+    'ข้าวไม่หวาน แต่ถ้าเคี้ยวนาน ๆ จะรู้สึกหวาน เกี่ยวข้องกับผลการทดสอบแป้งและน้ำตาลอย่างไร',
+    'ถ้าอยากรู้ว่ากล้วยดิบกับกล้วยสุกต่างกันอย่างไร ควรทดสอบด้วยวิธีใด',
+  ],
+  build(stage, panel, api) {
+    stage.innerHTML = '<canvas></canvas><div class="ftwrap"><table class="ft" id="ft"></table></div>';
+    const cv = Lab.canvas(stage.querySelector('canvas'));
+    panel.innerHTML =
+      '<h3>1. เลือกอาหาร</h3><div class="pick" id="foods">' + FOODS.map((f) => '<button class="btn" data-f="' + f.key + '">' + f.name + '</button>').join('') + '</div>' +
+      '<h3>2. เลือกการทดสอบ</h3><div class="pick t2" id="tests">' + TESTS.map((t) => '<button class="btn" data-t="' + t.key + '">' + t.name + '</button>').join('') + '</div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn primary" id="go">เริ่มทดสอบ ▶</button></div>' +
+      '<div class="row"><button class="btn" id="all">ทดสอบทุกอย่างในตาราง</button><button class="btn" id="clr">ล้างตาราง</button></div>';
+    const $ = (q) => panel.querySelector(q);
+    const s = { food: FOODS[0], test: TESTS[0], phase: 'idle', t: 0, res: {}, queue: [] };
+    const sync = () => {
+      panel.querySelectorAll('[data-f]').forEach((b) => b.classList.toggle('on', b.dataset.f === s.food.key));
+      panel.querySelectorAll('[data-t]').forEach((b) => b.classList.toggle('on', b.dataset.t === s.test.key));
+      renderTable();
+    };
+    panel.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b || s.phase !== 'idle' && s.phase !== 'done' && !b.id) return;
+      if (b.dataset.f || b.dataset.t) s.fast = false;
+      if (b.dataset.f) { s.food = FOODS.find((f) => f.key === b.dataset.f); s.phase = 'idle'; s.queue = []; api.note(''); }
+      if (b.dataset.t) { s.test = TESTS.find((t) => t.key === b.dataset.t); s.phase = 'idle'; s.queue = []; api.note(''); }
+      sync();
+    });
+    const start = () => { s.phase = 'pour'; s.t = 0; api.note('กำลังทดสอบ <b>' + s.food.name + '</b> ด้วย' + s.test.reagent + ' …'); sync(); };
+    $('#go').onclick = () => { s.queue = []; s.fast = false; start(); };
+    $('#all').onclick = () => {
+      s.queue = [];
+      FOODS.forEach((f) => TESTS.forEach((t) => { if (!s.res[f.key + t.key]) s.queue.push([f, t]); }));
+      if (!s.queue.length) { api.note('ทดสอบครบทุกช่องแล้ว'); return; }
+      s.fast = true;
+      const [f, t] = s.queue.shift(); s.food = f; s.test = t; start();
+    };
+    $('#clr').onclick = () => { s.res = {}; s.queue = []; s.phase = 'idle'; api.note(''); sync(); };
+
+    function renderTable() {
+      const tb = stage.querySelector('#ft');
+      tb.innerHTML = '<tr><th>อาหาร</th>' + TESTS.map((t) => '<th>' + t.name + '</th>').join('') + '</tr>' +
+        FOODS.map((f) => '<tr><td class="food">' + f.name + '</td>' + TESTS.map((t) => {
+          const r = s.res[f.key + t.key], cur = f === s.food && t === s.test ? ' class="cur"' : '';
+          return '<td' + cur + '>' + (r ? '<span class="sw" style="background:' + rgb(r.col) + '"></span>' + (r.pos ? '<b>มี</b>' : 'ไม่มี') : '') + '</td>';
+        }).join('') + '</tr>').join('');
+    }
+    sync();
+
+    // ---------- ภาพ ----------
+    const DUR = { pour: 0.9, drop: 2.2, heat: 3.6, rub: 1.6, dry: 2.4 };
+    function next() {
+      const isFat = s.test.key === 'fat';
+      const order = isFat ? ['pour', 'rub', 'dry', 'done'] : s.test.key === 'sugar' ? ['pour', 'drop', 'heat', 'done'] : ['pour', 'drop', 'done'];
+      s.phase = order[order.indexOf(s.phase) + 1]; s.t = 0;
+      if (s.phase === 'done') {
+        const r = outcome(s.food, s.test);
+        s.res[s.food.key + s.test.key] = r; renderTable();
+        api.note('<b>' + s.food.name + '</b> + ' + s.test.reagent + ' → ' + r.text);
+        if (s.queue.length) setTimeout(() => { if (s.phase === 'done' && s.queue.length) { const [f, t] = s.queue.shift(); s.food = f; s.test = t; start(); } }, s.fast ? 200 : 700);
+        else s.fast = false;
+      }
+    }
+
+    function tube(ctx, x, top, w, h, fill, level, col, sediment) {
+      // หลอดทดลอง: ของเหลวสูง level (0–1)
+      const bot = top + h;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(x - w / 2, top); ctx.lineTo(x - w / 2, bot - w / 2); ctx.arc(x, bot - w / 2, w / 2, Math.PI, 0, true); ctx.lineTo(x + w / 2, top); ctx.closePath();
+      ctx.save(); ctx.clip();
+      if (level > 0) {
+        const ly = bot - level * (h - 10);
+        ctx.fillStyle = rgb(col, 0.92); ctx.fillRect(x - w / 2, ly, w, bot - ly);
+        if (sediment) { ctx.fillStyle = rgb(sediment, 0.95); ctx.fillRect(x - w / 2, bot - w * 0.75, w, w); }
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x - w / 2 + 5, ly, 6, bot - ly);
+      }
+      ctx.restore();
+      ctx.strokeStyle = Lab.dark() ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.restore();
+    }
+
+    function scene() {
+      const ctx = cv.ctx, w = cv.w, h = cv.h, dark = Lab.dark(), ink = Lab.css('--ink'), muted = Lab.css('--muted');
+      ctx.clearRect(0, 0, w, h);
+      const f = s.food, t = s.test, r = outcome(f, t), ph = s.phase, k = Math.min(1, s.t / (DUR[ph] || 1));
+      ctx.fillStyle = ink; ctx.font = '600 20px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(f.name + '  +  ' + t.reagent, w / 2, 12);
+      const cx = w / 2, sc = Math.min(1.9, h / 430, w / 360);
+      if (t.key === 'fat') {
+        // กระดาษ: ถูอาหาร แล้วรอให้แห้ง ส่องกับแสงจากหน้าต่าง
+        const pw = Math.min(w * 0.6, 320 * sc), phh = pw * 0.72, px = cx - pw / 2, py = h * 0.2;
+        const lit = ph === 'dry' || ph === 'done';
+        ctx.fillStyle = dark ? '#3a4150' : '#dfe8f2'; ctx.fillRect(px - 30, py - 30, pw + 60, phh + 60);
+        if (lit) { const g = ctx.createRadialGradient(cx, py + phh / 2, 10, cx, py + phh / 2, pw); g.addColorStop(0, 'rgba(255,250,220,.95)'); g.addColorStop(1, 'rgba(255,250,220,0)'); ctx.fillStyle = g; ctx.fillRect(px - 30, py - 30, pw + 60, phh + 60); }
+        ctx.fillStyle = '#c9a77a'; ctx.fillRect(px, py, pw, phh);
+        ctx.strokeStyle = 'rgba(90,60,30,.4)'; ctx.lineWidth = 1; ctx.strokeRect(px, py, pw, phh);
+        const spot = ph === 'pour' ? 0 : ph === 'rub' ? k : 1;
+        const fatty = f.fat > 0.1, wet = f.key === 'water' || f.key === 'juice' || f.key === 'milk' || f.key === 'egg';
+        let alpha = 0;
+        if (ph === 'rub') alpha = (fatty || wet ? 0.7 : 0.25) * k;
+        else if (ph === 'dry' || ph === 'done') alpha = fatty ? 0.75 * Math.max(0.55, f.fat) : (wet ? 0.7 * (1 - (ph === 'done' ? 1 : k)) : 0.25 * (1 - (ph === 'done' ? 1 : k)));
+        if (spot > 0) {
+          ctx.fillStyle = 'rgba(255,245,215,' + alpha + ')';
+          ctx.beginPath(); ctx.ellipse(cx, py + phh / 2, pw * 0.22 * spot, phh * 0.25 * spot, 0.2, 0, 7); ctx.fill();
+          if (f.solid && ph === 'rub') { ctx.fillStyle = rgb(f.look); ctx.beginPath(); ctx.arc(cx + Math.sin(s.t * 14) * pw * 0.12, py + phh / 2, 18 * sc, 0, 7); ctx.fill(); }
+        }
+        ctx.fillStyle = muted; ctx.font = '15px Sarabun, sans-serif'; ctx.textBaseline = 'top';
+        ctx.fillText(ph === 'rub' ? 'ถูอาหารบนกระดาษ' : ph === 'dry' ? 'ทิ้งให้แห้ง แล้วยกขึ้นส่องแสง…' : ph === 'done' ? r.text : 'กระดาษสีน้ำตาล', cx, py + phh + 40);
+        return;
+      }
+      // หลอดทดลอง + หลอดหยด + (ต้มในบีกเกอร์สำหรับเบเนดิกต์)
+      const heating = ph === 'heat' || (ph === 'done' && t.key === 'sugar');
+      const tw = (heating ? 54 : 62) * sc, th = heating ? h * 0.48 : 230 * sc;
+      const top = heating ? 50 : h * 0.22;
+      const tx = cx;
+      let level = 0, col = f.look, sed = null;
+      if (ph === 'pour') level = 0.35 * k;
+      else if (ph !== 'idle') level = 0.35;
+      if (ph === 'drop') { level = 0.35 + 0.15 * k; col = mix(f.look, t.drop, 0.55 * k); }
+      if (ph === 'heat' || ph === 'done') {
+        level = 0.5;
+        if (t.key === 'sugar') {
+          const steps = r.steps || [t.drop];
+          const kk = ph === 'done' ? 1 : k, pos = kk * (steps.length - 1), i = Math.min(steps.length - 2, Math.floor(pos));
+          col = steps.length > 1 ? mix(steps[Math.max(0, i)], steps[Math.max(0, i) + 1], pos - Math.max(0, i)) : mix(f.look, t.drop, 0.6);
+          if (r.pos && kk > 0.6) sed = col;
+        } else col = r.col;
+      }
+      if (ph === 'idle') { level = 0; }
+      // บีกเกอร์น้ำร้อนและตะเกียง
+      if (heating) {
+        const bw = 170 * sc, by = top + th * 0.45, bh = top + th + 18 - by;
+        ctx.fillStyle = 'rgba(150,200,240,.35)'; ctx.fillRect(tx - bw / 2, by + 22 * sc, bw, bh - 22 * sc);
+        ctx.strokeStyle = dark ? '#c9d6e3' : '#6c8296'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(tx - bw / 2, by); ctx.lineTo(tx - bw / 2, by + bh); ctx.lineTo(tx + bw / 2, by + bh); ctx.lineTo(tx + bw / 2, by); ctx.stroke();
+        for (let i = 0; i < 7; i++) { const yy = by + bh - ((s.t * 60 + i * 23) % (bh - 25)); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(tx - bw / 2 + 16 + (i * 37) % (bw - 30), yy, 3 + (i % 3), 0, 7); ctx.stroke(); }
+        const fy = by + bh + 12 * sc, fl = 1 + 0.1 * Math.sin(performance.now() / 60);
+        const g = ctx.createRadialGradient(tx, fy + 20, 2, tx, fy + 18, 30 * fl); g.addColorStop(0, 'rgba(255,255,230,.95)'); g.addColorStop(0.4, 'rgba(110,160,255,.75)'); g.addColorStop(1, 'rgba(255,150,40,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(tx, fy + 18, 13 * fl, 28 * fl, 0, 0, 7); ctx.fill();
+      }
+      tube(ctx, tx, top, tw, th, null, level, col, sed);
+      // ชิ้นอาหารที่จมอยู่ (อาหารแข็งบดแล้ว)
+      if (f.solid && level > 0) { ctx.fillStyle = rgb(mix(col, f.look, 0.4)); for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(tx - tw * 0.25 + (i * 11) % (tw * 0.5), top + th - 22 * sc - (i % 2) * 9, 5 * sc, 0, 7); ctx.fill(); } }
+      // หลอดหยด
+      if (ph === 'drop') {
+        const dx = tx, dy = top - 70 * sc;
+        ctx.fillStyle = dark ? '#a8b2c0' : '#4a505b'; ctx.beginPath(); ctx.ellipse(dx, dy - 22 * sc, 14 * sc, 20 * sc, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = 'rgba(200,220,240,.7)'; ctx.fillRect(dx - 5 * sc, dy, 10 * sc, 55 * sc);
+        ctx.fillStyle = rgb(t.drop, 0.8); ctx.fillRect(dx - 4 * sc, dy + 20 * sc, 8 * sc, 33 * sc);
+        const n = 5, ph2 = (k * n) % 1, yy = dy + 58 * sc + ph2 * (th * (1 - 0.4) + 60 * sc);
+        if (k < 0.98) { ctx.fillStyle = rgb(t.drop); ctx.beginPath(); ctx.arc(dx, yy, 5 * sc, 0, 7); ctx.fill(); }
+      }
+      ctx.fillStyle = muted; ctx.font = '15px Sarabun, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const lab = ph === 'idle' ? 'กด "เริ่มทดสอบ"' : ph === 'pour' ? 'ใส่อาหารลงหลอดทดลอง' : ph === 'drop' ? 'หยด' + t.reagent.replace(' แล้วต้ม', '') : ph === 'heat' ? 'ต้มในน้ำร้อน สังเกตสีที่เปลี่ยน…' : r.text;
+      ctx.fillText(lab, tx, heating ? h - 26 : top + th + 14);
+      if (ph === 'done') { ctx.fillStyle = r.pos ? Lab.css('--ok') : muted; ctx.font = '600 18px Sarabun, sans-serif'; ctx.fillText(r.pos ? 'ผลบวก ✓' : 'ผลลบ', tx + tw * 2.2, top + th * 0.5); }
+    }
+
+    Lab.loop((dt) => {
+      if (!cv.w) return;
+      if (s.phase !== 'idle' && s.phase !== 'done') { s.t += dt * (s.fast ? 4 : 1); if (s.t >= DUR[s.phase]) next(); }
+      scene();
+    });
+  },
+});
+</script>
+</body>
+</html>
