@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Virtual Science">
-<title>ห้องวิทยาศาสตร์เสมือน</title>
+<title>ห้องวิทยาศาสตร์เสมือน By Dr.Tae</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
@@ -27,13 +27,34 @@
   .quick { display: flex; gap: 8px; flex-wrap: wrap; }
   .quick a { text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 5px 14px; font-size: 14px; }
   .quick a:hover { border-color: var(--accent); }
+  .hero.withqr { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .hero.withqr > div:first-child { flex: 1 1 420px; }
+  .hero .by { font-size: 18px; font-weight: 600; color: var(--accent); margin-left: 8px; white-space: nowrap; }
+  .qrbox { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 10px 14px 10px 10px; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+  .qrbox:hover { border-color: var(--accent); }
+  .qrbox img { width: 112px; height: 112px; display: block; border-radius: 6px; }
+  .qrbox b { display: block; font-size: 15px; }
+  .qrbox span { display: block; font-size: 13px; color: var(--muted); max-width: 170px; }
+  .qrbig { position: fixed; inset: 0; z-index: 20; background: rgba(10, 12, 16, .82); display: none; place-items: center; padding: 20px; }
+  .qrbig.on { display: grid; }
+  .qrbig > div { background: #fff; color: #111; border-radius: 18px; padding: 22px; text-align: center; max-width: 92vw; }
+  .qrbig img { width: min(70vh, 80vw); height: auto; display: block; margin: 0 auto 10px; }
+  .qrbig p { margin: 4px 0; font-size: 18px; }
+  @media print { .qrbox { display: none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hero">
-    <h1>ห้องวิทยาศาสตร์เสมือน</h1>
+  <div class="hero withqr">
+    <div>
+    <h1>ห้องวิทยาศาสตร์เสมือน <span class="by">By Dr.Tae</span></h1>
     <p>สื่อการสอนและห้องทดลองวิทยาศาสตร์ออนไลน์ สำหรับครูและนักเรียนชั้นประถมถึง ม.6 แบ่งเป็นสองห้องตามวิธีใช้</p>
+    </div>
+    <button class="qrbox" id="qrOpen" title="กดเพื่อขยาย QR code สำหรับฉายให้ทั้งห้องสแกน">
+      <img src="assets/qr.svg" alt="QR code ของเว็บห้องวิทยาศาสตร์เสมือน">
+      <div><b>สแกนเพื่อเข้าเว็บนี้</b><span>kpalawong-cloud.github.io/physics-lab</span><span style="margin-top:4px;color:var(--accent)">กดเพื่อขยายเต็มจอ</span></div>
+    </button>
   </div>
 
   <div class="rooms">
@@ -60,5 +81,18 @@
   <div class="quick" style="margin:0 0 28px"><a href="physics/">แล็บฟิสิกส์</a><a href="chemistry/">แล็บเคมี</a><a href="biology/">แล็บชีววิทยา</a><a href="earth/">แล็บโลกและอวกาศ</a><a href="labs.html#junior">แล็บประถม–ม.1</a></div>
   <footer class="foot">ใช้งานได้ทันทีบนคอมพิวเตอร์ แท็บเล็ต และโทรศัพท์ ไม่ต้องเข้าสู่ระบบ ข้อมูลการทดลองบันทึกไว้บนเครื่องของผู้ใช้เท่านั้น</footer>
 </div>
+<div class="qrbig" id="qrBig"><div>
+  <img src="assets/qr.svg" alt="QR code ของเว็บห้องวิทยาศาสตร์เสมือน">
+  <p><b>ห้องวิทยาศาสตร์เสมือน By Dr.Tae</b></p>
+  <p>kpalawong-cloud.github.io/physics-lab</p>
+  <p style="font-size:14px;color:#666">แตะที่ใดก็ได้เพื่อปิด</p>
+</div></div>
+<script>
+// ขยาย QR เต็มจอสำหรับฉายในห้องเรียน
+const qrBig = document.getElementById('qrBig');
+document.getElementById('qrOpen').onclick = () => qrBig.classList.add('on');
+qrBig.onclick = () => qrBig.classList.remove('on');
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') qrBig.classList.remove('on'); });
+</script>
 </body>
 </html>
